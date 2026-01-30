@@ -1,33 +1,36 @@
 services:
+  # OpenStock 主应用服务
   openstock:
     build:
       context: .
       extra_hosts:
         - "mongodb:host-gateway"
     ports:
-      - "3000:3000"
+      - "3000:3000" # 映射 3000 端口
     env_file:
-      - .env
+      - .env # 加载环境变量文件
     restart: unless-stopped
     depends_on:
-      - mongodb
+      - mongodb # 确保 mongodb 先启动
 
+  # MongoDB 数据库服务
   mongodb:
     image: mongo:7
     container_name: mongodb
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_ROOT_USERNAME: root # 数据库 root 用户名
+      MONGO_INITDB_ROOT_PASSWORD: example # 数据库 root 密码
     ports:
-      - "27017:27017"
+      - "27017:27017" # 映射 MongoDB 端口
     volumes:
-      - mongo-data:/data/db
+      - mongo-data:/data/db # 数据持久化存储卷
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+# 定义持久化存储卷
 volumes:
   mongo-data:

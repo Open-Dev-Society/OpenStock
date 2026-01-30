@@ -8,11 +8,14 @@ import {
     COMPANY_PROFILE_WIDGET_CONFIG,
     COMPANY_FINANCIALS_WIDGET_CONFIG,
 } from "@/lib/constants";
-
 import { auth } from '@/lib/better-auth/auth';
 import { headers } from 'next/headers';
 import { isStockInWatchlist } from '@/lib/actions/watchlist.actions';
 
+/**
+ * 股票详情页面
+ * 展示指定股票的详细信息、图表、技术分析及财务数据
+ */
 export default async function StockDetails({ params }: StockDetailsPageProps) {
     const { symbol } = await params;
     const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
@@ -26,7 +29,7 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
     return (
         <div className="flex min-h-screen p-4 md:p-6 lg:p-8">
             <section className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-                {/* Left column */}
+                {/* 左侧栏：股票基本信息与图表 */}
                 <div className="flex flex-col gap-6">
                     <TradingViewWidget
                         scriptUrl={`${scriptUrl}symbol-info.js`}
@@ -34,6 +37,7 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                         height={170}
                     />
 
+                    {/* 蜡烛图 */}
                     <TradingViewWidget
                         scriptUrl={`${scriptUrl}advanced-chart.js`}
                         config={CANDLE_CHART_WIDGET_CONFIG(symbol)}
@@ -41,6 +45,7 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                         height={600}
                     />
 
+                    {/* 基准线图表 */}
                     <TradingViewWidget
                         scriptUrl={`${scriptUrl}advanced-chart.js`}
                         config={BASELINE_WIDGET_CONFIG(symbol)}
@@ -49,7 +54,7 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                     />
                 </div>
 
-                {/* Right column */}
+                {/* 右侧栏：分析与财务数据 */}
                 <div className="flex flex-col gap-6">
                     <div className="flex items-center justify-between">
                         <WatchlistButton
@@ -60,18 +65,21 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                         />
                     </div>
 
+                    {/* 技术分析 */}
                     <TradingViewWidget
                         scriptUrl={`${scriptUrl}technical-analysis.js`}
                         config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(symbol)}
                         height={400}
                     />
 
+                    {/* 公司概况 */}
                     <TradingViewWidget
                         scriptUrl={`${scriptUrl}company-profile.js`}
                         config={COMPANY_PROFILE_WIDGET_CONFIG(symbol)}
                         height={440}
                     />
 
+                    {/* 财务报表数据 */}
                     <TradingViewWidget
                         scriptUrl={`${scriptUrl}financials.js`}
                         config={COMPANY_FINANCIALS_WIDGET_CONFIG(symbol)}

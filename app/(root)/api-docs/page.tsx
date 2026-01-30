@@ -1,6 +1,5 @@
-
 import React from 'react';
-import Image from 'next/image';
+import { Metadata } from 'next';
 import Link from 'next/link';
 import {
   Server,
@@ -16,16 +15,20 @@ import {
   AlertTriangle
 } from 'lucide-react';
 
-export const metadata = {
-  title: 'API & Architecture | OpenStock',
-  description: 'Technical documentation for OpenStock architecture, AI integrations, and background jobs.',
+export const metadata: Metadata = {
+  title: 'API 与系统架构 | OpenStock',
+  description: 'OpenStock 系统架构、AI 集成和后台任务的技术文档。',
 };
 
+/**
+ * API 文档页面组件
+ * 展示项目的架构、AI 策略和后台任务
+ */
 export default function ApiDocsPage() {
   return (
-    <div className="max-w-5xl mx-auto space-y-16 pb-20">
-      {/* Hero Section */}
-      <section className="text-center space-y-6 pt-10">
+    <div className="max-w-5xl mx-auto space-y-16 pb-20 mt-10">
+      {/* 英雄板块 */}
+      <section className="text-center space-y-6 pt-10 px-4">
         <div className="flex justify-center items-center gap-4 mb-8">
           <div className="bg-gray-800 p-3 rounded-2xl border border-gray-700 shadow-xl">
             <img src="/assets/images/logo.png" alt="openstock" className="h-10 w-auto invert brightness-0" />
@@ -37,29 +40,28 @@ export default function ApiDocsPage() {
         </div>
 
         <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-          OpenStock Architecture
+          OpenStock 系统架构
         </h1>
         <p className="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
-          A transparent look at the event-driven, multi-provider system powering your market insights.
+          透明化展示驱动您市场洞察的事件驱动型多服务商系统。
         </p>
 
         <div className="flex flex-wrap justify-center gap-3 pt-2">
-          <Badge color="green">v1.0.0 Active</Badge>
+          <Badge color="green">v1.0.0 运行中</Badge>
           <Badge color="purple">Gemini + Siray AI</Badge>
-          <Badge color="blue">Open Source AGPL-3.0</Badge>
+          <Badge color="blue">开源协议 AGPL-3.0</Badge>
         </div>
       </section>
 
-      {/* AI Architecture Section */}
-      <section className="grid md:grid-cols-2 gap-8 items-start">
+      {/* AI 架构板块 */}
+      <section className="grid md:grid-cols-2 gap-8 items-start px-4">
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <Cpu className="text-teal-400 h-8 w-8" />
-            <h2 className="text-3xl font-bold text-gray-100">Intelligent UI</h2>
+            <h2 className="text-3xl font-bold text-gray-100">智能 UI</h2>
           </div>
           <p className="text-gray-400 leading-relaxed">
-            We prioritize uptime for generative features (Welcome Emails, News Summaries) using a robust
-            multi-provider strategy. Our system automatically routes around outages.
+            我们通过稳健的多服务商策略，优先确保生成式功能（欢迎邮件、新闻摘要）的正常运行时间。我们的系统会自动绕过故障节点。
           </p>
 
           <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 space-y-4">
@@ -69,11 +71,11 @@ export default function ApiDocsPage() {
               </div>
               <div>
                 <h3 className="text-white font-semibold flex items-center gap-2">
-                  Primary: Google Gemini
-                  <span className="text-[10px] bg-teal-500/10 text-teal-400 px-2 py-0.5 rounded-full border border-teal-500/20">Flash Lite 2.5</span>
+                  主要服务: Google Gemini
+                  <span className="text-[10px] bg-teal-500/10 text-teal-400 px-2 py-0.5 rounded-full border border-teal-500/20">Flash Lite 1.5</span>
                 </h3>
                 <p className="text-sm text-gray-500 mt-1">
-                  Handles high-volume inference for news summarization and personalization.
+                  处理新闻摘要和个性化推荐的高吞吐量推理。
                 </p>
               </div>
             </div>
@@ -86,37 +88,36 @@ export default function ApiDocsPage() {
               </div>
               <div>
                 <h3 className="text-white font-semibold flex items-center gap-2">
-                  Fallback: Siray.ai
+                  备用服务: Siray.ai
                   <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20">Ultra 1.0</span>
                 </h3>
                 <p className="text-sm text-gray-500 mt-1">
-                  Instant failover protection. If Gemini wavers, Siray takes over to ensure zero dropped requests.
+                  即时故障转移保护。如果 Gemini 响应异常，Siray 将接管以确保请求零丢失。
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Diagram / Visual */}
-        <div className="bg-[#0A0A0A] border border-gray-800 rounded-xl p-8 flex flex-col justify-center items-center relative overflow-hidden group">
+        {/* 流程图可视化 */}
+        <div className="bg-[#0A0A0A] border border-gray-800 rounded-xl p-8 flex flex-col justify-center items-center relative overflow-hidden group min-h-[400px]">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-teal-900/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
-          {/* Visual Flowchart */}
           <div className="relative z-10 flex flex-col items-center gap-6 w-full max-w-sm">
             <div className="bg-gray-800 text-gray-300 px-4 py-2 rounded-lg text-sm border border-gray-700 w-full text-center">
-              User Action / Cron Job
+              用户操作 / 定时任务
             </div>
             <div className="h-6 w-px bg-gray-700" />
             <div className="bg-gray-800 p-4 rounded-xl border border-gray-600 w-full flex flex-col gap-3 relative shadow-2xl">
               <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-1 h-12 bg-teal-500 rounded-full" />
-              <span className="text-xs font-mono text-teal-500 mb-1">Inngest Function</span>
+              <span className="text-xs font-mono text-teal-500 mb-1">Inngest 函数</span>
               <div className="flex items-center justify-between text-sm text-gray-200 bg-black/40 p-2 rounded border border-gray-700">
-                <span>Attempt Gemini</span>
+                <span>尝试使用 Gemini</span>
                 <CheckCircle2 size={14} className="text-teal-500" />
               </div>
               <div className="flex items-center justify-between text-sm text-gray-200 bg-blue-900/20 p-2 rounded border border-blue-800/50">
                 <span className="flex items-center gap-2">
-                  Fallback to Siray
+                  备用切换至 Siray
                   <ShieldCheck size={12} className="text-blue-400" />
                 </span>
                 <ArrowRight size={14} className="text-blue-400" />
@@ -124,82 +125,109 @@ export default function ApiDocsPage() {
             </div>
             <div className="h-6 w-px bg-gray-700" />
             <div className="bg-green-900/20 text-green-400 px-4 py-2 rounded-lg text-sm border border-green-900/50 w-full text-center font-medium">
-              Content Delivered
+              内容成功交付
             </div>
           </div>
         </div>
       </section>
 
-      {/* Background Jobs */}
-      <section>
+      {/* 后台任务 */}
+      <section className="px-4">
         <div className="flex items-center gap-3 mb-6">
           <Server className="text-purple-400 h-8 w-8" />
-          <h2 className="text-3xl font-bold text-gray-100">Serverless Infrastructure</h2>
+          <h2 className="text-3xl font-bold text-gray-100">无服务器基础设施</h2>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           <JobCard
             icon={<Mail size={20} />}
-            title="Sign Up Email"
-            trigger="Event"
-            desc="Generates personalized welcome/onboarding email via AI."
+            title="注册邮件"
+            trigger="事件触发"
+            desc="通过 AI 生成个性化的欢迎/引导邮件。"
             color="purple"
           />
           <JobCard
             icon={<BarChart2 size={20} />}
-            title="Weekly News"
-            trigger="Cron: Mon 9am"
-            desc="Summarizes market news and broadcasts via ConvertKit."
+            title="每周新闻"
+            trigger="定时任务: 周一上午 9 点"
+            desc="汇总市场新闻并通过邮件播送。"
             color="teal"
           />
           <JobCard
             icon={<Clock size={20} />}
-            title="Stock Alerts"
-            trigger="Cron: 5m"
-            desc="Checks user price targets against real-time data."
+            title="股票警报"
+            trigger="定时任务: 每 5 分钟"
+            desc="根据实时数据检查用户设置的价格目标。"
             color="yellow"
           />
           <JobCard
             icon={<AlertTriangle size={20} />}
-            title="Re-engagement"
-            trigger="Cron: Daily"
-            desc="Identifies dormant users and sends nudges."
+            title="挽留策略"
+            trigger="定时任务: 每日"
+            desc="识别沉睡用户并发送提醒内容。"
             color="red"
           />
         </div>
       </section>
 
-      {/* Integration Stack */}
-      <section className="space-y-6">
+      {/* 集成栈 */}
+      <section className="space-y-6 px-4">
         <div className="flex items-center gap-3">
           <Database className="text-blue-400 h-8 w-8" />
-          <h2 className="text-3xl font-bold text-gray-100">Tech Stack & Data</h2>
+          <h2 className="text-3xl font-bold text-gray-100">技术栈与数据</h2>
         </div>
 
         <div className="grid gap-4">
           <StackItem
             title="Finnhub"
-            desc="Real-time quotes, technical indicators, and market news."
+            desc="实时报价、技术指标和市场新闻。"
             url="https://finnhub.io"
           />
           <StackItem
             title="ConvertKit (Kit)"
-            desc="High-volume newsletter broadcasts and user tagging."
+            desc="高吞吐量的通讯稿播送和用户标签管理。"
             url="https://kit.com"
           />
           <StackItem
             title="MongoDB Atlas"
-            desc="Distributed data on AWS. SRV-bypassed connection for maximum reliability."
+            desc="AWS 上的分布式数据服务。采用 SRV 旁路连接以实现最大可靠性。"
             url="https://mongodb.com"
           />
         </div>
       </section>
 
+      {/* 底部 API 哲学 (从旧版合并) */}
+      <section className="bg-gray-800 rounded-lg shadow-sm p-8 border mt-10 mx-4">
+        <h2 className="text-2xl font-semibold text-gray-100 mb-4">🌍 我们的 API 哲学</h2>
+        <div className="grid md:grid-cols-2 gap-8">
+          <div>
+            <p className="text-gray-400 mb-4">
+              我们相信每个人都应该能够获取市场数据 —— 无论是正在构建第一个投资组合追踪器的学生，还是正在为社区开发工具的开发者，以及任何想要无障碍学习金融知识的人。
+            </p>
+            <ul className="text-gray-400 space-y-2">
+              <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-green-500" /> 始终免费</li>
+              <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-green-500" /> 无门槛访问</li>
+              <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-green-500" /> 社区优先</li>
+              <li className="flex items-center gap-2"><CheckCircle2 size={16} className="text-green-500" /> 开源透明</li>
+            </ul>
+          </div>
+          <div className="bg-gray-900/50 p-6 rounded-xl border border-gray-700">
+            <h3 className="font-semibold text-white mb-2">🎓 社区支持</h3>
+            <p className="text-gray-500 text-sm mb-4">
+              正在为课程设计项目？请通过 <strong>opendevsociety@cc.cc</strong> 联系我们，以获取指导。
+            </p>
+            <a target="_blank" rel="noopener noreferrer" href="https://github.com/Open-Dev-Society/"
+              className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 px-4 py-2 rounded font-medium hover:bg-gray-300 transition-colors">
+              联系我们 <ArrowRight size={16} />
+            </a>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
 
-// Helper Components
+// 辅助组件
 
 function Badge({ children, color }: { children: React.ReactNode, color: 'green' | 'purple' | 'blue' }) {
   const colors = {

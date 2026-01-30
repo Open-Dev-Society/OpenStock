@@ -7,6 +7,9 @@ import { cache } from 'react';
 const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
 const NEXT_PUBLIC_FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY ?? '';
 
+/**
+ * 通用的 JSON 获取函数，支持缓存配置
+ */
 async function fetchJSON<T>(url: string, revalidateSeconds?: number): Promise<T> {
     const options: RequestInit & { next?: { revalidate?: number } } = revalidateSeconds
         ? { cache: 'force-cache', next: { revalidate: revalidateSeconds } }
@@ -15,41 +18,50 @@ async function fetchJSON<T>(url: string, revalidateSeconds?: number): Promise<T>
     const res = await fetch(url, options);
     if (!res.ok) {
         const text = await res.text().catch(() => '');
-        throw new Error(`Fetch failed ${res.status}: ${text}`);
+        throw new Error(`获取失败 ${res.status}: ${text}`);
     }
     return (await res.json()) as T;
 }
 
 export { fetchJSON };
 
+/**
+ * 获取实时报价
+ */
 export async function getQuote(symbol: string) {
     try {
         const token = NEXT_PUBLIC_FINNHUB_API_KEY;
         const url = `${FINNHUB_BASE_URL}/quote?symbol=${encodeURIComponent(symbol)}&token=${token}`;
-        // No caching for real-time price
+        // 实时价格不使用缓存
         return await fetchJSON<any>(url, 0);
     } catch (e) {
-        console.error('Error fetching quote for', symbol, e);
+        console.error('获取报价失败:', symbol, e);
         return null;
     }
 }
 
+/**
+ * 获取公司概况
+ */
 export async function getCompanyProfile(symbol: string) {
     try {
         const token = NEXT_PUBLIC_FINNHUB_API_KEY;
         const url = `${FINNHUB_BASE_URL}/stock/profile2?symbol=${encodeURIComponent(symbol)}&token=${token}`;
-        // Cache profile for 24 hours
+        // 概况缓存 24 小时
         return await fetchJSON<any>(url, 86400);
     } catch (e) {
-        console.error('Error fetching profile for', symbol, e);
+        console.error('获取公司概况失败:', symbol, e);
         return null;
     }
 }
 
+/**
+ * 获取自选列表数据
+ */
 export async function getWatchlistData(symbols: string[]) {
     if (!symbols || symbols.length === 0) return [];
 
-    // Fetch quotes and profiles in parallel
+    // 并行获取报价和公司概况
     const promises = symbols.map(async (sym) => {
         const [quote, profile] = await Promise.all([
             getQuote(sym),
@@ -65,20 +77,23 @@ export async function getWatchlistData(symbols: string[]) {
             name: profile?.name || sym,
             logo: profile?.logo,
             marketCap: profile?.marketCapitalization,
-            peRatio: 0 // Finnhub 'quote' and 'profile2' don't easily give real-time PE. Might need 'metric' endpoint, but skipping for now to save rate limits.
+            peRatio: 0 // Finnhub 'quote' 和 'profile2' 接口不直接提供实时市盈率。
         };
     });
 
     return await Promise.all(promises);
 }
 
-
+/**
+ * 获取市场新闻
+ * 如果提供了 symbols，则获取相关公司的特定新闻，否则获取普通市场新闻
+ */
 export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> {
     try {
         const range = getDateRange(5);
         const token = NEXT_PUBLIC_FINNHUB_API_KEY;
         if (!token) {
-            throw new Error('FINNHUB API key is not configured');
+            throw new Error('未配置 FINNHUB API 密钥');
         }
         const cleanSymbols = (symbols || [])
             .map((s) => s?.trim().toUpperCase())
@@ -86,7 +101,7 @@ export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> 
 
         const maxArticles = 6;
 
-        // If we have symbols, try to fetch company news per symbol and round-robin select
+        // 如果有股票代码，尝试按代码获取公司新闻并进行轮询选择
         if (cleanSymbols.length > 0) {
             const perSymbolArticles: Record<string, RawNewsArticle[]> = {};
 
@@ -97,14 +112,14 @@ export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> 
                         const articles = await fetchJSON<RawNewsArticle[]>(url, 300);
                         perSymbolArticles[sym] = (articles || []).filter(validateArticle);
                     } catch (e) {
-                        console.error('Error fetching company news for', sym, e);
+                        console.error('获取公司新闻失败:', sym, e);
                         perSymbolArticles[sym] = [];
                     }
                 })
             );
 
             const collected: MarketNewsArticle[] = [];
-            // Round-robin up to 6 picks
+            // 轮询选取最多 6 篇新闻
             for (let round = 0; round < maxArticles; round++) {
                 for (let i = 0; i < cleanSymbols.length; i++) {
                     const sym = cleanSymbols[i];
@@ -119,14 +134,14 @@ export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> 
             }
 
             if (collected.length > 0) {
-                // Sort by datetime desc
+                // 按日期逆序排序
                 collected.sort((a, b) => (b.datetime || 0) - (a.datetime || 0));
                 return collected.slice(0, maxArticles);
             }
-            // If none collected, fall through to general news
+            // 如果没收集到特定新闻，则回退到普通新闻
         }
 
-        // General market news fallback or when no symbols provided
+        // 普通市场新闻回退或未提供代码时的情况
         const generalUrl = `${FINNHUB_BASE_URL}/news?category=general&token=${token}`;
         const general = await fetchJSON<RawNewsArticle[]>(generalUrl, 300);
 
@@ -138,23 +153,27 @@ export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> 
             if (seen.has(key)) continue;
             seen.add(key);
             unique.push(art);
-            if (unique.length >= 20) break; // cap early before final slicing
+            if (unique.length >= 20) break; // 提前截断
         }
 
         const formatted = unique.slice(0, maxArticles).map((a, idx) => formatArticle(a, false, undefined, idx));
         return formatted;
     } catch (err) {
-        console.error('getNews error:', err);
-        throw new Error('Failed to fetch news');
+        console.error('getNews 错误:', err);
+        throw new Error('获取新闻失败');
     }
 }
 
+/**
+ * 搜索股票
+ * 如果没有查询词，则返回前 10 个热门股票
+ */
 export const searchStocks = cache(async (query?: string): Promise<StockWithWatchlistStatus[]> => {
     try {
         const token = NEXT_PUBLIC_FINNHUB_API_KEY;
         if (!token) {
-            // If no token, log and return empty to avoid throwing per requirements
-            console.error('Error in stock search:', new Error('FINNHUB API key is not configured'));
+            // 如果没有密钥，记录错误并返回空数组，避免阻塞页面
+            console.error('股票搜索错误:', new Error('未配置 FINNHUB API 密钥'));
             return [];
         }
 
@@ -163,17 +182,17 @@ export const searchStocks = cache(async (query?: string): Promise<StockWithWatch
         let results: FinnhubSearchResult[] = [];
 
         if (!trimmed) {
-            // Fetch top 10 popular symbols' profiles
+            // 获取前 10 个热门股票的简况
             const top = POPULAR_STOCK_SYMBOLS.slice(0, 10);
             const profiles = await Promise.all(
                 top.map(async (sym) => {
                     try {
                         const url = `${FINNHUB_BASE_URL}/stock/profile2?symbol=${encodeURIComponent(sym)}&token=${token}`;
-                        // Revalidate every hour
+                        // 每小时重新验证一次
                         const profile = await fetchJSON<any>(url, 3600);
                         return { sym, profile } as { sym: string; profile: any };
                     } catch (e) {
-                        console.error('Error fetching profile2 for', sym, e);
+                        console.error('获取 profile2 失败:', sym, e);
                         return { sym, profile: null } as { sym: string; profile: any };
                     }
                 })
@@ -191,10 +210,8 @@ export const searchStocks = cache(async (query?: string): Promise<StockWithWatch
                         displaySymbol: symbol,
                         type: 'Common Stock',
                     };
-                    // We don't include exchange in FinnhubSearchResult type, so carry via mapping later using profile
-                    // To keep pipeline simple, attach exchange via closure map stage
-                    // We'll reconstruct exchange when mapping to final type
-                    (r as any).__exchange = exchange; // internal only
+                    // 将交易所信息内部暂存，稍后映射时使用
+                    (r as any).__exchange = exchange; // 仅内部使用
                     return r;
                 })
                 .filter((x): x is FinnhubSearchResult => Boolean(x));
@@ -225,7 +242,7 @@ export const searchStocks = cache(async (query?: string): Promise<StockWithWatch
 
         return mapped;
     } catch (err) {
-        console.error('Error in stock search:', err);
+        console.error('股票搜索错误:', err);
         return [];
     }
 });

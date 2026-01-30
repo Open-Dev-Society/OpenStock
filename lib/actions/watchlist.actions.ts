@@ -68,15 +68,18 @@ export async function isStockInWatchlist(userId: string, symbol: string) {
 
 // -- Legacy Support (if needed by other components) --
 
+/**
+ * 根据邮箱获取用户的自选股票代码列表
+ */
 export async function getWatchlistSymbolsByEmail(email: string): Promise<string[]> {
     if (!email) return [];
 
     try {
         const mongoose = await connectToDatabase();
         const db = mongoose.connection.db;
-        if (!db) throw new Error('MongoDB connection not found');
+        if (!db) throw new Error('找不到 MongoDB 连接');
 
-        // Better Auth stores users in the "user" collection
+        // Better Auth 将用户信息存储在 "user" 集合中
         const user = await db.collection('user').findOne<{ _id?: unknown; id?: string; email?: string }>({ email });
 
         if (!user) return [];
@@ -84,10 +87,11 @@ export async function getWatchlistSymbolsByEmail(email: string): Promise<string[
         const userId = (user.id as string) || String(user._id || '');
         if (!userId) return [];
 
+        // 在 Watchlist 模型中查找该用户的所有股票代码
         const items = await Watchlist.find({ userId }, { symbol: 1 }).lean();
         return items.map((i) => String(i.symbol));
     } catch (err) {
-        console.error('getWatchlistSymbolsByEmail error:', err);
+        console.error('getWatchlistSymbolsByEmail 错误:', err);
         return [];
     }
 }

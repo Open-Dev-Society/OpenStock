@@ -9,10 +9,13 @@ interface WatchlistButtonProps {
     isInWatchlist: boolean;
     showTrashIcon?: boolean;
     type?: "button" | "icon";
-    userId?: string; // Made optional for backward compat, but required for actions
+    userId?: string; // 加入自选列表所需的用户 ID
     onWatchlistChange?: (symbol: string, added: boolean) => void;
 }
 
+/**
+ * 自选列表交互按钮组件
+ */
 const WatchlistButton = ({
     symbol,
     company,
@@ -25,52 +28,54 @@ const WatchlistButton = ({
     const [added, setAdded] = useState<boolean>(!!isInWatchlist);
     const [loading, setLoading] = useState(false);
 
+    // 动态生成按钮标签
     const label = useMemo(() => {
         if (type === "icon") return added ? "" : "";
-        return added ? "Remove from Watchlist" : "Add to Watchlist";
+        return added ? "从自选列表中移除" : "添加到自选列表";
     }, [added, type]);
 
     const handleClick = async (e: React.MouseEvent) => {
-        e.preventDefault(); // Prevent link navigation if inside a link
+        e.preventDefault(); // 阻止在链接内部时的导航行为
 
         if (!userId && !onWatchlistChange) {
-            console.error("WatchlistButton: userId or onWatchlistChange is required");
-            toast.error("Please sign in to modify watchlist");
+            console.error("WatchlistButton: requires userId or onWatchlistChange");
+            toast.error("请先登录以修改自选列表");
             return;
         }
 
         const next = !added;
-        setAdded(next); // Optimistic update
+        setAdded(next); // 乐观更新
         setLoading(true);
 
         try {
             if (userId) {
                 if (next) {
                     await addToWatchlist(userId, symbol, company);
-                    toast.success(`${symbol} added to watchlist`);
+                    toast.success(`${symbol} 已加入自选列表`);
                 } else {
                     await removeFromWatchlist(userId, symbol);
-                    toast.success(`${symbol} removed from watchlist`);
+                    toast.success(`${symbol} 已从自选列表中移除`);
                 }
             }
 
-            // Call external handler if provided (e.g. for UI refresh)
+            // 如果提供了外部处理函数（用于刷新 UI），则调用它
             onWatchlistChange?.(symbol, next);
         } catch (error) {
             console.error("Watchlist action failed:", error);
-            setAdded(!next); // Revert on error
-            toast.error("Failed to update watchlist");
+            setAdded(!next); // 出错时回滚
+            toast.error("更新自选列表失败");
         } finally {
             setLoading(false);
         }
     };
 
+    // 图标模式 (星星图标)
     if (type === "icon") {
         return (
             <button
                 type="button"
-                title={added ? `Remove ${symbol} from watchlist` : `Add ${symbol} to watchlist`}
-                aria-label={added ? `Remove ${symbol} from watchlist` : `Add ${symbol} to watchlist`}
+                title={added ? `将 ${symbol} 从自选列表中移除` : `将 ${symbol} 添加到自选列表`}
+                aria-label={added ? `将 ${symbol} 从自选列表中移除` : `将 ${symbol} 添加到自选列表`}
                 className={`flex items-center justify-center p-2 rounded-full transition-all ${added ? "text-yellow-400 hover:bg-yellow-400/10" : "text-gray-400 hover:text-white hover:bg-white/10"} ${loading ? "opacity-50 cursor-wait" : ""}`}
                 onClick={handleClick}
                 disabled={loading}
@@ -93,6 +98,7 @@ const WatchlistButton = ({
         );
     }
 
+    // 按钮模式
     return (
         <button
             type="button"
@@ -112,7 +118,7 @@ const WatchlistButton = ({
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 7h12M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m-7 4v6m4-6v6m4-6v6" />
                 </svg>
             ) : null}
-            <span>{loading ? "Updating..." : label}</span>
+            <span>{loading ? "更新中..." : label}</span>
         </button>
     );
 };
