@@ -245,7 +245,7 @@ export const sendWeeklyNewsSummary = inngest.createFunction(
                                                 <p style="margin: 0;">
                                                     <a href="{{ unsubscribe_url }}" style="color: #20c997; text-decoration: underline;">Unsubscribe</a>
                                                     <span style="margin: 0 10px;">•</span>
-                                                    <a href="https://openstock-ods.vercel.app" style="color: #20c997; text-decoration: underline;">Visit OpenStock</a>
+                                                    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://openstock-ods.vercel.app'}" style="color: #20c997; text-decoration: underline;">Visit OpenStock</a>
                                                 </p>
                                                 <p style="margin: 20px 0 0 0; font-size: 12px;">&copy; ${new Date().getFullYear()} OpenStock</p>
                                             </td>
@@ -460,7 +460,7 @@ export const checkInactiveUsers = inngest.createFunction(
                                         <table border="0" cellspacing="0" cellpadding="0" width="100%">
                                             <tr>
                                                 <td align="center">
-                                                    <a href="https://openstock.app" style="display: inline-block; background-color: #20c997; color: #000000; font-weight: bold; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-size: 16px;">Return to Dashboard</a>
+                                                    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://openstock-ods.vercel.app'}" style="display: inline-block; background-color: #20c997; color: #000000; font-weight: bold; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-size: 16px;">Return to Dashboard</a>
                                                 </td>
                                             </tr>
                                         </table>
