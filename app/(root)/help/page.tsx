@@ -1,123 +1,124 @@
 import { Metadata } from 'next';
-// Removed unused lucide-react imports
+import {
+  HelpCircle,
+  MessageCircle,
+  BookOpen,
+  Lightbulb,
+  Mail,
+  Github,
+  ChevronDown
+} from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Help Center - OpenStock',
-  description: 'Free help and community support - no barriers, just guidance',
+  title: 'Help Center | OpenStock',
+  description: 'Community-driven support for OpenStock. No paywalls, just help.',
 };
 
 export default function HelpPage() {
   const faqs = [
     {
       question: "Is OpenStock really free forever?",
-      answer: "Yes! We're part of the Open Dev Society, which means we'll never lock knowledge behind paywalls. Core features remain free always. We run on community donations and the belief that financial tools should be accessible to everyone."
+      answer: "Yes! We run on donations and community contribution. Core features (tracking, alerts, analysis) will remain free. We believe financial tools shouldn't be luxury items."
     },
     {
-      question: "I'm a student - can I use this for my projects?",
-      answer: "Absolutely! That's exactly why we built this. Use it for school projects, learning, or building your portfolio. Need help? Our community loves mentoring students. Email student@opendevsociety.org for extra support."
+      question: "How do I add stocks to my watchlist?",
+      answer: "Use the search bar at the top or in the header to find a company. On the stock's detail page, click the 'Heart' or 'Star' icon to instantly add it to your dashboard."
     },
     {
-      question: "How do I add stocks to my favorites?",
-      answer: "Navigate to any stock page and click the star icon. You can also search using the search bar and add directly from results. Everything is designed to be intuitive - no complex tutorials needed."
+      question: "Where does the market data come from?",
+      answer: "We partner with Finnhub and other providers to offer real-time and delayed data. While robust, please use it for analysis rather than high-frequency trading."
     },
     {
-      question: "Can I contribute to OpenStock?",
-      answer: "We'd love that! OpenStock is open source and community-driven. Check our GitHub for issues marked 'good first issue' or 'help wanted'. Every contribution, no matter how small, makes a difference."
+      question: "Can I contribute code or designs?",
+      answer: "Absolutely! Check our GitHub repository. We label issues as 'good first issue' for beginners. We welcome designers, developers, and writers alike."
     },
     {
-      question: "What if I find a bug or have a feature request?",
-      answer: "Please tell us! Submit issues on GitHub, join our Discord, or email opendevsociety@gmail.com. We see every report as a chance to make the platform better for everyone."
+      question: "My alerts aren't triggering.",
+      answer: "Alerts run every 5 minutes via our background jobs. Ensure you've confirmed your email address, as we send notifications primarily via email."
     }
   ];
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-4xl">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-gray-100 mb-4">Community Help Center</h1>
-        <p className="text-xl text-gray-200 mb-4">
-          Free help, guided by community, powered by the belief that everyone deserves support
-        </p>
-        <div className="bg-green-300 border border-green-200 rounded-lg p-4 max-w-2xl mx-auto">
-          <p className="text-black text-sm">
-            🤝 <strong>Our Promise:</strong> Every question matters. Every beginner is welcomed. No exclusion, ever.
-          </p>
+    <div className="max-w-4xl mx-auto px-4 pb-20">
+
+      {/* Header */}
+      <div className="text-center pt-16 pb-12 space-y-4">
+        <div className="inline-flex p-3 bg-blue-500/10 rounded-2xl border border-blue-500/20 mb-4">
+          <HelpCircle className="text-blue-400 h-8 w-8" />
         </div>
+        <h1 className="text-4xl md:text-5xl font-bold text-white">How can we help?</h1>
+        <p className="text-xl text-gray-400">Community-powered support for everyone.</p>
       </div>
 
-
-      {/* Help Philosophy */}
-      <div className="grid md:grid-cols-3 gap-6 mb-12">
-        <div className="bg-gray-800 rounded-lg shadow-sm p-6 border hover:shadow-md transition-shadow">
-
-          <h3 className="text-lg font-semibold text-blue-500 mb-2">Learn Together</h3>
-          <p className="text-gray-200 text-sm">
-            Every expert was once a beginner. Our guides are written by the community, for the community.
-            No jargon, no assumptions about prior knowledge.
-          </p>
-        </div>
-
-        <div className="bg-gray-800 rounded-lg shadow-sm p-6 border hover:shadow-md transition-shadow">
-
-          <h3 className="text-lg font-semibold text-green-500 mb-2">Community Support</h3>
-          <p className="text-gray-200 text-sm">
-            Real people helping real people. Our Discord community includes students, professionals,
-            and mentors who genuinely want to help you succeed.
-          </p>
-        </div>
-
-        <div className="bg-gray-800 rounded-lg shadow-sm p-6 border hover:shadow-md transition-shadow">
-
-          <h3 className="text-lg font-semibold text-purple-500 mb-2">Built with Care</h3>
-          <p className="text-gray-200 text-sm">
-            Every feature is designed with accessibility and ease-of-use in mind.
-            We believe powerful tools should be simple to use.
-          </p>
-        </div>
+      {/* Quick Action Grid */}
+      <div className="grid md:grid-cols-3 gap-4 mb-16">
+        <HelpCard
+          icon={<BookOpen className="text-teal-400" />}
+          title="Read Docs"
+          desc="Deep dive into features and API integration."
+          link="/api-docs"
+          linkText="View Documentation"
+        />
+        <HelpCard
+          icon={<MessageCircle className="text-purple-400" />}
+          title="Community Chat"
+          desc="Get real-time answers from other users."
+          link="https://discord.gg/JkJ8kfxgxB"
+          linkText="Join Discord"
+        />
+        <HelpCard
+          icon={<Github className="text-white" />}
+          title="Report Bugs"
+          desc="Found an issue? Let our developers know."
+          link="https://github.com/Open-Dev-Society/OpenStock/issues"
+          linkText="Open Issue"
+        />
       </div>
 
-      {/* Community FAQs */}
-      <section className="mb-12">
-        <h2 className="text-3xl font-bold text-gray-100 mb-8 text-center">Community Questions</h2>
-        <div className="space-y-4">
-          {faqs.map((faq, index) => (
-            <div key={index} className="bg-gray-800 rounded-lg shadow-sm p-6 border">
-              <h3 className="text-lg font-semibold text-gray-100 mb-2">{faq.question}</h3>
-              <p className="text-gray-200">{faq.answer}</p>
+      {/* FAQs */}
+      <div className="space-y-8">
+        <h2 className="text-2xl font-bold text-white border-b border-gray-800 pb-4">Frequently Asked Questions</h2>
+        <div className="grid gap-4">
+          {faqs.map((faq, idx) => (
+            <div key={idx} className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 hover:bg-gray-800/50 transition-colors">
+              <h3 className="font-semibold text-lg text-gray-200 mb-2 flex items-start gap-3">
+                <Lightbulb size={20} className="text-yellow-500/50 mt-1 shrink-0" />
+                {faq.question}
+              </h3>
+              <p className="text-gray-400 leading-relaxed ml-8 pl-1 border-l-2 border-gray-800">
+                {faq.answer}
+              </p>
             </div>
           ))}
         </div>
-      </section>
+      </div>
 
-      {/* Community Connection */}
-      <section className="bg-gradient-to-r from-blue-200 to-purple-200 rounded-lg p-8 text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Join Our Community</h2>
-        <p className="text-gray-700 mb-6">
-          Don&apos;t struggle alone. Our community of builders, learners, and dreamers is here to help.
-          Because we believe the future belongs to those who build it openly.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-                href="https://discord.gg/jdJuEMvk"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-550 transition-colors text-center inline-block"
-            >
-                Join Discord Community
-            </a>
+      {/* Direct Contact */}
+      <div className="mt-20 bg-gradient-to-br from-gray-900 to-black border border-gray-800 rounded-2xl p-8 text-center">
+        <h3 className="text-xl font-bold text-white mb-2">Still stuck?</h3>
+        <p className="text-gray-400 mb-6">Our team (and community) answers emails, usually entirely for free.</p>
+        <a
+          href="mailto:opendevsociety@gmail.com"
+          className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+        >
+          <Mail size={18} />
+          Contact Support
+        </a>
+      </div>
 
-            <a
-                href="mailto:opendevsociety@gmail.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-gray-800 text-gray-200 px-6 py-3 rounded-lg hover:bg-gray-900 transition-colors text-center inline-block"
-            >
-                Email Help Team
-            </a>
-        </div>
-        <p className="text-xs text-gray-600 mt-4">
-          ✨ All support is free, always. We&apos;re here because we care, not for profit.
-        </p>
-      </section>
+    </div>
+  );
+}
+
+function HelpCard({ icon, title, desc, link, linkText }: any) {
+  return (
+    <div className="bg-gray-900 border border-gray-800 p-6 rounded-xl flex flex-col items-start hover:border-gray-700 transition-colors">
+      <div className="mb-4 bg-gray-800 p-2 rounded-lg">{icon}</div>
+      <h3 className="font-bold text-white text-lg mb-2">{title}</h3>
+      <p className="text-sm text-gray-400 mb-6 flex-grow">{desc}</p>
+      <a href={link} className="text-teal-400 text-sm font-medium hover:underline flex items-center gap-1">
+        {linkText} <ChevronDown size={14} className="-rotate-90" />
+      </a>
     </div>
   );
 }

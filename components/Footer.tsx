@@ -18,9 +18,15 @@ const Footer = () => {
                                 className="brightness-0 invert"
                             />
                         </Link>
-                        <p className="text-gray-400 mb-10 max-w-md">
+                        <p className="text-gray-400 mb-6 max-w-md">
                             OpenStock is an open-source alternative to expensive market platforms. Track real-time prices, set personalized alerts, and explore detailed company insights — built openly, for everyone, forever free.
                         </p>
+                        <div className="mb-8">
+                            <Link href="/about" className="text-teal-400 hover:text-teal-300 font-medium inline-flex items-center gap-1 group">
+                                Learn about our mission
+                                <span className="group-hover:translate-x-1 transition-transform">→</span>
+                            </Link>
+                        </div>
                         <div className="flex space-x-6">
                             <Link
                                 href="https://github.com/Open-Dev-Society/OpenStock"
@@ -45,7 +51,7 @@ const Footer = () => {
                                 </span>
                             </Link>
                             <Link
-                                href="https://discord.gg/jdJuEMvk"
+                                href="https://discord.gg/JkJ8kfxgxB"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-gray-400 hover:text-blue-600 transition-colors duration-200 relative group"

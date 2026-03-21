@@ -23,6 +23,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "country-data-list": "^1.5.5",
+    "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "inngest": "^3.47.0",
     "lucide-react": "^0.544.0",
