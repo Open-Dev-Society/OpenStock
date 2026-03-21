@@ -17,7 +17,7 @@ export const sendWelcomeEmail = async ({email, name, intro} : WelcomeEmailData) 
 
 
     const mailOptions = {
-        from: `"Openstock" <opendevsociety@gamil.com>`,
+        from: `"Openstock" <opendevsociety@gmail.com>`,
         to: email,
         subject: 'Welcome to OpenStock - your open-source stock market toolkit',
         text: 'Thanks for joining Openstock and believing in this initiative by Open Dev Society',
