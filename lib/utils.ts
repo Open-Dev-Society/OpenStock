@@ -116,6 +116,22 @@ export const formatPrice = (price: number) => {
     }).format(price);
 };
 
+// Alias for consistency
+export const formatCurrency = formatPrice;
+
+export function formatNumber(num: number): string {
+    // If number is small (likely already in millions from Finnhub), multiply by 1M to get actual value
+    // Typical mega-cap is > 100B. 100B in millions is 100,000.
+    // If we assume typical market cap input IS millions:
+    const value = num * 1000000;
+
+    if (value >= 1e12) return (value / 1e12).toFixed(2) + 'T';
+    if (value >= 1e9) return (value / 1e9).toFixed(2) + 'B';
+    if (value >= 1e6) return (value / 1e6).toFixed(2) + 'M';
+    if (value >= 1e3) return (value / 1e3).toFixed(2) + 'K';
+    return value.toString();
+}
+
 export const formatDateToday = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',

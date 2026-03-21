@@ -22,6 +22,57 @@ async function fetchJSON<T>(url: string, revalidateSeconds?: number): Promise<T>
 
 export { fetchJSON };
 
+export async function getQuote(symbol: string) {
+    try {
+        const token = NEXT_PUBLIC_FINNHUB_API_KEY;
+        const url = `${FINNHUB_BASE_URL}/quote?symbol=${encodeURIComponent(symbol)}&token=${token}`;
+        // No caching for real-time price
+        return await fetchJSON<any>(url, 0);
+    } catch (e) {
+        console.error('Error fetching quote for', symbol, e);
+        return null;
+    }
+}
+
+export async function getCompanyProfile(symbol: string) {
+    try {
+        const token = NEXT_PUBLIC_FINNHUB_API_KEY;
+        const url = `${FINNHUB_BASE_URL}/stock/profile2?symbol=${encodeURIComponent(symbol)}&token=${token}`;
+        // Cache profile for 24 hours
+        return await fetchJSON<any>(url, 86400);
+    } catch (e) {
+        console.error('Error fetching profile for', symbol, e);
+        return null;
+    }
+}
+
+export async function getWatchlistData(symbols: string[]) {
+    if (!symbols || symbols.length === 0) return [];
+
+    // Fetch quotes and profiles in parallel
+    const promises = symbols.map(async (sym) => {
+        const [quote, profile] = await Promise.all([
+            getQuote(sym),
+            getCompanyProfile(sym)
+        ]);
+
+        return {
+            symbol: sym,
+            price: quote?.c || 0,
+            change: quote?.d || 0,
+            changePercent: quote?.dp || 0,
+            currency: profile?.currency || 'USD',
+            name: profile?.name || sym,
+            logo: profile?.logo,
+            marketCap: profile?.marketCapitalization,
+            peRatio: 0 // Finnhub 'quote' and 'profile2' don't easily give real-time PE. Might need 'metric' endpoint, but skipping for now to save rate limits.
+        };
+    });
+
+    return await Promise.all(promises);
+}
+
+
 export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> {
     try {
         const range = getDateRange(5);

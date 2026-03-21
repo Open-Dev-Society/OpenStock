@@ -409,9 +409,19 @@ OpenStock is and will remain free and open for everyone. This project is license
 - [chinnsenn](https://github.com/chinnsenn) - Set up Docker configuration for the repository, ensuring a smooth development and deployment process.
 - [koevoet1221](https://github.com/koevoet1221) - Resolved MongoDB Docker build issues, improving the project’s overall stability and reliability.
 
+
+## ❤️ Partners & Backers
+
+<a href="https://www.siray.ai/">
+  <img src="public/assets/icons/siray.svg" alt="Siray.ai Logo" width="100" />
+</a>
+
+**[Siray.ai](https://www.siray.ai/)** — The robust AI infrastructure backing OpenStock. Siray.ai ensures our market insights never sleep.
+
 ## Special thanks
 Huge thanks to [Adrian Hajdin (JavaScript Mastery)](https://github.com/adrianhajdin) — his excellent Stock Market App tutorial was instrumental in building OpenStock for the open-source community under the Open Dev Society.
 
 GitHub: [adrianhajdin](https://github.com/adrianhajdin)
 YouTube tutorial: [Stock Market App Tutorial](https://www.youtube.com/watch?v=gu4pafNCXng)
 YouTube channel: [JavaScript Mastery](https://www.youtube.com/@javascriptmastery)
+
