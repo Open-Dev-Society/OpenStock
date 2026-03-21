@@ -1,4 +1,7 @@
 <div align="center">
+  Checkout new amazing projects also, <a href="github.com/open-dev-society/openreadme" target="_blank">OpenReadme </a> is live
+</div>  
+<div align="center">
   <br />
   <a href="#" target="_blank">
     <img src="./public/assets/images/dashboard.png" alt="Project Banner" />
