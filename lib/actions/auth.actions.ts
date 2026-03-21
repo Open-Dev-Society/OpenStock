@@ -9,10 +9,17 @@ export const signUpWithEmail = async ({ email, password, fullName, country, inve
         const response = await auth.api.signUpEmail({ body: { email, password, name: fullName } })
 
         if(response) {
-            await inngest.send({
-                name: 'app/user.created',
-                data: { email, name: fullName, country, investmentGoals, riskTolerance, preferredIndustry }
-            })
+            try {
+                console.log('📤 Sending Inngest event: app/user.created for', email);
+                await inngest.send({
+                    name: 'app/user.created',
+                    data: { email, name: fullName, country, investmentGoals, riskTolerance, preferredIndustry }
+                });
+                console.log('✅ Inngest event sent successfully');
+            } catch (error) {
+                console.error('❌ Failed to send Inngest event:', error);
+                // Don't fail signup if email fails
+            }
         }
 
         return { success: true, data: response }

@@ -33,12 +33,20 @@ export const sendSignUpEmail = inngest.createFunction(
         })
 
         await step.run('send-welcome-email', async () => {
-            const part = response.candidates?.[0]?.content?.parts?.[0];
-            const introText = (part && 'text' in part ? part.text : null) ||'Thanks for joining Openstock. You now have the tools to track markets and make smarter moves.'
+            try {
+                const part = response.candidates?.[0]?.content?.parts?.[0];
+                const introText = (part && 'text' in part ? part.text : null) ||'Thanks for joining Openstock. You now have the tools to track markets and make smarter moves.'
 
-            const { data: { email, name } } = event;
+                const { data: { email, name } } = event;
 
-            return await sendWelcomeEmail({ email, name, intro: introText });
+                console.log(`📧 Attempting to send welcome email to: ${email}`);
+                const result = await sendWelcomeEmail({ email, name, intro: introText });
+                console.log(`✅ Welcome email sent successfully to: ${email}`);
+                return result;
+            } catch (error) {
+                console.error('❌ Error sending welcome email:', error);
+                throw error;
+            }
         })
 
         return {
@@ -106,13 +114,28 @@ export const sendDailyNewsSummary = inngest.createFunction(
 
         // Step #4: (placeholder) Send the emails
         await step.run('send-news-emails', async () => {
-            await Promise.all(
+            const results = await Promise.allSettled(
                 userNewsSummaries.map(async ({ user, newsContent}) => {
-                    if(!newsContent) return false;
+                    if(!newsContent) {
+                        console.log(`⏭️ Skipping email for ${user.email} - no news content`);
+                        return false;
+                    }
 
-                    return await sendNewsSummaryEmail({ email: user.email, date: getFormattedTodayDate(), newsContent })
+                    try {
+                        console.log(`📧 Attempting to send news summary email to: ${user.email}`);
+                        const result = await sendNewsSummaryEmail({ email: user.email, date: getFormattedTodayDate(), newsContent });
+                        console.log(`✅ News summary email sent successfully to: ${user.email}`);
+                        return result;
+                    } catch (error) {
+                        console.error(`❌ Failed to send news summary email to ${user.email}:`, error);
+                        throw error;
+                    }
                 })
-            )
+            );
+            
+            const successful = results.filter(r => r.status === 'fulfilled').length;
+            const failed = results.filter(r => r.status === 'rejected').length;
+            console.log(`📊 Email sending summary: ${successful} successful, ${failed} failed`);
         })
 
         return { success: true, message: 'Daily news summary emails sent successfully' }

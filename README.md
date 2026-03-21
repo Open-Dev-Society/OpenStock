@@ -242,13 +242,15 @@ BETTER_AUTH_SECRET=your_better_auth_secret
 BETTER_AUTH_URL=http://localhost:3000
 
 # Finnhub
-FINNHUB_API_KEY=your_finnhub_key
-# Optional client-exposed variant if needed by client code:
-NEXT_PUBLIC_FINNHUB_API_KEY=
+# Note: NEXT_PUBLIC_FINNHUB_API_KEY is required for Vercel deployment
+NEXT_PUBLIC_FINNHUB_API_KEY=your_finnhub_key
 FINNHUB_BASE_URL=https://finnhub.io/api/v1
 
 # Inngest AI (Gemini)
 GEMINI_API_KEY=your_gemini_api_key
+# Inngest Signing Key (required for Vercel deployment)
+# Get this from your Inngest dashboard: https://app.inngest.com/env/settings/keys
+INNGEST_SIGNING_KEY=your_inngest_signing_key
 
 # Email (Nodemailer via Gmail; consider App Passwords if 2FA)
 NODEMAILER_EMAIL=youraddress@gmail.com
@@ -268,12 +270,15 @@ BETTER_AUTH_SECRET=your_better_auth_secret
 BETTER_AUTH_URL=http://localhost:3000
 
 # Finnhub
-FINNHUB_API_KEY=your_finnhub_key
-NEXT_PUBLIC_FINNHUB_API_KEY=
+# Note: NEXT_PUBLIC_FINNHUB_API_KEY is required for Vercel deployment
+NEXT_PUBLIC_FINNHUB_API_KEY=your_finnhub_key
 FINNHUB_BASE_URL=https://finnhub.io/api/v1
 
 # Inngest AI (Gemini)
 GEMINI_API_KEY=your_gemini_api_key
+# Inngest Signing Key (required for Vercel deployment)
+# Get this from your Inngest dashboard: https://app.inngest.com/env/settings/keys
+INNGEST_SIGNING_KEY=your_inngest_signing_key
 
 # Email (Nodemailer via Gmail; consider App Passwords if 2FA)
 NODEMAILER_EMAIL=youraddress@gmail.com
@@ -329,7 +334,7 @@ public/assets/images/   # logos and screenshots
 
 - Finnhub
     - Stock search, company profiles, and market news.
-    - Set `FINNHUB_API_KEY` and `FINNHUB_BASE_URL` (default: https://finnhub.io/api/v1).
+    - Set `NEXT_PUBLIC_FINNHUB_API_KEY` and `FINNHUB_BASE_URL` (default: https://finnhub.io/api/v1).
     - Free tiers may return delayed quotes; respect rate limits and terms.
 
 - TradingView
