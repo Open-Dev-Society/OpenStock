@@ -1,28 +1,31 @@
-# 使用官方 Node.js 20 版本作为基础镜像
+# Use official Node.js 20 Alpine image as base
 FROM node:20-alpine
 
-# 设置工作目录
+# Set working directory
 WORKDIR /app
 
-# 复制 package.json 和 package-lock.json（或 pnpm-lock.yaml）以利用缓存
-COPY package.json package-lock.json* pnpm-lock.yaml* ./
+# Copy package.json and package-lock.json to leverage Docker cache
+COPY package*.json ./
+# Uncomment the next line if you use pnpm and have pnpm-lock.yaml
+# COPY pnpm-lock.yaml ./
 
-# 安装依赖（根据你使用的包管理器选择）
+# Install dependencies (choose npm or pnpm)
 RUN npm install
-# 如果使用 pnpm，替换为：
+# If using pnpm, replace with:
 # RUN npm install -g pnpm && pnpm install
 
-# 复制项目所有文件
+# Copy all project files
 COPY . .
 
-# 构建 Next.js 应用
+# Build the Next.js application
 RUN npm run build
-# 或 pnpm run build
+# Or if using pnpm:
+# RUN pnpm run build
 
-# 暴露应用端口（默认 Next.js 生产端口为3000）
+# Expose the port Next.js runs on
 EXPOSE 3000
 
-# 启动应用
+# Start the Next.js production server
 CMD ["npm", "start"]
-# 或 pnpm 启动
+# Or if using pnpm:
 # CMD ["pnpm", "start"]
