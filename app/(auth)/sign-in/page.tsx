@@ -4,10 +4,10 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import InputField from '@/components/forms/InputField';
 import FooterLink from '@/components/forms/FooterLink';
-import {signInWithEmail, signUpWithEmail} from "@/lib/actions/auth.actions";
-import {toast} from "sonner";
-import {signInEmail} from "better-auth/api";
-import {useRouter} from "next/navigation";
+import { signInWithEmail, signUpWithEmail } from "@/lib/actions/auth.actions";
+import { toast } from "sonner";
+import { signInEmail } from "better-auth/api";
+import { useRouter } from "next/navigation";
 import OpenDevSocietyBranding from "@/components/OpenDevSocietyBranding";
 import React from "react";
 
@@ -55,11 +55,11 @@ const SignIn = () => {
                     register={register}
                     error={errors.email}
                     validation={{
-                      required: 'Email is required',
-                      pattern: {
-                        value: /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/,
-                        message: 'Please enter a valid email address'
-                      }
+                        required: 'Email is required',
+                        pattern: {
+                            value: /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/,
+                            message: 'Please enter a valid email address'
+                        }
                     }}
                 />
 
@@ -78,7 +78,16 @@ const SignIn = () => {
                 </Button>
 
                 <FooterLink text="Don't have an account?" linkText="Create an account" href="/sign-up" />
-                <OpenDevSocietyBranding outerClassName="mt-10 flex justify-center"/>
+                <OpenDevSocietyBranding outerClassName="mt-10 flex justify-center" />
+                <div className="mt-5 flex justify-center">
+                    <a href="https://peerlist.io/ravixalgorithm/project/openstock" target="_blank" rel="noreferrer">
+                        <img
+                            src="https://peerlist.io/api/v1/projects/embed/PRJH8OED7MBL9MGB9HRMKAKLM66KNN?showUpvote=true&theme=light"
+                            alt="OpenStock"
+                            style={{ width: 'auto', height: '72px' }}
+                        />
+                    </a>
+                </div>
             </form>
         </>
     );

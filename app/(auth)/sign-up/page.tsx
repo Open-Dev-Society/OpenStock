@@ -1,15 +1,15 @@
 'use client';
 
-import {useForm} from "react-hook-form";
-import {Button} from "@/components/ui/button";
+import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
 import InputField from "@/components/forms/InputField";
 import SelectField from "@/components/forms/SelectField";
-import {INVESTMENT_GOALS, PREFERRED_INDUSTRIES, RISK_TOLERANCE_OPTIONS} from "@/lib/constants";
-import {CountrySelectField} from "@/components/forms/CountrySelectField";
+import { INVESTMENT_GOALS, PREFERRED_INDUSTRIES, RISK_TOLERANCE_OPTIONS } from "@/lib/constants";
+import { CountrySelectField } from "@/components/forms/CountrySelectField";
 import FooterLink from "@/components/forms/FooterLink";
-import {signUpWithEmail} from "@/lib/actions/auth.actions";
-import {useRouter} from "next/navigation";
-import {toast} from "sonner";
+import { signUpWithEmail } from "@/lib/actions/auth.actions";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import OpenDevSocietyBranding from "@/components/OpenDevSocietyBranding";
 import React from "react";
 
@@ -31,7 +31,7 @@ const SignUp = () => {
             preferredIndustry: 'Technology'
         },
         mode: 'onBlur'
-    }, );
+    },);
 
     const onSubmit = async (data: SignUpFormData) => {
         try {
@@ -72,11 +72,11 @@ const SignUp = () => {
                     register={register}
                     error={errors.email}
                     validation={{
-                      required: 'Email is required',
-                      pattern: {
-                        value: /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/,
-                        message: 'Please enter a valid email address'
-                      }
+                        required: 'Email is required',
+                        pattern: {
+                            value: /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/,
+                            message: 'Please enter a valid email address'
+                        }
                     }}
                 />
 
@@ -134,7 +134,16 @@ const SignUp = () => {
 
                 <FooterLink text="Already have an account?" linkText="Sign in" href="/sign-in" />
 
-                <OpenDevSocietyBranding outerClassName="mt-10 flex justify-center"/>
+                <OpenDevSocietyBranding outerClassName="mt-10 flex justify-center" />
+                <div className="mt-5 flex justify-center">
+                    <a href="https://peerlist.io/ravixalgorithm/project/openstock" target="_blank" rel="noreferrer">
+                        <img
+                            src="https://peerlist.io/api/v1/projects/embed/PRJH8OED7MBL9MGB9HRMKAKLM66KNN?showUpvote=true&theme=light"
+                            alt="OpenStock"
+                            style={{ width: 'auto', height: '72px' }}
+                        />
+                    </a>
+                </div>
             </form>
         </>
     )
