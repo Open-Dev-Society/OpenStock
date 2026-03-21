@@ -2,6 +2,13 @@
   Checkout new amazing projects also, <a href="github.com/open-dev-society/openreadme" target="_blank">OpenReadme </a> is live
 </div>  
 <a href="https://hellogithub.com/repository/Open-Dev-Society/OpenStock" target="_blank"><img src="https://abroad.hellogithub.com/v1/widgets/recommend.svg?rid=5c4337a9e2dd4a8ba8aba87a88f04b8b&claim_uid=07HezcXv9puSGKQ&theme=neutral" alt="Featured｜HelloGitHub" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+<a href="https://peerlist.io/ravixalgorithm/project/openstock" target="_blank" rel="noreferrer">
+				<img
+					src="https://peerlist.io/api/v1/projects/embed/PRJH8OED7MBL9MGB9HRMKAKLM66KNN?showUpvote=true&theme=light"
+					alt="OpenStock"
+					style="width: auto; height: 54px;"
+				/>
+			</a>
 <div align="center">
   <br />
   <a href="#" target="_blank">
