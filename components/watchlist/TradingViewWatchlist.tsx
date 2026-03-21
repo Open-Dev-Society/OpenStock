@@ -1,7 +1,5 @@
 "use client";
 
-import React, { useEffect, useRef, memo } from 'react';
-import { useTheme } from "next-themes";
 import { formatSymbolForTradingView } from '@/lib/utils';
 
 interface TradingViewWatchlistProps {

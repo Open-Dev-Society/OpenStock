@@ -160,17 +160,17 @@ export function formatSymbolForTradingView(symbol: string): string {
     
     // Shanghai
     if (upperSymbol.endsWith('.SS')) {
-        return `SSE:${upperSymbol.replace('.SS', '')}`;
+        return `SSE:${upperSymbol.slice(0, -3)}`;
     }
     
     // Shenzhen
     if (upperSymbol.endsWith('.SZ')) {
-        return `SZSE:${upperSymbol.replace('.SZ', '')}`;
+        return `SZSE:${upperSymbol.slice(0, -3)}`;
     }
     
     // Hong Kong
     if (upperSymbol.endsWith('.HK')) {
-        return `HKEX:${upperSymbol.replace('.HK', '')}`;
+        return `HKEX:${upperSymbol.slice(0, -3)}`;
     }
     
     return upperSymbol;
