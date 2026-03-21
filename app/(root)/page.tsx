@@ -30,6 +30,7 @@ const Home = () => {
             <section className="grid w-full gap-8 home-section">
                 <div className="md:col-span-1 xl:col-span-2">
                     <TradingViewWidget
+                        title="Market Quotes"
                         scriptUrl={`${scriptUrl}market-quotes.js`}
                         config={MARKET_DATA_WIDGET_CONFIG}
                         height={600}
@@ -37,13 +38,12 @@ const Home = () => {
                 </div>
                 <div className="md:col-span-1 xl:col-span-1">
                     <TradingViewWidget
+                        title="Top Stories"
                         scriptUrl={`${scriptUrl}timeline.js`}
                         config={TOP_STORIES_WIDGET_CONFIG}
                         height={600}
                     />
-
                 </div>
-
             </section>
         </div>
 
