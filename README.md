@@ -408,6 +408,8 @@ OpenStock is and will remain free and open for everyone. This project is license
 - [Priyanshuu00007](https://github.com/Priyanshuu00007) - Created the official OpenStock logo and contributed to the project’s visual identity.
 - [chinnsenn](https://github.com/chinnsenn) - Set up Docker configuration for the repository, ensuring a smooth development and deployment process.
 - [koevoet1221](https://github.com/koevoet1221) - Resolved MongoDB Docker build issues, improving the project’s overall stability and reliability.
+- [ettoreciolli1](https://github.com/ettoreciolli1) - updated Readme
+
 
 
 ## ❤️ Partners & Backers
