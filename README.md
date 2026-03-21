@@ -185,7 +185,7 @@ MONGODB_URI=mongodb://root:example@mongodb:27017/openstock?authSource=admin
 4) Start the stack:
 ```bash
 # from the repository root
-docker compose up -d --build
+docker compose up -d mongodb && docker compose up -d --build
 ```
 
 5) Access the app:
@@ -257,7 +257,7 @@ Local (Docker Compose) MongoDB:
 NODE_ENV=development
 
 # Database (Docker)
-MONGODB_URI=mongodb://root:example@mongodb:27017/openstock?authSource=admin
+MONGODB_URI=mongodb://root:example@127.0.0.1:27017/openstock?authSource=admin
 
 # Better Auth
 BETTER_AUTH_SECRET=your_better_auth_secret
