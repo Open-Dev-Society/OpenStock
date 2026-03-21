@@ -50,7 +50,7 @@ Note: OpenStock is community-built and not a brokerage. Market data may be delay
 13. 📜 [License](#license)
 14. 🙏 [Acknowledgements](#acknowledgements)
 
-## ✨ Introduction
+## ✨ Introduction <a name="introduction"></a>
 
 OpenStock is a modern stock market app powered by Next.js (App Router), shadcn/ui and Tailwind CSS, Better Auth for authentication, MongoDB for persistence, Finnhub for market data, and TradingView widgets for charts and market views.
 
