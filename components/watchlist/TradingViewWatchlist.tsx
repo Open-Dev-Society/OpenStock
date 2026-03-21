@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, memo } from 'react';
-import { useTheme } from "next-themes";
+import { formatSymbolForTradingView } from '@/lib/utils';
 
 interface TradingViewWatchlistProps {
     symbols: string[];
@@ -26,7 +26,7 @@ function TradingViewWatchlist({ symbols }: TradingViewWatchlistProps) {
         // Since we don't have exchange data easily, we'll try raw symbol. 
         // Ideally we'd prefix "NASDAQ:" or "NYSE:" but let's test without first.
         const symbolList = symbols.map(s => ({
-            name: s,
+            name: formatSymbolForTradingView(s),
             displayName: s
         }));
 

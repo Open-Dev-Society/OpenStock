@@ -153,3 +153,25 @@ export const getFormattedTodayDate = () => new Date().toLocaleDateString('en-US'
     day: 'numeric',
     timeZone: 'UTC',
 });
+
+export function formatSymbolForTradingView(symbol: string): string {
+    if (!symbol) return '';
+    const upperSymbol = symbol.toUpperCase();
+    
+    // Shanghai
+    if (upperSymbol.endsWith('.SS')) {
+        return `SSE:${upperSymbol.slice(0, -3)}`;
+    }
+    
+    // Shenzhen
+    if (upperSymbol.endsWith('.SZ')) {
+        return `SZSE:${upperSymbol.slice(0, -3)}`;
+    }
+    
+    // Hong Kong
+    if (upperSymbol.endsWith('.HK')) {
+        return `HKEX:${upperSymbol.slice(0, -3)}`;
+    }
+    
+    return upperSymbol;
+}
