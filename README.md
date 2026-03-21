@@ -379,7 +379,7 @@ If you discover a vulnerability:
 
 ## 📜 License
 
-OpenStock is and will remain free and open for everyone. A formal open-source license will be added to this repository; until then, contributions are accepted under our commitment to openness and transparency.
+OpenStock is and will remain free and open for everyone. This project is licensed under the AGPL-3.0 License - see the LICENSE file for details.
 
 ## 🙏 Acknowledgements
 
