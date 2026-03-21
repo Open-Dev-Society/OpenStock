@@ -12,9 +12,11 @@ import {
 import { auth } from '@/lib/better-auth/auth';
 import { headers } from 'next/headers';
 import { isStockInWatchlist } from '@/lib/actions/watchlist.actions';
+import { formatSymbolForTradingView } from '@/lib/utils';
 
 export default async function StockDetails({ params }: StockDetailsPageProps) {
     const { symbol } = await params;
+    const tvSymbol = formatSymbolForTradingView(symbol);
     const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
 
     const session = await auth.api.getSession({
@@ -30,13 +32,13 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                 <div className="flex flex-col gap-6">
                     <TradingViewWidget
                         scriptUrl={`${scriptUrl}symbol-info.js`}
-                        config={SYMBOL_INFO_WIDGET_CONFIG(symbol)}
+                        config={SYMBOL_INFO_WIDGET_CONFIG(tvSymbol)}
                         height={170}
                     />
 
                     <TradingViewWidget
                         scriptUrl={`${scriptUrl}advanced-chart.js`}
-                        config={CANDLE_CHART_WIDGET_CONFIG(symbol)}
+                        config={CANDLE_CHART_WIDGET_CONFIG(tvSymbol)}
                         className="custom-chart"
                         height={600}
                         allowExpand={true}
@@ -44,7 +46,7 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
 
                     <TradingViewWidget
                         scriptUrl={`${scriptUrl}advanced-chart.js`}
-                        config={BASELINE_WIDGET_CONFIG(symbol)}
+                        config={BASELINE_WIDGET_CONFIG(tvSymbol)}
                         className="custom-chart"
                         height={600}
                         allowExpand={true}
@@ -64,19 +66,19 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
 
                     <TradingViewWidget
                         scriptUrl={`${scriptUrl}technical-analysis.js`}
-                        config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(symbol)}
+                        config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(tvSymbol)}
                         height={400}
                     />
 
                     <TradingViewWidget
                         scriptUrl={`${scriptUrl}company-profile.js`}
-                        config={COMPANY_PROFILE_WIDGET_CONFIG(symbol)}
+                        config={COMPANY_PROFILE_WIDGET_CONFIG(tvSymbol)}
                         height={440}
                     />
 
                     <TradingViewWidget
                         scriptUrl={`${scriptUrl}financials.js`}
-                        config={COMPANY_FINANCIALS_WIDGET_CONFIG(symbol)}
+                        config={COMPANY_FINANCIALS_WIDGET_CONFIG(tvSymbol)}
                         height={800}
                     />
                 </div>
