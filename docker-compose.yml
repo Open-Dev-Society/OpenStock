@@ -1,6 +1,9 @@
 services:
   openstock:
-    build: .
+    build:
+      context: .
+      extra_hosts:
+        - "mongodb:host-gateway"
     ports:
       - "3000:3000"
     env_file:
