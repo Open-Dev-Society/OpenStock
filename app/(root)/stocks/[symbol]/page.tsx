@@ -39,6 +39,7 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                         config={CANDLE_CHART_WIDGET_CONFIG(symbol)}
                         className="custom-chart"
                         height={600}
+                        allowExpand={true}
                     />
 
                     <TradingViewWidget
@@ -46,6 +47,7 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                         config={BASELINE_WIDGET_CONFIG(symbol)}
                         className="custom-chart"
                         height={600}
+                        allowExpand={true}
                     />
                 </div>
 
