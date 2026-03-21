@@ -1,5 +1,7 @@
+export const dynamic = "force-dynamic";
+
 import React, { Suspense } from 'react';
-import { auth } from '@/lib/better-auth/auth';
+import { getAuth } from '@/lib/better-auth/auth';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getUserWatchlist } from '@/lib/actions/watchlist.actions';
@@ -12,7 +14,7 @@ import SearchCommand from '@/components/SearchCommand';
 import { Loader2 } from 'lucide-react';
 
 export default async function WatchlistPage() {
-    const session = await auth.api.getSession({
+    const session = await (await getAuth()).api.getSession({
         headers: await headers()
     });
 

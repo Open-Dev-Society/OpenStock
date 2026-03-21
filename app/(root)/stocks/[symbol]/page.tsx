@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import TradingViewWidget from "@/components/TradingViewWidget";
 import WatchlistButton from "@/components/WatchlistButton";
 import {
@@ -9,7 +11,7 @@ import {
     COMPANY_FINANCIALS_WIDGET_CONFIG,
 } from "@/lib/constants";
 
-import { auth } from '@/lib/better-auth/auth';
+import { getAuth } from '@/lib/better-auth/auth';
 import { headers } from 'next/headers';
 import { isStockInWatchlist } from '@/lib/actions/watchlist.actions';
 import { formatSymbolForTradingView } from '@/lib/utils';
@@ -19,7 +21,7 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
     const tvSymbol = formatSymbolForTradingView(symbol);
     const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
 
-    const session = await auth.api.getSession({
+    const session = await (await getAuth()).api.getSession({
         headers: await headers()
     });
     const userId = session?.user?.id;

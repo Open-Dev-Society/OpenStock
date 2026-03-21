@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Metadata } from 'next';
 import { Shield, FileText, Check, AlertTriangle, Scale } from 'lucide-react';
 

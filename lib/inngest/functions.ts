@@ -8,8 +8,7 @@ import { getFormattedTodayDate } from "@/lib/utils";
 import { callAIProviderWithFallback } from "@/lib/ai-provider";
 
 export const sendSignUpEmail = inngest.createFunction(
-    { id: 'sign-up-email' },
-    { event: 'app/user.created' },
+    { id: 'sign-up-email', trigger: { event: 'app/user.created' } },
     async ({ event, step }) => {
         const userProfile = `
             - Country: ${event.data.country}
@@ -55,8 +54,7 @@ export const sendSignUpEmail = inngest.createFunction(
 
 // Rename to Weekly
 export const sendWeeklyNewsSummary = inngest.createFunction(
-    { id: 'weekly-news-summary' },
-    [{ event: 'app/send.weekly.news' }, { cron: '0 9 * * 1' }], // Every Monday at 9AM
+    { id: 'weekly-news-summary', triggers: [{ event: 'app/send.weekly.news' }, { cron: '0 9 * * 1' }] }, // Every Monday at 9AM
     async ({ step }) => {
         // Step 1: Fetch General Market News
         const articles = await step.run('fetch-general-news', async () => {
@@ -205,8 +203,7 @@ export const sendWeeklyNewsSummary = inngest.createFunction(
 )
 
 export const checkStockAlerts = inngest.createFunction(
-    { id: 'check-stock-alerts' },
-    { cron: '*/5 * * * *' }, // Run every 5 minutes
+    { id: 'check-stock-alerts', trigger: { cron: '*/5 * * * *' } }, // Run every 5 minutes
     async ({ step }) => {
         // Step 1: Fetch active alerts
         const activeAlerts = await step.run('fetch-active-alerts', async () => {
@@ -297,8 +294,7 @@ export const checkStockAlerts = inngest.createFunction(
 );
 
 export const checkInactiveUsers = inngest.createFunction(
-    { id: 'check-inactive-users' },
-    { cron: '0 10 * * *' }, // Run every day at 10 AM
+    { id: 'check-inactive-users', trigger: { cron: '0 10 * * *' } }, // Run every day at 10 AM
     async ({ step }) => {
         // Step 1: Fetch Inactive Users
         const inactiveUsers = await step.run('fetch-inactive-users', async () => {

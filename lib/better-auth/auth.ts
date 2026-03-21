@@ -38,4 +38,4 @@ export const getAuth = async () => {
     return authInstance;
 }
 
-export const auth = await getAuth();
+// auth is lazy - use getAuth() instead

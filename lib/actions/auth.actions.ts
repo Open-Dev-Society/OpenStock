@@ -1,12 +1,12 @@
 'use server';
 
-import { auth } from "@/lib/better-auth/auth";
+import { getAuth } from "@/lib/better-auth/auth";
 import { inngest } from "@/lib/inngest/client";
 import { headers } from "next/headers";
 
 export const signUpWithEmail = async ({ email, password, fullName, country, investmentGoals, riskTolerance, preferredIndustry }: SignUpFormData) => {
     try {
-        const response = await auth.api.signUpEmail({ body: { email, password, name: fullName } })
+        const response = await (await getAuth()).api.signUpEmail({ body: { email, password, name: fullName } })
 
         if (response) {
             try {
@@ -31,7 +31,7 @@ export const signUpWithEmail = async ({ email, password, fullName, country, inve
 
 export const signInWithEmail = async ({ email, password }: SignInFormData) => {
     try {
-        const response = await auth.api.signInEmail({ body: { email, password } })
+        const response = await (await getAuth()).api.signInEmail({ body: { email, password } })
 
         // Update lastActiveAt
         if (response) {
@@ -60,7 +60,7 @@ export const signInWithEmail = async ({ email, password }: SignInFormData) => {
 
 export const signOut = async () => {
     try {
-        await auth.api.signOut({ headers: await headers() });
+        await (await getAuth()).api.signOut({ headers: await headers() });
     } catch (e) {
         console.log('Sign out failed', e)
         return { success: false, error: 'Sign out failed' }
