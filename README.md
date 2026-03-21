@@ -383,8 +383,8 @@ You belong here. Whether you’re a student, a self-taught dev, or a seasoned en
 
 If you discover a vulnerability:
 - Do not open a public issue
-- Email: opendevsociety@cc.cc
-- We’ll coordinate responsible disclosure and patch swiftly
+- Email: <a href="mailto:opendevsociety@cc.cc">opendevsociety@cc.cc</a>
+- We'll coordinate responsible disclosure and patch swiftly
 
 ## 📜 License <a name="license"></a>
 
