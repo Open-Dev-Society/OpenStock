@@ -5,6 +5,7 @@ import { getAllUsersForNewsEmail } from "@/lib/actions/user.actions";
 import { getWatchlistSymbolsByEmail } from "@/lib/actions/watchlist.actions";
 import { getNews } from "@/lib/actions/finnhub.actions";
 import { getFormattedTodayDate } from "@/lib/utils";
+import { callAIProviderWithFallback } from "@/lib/ai-provider";
 
 export const sendSignUpEmail = inngest.createFunction(
     { id: 'sign-up-email' },
@@ -20,60 +21,20 @@ export const sendSignUpEmail = inngest.createFunction(
         const prompt = PERSONALIZED_WELCOME_EMAIL_PROMPT.replace('{{userProfile}}', userProfile)
 
 
-        let aiResponse;
-        try {
-            aiResponse = await step.ai.infer('generate-welcome-intro', {
-                model: step.ai.models.gemini({ model: 'gemini-2.5-flash-lite' }),
-                body: {
-                    contents: [
-                        {
-                            role: 'user',
-                            parts: [
-                                { text: prompt }
-                            ]
-                        }]
-                }
-            });
-        } catch (error) {
-            console.error("⚠️ Gemini API failed, switching to Siray.ai fallback", error);
-
-            // Fallback Step
-            aiResponse = await step.run('generate-welcome-intro-fallback', async () => {
-                const SIRAY_API_KEY = process.env.SIRAY_API_KEY;
-                if (!SIRAY_API_KEY) throw new Error("Siray API Key missing");
-
-                // Simulated OpenAI-compatible call
-                const res = await fetch('https://api.siray.ai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${SIRAY_API_KEY}`
-                    },
-                    body: JSON.stringify({
-                        model: 'siray-1.0-ultra', // Hypothetical model
-                        messages: [{ role: 'user', content: prompt }]
-                    })
-                });
-
-                if (!res.ok) throw new Error(`Siray API Error: ${res.statusText}`);
-
-                const data = await res.json();
-                // Map to Gemini format for compatibility downstream
-                return {
-                    candidates: [{
-                        content: { parts: [{ text: data.choices[0].message.content }] }
-                    }]
-                };
-            });
-        }
-
+        const introText = await step.run('generate-welcome-intro', async () => {
+            try {
+                return await callAIProviderWithFallback(prompt);
+            } catch (error) {
+                console.error("⚠️ All AI providers failed for welcome email", error);
+                return 'Thanks for joining Openstock. You now have the tools to track markets and make smarter moves.';
+            }
+        });
 
         await step.run('send-welcome-email', async () => {
             try {
-                const part = aiResponse.candidates?.[0]?.content?.parts?.[0];
-                const introText = (part && 'text' in part ? part.text : null) || 'Thanks for joining Openstock. You now have the tools to track markets and make smarter moves.'
 
                 const { data: { email, name } } = event;
+                // introText is already a plain string from the AI provider
 
                 console.log(`📧 Attempting to send welcome email to: ${email}`);
                 const result = await sendWelcomeEmail({ email, name, intro: introText });
@@ -115,43 +76,14 @@ export const sendWeeklyNewsSummary = inngest.createFunction(
             .replace('Daily', 'Weekly');
 
 
-        let aiResponse;
-        try {
-            aiResponse = await step.ai.infer('generate-news-summary', {
-                model: step.ai.models.gemini({ model: 'gemini-2.5-flash-lite' }),
-                body: { contents: [{ role: 'user', parts: [{ text: prompt }] }] }
-            });
-        } catch (error) {
-            console.error("⚠️ Gemini API failed (Weekly News), switching to Siray.ai fallback", error);
-            aiResponse = await step.run('generate-news-summary-fallback', async () => {
-                const SIRAY_API_KEY = process.env.SIRAY_API_KEY;
-                if (!SIRAY_API_KEY) return { candidates: [{ content: { parts: [{ text: "Market is moving. Log in to see more." }] } }] };
-
-                const res = await fetch('https://api.siray.ai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${SIRAY_API_KEY}`
-                    },
-                    body: JSON.stringify({
-                        model: 'siray-1.0-ultra',
-                        messages: [{ role: 'user', content: prompt }]
-                    })
-                });
-
-                if (!res.ok) throw new Error("Siray API Error");
-                const data = await res.json();
-                return {
-                    candidates: [{
-                        content: { parts: [{ text: data.choices[0].message.content }] }
-                    }]
-                };
-            });
-        }
-
-
-        const part = aiResponse.candidates?.[0]?.content?.parts?.[0];
-        const summaryText = (part && 'text' in part ? part.text : null) || 'Market is moving. Log in to see more.';
+        const summaryText = await step.run('generate-news-summary', async () => {
+            try {
+                return await callAIProviderWithFallback(prompt);
+            } catch (error) {
+                console.error("⚠️ All AI providers failed for news summary", error);
+                return 'Market is moving. Log in to see more.';
+            }
+        });
 
         // Step 3: Send Broadcast via Kit
         await step.run('send-kit-broadcast', async () => {
