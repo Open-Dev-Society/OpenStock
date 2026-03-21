@@ -50,7 +50,7 @@ Note: OpenStock is community-built and not a brokerage. Market data may be delay
 13. 📜 [License](#license)
 14. 🙏 [Acknowledgements](#acknowledgements)
 
-## ✨ Introduction
+## ✨ Introduction <a name="introduction"></a>
 
 OpenStock is a modern stock market app powered by Next.js (App Router), shadcn/ui and Tailwind CSS, Better Auth for authentication, MongoDB for persistence, Finnhub for market data, and TradingView widgets for charts and market views.
 
@@ -71,7 +71,7 @@ We believe there’s a better way.
 
 Because the future belongs to those who build it openly.
 
-## ⚙️ Tech Stack
+## ⚙️ Tech Stack <a name="tech-stack"></a>
 
 Core
 - Next.js 15 (App Router), React 19
@@ -94,7 +94,7 @@ Automation & Comms
 Language composition
 - TypeScript (~93.4%), CSS (~6%), JavaScript (~0.6%)
 
-## 🔋 Features
+## 🔋 Features <a name="features"></a>
 
 - Authentication
     - Email/password auth with Better Auth + MongoDB adapter
@@ -120,7 +120,7 @@ Language composition
 - Keyboard shortcut
     - Cmd/Ctrl + K for quick actions/search
 
-## 🤸 Quick Start
+## 🤸 Quick Start <a name="quick-start"></a>
 
 Prerequisites
 - Node.js 20+ and pnpm or npm
@@ -171,7 +171,7 @@ npm run build && npm start
 
 Open http://localhost:3000 to view the app.
 
-## 🐳 Docker Setup
+## 🐳 Docker Setup <a name="docker-setup"></a>
 
 You can run OpenStock and MongoDB easily with Docker Compose.
 
@@ -225,7 +225,7 @@ volumes:
   mongo-data:
 ```
 
-## 🔐 Environment Variables
+## 🔐 Environment Variables <a name="environment-variables"></a>
 
 Create `.env` at the project root. Choose either a hosted MongoDB (Atlas) URI or the local Docker URI.
 
@@ -291,7 +291,7 @@ Notes
 - In production, prefer a dedicated SMTP provider over a personal Gmail.
 - Do not hardcode secrets in the Dockerfile; use `.env` and Compose.
 
-## 🧱 Project Structure
+## 🧱 Project Structure <a name="project-structure"></a>
 
 ```
 app/
@@ -330,7 +330,7 @@ components.json         # shadcn config
 public/assets/images/   # logos and screenshots
 ```
 
-## 📡 Data & Integrations
+## 📡 Data & Integrations <a name="data--integrations"></a>
 
 - Finnhub
     - Stock search, company profiles, and market news.
@@ -355,7 +355,7 @@ public/assets/images/   # logos and screenshots
     - Gmail transport. Update credentials or switch to your SMTP provider.
     - Templates for welcome and news summary emails.
 
-## 🧪 Scripts & Tooling
+## 🧪 Scripts & Tooling <a name="scripts--tooling"></a>
 
 Package scripts
 - `dev`: Next.js dev server with Turbopack
@@ -370,7 +370,7 @@ Developer experience
 - shadcn/ui components with Radix primitives
 - cmdk command palette, next-themes, lucide-react icons
 
-## 🤝 Contributing
+## 🤝 Contributing <a name="contributing"></a>
 
 You belong here. Whether you’re a student, a self-taught dev, or a seasoned engineer — contributions are welcome.
 
@@ -379,18 +379,18 @@ You belong here. Whether you’re a student, a self-taught dev, or a seasoned en
 - Keep PRs focused; add screenshots for UI changes
 - Be kind, guide beginners, no gatekeeping — that’s the ODS way
 
-## 🛡️ Security
+## 🛡️ Security <a name="security"></a>
 
 If you discover a vulnerability:
 - Do not open a public issue
-- Email: opendevsociety@cc.cc
-- We’ll coordinate responsible disclosure and patch swiftly
+- Email: <a href="mailto:opendevsociety@cc.cc">opendevsociety@cc.cc</a>
+- We'll coordinate responsible disclosure and patch swiftly
 
-## 📜 License
+## 📜 License <a name="license"></a>
 
 OpenStock is and will remain free and open for everyone. This project is licensed under the AGPL-3.0 License - see the LICENSE file for details.
 
-## 🙏 Acknowledgements
+## 🙏 Acknowledgements <a name="acknowledgements"></a>
 
 - Finnhub for accessible market data
 - TradingView for embeddable market widgets
