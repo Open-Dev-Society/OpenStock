@@ -3,7 +3,9 @@
   <a href="#" target="_blank">
     <img src="./public/assets/images/dashboard.png" alt="Project Banner" />
   </a>
+  © Open Dev Society. This project is licensed under AGPL-3.0; if you modify, redistribute, or deploy it (including as a web service), you must release your source code under the same license and credit OpenStock.
   <br />
+  <br/>
 
   <div>
     <img src="https://img.shields.io/badge/-Next.js-black?style=for-the-badge&logoColor=white&logo=next.js&color=000000" alt="Next.js badge" />
@@ -307,6 +309,8 @@ OpenStock is and will remain free and open for everyone. A formal open-source li
 - All contributors who make open tools possible
 
 — Built openly, for everyone, forever free. Open Dev Society.
+
+© Open Dev Society. This project is licensed under AGPL-3.0; if you modify, redistribute, or deploy it (including as a web service), you must release your source code under the same license and credit OpenStock.
 
 
 ## Our Honourable Contributors
