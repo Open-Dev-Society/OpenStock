@@ -63,7 +63,7 @@ export default function ApiDocsPage() {
             Found a bug? Want a feature? Submit a PR or issue on GitHub.
           </p>
           <div className="flex space-x-4">
-            <a target="_blank" href="https://github.com/Open-Dev-Society/"
+            <a target="_blank" rel="noopener noreferrer" href="https://github.com/Open-Dev-Society/"
                className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 transition-colors">
               Contact us
             </a>
