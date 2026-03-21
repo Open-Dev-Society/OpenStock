@@ -155,7 +155,7 @@ export const getFormattedTodayDate = () => new Date().toLocaleDateString('en-US'
 });
 
 export function formatSymbolForTradingView(symbol: string): string {
-    if (!symbol) return symbol;
+    if (!symbol) return '';
     const upperSymbol = symbol.toUpperCase();
     
     // Shanghai
