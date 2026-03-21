@@ -24,7 +24,7 @@
     "cmdk": "^1.1.1",
     "country-data-list": "^1.5.5",
     "dotenv": "^17.2.3",
-    "inngest": "^3.44.0",
+    "inngest": "^3.47.0",
     "lucide-react": "^0.544.0",
     "mongodb": "^6.20.0",
     "mongoose": "^8.19.0",
