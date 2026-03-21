@@ -374,7 +374,7 @@ You belong here. Whether you’re a student, a self-taught dev, or a seasoned en
 
 If you discover a vulnerability:
 - Do not open a public issue
-- Email: opendevsociety@gmail.com
+- Email: opendevsociety@cc.cc
 - We’ll coordinate responsible disclosure and patch swiftly
 
 ## 📜 License
