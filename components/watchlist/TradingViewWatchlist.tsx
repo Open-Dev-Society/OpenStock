@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useEffect, useRef, memo } from 'react';
 import { formatSymbolForTradingView } from '@/lib/utils';
 
 interface TradingViewWatchlistProps {
