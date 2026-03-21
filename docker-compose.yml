@@ -3,6 +3,8 @@ services:
     build:
       context: .
       network: host
+      extra_hosts:
+        - "mongodb=127.0.0.1"
     ports:
       - "3000:3000"
     env_file:

@@ -257,7 +257,7 @@ Local (Docker Compose) MongoDB:
 NODE_ENV=development
 
 # Database (Docker)
-MONGODB_URI=mongodb://root:example@127.0.0.1:27017/openstock?authSource=admin
+MONGODB_URI=mongodb://root:example@mongodb:27017/openstock?authSource=admin
 
 # Better Auth
 BETTER_AUTH_SECRET=your_better_auth_secret
