@@ -8,7 +8,7 @@ import { getFormattedTodayDate } from "@/lib/utils";
 import { callAIProviderWithFallback } from "@/lib/ai-provider";
 
 export const sendSignUpEmail = inngest.createFunction(
-    { id: 'sign-up-email', trigger: { event: 'app/user.created' } },
+    { id: 'sign-up-email' }, { event: 'app/user.created' },
     async ({ event, step }) => {
         const userProfile = `
             - Country: ${event.data.country}
