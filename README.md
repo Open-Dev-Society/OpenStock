@@ -310,7 +310,7 @@ OpenStock is and will remain free and open for everyone. A formal open-source li
 
 — Built openly, for everyone, forever free. Open Dev Society.
 
-© Open Dev Society. This project is licensed under AGPL-3.0; if you modify, redistribute, or deploy it (including as a web service), you must release your source code under the same license and credit OpenStock.
+> © Open Dev Society. This project is licensed under AGPL-3.0; if you modify, redistribute, or deploy it (including as a web service), you must release your source code under the same license and credit OpenStock.
 
 
 ## Our Honourable Contributors
