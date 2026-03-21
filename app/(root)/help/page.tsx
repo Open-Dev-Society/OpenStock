@@ -106,12 +106,14 @@ export default function HelpPage() {
             </a>
 
             <a
-                target="_blank"
-                href="mailto:opendevsociety@gmail.com"
-                className="bg-gray-800 text-gray-200 px-6 py-3 rounded-lg hover:bg-gray-900 transition-colors text-center inline-block"
-            >
-                Email Help Team
-            </a>
+                <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href="mailto:opendevsociety@gmail.com"
+                    className="bg-gray-800 text-gray-200 px-6 py-3 rounded-lg hover:bg-gray-900 transition-colors text-center inline-block"
+                >
+                    Email Help Team
+                </a>
         </div>
         <p className="text-xs text-gray-600 mt-4">
           ✨ All support is free, always. We&apos;re here because we care, not for profit.
