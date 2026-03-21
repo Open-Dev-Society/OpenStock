@@ -41,3 +41,4 @@ export const signOut = async () => {
         return { success: false, error: 'Sign out failed' }
     }
 }
+
