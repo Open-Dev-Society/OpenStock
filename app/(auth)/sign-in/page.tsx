@@ -54,7 +54,13 @@ const SignIn = () => {
                     placeholder="opendevsociety@cc.cc"
                     register={register}
                     error={errors.email}
-                    validation={{ required: 'Email is required', pattern: /^\w+@\w+\.\w+$/ }}
+                    validation={{
+                      required: 'Email is required',
+                      pattern: {
+                        value: /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/,
+                        message: 'Please enter a valid email address'
+                      }
+                    }}
                 />
 
                 <InputField
