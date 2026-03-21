@@ -3,7 +3,7 @@
   <a href="#" target="_blank">
     <img src="./public/assets/images/dashboard.png" alt="Project Banner" />
   </a>
-  © Open Dev Society. This project is licensed under AGPL-3.0; if you modify, redistribute, or deploy it (including as a web service), you must release your source code under the same license and credit OpenStock.
+  © Open Dev Society. This project is licensed under AGPL-3.0; if you modify, redistribute, or deploy it (including as a web service), you must release your source code under the same license and credit the original authors.
   <br />
   <br/>
 
@@ -36,22 +36,23 @@ Note: OpenStock is community-built and not a brokerage. Market data may be delay
 3. ⚙️ [Tech Stack](#tech-stack)
 4. 🔋 [Features](#features)
 5. 🤸 [Quick Start](#quick-start)
-6. 🔐 [Environment Variables](#environment-variables)
-7. 🧱 [Project Structure](#project-structure)
-8. 📡 [Data & Integrations](#data--integrations)
-9. 🧪 [Scripts & Tooling](#scripts--tooling)
-10. 🤝 [Contributing](#contributing)
-11. 🛡️ [Security](#security)
-12. 📜 [License](#license)
-13. 🙏 [Acknowledgements](#acknowledgements)
+6. 🐳 [Docker Setup](#docker-setup)
+7. 🔐 [Environment Variables](#environment-variables)
+8. 🧱 [Project Structure](#project-structure)
+9. 📡 [Data & Integrations](#data--integrations)
+10. 🧪 [Scripts & Tooling](#scripts--tooling)
+11. 🤝 [Contributing](#contributing)
+12. 🛡️ [Security](#security)
+13. 📜 [License](#license)
+14. 🙏 [Acknowledgements](#acknowledgements)
 
 ## ✨ Introduction
 
-OpenStock is a modern stock market app powered by Next.js (App Router), shadcn/ui and Tailwind CSS, Better Auth for authentication, MongoDB for persistence, Finnhub for market data, TradingView widgets for rich charting, and Inngest for reliable background jobs. It’s designed to be practical for professionals and welcoming for students — no paywalls, no gatekeeping.
+OpenStock is a modern stock market app powered by Next.js (App Router), shadcn/ui and Tailwind CSS, Better Auth for authentication, MongoDB for persistence, Finnhub for market data, and TradingView widgets for charts and market views.
 
 ## 🌍 Open Dev Society Manifesto <a name="manifesto"></a>
 
-We live in a world where knowledge is hidden behind paywalls. Where tools are locked in subscriptions. Where information is twisted by bias. Where newcomers are told they’re not “good enough” to contribute.
+We live in a world where knowledge is hidden behind paywalls. Where tools are locked in subscriptions. Where information is twisted by bias. Where newcomers are told they’re not “good enough” to build.
 
 We believe there’s a better way.
 
@@ -119,7 +120,7 @@ Language composition
 
 Prerequisites
 - Node.js 20+ and pnpm or npm
-- MongoDB connection string
+- MongoDB connection string (MongoDB Atlas or local via Docker Compose)
 - Finnhub API key (free tier supported; real-time may require paid)
 - Gmail account for email (or update Nodemailer transport)
 - Optional: Google Gemini API key (for AI-generated welcome intros)
@@ -136,7 +137,7 @@ npm install
 ```
 
 Configure environment
-- Create a `.env` file (see [Environment Variables](#environment-variables))
+- Create a `.env` file (see [Environment Variables](#environment-variables)).
 - Verify DB connectivity:
 ```bash
 pnpm test:db
@@ -166,15 +167,70 @@ npm run build && npm start
 
 Open http://localhost:3000 to view the app.
 
+## 🐳 Docker Setup
+
+You can run OpenStock and MongoDB easily with Docker Compose.
+
+1) Ensure Docker and Docker Compose are installed.
+
+2) docker-compose.yml includes two services:
+- openstock (this app)
+- mongodb (MongoDB database with a persistent volume)
+
+3) Create your `.env` (see examples below). For the Docker setup, use a local connection string like:
+```env
+MONGODB_URI=mongodb://root:example@mongodb:27017/openstock?authSource=admin
+```
+
+4) Start the stack:
+```bash
+# from the repository root
+docker compose up -d --build
+```
+
+5) Access the app:
+- App: http://localhost:3000
+- MongoDB is available inside the Docker network at host mongodb:27017
+
+Notes
+- The app service depends_on the mongodb service.
+- Credentials are defined in Compose for the MongoDB root user; authSource=admin is required on the connection string for root.
+- Data persists across restarts via the docker volume.
+
+Optional: Example MongoDB service definition used in this project:
+```yaml
+services:
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongo-data:
+```
+
 ## 🔐 Environment Variables
 
-Create `.env` at the project root:
+Create `.env` at the project root. Choose either a hosted MongoDB (Atlas) URI or the local Docker URI.
 
+Hosted (MongoDB Atlas):
 ```env
 # Core
 NODE_ENV=development
 
-# Database
+# Database (Atlas)
 MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>/<db>?retryWrites=true&w=majority
 
 # Better Auth
@@ -195,10 +251,36 @@ NODEMAILER_EMAIL=youraddress@gmail.com
 NODEMAILER_PASSWORD=your_gmail_app_password
 ```
 
+Local (Docker Compose) MongoDB:
+```env
+# Core
+NODE_ENV=development
+
+# Database (Docker)
+MONGODB_URI=mongodb://root:example@mongodb:27017/openstock?authSource=admin
+
+# Better Auth
+BETTER_AUTH_SECRET=your_better_auth_secret
+BETTER_AUTH_URL=http://localhost:3000
+
+# Finnhub
+FINNHUB_API_KEY=your_finnhub_key
+NEXT_PUBLIC_FINNHUB_API_KEY=
+FINNHUB_BASE_URL=https://finnhub.io/api/v1
+
+# Inngest AI (Gemini)
+GEMINI_API_KEY=your_gemini_api_key
+
+# Email (Nodemailer via Gmail; consider App Passwords if 2FA)
+NODEMAILER_EMAIL=youraddress@gmail.com
+NODEMAILER_PASSWORD=your_gmail_app_password
+```
+
 Notes
 - Keep private keys server-side whenever possible.
 - If using `NEXT_PUBLIC_` variables, remember they are exposed to the browser.
 - In production, prefer a dedicated SMTP provider over a personal Gmail.
+- Do not hardcode secrets in the Dockerfile; use `.env` and Compose.
 
 ## 🧱 Project Structure
 
@@ -310,8 +392,7 @@ OpenStock is and will remain free and open for everyone. A formal open-source li
 
 — Built openly, for everyone, forever free. Open Dev Society.
 
-> © Open Dev Society. This project is licensed under AGPL-3.0; if you modify, redistribute, or deploy it (including as a web service), you must release your source code under the same license and credit OpenStock.
-
+> © Open Dev Society. This project is licensed under AGPL-3.0; if you modify, redistribute, or deploy it (including as a web service), you must release your source code under the same license and credit the original authors.
 
 ## Our Honourable Contributors
 - [ravixalgorithm](https://github.com/ravixalgorithm)
@@ -319,7 +400,7 @@ OpenStock is and will remain free and open for everyone. A formal open-source li
 - [chinnsenn](https://github.com/chinnsenn)
 
 ## Special thanks
-Huge thanks to [Adrian Hajdin (JavaScript Mastery)](https://github.com/adrianhajdin) — his excellent Stock Market App tutorial was instrumental in building OpenStock for the open-source community under the Open Dev Society. If you found this project helpful, please check out his channel and give him a shoutout for the amazing content!
+Huge thanks to [Adrian Hajdin (JavaScript Mastery)](https://github.com/adrianhajdin) — his excellent Stock Market App tutorial was instrumental in building OpenStock for the open-source community under the Open Dev Society.
 
 GitHub: [adrianhajdin](https://github.com/adrianhajdin)
 YouTube tutorial: [Stock Market App Tutorial](https://www.youtube.com/watch?v=gu4pafNCXng)
