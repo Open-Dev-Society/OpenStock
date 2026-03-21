@@ -312,7 +312,7 @@ OpenStock is and will remain free and open for everyone. A formal open-source li
 ## Our Honourable Contributors
 - [ravixalgorithm](https://github.com/ravixalgorithm)
 - [Priyanshuu00007](https://github.com/Priyanshuu00007)
-
+- [chinnsenn](https://github.com/chinnsenn)
 
 ## Special thanks
 Huge thanks to [Adrian Hajdin (JavaScript Mastery)](https://github.com/adrianhajdin) — his excellent Stock Market App tutorial was instrumental in building OpenStock for the open-source community under the Open Dev Society. If you found this project helpful, please check out his channel and give him a shoutout for the amazing content!
