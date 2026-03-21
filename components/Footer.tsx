@@ -44,6 +44,17 @@ const Footer = () => {
                                     <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full"></span>
                                 </span>
                             </Link>
+                            <Link
+                                href="https://discord.gg/jdJuEMvk"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-gray-400 hover:text-blue-600 transition-colors duration-200 relative group"
+                            >
+                                <span className="relative">
+                                    Discord
+                                    <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
+                                </span>
+                            </Link>
                         </div>
                     </div>
 
