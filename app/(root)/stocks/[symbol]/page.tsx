@@ -25,8 +25,10 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
         headers: await headers()
     });
     const userId = session?.user?.id;
-    const isInWatchlist = userId ? await isStockInWatchlist(userId, symbol) : false;
-    const sentimentInsights = await getStockSentimentInsights(symbol);
+    const [isInWatchlist, sentimentInsights] = await Promise.all([
+        userId ? isStockInWatchlist(userId, symbol) : Promise.resolve(false),
+        getStockSentimentInsights(symbol),
+    ]);
 
     return (
         <div className="flex min-h-screen p-4 md:p-6 lg:p-8">

@@ -29,8 +29,11 @@ const requiredVars = {
     'NODEMAILER_PASSWORD': 'Gmail app password (not regular password)',
 };
 
-const optionalVars = {
+const deprecatedVars = {
     'FINNHUB_API_KEY': 'Legacy Finnhub key (deprecated, use NEXT_PUBLIC_FINNHUB_API_KEY)',
+};
+
+const optionalVars = {
     'ADANOS_API_KEY': 'Optional Adanos API key for stock sentiment insights',
     'ADANOS_API_BASE_URL': 'Optional Adanos API base URL override',
 };
@@ -52,11 +55,19 @@ for (const [key, description] of Object.entries(requiredVars)) {
     }
 }
 
+// Check deprecated variables
+for (const [key, description] of Object.entries(deprecatedVars)) {
+    const value = process.env[key];
+    if (value) {
+        warnings.push({ key, description, message: 'This variable is deprecated' });
+    }
+}
+
 // Check optional variables
 for (const [key, description] of Object.entries(optionalVars)) {
     const value = process.env[key];
     if (value) {
-        warnings.push({ key, description, message: 'This variable is deprecated or optional' });
+        warnings.push({ key, description, message: 'Optional integration enabled' });
     }
 }
 
