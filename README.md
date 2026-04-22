@@ -275,8 +275,8 @@ GEMINI_API_KEY=your_gemini_api_key
 INNGEST_SIGNING_KEY=your_inngest_signing_key
 
 # Email (optional; Nodemailer via Gmail, consider App Passwords if 2FA)
-NODEMAILER_EMAIL=youraddress@gmail.com
-NODEMAILER_PASSWORD=your_gmail_app_password
+# NODEMAILER_EMAIL=youraddress@gmail.com
+# NODEMAILER_PASSWORD=your_gmail_app_password
 ```
 
 Local (Docker Compose) MongoDB:
@@ -316,8 +316,8 @@ GEMINI_API_KEY=your_gemini_api_key
 INNGEST_SIGNING_KEY=your_inngest_signing_key
 
 # Email (optional; Nodemailer via Gmail, consider App Passwords if 2FA)
-NODEMAILER_EMAIL=youraddress@gmail.com
-NODEMAILER_PASSWORD=your_gmail_app_password
+# NODEMAILER_EMAIL=youraddress@gmail.com
+# NODEMAILER_PASSWORD=your_gmail_app_password
 ```
 
 Notes

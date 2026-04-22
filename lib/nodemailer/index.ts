@@ -34,7 +34,8 @@ if (transporter) {
 export const sendWelcomeEmail = async ({ email, name, intro }: WelcomeEmailData) => {
     try {
         if (!transporter) {
-            throw new Error('Email credentials not configured');
+            console.warn('âš ï¸ Welcome email skipped: email credentials are not configured.');
+            return null;
         }
 
         const htmlTemplate = WELCOME_EMAIL_TEMPLATE
@@ -63,7 +64,8 @@ export const sendNewsSummaryEmail = async (
 ) => {
     try {
         if (!transporter) {
-            throw new Error('Email credentials not configured');
+            console.warn('âš ï¸ News summary email skipped: email credentials are not configured.');
+            return null;
         }
 
         const htmlTemplate = NEWS_SUMMARY_EMAIL_TEMPLATE
