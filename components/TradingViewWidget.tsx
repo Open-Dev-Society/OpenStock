@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useState } from 'react';
 import useTradingViewWidget from "@/hooks/useTradingViewWidget";
 import { cn } from "@/lib/utils";
 import { Maximize2, Minimize2 } from 'lucide-react';
@@ -17,18 +17,6 @@ interface TradingViewWidgetProps {
 
 const TradingViewWidget = ({ title, scriptUrl, config, height = 600, className, allowExpand = false }: TradingViewWidgetProps) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const [windowHeight, setWindowHeight] = useState(0);
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            setWindowHeight(window.innerHeight);
-            const handleResize = () => setWindowHeight(window.innerHeight);
-            window.addEventListener('resize', handleResize);
-            return () => window.removeEventListener('resize', handleResize);
-        }
-    }, []);
-
-    const currentHeight = isExpanded ? windowHeight : height;
 
     const widgetConfig = {
         ...config,
@@ -65,7 +53,7 @@ const TradingViewWidget = ({ title, scriptUrl, config, height = 600, className, 
                 <div
                     className={cn('tradingview-widget-container', className, isExpanded && "h-full")}
                     ref={containerRef}
-                    style={{ height: currentHeight, width: "100%" }}
+                    style={{ height: isExpanded ? '100vh' : height, width: "100%" }}
                 />
             </div>
         </div>
