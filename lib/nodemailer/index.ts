@@ -1,6 +1,10 @@
 import nodemailer from 'nodemailer';
 import { WELCOME_EMAIL_TEMPLATE, NEWS_SUMMARY_EMAIL_TEMPLATE } from "@/lib/nodemailer/templates";
 
+type EmailSendResult =
+    | { status: 'skipped' }
+    | { status: 'sent'; messageId: string };
+
 const hasEmailConfig = Boolean(process.env.NODEMAILER_EMAIL && process.env.NODEMAILER_PASSWORD);
 
 if (!hasEmailConfig) {
@@ -34,8 +38,8 @@ if (transporter) {
 export const sendWelcomeEmail = async ({ email, name, intro }: WelcomeEmailData) => {
     try {
         if (!transporter) {
-            console.warn('âš ï¸ Welcome email skipped: email credentials are not configured.');
-            return null;
+            console.warn('⚠️ Welcome email skipped: email credentials are not configured.');
+            return { status: 'skipped' } satisfies EmailSendResult;
         }
 
         const htmlTemplate = WELCOME_EMAIL_TEMPLATE
@@ -52,7 +56,7 @@ export const sendWelcomeEmail = async ({ email, name, intro }: WelcomeEmailData)
 
         const info = await transporter.sendMail(mailOptions);
         console.log('✅ Welcome email sent successfully:', info.messageId);
-        return info;
+        return { status: 'sent', messageId: info.messageId } satisfies EmailSendResult;
     } catch (error) {
         console.error('❌ Failed to send welcome email:', error);
         throw error;
@@ -64,8 +68,8 @@ export const sendNewsSummaryEmail = async (
 ) => {
     try {
         if (!transporter) {
-            console.warn('âš ï¸ News summary email skipped: email credentials are not configured.');
-            return null;
+            console.warn('⚠️ News summary email skipped: email credentials are not configured.');
+            return { status: 'skipped' } satisfies EmailSendResult;
         }
 
         const htmlTemplate = NEWS_SUMMARY_EMAIL_TEMPLATE
@@ -82,7 +86,7 @@ export const sendNewsSummaryEmail = async (
 
         const info = await transporter.sendMail(mailOptions);
         console.log('✅ News summary email sent successfully:', info.messageId);
-        return info;
+        return { status: 'sent', messageId: info.messageId } satisfies EmailSendResult;
     } catch (error) {
         console.error('❌ Failed to send news summary email:', error);
         throw error;
