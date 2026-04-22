@@ -26,6 +26,11 @@ const COUNTRY_LABEL_OVERRIDES: Record<string, string> = {
     TW: 'Taiwan',
 };
 
+const COUNTRY_OPTIONS = countryList().getData().map((country) => ({
+    ...country,
+    label: COUNTRY_LABEL_OVERRIDES[country.value] ?? country.label,
+}));
+
 type CountrySelectProps = {
     name: string;
     label: string;
@@ -42,12 +47,6 @@ const CountrySelect = ({
     onChange: (value: string) => void;
 }) => {
     const [open, setOpen] = useState(false);
-
-    // Get country options with flags
-    const countries = countryList().getData().map((country) => ({
-        ...country,
-        label: COUNTRY_LABEL_OVERRIDES[country.value] ?? country.label,
-    }));
 
     // Helper function to get flag emoji
     const getFlagEmoji = (countryCode: string) => {
@@ -70,7 +69,7 @@ const CountrySelect = ({
                     {value ? (
                         <span className='flex items-center gap-2'>
               <span>{getFlagEmoji(value)}</span>
-              <span>{countries.find((c) => c.value === value)?.label}</span>
+              <span>{COUNTRY_OPTIONS.find((c) => c.value === value)?.label}</span>
             </span>
                     ) : (
                         'Select your country...'
@@ -92,7 +91,7 @@ const CountrySelect = ({
                     </CommandEmpty>
                     <CommandList className='max-h-60 bg-gray-800 scrollbar-hide-default'>
                         <CommandGroup className='bg-gray-800'>
-                            {countries.map((country) => (
+                            {COUNTRY_OPTIONS.map((country) => (
                                 <CommandItem
                                     key={country.value}
                                     value={`${country.label} ${country.value}`}
