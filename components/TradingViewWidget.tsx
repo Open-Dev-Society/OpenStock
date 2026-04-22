@@ -32,12 +32,11 @@ const TradingViewWidget = ({ title, scriptUrl, config, height = 600, className, 
 
     const widgetConfig = {
         ...config,
-        height: currentHeight,
         width: "100%",
         autosize: true,
     };
 
-    const containerRef = useTradingViewWidget(scriptUrl, widgetConfig, currentHeight);
+    const containerRef = useTradingViewWidget(scriptUrl, widgetConfig);
 
     const toggleExpand = () => {
         setIsExpanded(!isExpanded);
@@ -63,9 +62,11 @@ const TradingViewWidget = ({ title, scriptUrl, config, height = 600, className, 
                     </Button>
                 )}
 
-                <div className={cn('tradingview-widget-container', className, isExpanded && "h-full")} ref={containerRef}>
-                    <div className="tradingview-widget-container__widget" style={{ height: currentHeight, width: "100%" }} />
-                </div>
+                <div
+                    className={cn('tradingview-widget-container', className, isExpanded && "h-full")}
+                    ref={containerRef}
+                    style={{ height: currentHeight, width: "100%" }}
+                />
             </div>
         </div>
     );
