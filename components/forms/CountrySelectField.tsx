@@ -22,6 +22,10 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import countryList from 'react-select-country-list';
 
+const COUNTRY_LABEL_OVERRIDES: Record<string, string> = {
+    TW: 'Taiwan',
+};
+
 type CountrySelectProps = {
     name: string;
     label: string;
@@ -40,7 +44,10 @@ const CountrySelect = ({
     const [open, setOpen] = useState(false);
 
     // Get country options with flags
-    const countries = countryList().getData();
+    const countries = countryList().getData().map((country) => ({
+        ...country,
+        label: COUNTRY_LABEL_OVERRIDES[country.value] ?? country.label,
+    }));
 
     // Helper function to get flag emoji
     const getFlagEmoji = (countryCode: string) => {
