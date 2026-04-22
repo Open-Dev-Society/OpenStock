@@ -134,7 +134,7 @@ Prerequisites
 - Node.js 20+ and pnpm or npm
 - MongoDB connection string (MongoDB Atlas or local via Docker Compose)
 - Finnhub API key (free tier supported; real-time may require paid)
-- Gmail account for email (or update Nodemailer transport)
+- Optional: Gmail account for email (or update Nodemailer transport) if you want welcome and news summary emails
 - Optional: Google Gemini API key (for AI-generated welcome intros)
 
 Clone and install
@@ -208,6 +208,7 @@ Notes
 - The app service depends_on the mongodb service.
 - Credentials are defined in Compose for the MongoDB root user; authSource=admin is required on the connection string for root.
 - Data persists across restarts via the docker volume.
+- `NODEMAILER_EMAIL` and `NODEMAILER_PASSWORD` are optional for local Docker runs. If they are omitted, the app still starts but email features stay disabled.
 
 Optional: Example MongoDB service definition used in this project:
 ```yaml
@@ -273,7 +274,7 @@ GEMINI_API_KEY=your_gemini_api_key
 # Get this from your Inngest dashboard: https://app.inngest.com/env/settings/keys
 INNGEST_SIGNING_KEY=your_inngest_signing_key
 
-# Email (Nodemailer via Gmail; consider App Passwords if 2FA)
+# Email (optional; Nodemailer via Gmail, consider App Passwords if 2FA)
 NODEMAILER_EMAIL=youraddress@gmail.com
 NODEMAILER_PASSWORD=your_gmail_app_password
 ```
@@ -314,7 +315,7 @@ GEMINI_API_KEY=your_gemini_api_key
 # Get this from your Inngest dashboard: https://app.inngest.com/env/settings/keys
 INNGEST_SIGNING_KEY=your_inngest_signing_key
 
-# Email (Nodemailer via Gmail; consider App Passwords if 2FA)
+# Email (optional; Nodemailer via Gmail, consider App Passwords if 2FA)
 NODEMAILER_EMAIL=youraddress@gmail.com
 NODEMAILER_PASSWORD=your_gmail_app_password
 ```
@@ -323,6 +324,7 @@ Notes
 - Keep private keys server-side whenever possible.
 - If using `NEXT_PUBLIC_` variables, remember they are exposed to the browser.
 - In production, prefer a dedicated SMTP provider over a personal Gmail.
+- If the Nodemailer credentials are omitted, the app still runs but welcome and news summary emails are disabled.
 - Do not hardcode secrets in the Dockerfile; use `.env` and Compose.
 
 ## 🧱 Project Structure <a name="project-structure"></a>
