@@ -4,9 +4,9 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import InputField from '@/components/forms/InputField';
 import FooterLink from '@/components/forms/FooterLink';
-import { signInWithEmail, signUpWithEmail } from "@/lib/actions/auth.actions";
+import { signInWithEmail } from "@/lib/actions/auth.actions";
 import { toast } from "sonner";
-import { signInEmail } from "better-auth/api";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import OpenDevSocietyBranding from "@/components/OpenDevSocietyBranding";
 import React from "react";
@@ -72,6 +72,12 @@ const SignIn = () => {
                     error={errors.password}
                     validation={{ required: 'Password is required', minLength: 8 }}
                 />
+
+                <div className="flex justify-end">
+                    <Link href="/forgot-password" className="footer-link text-sm">
+                        Forgot password?
+                    </Link>
+                </div>
 
                 <Button type="submit" disabled={isSubmitting} className="yellow-btn w-full mt-5">
                     {isSubmitting ? 'Signing In' : 'Sign In'}

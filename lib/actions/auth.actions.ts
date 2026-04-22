@@ -58,6 +58,45 @@ export const signInWithEmail = async ({ email, password }: SignInFormData) => {
     }
 }
 
+export const requestPasswordResetEmail = async ({ email }: { email: string }) => {
+    if (!process.env.NODEMAILER_EMAIL || !process.env.NODEMAILER_PASSWORD) {
+        return { success: false, error: 'Password reset email is not configured.' }
+    }
+
+    try {
+        const baseUrl = process.env.BETTER_AUTH_URL ?? 'http://localhost:3000';
+        await auth.api.requestPasswordReset({
+            body: {
+                email,
+                redirectTo: `${baseUrl}/reset-password`,
+            },
+        });
+
+        return { success: true }
+    } catch (e) {
+        console.log('Password reset request failed', e)
+        return { success: false, error: 'Unable to send password reset email.' }
+    }
+}
+
+export const resetPasswordWithToken = async (
+    { token, newPassword }: { token: string; newPassword: string }
+) => {
+    try {
+        await auth.api.resetPassword({
+            body: {
+                token,
+                newPassword,
+            },
+        });
+
+        return { success: true }
+    } catch (e) {
+        console.log('Password reset failed', e)
+        return { success: false, error: 'Reset link is invalid or expired.' }
+    }
+}
+
 export const signOut = async () => {
     try {
         await auth.api.signOut({ headers: await headers() });
