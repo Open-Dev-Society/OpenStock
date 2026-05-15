@@ -2,12 +2,12 @@
 
 
 import React, { createContext, useContext } from 'react'
-import {NAV_ITEMS} from "@/lib/constants";
 import Link from "next/link";
 import {usePathname} from "next/navigation";
 import SearchCommand from "@/components/SearchCommand";
 import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useDictionary } from '@/hooks/useDictionary';
 
 // Create context for popup state
 const DonatePopupContext = createContext<{
@@ -20,6 +20,7 @@ export const useDonatePopup = () => useContext(DonatePopupContext);
 
 const NavItems = ({initialStocks}: { initialStocks: StockWithWatchlistStatus[]}) => {
     const pathname = usePathname()
+    const dict = useDictionary();
 
     const isActive = (path: string) => {
         if (path ==='/') return pathname === '/'
@@ -35,12 +36,17 @@ const NavItems = ({initialStocks}: { initialStocks: StockWithWatchlistStatus[]})
     return (
         <DonatePopupContext.Provider value={{ openDonatePopup }}>
             <ul className="flex flex-col sm:flex-row p-2 gap-3 sm:gap-10 font-medium">
-            {NAV_ITEMS.map(({href, label}) => {
+            {dict.nav && [
+                { href: '/', label: dict.nav.dashboard },
+                { href: '/search', label: dict.nav.search },
+                { href: '/watchlist', label: dict.nav.watchlist },
+                { href: '/api-docs', label: dict.nav.apiDocs },
+            ].map(({href, label}) => {
                 if (href === '/search') return (
                     <li key="search-trigger">
                         <SearchCommand
                             renderAs="text"
-                            label="Search"
+                            label={dict.common.search}
                             initialStocks={initialStocks}
                         />
                     </li>
@@ -58,7 +64,7 @@ const NavItems = ({initialStocks}: { initialStocks: StockWithWatchlistStatus[]})
                     size="sm"
                 >
                     <Heart className="h-4 w-4 fill-current" />
-                    Donate
+                    {dict.nav.donate}
                 </Button>
             </li>
         </ul>

@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionCookie } from "better-auth/cookies";
+import type { Locale } from '@/i18n';
+
+const locales: Locale[] = ['en', 'zh-CN'];
+const defaultLocale: Locale = 'en';
+
+function getLocaleFromCookies(request: NextRequest): Locale {
+    const cookieLocale = request.cookies.get('NEXT_LOCALE')?.value as Locale;
+    if (cookieLocale && locales.includes(cookieLocale)) {
+        return cookieLocale;
+    }
+    return defaultLocale;
+}
 
 export async function middleware(request: NextRequest) {
     const sessionCookie = getSessionCookie(request);
@@ -9,7 +21,12 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/sign-in', request.url));
     }
 
-    return NextResponse.next();
+    // Detect locale and set in headers for server components
+    const locale = getLocaleFromCookies(request);
+    const response = NextResponse.next();
+    response.headers.set('x-locale', locale);
+
+    return response;
 }
 
 export const config = {
