@@ -338,3 +338,19 @@ export const WATCHLIST_TABLE_HEADER = [
     'Alert',
     'Action',
 ];
+
+export const PASSWORD_RULES = [
+    { label: 'At least 8 characters', test: (pw: string) => pw.length >= 8 },
+    { label: 'At least 1 uppercase letter', test: (pw: string) => /[A-Z]/.test(pw) },
+    { label: 'At least 1 lowercase letter', test: (pw: string) => /[a-z]/.test(pw) },
+    { label: 'At least 1 number', test: (pw: string) => /[0-9]/.test(pw) },
+] as const;
+
+export const PASSWORD_VALIDATION = {
+    required: 'Password is required',
+    minLength: { value: 8, message: 'Password must be at least 8 characters' },
+    pattern: {
+        value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/,
+        message: 'Password must include uppercase, lowercase, and a number',
+    },
+};
