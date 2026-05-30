@@ -7,9 +7,11 @@ import { toast } from 'sonner';
 
 import FooterLink from '@/components/forms/FooterLink';
 import InputField from '@/components/forms/InputField';
+import PasswordRequirements from '@/components/forms/PasswordRequirements';
 import OpenDevSocietyBranding from '@/components/OpenDevSocietyBranding';
 import { Button } from '@/components/ui/button';
 import { resetPasswordWithToken } from '@/lib/actions/auth.actions';
+import { PASSWORD_VALIDATION } from '@/lib/constants';
 
 type ResetPasswordFormData = {
     newPassword: string;
@@ -86,8 +88,9 @@ const ResetPasswordForm = () => {
                     type="password"
                     register={register}
                     error={errors.newPassword}
-                    validation={{ required: 'New password is required', minLength: 8 }}
+                    validation={PASSWORD_VALIDATION}
                 />
+                <PasswordRequirements password={newPassword ?? ''} />
 
                 <InputField
                     name="confirmPassword"

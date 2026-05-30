@@ -9,6 +9,7 @@
 					style="width: auto; height: 54px;"
 				/>
 			</a>
+ <a href="https://www.star-history.com/open-dev-society/openstock"><img src="https://api.star-history.com/badge?repo=Open-Dev-Society/OpenStock" alt="Star History Rank" /></a>
 <div align="center">
   <br />
   <a href="#" target="_blank">

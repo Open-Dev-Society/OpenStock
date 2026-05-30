@@ -4,7 +4,8 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import InputField from "@/components/forms/InputField";
 import SelectField from "@/components/forms/SelectField";
-import { INVESTMENT_GOALS, PREFERRED_INDUSTRIES, RISK_TOLERANCE_OPTIONS } from "@/lib/constants";
+import PasswordRequirements from "@/components/forms/PasswordRequirements";
+import { INVESTMENT_GOALS, PASSWORD_VALIDATION, PREFERRED_INDUSTRIES, RISK_TOLERANCE_OPTIONS } from "@/lib/constants";
 import { CountrySelectField } from "@/components/forms/CountrySelectField";
 import FooterLink from "@/components/forms/FooterLink";
 import { signUpWithEmail } from "@/lib/actions/auth.actions";
@@ -19,6 +20,7 @@ const SignUp = () => {
         register,
         handleSubmit,
         control,
+        watch,
         formState: { errors, isSubmitting },
     } = useForm<SignUpFormData>({
         defaultValues: {
@@ -32,6 +34,8 @@ const SignUp = () => {
         },
         mode: 'onBlur'
     },);
+
+    const passwordValue = watch('password');
 
     const onSubmit = async (data: SignUpFormData) => {
         try {
@@ -87,8 +91,9 @@ const SignUp = () => {
                     type="password"
                     register={register}
                     error={errors.password}
-                    validation={{ required: 'Password is required', minLength: 8 }}
+                    validation={PASSWORD_VALIDATION}
                 />
+                <PasswordRequirements password={passwordValue ?? ''} />
 
                 <CountrySelectField
                     name="country"
