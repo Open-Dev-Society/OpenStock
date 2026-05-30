@@ -223,6 +223,10 @@ ${portfolioText}
 
             const dispatcher = new ProxyAgent(proxyUrl);
 
+            // 30s timeout for LLM call
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
+
             const resp = await undici.fetch(config.apiEndpoint, {
                 method: 'POST',
                 headers: {
@@ -239,7 +243,9 @@ ${portfolioText}
                     max_tokens: 1000,
                 }),
                 dispatcher,
+                signal: controller.signal,
             });
+            clearTimeout(timeoutId);
 
             const json = await resp.json() as any;
             aiResponse = json.choices?.[0]?.message?.content || '';

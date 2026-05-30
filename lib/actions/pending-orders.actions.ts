@@ -195,8 +195,14 @@ export async function getAllPendingOrders(): Promise<PendingOrder[]> {
 async function attemptExecuteOrder(orderId: string): Promise<boolean> {
     try {
         const coll = await getPendingOrdersCollection();
-        const order = await coll.findOne({ _id: new mongoose.Types.ObjectId(orderId), status: 'PENDING' });
-        if (!order) return false;
+
+        // Atomically claim the order (prevents TOCTOU race when two processes try to execute the same order)
+        const order = await coll.findOneAndUpdate(
+            { _id: new mongoose.Types.ObjectId(orderId), status: 'PENDING' },
+            { $set: { status: 'PROCESSING', processingStartedAt: new Date() } },
+            { returnDocument: 'before' }
+        );
+        if (!order) return false; // Already claimed or doesn't exist
 
         // Market must be open to execute
         if (!isMarketOpen()) return false;
@@ -285,6 +291,7 @@ export async function processAllPendingOrders(): Promise<{ executed: number; fai
     for (const order of orders) {
         const ok = await attemptExecuteOrder(order._id);
         if (ok) executed++;
+        else failed++;
     }
 
     revalidatePath('/paper-trading');

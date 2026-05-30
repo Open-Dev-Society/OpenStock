@@ -38,6 +38,7 @@ export default function PendingOrdersList({ accountId }: { accountId: string }) 
             case 'LIMIT': return o.type === 'BUY' ? `Limit Buy ≤ $${o.limitPrice?.toFixed(2)}` : `Limit Sell ≥ $${o.limitPrice?.toFixed(2)}`;
             case 'STOP': return o.type === 'BUY' ? `Stop Buy ≥ $${o.stopPrice?.toFixed(2)}` : `Stop Loss ≤ $${o.stopPrice?.toFixed(2)}`;
             case 'MARKET_ON_OPEN': return 'Market-on-Open';
+            default: return o.orderType || 'Unknown';
         }
     };
 

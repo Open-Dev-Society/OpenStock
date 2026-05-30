@@ -16,9 +16,7 @@
 /** Nth weekday of a month. weekday: 0=Sun...6=Sat */
 function nthWeekday(year: number, month: number, weekday: number, n: number): Date {
     const first = new Date(Date.UTC(year, month - 1, 1));
-    let day = first.getUTCDay(); // 0=Sun
-    let offset = (weekday - day + 7) % 7;
-    if (offset === 0 && n > 1) offset = 7; // if 1st is the target weekday, n=1 picks it
+    const offset = (weekday - first.getUTCDay() + 7) % 7;
     const date = 1 + offset + (n - 1) * 7;
     return new Date(Date.UTC(year, month - 1, date));
 }
