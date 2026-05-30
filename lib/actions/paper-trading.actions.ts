@@ -289,6 +289,11 @@ export async function buyStock(
         const db = mongoose.connection.db;
         if (!db) return { success: false, error: '数据库连接失败' };
 
+        // Validate share count
+        if (!shares || !Number.isInteger(shares) || shares < 1) {
+            return { success: false, error: `Invalid share count: ${shares}. Must be at least 1.` };
+        }
+
         // Get account
         const account = await PaperAccount.findById(accountId);
         if (!account) return { success: false, error: '账户不存在' };
@@ -340,6 +345,11 @@ export async function sellStock(
         await connectToDatabase();
         const db = mongoose.connection.db;
         if (!db) return { success: false, error: '数据库连接失败' };
+
+        // Validate share count
+        if (!shares || !Number.isInteger(shares) || shares < 1) {
+            return { success: false, error: `Invalid share count: ${shares}. Must be at least 1.` };
+        }
 
         const account = await PaperAccount.findById(accountId);
         if (!account) return { success: false, error: '账户不存在' };

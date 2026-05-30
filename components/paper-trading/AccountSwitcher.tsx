@@ -61,14 +61,14 @@ export default function AccountSwitcher({ userId, activeAccountId, onAccountChan
         if (accounts.length <= 1) return; // Can't delete last account
         const name = accounts.find(a => a._id === accountId)?.name || 'this account';
         if (!confirm(`Delete "${name}"? All trade records will be removed.`)) return;
-        const { deleteAccount } = await import('@/lib/actions/paper-trading.actions');
+        const { deleteAccount, listAccounts } = await import('@/lib/actions/paper-trading.actions');
         const res = await deleteAccount(accountId);
         if (res.success) {
-            await loadAccounts();
-            // Switch to first remaining account
-            const remaining = accounts.filter(a => a._id !== accountId);
-            if (remaining.length > 0) {
-                onAccountChange(remaining[0]._id);
+            // Fetch fresh list from API instead of using stale React state
+            const freshList = await listAccounts(userId);
+            setAccounts(freshList);
+            if (freshList.length > 0) {
+                onAccountChange(freshList[0]._id);
             }
         }
     };

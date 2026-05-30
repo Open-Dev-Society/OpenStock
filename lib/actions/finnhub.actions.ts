@@ -57,8 +57,12 @@ async function fetchJSON<T>(url: string, revalidateSeconds?: number, timeoutMs =
 
         try {
             const data = await doFetch<T>(url, timeoutMs);
-            fs.mkdirSync(FINNHUB_CACHE_DIR, { recursive: true });
-            fs.writeFileSync(cacheFile, JSON.stringify({ ts: now, data }));
+            try {
+                fs.mkdirSync(FINNHUB_CACHE_DIR, { recursive: true });
+                fs.writeFileSync(cacheFile, JSON.stringify({ ts: now, data }));
+            } catch {
+                // Cache write failure is non-fatal — still return the fresh data
+            }
             return data;
         } catch (e) {
             // On fetch error, try to serve stale cache
@@ -134,8 +138,8 @@ function getExchangeLabel(symbol: string, exchange?: string) {
 }
 
 export async function getQuote(symbol: string) {
+    const token = NEXT_PUBLIC_FINNHUB_API_KEY;
     try {
-        const token = NEXT_PUBLIC_FINNHUB_API_KEY;
         const url = `${FINNHUB_BASE_URL}/quote?symbol=${encodeURIComponent(symbol)}&token=${token}`;
         // No caching for real-time price
         return await fetchJSON<FinnhubQuote>(url, 0);
