@@ -7,32 +7,121 @@
  * Pre-market:  4:00 AM - 9:30 AM ET
  * After-hours: 4:00 PM - 8:00 PM ET
  *
- * Converts to Beijing time (CST, UTC+8) for easy checking
- * from a China-based server.
+ * Holidays are calculated dynamically for any year using known US holiday rules.
+ * No hardcoded year-specific data needed.
  */
 
-// ── US Market Holidays 2026 ──
-// Source: NYSE holiday calendar
-const HOLIDAYS_2026: { month: number; day: number }[] = [
-    { month: 1, day: 1 },   // New Year's Day (Thu)
-    { month: 1, day: 19 },  // MLK Day (Mon)
-    { month: 2, day: 16 },  // Presidents' Day (Mon)
-    { month: 4, day: 3 },   // Good Friday (Fri)
-    { month: 5, day: 25 },  // Memorial Day (Mon)
-    { month: 6, day: 19 },  // Juneteenth (Fri)
-    { month: 7, day: 3 },   // Independence Day observed (Fri)
-    { month: 9, day: 7 },   // Labor Day (Mon)
-    { month: 11, day: 26 }, // Thanksgiving (Thu)
-    { month: 12, day: 25 }, // Christmas (Fri)
-];
+// ── Holiday Calculator ──
+
+/** Nth weekday of a month. weekday: 0=Sun...6=Sat */
+function nthWeekday(year: number, month: number, weekday: number, n: number): Date {
+    const first = new Date(Date.UTC(year, month - 1, 1));
+    let day = first.getUTCDay(); // 0=Sun
+    let offset = (weekday - day + 7) % 7;
+    if (offset === 0 && n > 1) offset = 7; // if 1st is the target weekday, n=1 picks it
+    const date = 1 + offset + (n - 1) * 7;
+    return new Date(Date.UTC(year, month - 1, date));
+}
+
+/** Last weekday of a month */
+function lastWeekday(year: number, month: number, weekday: number): Date {
+    // Start from last day of month and work backwards
+    const lastDay = new Date(Date.UTC(year, month, 0)); // day 0 of next month = last day
+    let d = lastDay.getUTCDate();
+    while (new Date(Date.UTC(year, month - 1, d)).getUTCDay() !== weekday) d--;
+    return new Date(Date.UTC(year, month - 1, d));
+}
+
+/**
+ * Compute Easter Sunday using Gauss algorithm (works 1900-2099).
+ * Returns Date in UTC.
+ */
+function easterSunday(year: number): Date {
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const month = Math.floor((h + l - 7 * m + 114) / 31);
+    const day = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(Date.UTC(year, month - 1, day));
+}
+
+/**
+ * If a fixed-date holiday falls on Sat, observe Fri before.
+ * If Sun, observe Mon after.
+ */
+function observedDate(year: number, month: number, day: number): Date {
+    const d = new Date(Date.UTC(year, month - 1, day));
+    const dow = d.getUTCDay();
+    if (dow === 6) return new Date(Date.UTC(year, month - 1, day - 1)); // Sat → Fri
+    if (dow === 0) return new Date(Date.UTC(year, month - 1, day + 1)); // Sun → Mon
+    return d;
+}
+
+/**
+ * Generate all US stock market holidays for a given year.
+ * Returns Date objects in UTC.
+ */
+function getHolidaysForYear(year: number): Date[] {
+    const holidays: Date[] = [];
+
+    // New Year's Day — Jan 1 (observed if weekend)
+    holidays.push(observedDate(year, 1, 1));
+
+    // Martin Luther King Jr. Day — 3rd Monday of January
+    holidays.push(nthWeekday(year, 1, 1, 3));
+
+    // Presidents' Day — 3rd Monday of February
+    holidays.push(nthWeekday(year, 2, 1, 3));
+
+    // Good Friday — 2 days before Easter Sunday
+    const easter = easterSunday(year);
+    const goodFri = new Date(easter.getTime() - 2 * 86400000);
+    holidays.push(goodFri);
+
+    // Memorial Day — Last Monday of May
+    holidays.push(lastWeekday(year, 5, 1));
+
+    // Juneteenth — June 19 (observed if weekend)
+    holidays.push(observedDate(year, 6, 19));
+
+    // Independence Day — July 4 (observed if weekend)
+    holidays.push(observedDate(year, 7, 4));
+
+    // Labor Day — 1st Monday of September
+    holidays.push(nthWeekday(year, 9, 1, 1));
+
+    // Thanksgiving — 4th Thursday of November
+    holidays.push(nthWeekday(year, 11, 4, 4));
+
+    // Christmas — December 25 (observed if weekend)
+    holidays.push(observedDate(year, 12, 25));
+
+    return holidays;
+}
 
 /**
  * Check if a given date is a US market holiday
  */
 export function isUSHoliday(d: Date): boolean {
-    const month = d.getUTCMonth() + 1; // getUTCMonth() is 0-indexed
-    const day = d.getUTCDate();
-    return HOLIDAYS_2026.some(h => h.month === month && h.day === day);
+    const year = d.getUTCFullYear();
+    const holidays = getHolidaysForYear(year);
+    // Also check adjacent years for holidays observed before/after New Year
+    if (year > 1900) holidays.push(...getHolidaysForYear(year - 1));
+    holidays.push(...getHolidaysForYear(year + 1));
+    
+    const ts = d.getTime();
+    return holidays.some(h => Math.abs(h.getTime() - ts) < 86400000 && 
+        h.getUTCMonth() === d.getUTCMonth() && 
+        h.getUTCDate() === d.getUTCDate());
 }
 
 /**
