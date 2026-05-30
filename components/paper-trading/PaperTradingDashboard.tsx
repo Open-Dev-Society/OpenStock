@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { ArrowUp, ArrowDown, Plus, RotateCcw, Settings, X, CalendarClock, Clock } from 'lucide-react';
+import { ArrowUp, ArrowDown, Plus, RotateCcw, Settings, X, CalendarClock, Clock, AlertCircle, Activity, Banknote } from 'lucide-react';
 import AITradingPanel from './AITradingPanel';
 import AccountSwitcher from './AccountSwitcher';
+import PendingOrdersList from './PendingOrdersList';
 
 interface Position {
     symbol: string;
@@ -72,8 +73,21 @@ export default function PaperTradingDashboard({ userId, accountId }: { userId: s
     const [sellSymbol, setSellSymbol] = useState('');
     const [sellShares, setSellShares] = useState('');
     const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+    const [buyMessage, setBuyMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+    const [sellMessage, setSellMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
     const [loading, setLoading] = useState(false);
     const [dataLoaded, setDataLoaded] = useState(false);
+
+    // Order type for buy form
+    const [orderType, setOrderType] = useState<'MARKET' | 'LIMIT' | 'STOP'>('MARKET');
+    const [limitPrice, setLimitPrice] = useState('');
+    const [stopPrice, setStopPrice] = useState('');
+    const [marketStatus, setMarketStatus] = useState<{ isOpen: boolean; label: string; nextOpen: string } | null>(null);
+
+    // Order type for sell confirmation
+    const [sellOrderType, setSellOrderType] = useState<'MARKET' | 'LIMIT' | 'STOP'>('MARKET');
+    const [sellLimitPrice, setSellLimitPrice] = useState('');
+    const [sellStopPrice, setSellStopPrice] = useState('');
 
     // Setup / Reset state
     const [showResetDialog, setShowResetDialog] = useState(false);
@@ -98,8 +112,19 @@ export default function PaperTradingDashboard({ userId, accountId }: { userId: s
 
     useEffect(() => {
         fetchData(currentAccountId);
-        const interval = setInterval(() => fetchData(currentAccountId), 10000);
-        return () => clearInterval(interval);
+        // Check market status
+        import('@/lib/utils/market-hours').then(({ getMarketStatus }) => {
+            setMarketStatus(getMarketStatus());
+        });
+        // Update market status every 60s
+        const marketInterval = setInterval(() => {
+            import('@/lib/utils/market-hours').then(({ getMarketStatus: gms }) => {
+                setMarketStatus(gms());
+            });
+        }, 60000);
+        // Data refresh interval
+        const refreshInterval = setInterval(() => fetchData(currentAccountId), 10000);
+        return () => { clearInterval(refreshInterval); clearInterval(marketInterval); };
     }, [currentAccountId, fetchData]);
 
     const handleAccountChange = (newAccountId: string) => {
@@ -138,17 +163,68 @@ export default function PaperTradingDashboard({ userId, accountId }: { userId: s
         if (!buySymbol || !buyShares) return;
         const shares = parseInt(buyShares);
         if (isNaN(shares) || shares <= 0) return;
+
+        // Limit/Stop order → create pending order
+        if (orderType === 'LIMIT' || orderType === 'STOP') {
+            if ((orderType === 'LIMIT' && !limitPrice) || (orderType === 'STOP' && !stopPrice)) return;
+            setLoading(true);
+            setBuyMessage(null);
+            const price = orderType === 'LIMIT' ? parseFloat(limitPrice) : parseFloat(stopPrice);
+            if (isNaN(price) || price <= 0) { setLoading(false); return; }
+            const { createPendingOrder } = await import('@/lib/actions/pending-orders.actions');
+            const result = await createPendingOrder(
+                currentAccountId, userId,
+                buySymbol.toUpperCase(), buySymbol.toUpperCase(),
+                'BUY', shares, orderType as 'LIMIT' | 'STOP',
+                orderType === 'LIMIT' ? price : null,
+                orderType === 'STOP' ? price : null,
+            );
+            setLoading(false);
+            if (result.success) {
+                setBuyMessage({ text: result.message || 'Order placed', type: 'success' });
+                setBuySymbol(''); setBuyShares(''); setLimitPrice(''); setStopPrice('');
+                fetchData(currentAccountId);
+            } else {
+                setBuyMessage({ text: result.error || 'Order failed', type: 'error' });
+            }
+            return;
+        }
+
+        // Market order → execute immediately or fallback to Market-on-Open
         setLoading(true);
-        setMessage(null);
+        setBuyMessage(null);
         const { buyStock } = await import('@/lib/actions/paper-trading.actions');
-        const result = await buyStock(currentAccountId, buySymbol.toUpperCase(), buySymbol.toUpperCase(), shares);
-        setLoading(false);
-        if (result.success) {
-            setMessage({ text: result.message, type: 'success' });
-            setBuySymbol(''); setBuyShares('');
-            fetchData(currentAccountId);
+        const { getMarketStatus } = await import('@/lib/utils/market-hours');
+        const market = getMarketStatus();
+
+        if (market.isOpen) {
+            // Market is open → execute immediately
+            const result = await buyStock(currentAccountId, buySymbol.toUpperCase(), buySymbol.toUpperCase(), shares);
+            setLoading(false);
+            if (result.success) {
+                setBuyMessage({ text: result.message || 'Buy successful', type: 'success' });
+                setBuySymbol(''); setBuyShares('');
+                fetchData(currentAccountId);
+            } else {
+                setBuyMessage({ text: result.error || 'Buy failed', type: 'error' });
+            }
         } else {
-            setMessage({ text: result.error || 'Buy failed', type: 'error' });
+            // Market is closed → create Market-on-Open pending order
+            const { createPendingOrder } = await import('@/lib/actions/pending-orders.actions');
+            const result = await createPendingOrder(
+                currentAccountId, userId,
+                buySymbol.toUpperCase(), buySymbol.toUpperCase(),
+                'BUY', shares, 'MARKET_ON_OPEN',
+                null, null,
+            );
+            setLoading(false);
+            if (result.success) {
+                setBuyMessage({ text: `Market closed. Placed Market-on-Open order for ${shares} ${buySymbol.toUpperCase()} — will execute when market opens.`, type: 'success' });
+                setBuySymbol(''); setBuyShares('');
+                fetchData(currentAccountId);
+            } else {
+                setBuyMessage({ text: result.error || 'Failed to place order', type: 'error' });
+            }
         }
     };
 
@@ -156,17 +232,65 @@ export default function PaperTradingDashboard({ userId, accountId }: { userId: s
         if (!sellShares) return;
         const shares = parseInt(sellShares);
         if (isNaN(shares) || shares <= 0) return;
+
+        // Limit/Stop sell → create pending order
+        if (sellOrderType === 'LIMIT' || sellOrderType === 'STOP') {
+            const price = sellOrderType === 'LIMIT' ? parseFloat(sellLimitPrice) : parseFloat(sellStopPrice);
+            if (isNaN(price) || price <= 0) { setSellMessage({ text: 'Invalid price', type: 'error' }); return; }
+            setLoading(true);
+            setSellMessage(null);
+            const { createPendingOrder } = await import('@/lib/actions/pending-orders.actions');
+            const result = await createPendingOrder(
+                currentAccountId, userId,
+                symbol.toUpperCase(), symbol.toUpperCase(),
+                'SELL', shares, sellOrderType as 'LIMIT' | 'STOP',
+                sellOrderType === 'LIMIT' ? price : null,
+                sellOrderType === 'STOP' ? price : null,
+            );
+            setLoading(false);
+            if (result.success) {
+                setSellMessage({ text: result.message || 'Order placed', type: 'success' });
+                setSellSymbol(''); setSellShares(''); setSellLimitPrice(''); setSellStopPrice('');
+                fetchData(currentAccountId);
+            } else {
+                setSellMessage({ text: result.error || 'Order failed', type: 'error' });
+            }
+            return;
+        }
+
+        // Market sell → execute or pending
         setLoading(true);
-        setMessage(null);
+        setSellMessage(null);
         const { sellStock } = await import('@/lib/actions/paper-trading.actions');
-        const result = await sellStock(currentAccountId, symbol.toUpperCase(), shares);
-        setLoading(false);
-        if (result.success) {
-            setMessage({ text: result.message, type: 'success' });
-            setSellSymbol(''); setSellShares('');
-            fetchData(currentAccountId);
+        const { getMarketStatus } = await import('@/lib/utils/market-hours');
+        const market = getMarketStatus();
+
+        if (market.isOpen) {
+            const result = await sellStock(currentAccountId, symbol.toUpperCase(), shares);
+            setLoading(false);
+            if (result.success) {
+                setSellMessage({ text: result.message || 'Sell successful', type: 'success' });
+                setSellSymbol(''); setSellShares('');
+                fetchData(currentAccountId);
+            } else {
+                setSellMessage({ text: result.error || 'Sell failed', type: 'error' });
+            }
         } else {
-            setMessage({ text: result.error || 'Sell failed', type: 'error' });
+            const { createPendingOrder } = await import('@/lib/actions/pending-orders.actions');
+            const result = await createPendingOrder(
+                currentAccountId, userId,
+                symbol.toUpperCase(), symbol.toUpperCase(),
+                'SELL', shares, 'MARKET_ON_OPEN',
+                null, null,
+            );
+            setLoading(false);
+            if (result.success) {
+                setSellMessage({ text: `Market closed. Placed Market-on-Open sell order for ${shares} ${symbol.toUpperCase()} — will execute when market opens.`, type: 'success' });
+                setSellSymbol(''); setSellShares('');
+                fetchData(currentAccountId);
+            } else {
+                setSellMessage({ text: result.error || 'Failed to place order', type: 'error' });
+            }
         }
     };
 
@@ -235,7 +359,7 @@ export default function PaperTradingDashboard({ userId, accountId }: { userId: s
                 </button>
             </div>
 
-            {/* ── Message ── */}
+            {/* ── General Message (period updates, resets) ── */}
             {message && (
                 <div className={`px-4 py-3 rounded-lg text-sm font-medium ${
                     message.type === 'success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
@@ -314,24 +438,107 @@ export default function PaperTradingDashboard({ userId, accountId }: { userId: s
 
             {/* ── Buy Form ── */}
             <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-5">
-                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2"><Plus className="w-5 h-5 text-green-400" /> Buy</h3>
+                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <Plus className="w-5 h-5 text-green-400" /> Buy
+                    {marketStatus && (
+                        <span className={`ml-auto text-xs font-normal flex items-center gap-1.5 ${
+                            marketStatus.isOpen ? 'text-green-400' : 'text-yellow-400'
+                        }`}>
+                            <span className={`w-2 h-2 rounded-full inline-block ${
+                                marketStatus.isOpen ? 'bg-green-400' : 'bg-yellow-400'
+                            }`} />
+                            {marketStatus.label}
+                        </span>
+                    )}
+                </h3>
+
+                {/* Order Type Toggle */}
+                <div className="flex gap-1 mb-4 bg-black/30 rounded-lg p-1 w-fit">
+                    {(['MARKET', 'LIMIT', 'STOP'] as const).map(ot => (
+                        <button
+                            key={ot}
+                            onClick={() => setOrderType(ot)}
+                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                                orderType === ot
+                                    ? 'bg-teal-600 text-white'
+                                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
+                        >
+                            {ot === 'MARKET' ? 'Market Order' : ot === 'LIMIT' ? 'Limit Order' : 'Stop Order'}
+                        </button>
+                    ))}
+                </div>
+
                 <div className="flex flex-wrap items-end gap-3">
-                    <div className="flex-1 min-w-[140px]">
+                    <div className="flex-1 min-w-[120px]">
                         <label className="block text-xs text-gray-400 mb-1">Symbol</label>
                         <input type="text" value={buySymbol} onChange={e => setBuySymbol(e.target.value.toUpperCase())} placeholder="NVDA"
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-teal-500" />
                     </div>
-                    <div className="flex-1 min-w-[100px]">
+                    <div className="flex-1 min-w-[80px]">
                         <label className="block text-xs text-gray-400 mb-1">Shares</label>
                         <input type="number" value={buyShares} onChange={e => setBuyShares(e.target.value)} placeholder="10" min="1"
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-teal-500" />
                     </div>
-                    <button onClick={handleBuy} disabled={loading || !buySymbol || !buyShares}
-                        className="bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">
-                        {loading ? '...' : 'Buy'}
+
+                    {/* Limit/Stop price input */}
+                    {(orderType === 'LIMIT' || orderType === 'STOP') && (
+                        <div className="flex-1 min-w-[100px]">
+                            <label className="block text-xs text-gray-400 mb-1">
+                                {orderType === 'LIMIT' ? (buyShares && limitPrice ? `Max total: $${(parseInt(buyShares || '0') * parseFloat(limitPrice || '0')).toFixed(0)}` : 'Limit Price ($)') : 'Stop Price ($)'}
+                            </label>
+                            <input
+                                type="number"
+                                value={orderType === 'LIMIT' ? limitPrice : stopPrice}
+                                onChange={e => orderType === 'LIMIT' ? setLimitPrice(e.target.value) : setStopPrice(e.target.value)}
+                                placeholder={orderType === 'LIMIT' ? 'Max buy price' : 'Trigger price'}
+                                min="0.01" step="0.01"
+                                className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-teal-500"
+                            />
+                        </div>
+                    )}
+
+                    <button
+                        onClick={handleBuy}
+                        disabled={loading || !buySymbol || !buyShares || (orderType === 'LIMIT' && !limitPrice) || (orderType === 'STOP' && !stopPrice)}
+                        className="bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors"
+                    >
+                        {loading ? '...' : orderType === 'MARKET' ? 'Buy' : `Place ${orderType} Order`}
                     </button>
                 </div>
+
+                {/* Market closed warning for market orders */}
+                {orderType === 'MARKET' && marketStatus && !marketStatus.isOpen && (
+                    <p className="mt-3 text-xs text-yellow-400 flex items-start gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                        Market is currently closed. Your order will be placed as a <strong>Market-on-Open</strong> pending order
+                        and executed automatically when the market opens.
+                    </p>
+                )}
+
+                {/* Limit order hint */}
+                {orderType === 'LIMIT' && (
+                    <p className="mt-3 text-xs text-gray-500">
+                        Limit buy: executes when price drops to <strong>${limitPrice ? parseFloat(limitPrice).toFixed(2) : '—'}</strong> or lower.
+                    </p>
+                )}
+
+                {/* Stop order hint */}
+                {orderType === 'STOP' && (
+                    <p className="mt-3 text-xs text-gray-500">
+                        Stop buy: executes when price rises above <strong>${stopPrice ? parseFloat(stopPrice).toFixed(2) : '—'}</strong> (breakout entry).
+                    </p>
+                )}
             </div>
+
+            {/* ── Buy Message ── */}
+            {buyMessage && (
+                <div className={`px-4 py-3 rounded-lg text-sm font-medium ${
+                    buyMessage.type === 'success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                }`}>
+                    {buyMessage.text}
+                </div>
+            )}
 
             {/* ── Holdings ── */}
             <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden">
@@ -349,23 +556,135 @@ export default function PaperTradingDashboard({ userId, accountId }: { userId: s
                             </tr></thead>
                             <tbody className="divide-y divide-white/5">
                                 {positions.map(pos => (
-                                    <tr key={pos.symbol} className="hover:bg-white/5 transition-colors">
-                                        <td className="px-5 py-4"><div><span className="text-white font-semibold">{pos.symbol}</span><p className="text-xs text-gray-500">{pos.company}</p></div></td>
-                                        <td className="px-5 py-4 text-right text-white">{pos.shares}</td>
-                                        <td className="px-5 py-4 text-right text-gray-300">${pos.avgCost.toFixed(2)}</td>
-                                        <td className="px-5 py-4 text-right text-white font-mono">${pos.currentPrice.toFixed(2)}</td>
-                                        <td className="px-5 py-4 text-right text-white">${pos.marketValue.toFixed(2)}</td>
-                                        <td className={`px-5 py-4 text-right font-medium ${pos.pl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                            <div className="flex items-center justify-end gap-1">
-                                                {pos.pl >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
-                                                ${Math.abs(pos.pl).toFixed(2)} ({pos.plPercent >= 0 ? '+' : ''}{pos.plPercent}%)
-                                            </div>
-                                        </td>
-                                        <td className="px-5 py-4 text-right">
-                                            <button onClick={() => { setSellSymbol(pos.symbol); setSellShares(String(pos.shares)); }}
-                                                className="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded-md transition-colors">Sell</button>
-                                        </td>
-                                    </tr>
+                                    <React.Fragment key={pos.symbol}>
+                                        <tr className="hover:bg-white/5 transition-colors">
+                                            <td className="px-5 py-4"><div><span className="text-white font-semibold">{pos.symbol}</span><p className="text-xs text-gray-500">{pos.company}</p></div></td>
+                                            <td className="px-5 py-4 text-right text-white">{pos.shares}</td>
+                                            <td className="px-5 py-4 text-right text-gray-300">${pos.avgCost.toFixed(2)}</td>
+                                            <td className="px-5 py-4 text-right text-white font-mono">${pos.currentPrice.toFixed(2)}</td>
+                                            <td className="px-5 py-4 text-right text-white">${pos.marketValue.toFixed(2)}</td>
+                                            <td className={`px-5 py-4 text-right font-medium ${pos.pl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                <div className="flex items-center justify-end gap-1">
+                                                    {pos.pl >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                                                    ${Math.abs(pos.pl).toFixed(2)} ({pos.plPercent >= 0 ? '+' : ''}{pos.plPercent}%)
+                                                </div>
+                                            </td>
+                                            <td className="px-5 py-4 text-right">
+                                                <button onClick={() => {
+                                                    if (sellSymbol === pos.symbol) {
+                                                        // Close if already open
+                                                        setSellSymbol(''); setSellShares(''); setSellLimitPrice(''); setSellStopPrice('');
+                                                    } else {
+                                                        setSellSymbol(pos.symbol);
+                                                        setSellShares(String(pos.shares));
+                                                        setSellOrderType('MARKET');
+                                                        setSellLimitPrice('');
+                                                        setSellStopPrice('');
+                                                    }
+                                                }}
+                                                    className={`text-xs px-3 py-1.5 rounded-md transition-colors ${
+                                                        sellSymbol === pos.symbol
+                                                            ? 'bg-gray-500/20 text-gray-400'
+                                                            : 'bg-red-500/10 hover:bg-red-500/20 text-red-400'
+                                                    }`}>
+                                                    {sellSymbol === pos.symbol ? 'Cancel' : 'Sell'}
+                                                </button>
+                                            </td>
+                                        </tr>
+
+                                        {/* ── Inline Sell Panel (slides out below this row) ── */}
+                                        {sellSymbol === pos.symbol && (
+                                            <tr>
+                                                <td colSpan={7} className="px-0 py-0">
+                                                    <div className="bg-yellow-500/5 border-y border-yellow-500/20 px-5 py-4 mx-0 animate-slideDown">
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <h4 className="text-sm font-semibold text-white">
+                                                                Sell {pos.symbol}
+                                                                {marketStatus && (
+                                                                    <span className={`ml-2 text-xs font-normal ${
+                                                                        marketStatus.isOpen ? 'text-green-400' : 'text-yellow-400'
+                                                                    }`}>
+                                                                        · {marketStatus.isOpen ? 'Open' : 'Closed'}
+                                                                    </span>
+                                                                )}
+                                                            </h4>
+                                                            <div className="flex gap-1 bg-black/30 rounded-lg p-0.5">
+                                                                {(['MARKET', 'LIMIT', 'STOP'] as const).map(ot => (
+                                                                    <button key={ot}
+                                                                        onClick={() => setSellOrderType(ot)}
+                                                                        className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                                                                            sellOrderType === ot
+                                                                                ? 'bg-teal-600 text-white'
+                                                                                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                                                        }`}
+                                                                    >
+                                                                        {ot === 'MARKET' ? 'Market' : ot === 'LIMIT' ? 'Limit' : 'Stop'}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-end gap-3 flex-wrap">
+                                                            <div>
+                                                                <label className="block text-xs text-gray-400 mb-1">Shares</label>
+                                                                <input type="number" value={sellShares}
+                                                                    onChange={e => setSellShares(e.target.value)}
+                                                                    min="1" max={pos.shares}
+                                                                    className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white text-sm w-24 focus:outline-none focus:border-teal-500" />
+                                                            </div>
+
+                                                            {(sellOrderType === 'LIMIT' || sellOrderType === 'STOP') && (
+                                                                <div>
+                                                                    <label className="block text-xs text-gray-400 mb-1">
+                                                                        {sellOrderType === 'LIMIT' ? 'Limit Price ($)' : 'Stop Price ($)'}
+                                                                    </label>
+                                                                    <input type="number"
+                                                                        value={sellOrderType === 'LIMIT' ? sellLimitPrice : sellStopPrice}
+                                                                        onChange={e => sellOrderType === 'LIMIT' ? setSellLimitPrice(e.target.value) : setSellStopPrice(e.target.value)}
+                                                                        placeholder={sellOrderType === 'LIMIT' ? 'Min sell' : 'Trigger'}
+                                                                        min="0.01" step="0.01"
+                                                                        className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white text-sm w-24 focus:outline-none focus:border-teal-500" />
+                                                                </div>
+                                                            )}
+
+                                                            <button onClick={() => handleSell(pos.symbol)}
+                                                                disabled={loading || (sellOrderType === 'LIMIT' && !sellLimitPrice) || (sellOrderType === 'STOP' && !sellStopPrice)}
+                                                                className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors">
+                                                                {loading ? '...' : sellOrderType === 'MARKET' ? 'Confirm Sell' : `Place ${sellOrderType}`}
+                                                            </button>
+                                                            <button onClick={() => { setSellSymbol(''); setSellShares(''); setSellLimitPrice(''); setSellStopPrice(''); }}
+                                                                className="text-gray-400 hover:text-white text-xs transition-colors">Cancel</button>
+                                                        </div>
+
+                                                        {/* Hints */}
+                                                        {sellOrderType === 'MARKET' && marketStatus && !marketStatus.isOpen && (
+                                                            <p className="mt-2 text-xs text-yellow-400 flex items-center gap-1">
+                                                                <AlertCircle className="w-3 h-3" /> Market closed · Will be Market-on-Open pending order
+                                                            </p>
+                                                        )}
+                                                        {sellOrderType === 'LIMIT' && (
+                                                            <p className="mt-2 text-xs text-gray-500">
+                                                                Sells when price ≥ <strong>${sellLimitPrice ? parseFloat(sellLimitPrice).toFixed(2) : '—'}</strong>
+                                                            </p>
+                                                        )}
+                                                        {sellOrderType === 'STOP' && (
+                                                            <p className="mt-2 text-xs text-gray-500">
+                                                                Triggers when price ≤ <strong>${sellStopPrice ? parseFloat(sellStopPrice).toFixed(2) : '—'}</strong>
+                                                            </p>
+                                                        )}
+
+                                                        {/* Sell Message */}
+                                                        {sellMessage && (
+                                                            <div className={`mt-3 px-3 py-2 rounded text-xs font-medium ${
+                                                                sellMessage.type === 'success' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
+                                                            }`}>
+                                                                {sellMessage.text}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
                                 ))}
                             </tbody>
                         </table>
@@ -373,23 +692,8 @@ export default function PaperTradingDashboard({ userId, accountId }: { userId: s
                 )}
             </div>
 
-            {/* ── Sell Confirmation ── */}
-            {sellSymbol && (
-                <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-xl p-5">
-                    <h3 className="text-lg font-semibold text-white mb-3">Sell {sellSymbol}</h3>
-                    <div className="flex items-end gap-3">
-                        <div><label className="block text-xs text-gray-400 mb-1">Shares</label>
-                            <input type="number" value={sellShares} onChange={e => setSellShares(e.target.value)} min="1"
-                                className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white text-sm w-32 focus:outline-none focus:border-teal-500" />
-                        </div>
-                        <button onClick={() => handleSell(sellSymbol)} disabled={loading}
-                            className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">
-                            {loading ? '...' : 'Confirm Sell'}
-                        </button>
-                        <button onClick={() => { setSellSymbol(''); setSellShares(''); }} className="text-gray-400 hover:text-white px-3 py-2 text-sm transition-colors">Cancel</button>
-                    </div>
-                </div>
-            )}
+            {/* ── Pending Orders ── */}
+            <PendingOrdersList accountId={currentAccountId} />
 
             {/* ── Trade History ── */}
             <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden">

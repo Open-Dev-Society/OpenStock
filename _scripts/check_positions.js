@@ -35,11 +35,26 @@ async function main() {
   const acc = await accounts.findOne({ userId: USER_ID });
   if (!acc) { console.log('No account found'); await client.close(); return; }
 
-  const openPositions = await trades.aggregate([
-    { $match: { userId: USER_ID } },
-    { $group: { _id: '$symbol', shares: { $sum: { $cond: [{ $eq: ['$type', 'BUY'] }, '$shares', { $multiply: ['$shares', -1] }] } }, totalCost: { $sum: { $cond: [{ $eq: ['$type', 'BUY'] }, '$total', 0] } }, company: { $first: '$company' } } },
-    { $match: { shares: { $gt: 0 } } }
-  ]).toArray();
+  const allTrades = await trades.find({ userId: USER_ID }).sort({ timestamp: 1 }).toArray();
+
+  // Compute running positions with correct cost basis after partial sells
+  const positionMap = {};
+  for (const t of allTrades) {
+    if (!positionMap[t.symbol]) positionMap[t.symbol] = { shares: 0, totalCost: 0, company: t.company };
+    const p = positionMap[t.symbol];
+    if (t.type === 'BUY') {
+      p.shares += t.shares;
+      p.totalCost += t.total;
+    } else if (t.type === 'SELL' && p.shares > 0) {
+      const avgCost = p.totalCost / p.shares;
+      p.totalCost -= avgCost * t.shares;
+      p.shares -= t.shares;
+    }
+  }
+
+  const openPositions = Object.entries(positionMap)
+    .filter(([_, p]) => p.shares > 0)
+    .map(([symbol, p]) => ({ _id: symbol, shares: p.shares, totalCost: p.totalCost, company: p.company }));
 
   console.log('=== PAPER TRADING PORTFOLIO ===');
   console.log('Date:', new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }));

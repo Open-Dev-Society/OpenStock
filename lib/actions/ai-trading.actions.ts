@@ -4,6 +4,7 @@ import { connectToDatabase } from '@/database/mongoose';
 import { AITradingConfigModel } from '@/database/models/paper-trading.model';
 import { revalidatePath } from 'next/cache';
 import { getAccountOverview, getPositions, buyStock, sellStock } from '@/lib/actions/paper-trading.actions';
+import { isMarketOpen, getMarketStatus } from '@/lib/utils/market-hours';
 import mongoose from 'mongoose';
 
 // ── Config CRUD ──
@@ -115,17 +116,27 @@ interface AITradeResult {
     summary: string;
 }
 
-export async function runAITradeCycle(accountId: string): Promise<AITradeResult> {
+export async function runAITradeCycle(accountId: string, force: boolean = false): Promise<AITradeResult> {
     try {
         await connectToDatabase();
 
         // 1. Load AI config
         const config = await AITradingConfigModel.findOne({ accountId });
         if (!config || !config.apiKey) {
-            return { decisions: [], executed: [], errors: ['AI 未配置或缺少 API Key'], summary: '' };
+            return { decisions: [], executed: [], errors: ['AI not configured or missing API key'], summary: '' };
         }
 
-        // 2. Load portfolio
+        // 2. Check interval (skip for manual "force" runs)
+        if (!force && config.lastTradeAt && config.tradingIntervalMin > 0) {
+            const elapsed = Date.now() - new Date(config.lastTradeAt).getTime();
+            const intervalMs = config.tradingIntervalMin * 60 * 1000;
+            if (elapsed < intervalMs) {
+                const remaining = Math.ceil((intervalMs - elapsed) / 60000);
+                return { decisions: [], executed: [], errors: [], summary: `Skipped — last trade ${Math.floor(elapsed / 60000)}m ago, interval set to ${config.tradingIntervalMin}m. Next check in ~${remaining}m.` };
+            }
+        }
+
+        // 3. Load portfolio
         const overview = await getAccountOverview(accountId);
         const positions = await getPositions(accountId);
         if (!overview) {
@@ -142,13 +153,24 @@ export async function runAITradeCycle(accountId: string): Promise<AITradeResult>
                 return {
                     decisions: [],
                     executed: [],
-                    errors: [`交易周期已于 ${end.toLocaleDateString('zh-CN')} 到期。AI 自动交易已停止，您仍可手动操作。`],
+                    errors: [`Trading period ended ${end.toLocaleDateString('en-US')}. AI auto-trading stopped. You can still trade manually.`],
                     summary: '',
                 };
             }
         }
 
-        // 4. Build portfolio context
+        // 4. Check if market is open
+        if (!isMarketOpen()) {
+            const status = getMarketStatus();
+            return {
+                decisions: [],
+                executed: [],
+                errors: [`Market is currently closed (${status.label}). AI trading only runs during US market hours (Mon-Fri, 9:30 AM - 4:00 PM ET). ${status.nextOpen}.`],
+                summary: '',
+            };
+        }
+
+        // 5. Build portfolio context
         const totalValue = account.balance + positions.reduce((sum: number, p: any) => sum + p.marketValue, 0);
         const portfolioLines = [
             `账户总资产: $${totalValue.toFixed(2)}`,
@@ -248,7 +270,7 @@ ${portfolioText}
                 if (dec.action === 'BUY' && dec.shares && dec.shares > 0) {
                     const result = await buyStock(accountId, dec.symbol.toUpperCase(), dec.symbol.toUpperCase(), dec.shares);
                     if (result.success) {
-                        const priceMatch = result.message.match(/\$([\d.]+)/g);
+                        const priceMatch = (result.message || '').match(/\$([\d.]+)/g);
                         const price = priceMatch && priceMatch.length >= 2 ? parseFloat(priceMatch[1].replace('$', '')) : 0;
                         executed.push({ symbol: dec.symbol.toUpperCase(), action: 'BUY', shares: dec.shares, price: price || 0, total: (price || 0) * dec.shares });
                     } else {
@@ -257,7 +279,7 @@ ${portfolioText}
                 } else if (dec.action === 'SELL' && dec.shares && dec.shares > 0) {
                     const result = await sellStock(accountId, dec.symbol.toUpperCase(), dec.shares);
                     if (result.success) {
-                        const priceMatch = result.message.match(/\$([\d.]+)/g);
+                        const priceMatch = (result.message || '').match(/\$([\d.]+)/g);
                         const price = priceMatch && priceMatch.length >= 2 ? parseFloat(priceMatch[1].replace('$', '')) : 0;
                         executed.push({ symbol: dec.symbol.toUpperCase(), action: 'SELL', shares: dec.shares, price: price || 0, total: (price || 0) * dec.shares });
                     } else {

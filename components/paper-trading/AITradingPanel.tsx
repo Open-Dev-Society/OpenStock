@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Bot, Play, Save, Settings, Shield, TrendingUp, Zap, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { Bot, Play, Save, Settings, Shield, TrendingUp, Zap, ChevronDown, ChevronRight, Loader2, AlertCircle, Activity } from 'lucide-react';
 
 interface AIConfig {
     enabled: boolean;
@@ -63,6 +63,7 @@ export default function AITradingPanel({ accountId, userId }: { accountId: strin
     const [running, setRunning] = useState(false);
     const [result, setResult] = useState<AITradeResult | null>(null);
     const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+    const [marketStatus, setMarketStatus] = useState<{ isOpen: boolean; label: string; nextOpen: string } | null>(null);
 
     // Form state
     const [apiEndpoint, setApiEndpoint] = useState('');
@@ -92,6 +93,17 @@ export default function AITradingPanel({ accountId, userId }: { accountId: strin
 
     useEffect(() => {
         loadConfig();
+        // Check market status
+        import('@/lib/utils/market-hours').then(({ getMarketStatus }) => {
+            setMarketStatus(getMarketStatus());
+        });
+        // Refresh every 60s
+        const interval = setInterval(() => {
+            import('@/lib/utils/market-hours').then(({ getMarketStatus: gms }) => {
+                setMarketStatus(gms());
+            });
+        }, 60000);
+        return () => clearInterval(interval);
     }, [loadConfig]);
 
     const handleSave = async () => {
@@ -120,7 +132,7 @@ export default function AITradingPanel({ accountId, userId }: { accountId: strin
     const handleToggle = async () => {
         const newEnabled = !config?.enabled;
         const { toggleAITrading } = await import('@/lib/actions/ai-trading.actions');
-        const res = await toggleAITrading(userId, newEnabled);
+        const res = await toggleAITrading(accountId, newEnabled);
         if (res.success) {
             setConfig(prev => prev ? { ...prev, enabled: newEnabled } : null);
             setMessage({ text: newEnabled ? 'AI auto-trading enabled' : 'AI auto-trading stopped', type: 'success' });
@@ -132,7 +144,7 @@ export default function AITradingPanel({ accountId, userId }: { accountId: strin
         setResult(null);
         setMessage(null);
         const { runAITradeCycle } = await import('@/lib/actions/ai-trading.actions');
-        const res = await runAITradeCycle(userId);
+        const res = await runAITradeCycle(accountId, true);
         setResult(res);
         setRunning(false);
         if (res.errors.length > 0) {
@@ -177,6 +189,16 @@ export default function AITradingPanel({ accountId, userId }: { accountId: strin
                                     Running
                                 </span>
                             )}
+                            {marketStatus && (
+                                <span className={`text-xs font-normal flex items-center gap-1 ${
+                                    marketStatus.isOpen ? 'text-green-400' : 'text-yellow-400'
+                                }`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full inline-block ${
+                                        marketStatus.isOpen ? 'bg-green-400 animate-pulse' : 'bg-yellow-400'
+                                    }`} />
+                                    {marketStatus.isOpen ? 'Market Open' : 'Market Closed'}
+                                </span>
+                            )}
                         </h3>
                         <p className="text-xs text-gray-500">
                             {config?.enabled
@@ -189,11 +211,12 @@ export default function AITradingPanel({ accountId, userId }: { accountId: strin
                     {config?.enabled && (
                         <button
                             onClick={e => { e.stopPropagation(); handleRun(); }}
-                            disabled={running}
+                            disabled={running || (marketStatus !== null && !marketStatus.isOpen)}
                             className="bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1"
+                            title={marketStatus && !marketStatus.isOpen ? `Market closed (${marketStatus.label})` : 'Run AI trade cycle'}
                         >
                             {running ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
-                            Manual Run
+                            {running ? 'Running...' : 'Manual Run'}
                         </button>
                     )}
                     {expanded ? <ChevronDown className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}

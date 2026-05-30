@@ -166,7 +166,8 @@ export async function getAccountOverview(accountId: string, userId?: string, ini
                 $group: {
                     _id: '$symbol',
                     shares: { $sum: { $cond: [{ $eq: ['$type', 'BUY'] }, '$shares', { $multiply: ['$shares', -1] }] } },
-                    totalCost: { $sum: { $cond: [{ $eq: ['$type', 'BUY'] }, '$total', 0] } },
+                    totalBuyShares: { $sum: { $cond: [{ $eq: ['$type', 'BUY'] }, '$shares', 0] } },
+                    totalBuyCost: { $sum: { $cond: [{ $eq: ['$type', 'BUY'] }, '$total', 0] } },
                     totalProceeds: { $sum: { $cond: [{ $eq: ['$type', 'SELL'] }, '$total', 0] } },
                     company: { $first: '$company' },
                 }
@@ -208,7 +209,8 @@ export async function getPositions(accountId: string) {
                 $group: {
                     _id: '$symbol',
                     shares: { $sum: { $cond: [{ $eq: ['$type', 'BUY'] }, '$shares', { $multiply: ['$shares', -1] }] } },
-                    totalCost: { $sum: { $cond: [{ $eq: ['$type', 'BUY'] }, '$total', 0] } },
+                    totalBuyShares: { $sum: { $cond: [{ $eq: ['$type', 'BUY'] }, '$shares', 0] } },
+                    totalBuyCost: { $sum: { $cond: [{ $eq: ['$type', 'BUY'] }, '$total', 0] } },
                     totalProceeds: { $sum: { $cond: [{ $eq: ['$type', 'SELL'] }, '$total', 0] } },
                     company: { $first: '$company' },
                 }
@@ -225,10 +227,13 @@ export async function getPositions(accountId: string) {
         const enriched = positions.map((pos: any, i: number) => {
             const currentPrice = quotes[i]?.c || 0;
             const roundedPrice = Math.round(currentPrice * 100) / 100;
-            const avgCost = pos.totalCost / pos.shares;
+            // avgCost = average purchase price per share (total buy cost / total buy shares)
+            const avgCost = pos.totalBuyShares > 0 ? pos.totalBuyCost / pos.totalBuyShares : 0;
+            // costBasis = proportional cost for remaining shares after partial sells
+            const costBasis = avgCost * pos.shares;
             const marketValue = +(pos.shares * roundedPrice).toFixed(2);
-            const pl = +(marketValue - pos.totalCost).toFixed(2);
-            const plPercent = pos.totalCost > 0 ? +((pl / pos.totalCost) * 100).toFixed(2) : 0;
+            const pl = +(marketValue - costBasis).toFixed(2);
+            const plPercent = costBasis > 0 ? +((pl / costBasis) * 100).toFixed(2) : 0;
 
             return {
                 symbol: pos._id,
