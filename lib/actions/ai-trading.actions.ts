@@ -9,10 +9,12 @@ import mongoose from 'mongoose';
 
 // ── Config CRUD ──
 
-export async function getAIConfig(accountId: string) {
+export async function getAIConfig(accountId: string, userId?: string) {
     try {
         await connectToDatabase();
-        const config = await AITradingConfigModel.findOne({ accountId });
+        const query: any = { accountId };
+        if (userId) query.userId = userId;
+        const config = await AITradingConfigModel.findOne(query);
         if (!config) {
             return {
                 enabled: false,
@@ -217,17 +219,19 @@ ${portfolioText}
         // 6. Call LLM
         let aiResponse: string;
         try {
-            const proxyUrl = process.env.HTTPS_PROXY || 'http://127.0.0.1:7890';
-            const { ProxyAgent } = await import('undici');
+            const proxyUrl = process.env.HTTPS_PROXY;
+            let dispatcher: any = undefined;
             const undici = await import('undici');
-
-            const dispatcher = new ProxyAgent(proxyUrl);
+            if (proxyUrl) {
+                const { ProxyAgent } = await import('undici');
+                dispatcher = new ProxyAgent(proxyUrl);
+            }
 
             // 30s timeout for LLM call
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-            const resp = await undici.fetch(config.apiEndpoint, {
+            const fetchOptions: any = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -242,9 +246,10 @@ ${portfolioText}
                     temperature: 0.3,
                     max_tokens: 1000,
                 }),
-                dispatcher,
                 signal: controller.signal,
-            });
+            };
+            if (dispatcher) fetchOptions.dispatcher = dispatcher;
+            const resp = await undici.fetch(config.apiEndpoint, fetchOptions);
             clearTimeout(timeoutId);
 
             const json = await resp.json() as any;
@@ -277,7 +282,7 @@ ${portfolioText}
                     const result = await buyStock(accountId, dec.symbol.toUpperCase(), dec.symbol.toUpperCase(), dec.shares);
                     if (result.success) {
                         const priceMatch = (result.message || '').match(/\$([\d.]+)/g);
-                        const price = priceMatch && priceMatch.length >= 2 ? parseFloat(priceMatch[1].replace('$', '')) : 0;
+                        const price = priceMatch && priceMatch.length >= 1 ? parseFloat(priceMatch[0].replace('$', '')) : 0;
                         executed.push({ symbol: dec.symbol.toUpperCase(), action: 'BUY', shares: dec.shares, price: price || 0, total: (price || 0) * dec.shares });
                     } else {
                         errors.push(`${dec.symbol} 买入失败: ${result.error}`);
@@ -286,7 +291,7 @@ ${portfolioText}
                     const result = await sellStock(accountId, dec.symbol.toUpperCase(), dec.shares);
                     if (result.success) {
                         const priceMatch = (result.message || '').match(/\$([\d.]+)/g);
-                        const price = priceMatch && priceMatch.length >= 2 ? parseFloat(priceMatch[1].replace('$', '')) : 0;
+                        const price = priceMatch && priceMatch.length >= 1 ? parseFloat(priceMatch[0].replace('$', '')) : 0;
                         executed.push({ symbol: dec.symbol.toUpperCase(), action: 'SELL', shares: dec.shares, price: price || 0, total: (price || 0) * dec.shares });
                     } else {
                         errors.push(`${dec.symbol} 卖出失败: ${result.error}`);

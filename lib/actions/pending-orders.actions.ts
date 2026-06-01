@@ -115,8 +115,8 @@ export async function createPendingOrder(
             type,
             shares,
             orderType,
-            limitPrice: limitPrice || null,
-            stopPrice: stopPrice || null,
+            limitPrice: limitPrice ?? null,
+            stopPrice: stopPrice ?? null,
             status: 'PENDING',
             createdAt: new Date(),
             executedAt: null,
@@ -193,25 +193,36 @@ export async function getAllPendingOrders(): Promise<PendingOrder[]> {
  * Returns true if executed, false if still pending.
  */
 async function attemptExecuteOrder(orderId: string): Promise<boolean> {
-    try {
-        const coll = await getPendingOrdersCollection();
+    const coll = await getPendingOrdersCollection();
 
-        // Atomically claim the order (prevents TOCTOU race when two processes try to execute the same order)
-        const order = await coll.findOneAndUpdate(
-            { _id: new mongoose.Types.ObjectId(orderId), status: 'PENDING' },
-            { $set: { status: 'PROCESSING', processingStartedAt: new Date() } },
-            { returnDocument: 'before' }
-        );
-        if (!order) return false; // Already claimed or doesn't exist
+    // Atomically claim the order (prevents TOCTOU race when two processes try to execute the same order)
+    const order = await coll.findOneAndUpdate(
+        { _id: new mongoose.Types.ObjectId(orderId), status: 'PENDING' },
+        { $set: { status: 'PROCESSING', processingStartedAt: new Date() } },
+        { returnDocument: 'before' }
+    );
+    if (!order) return false; // Already claimed or doesn't exist
+
+    // Helper to release the PROCESSING lock back to PENDING
+    const releaseLock = () =>
+        coll.updateOne({ _id: order._id }, { $set: { status: 'PENDING' }, $unset: { processingStartedAt: '' } });
+
+    try {
 
         // Market must be open to execute
-        if (!isMarketOpen()) return false;
+        if (!isMarketOpen()) {
+            await releaseLock();
+            return false;
+        }
 
         // Get current price
         const { getQuote } = await import('@/lib/actions/finnhub.actions');
         const quote = await getQuote(order.symbol);
         const currentPrice = quote?.c || 0;
-        if (!currentPrice) return false;
+        if (!currentPrice) {
+            await releaseLock();
+            return false;
+        }
 
         const roundedPrice = Math.round(currentPrice * 100) / 100;
 
@@ -245,7 +256,10 @@ async function attemptExecuteOrder(orderId: string): Promise<boolean> {
                 break;
         }
 
-        if (!shouldExecute) return false;
+        if (!shouldExecute) {
+            await releaseLock();
+            return false;
+        }
 
         // Execute the trade
         let result;
@@ -270,6 +284,8 @@ async function attemptExecuteOrder(orderId: string): Promise<boolean> {
         }
     } catch (error: any) {
         console.error(`Error executing order ${orderId}:`, error);
+        // Ensure the order isn't stuck in PROCESSING on unexpected errors
+        try { await releaseLock(); } catch {}
         return false;
     }
 }

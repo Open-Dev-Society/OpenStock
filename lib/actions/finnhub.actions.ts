@@ -142,7 +142,15 @@ export async function getQuote(symbol: string) {
     try {
         const url = `${FINNHUB_BASE_URL}/quote?symbol=${encodeURIComponent(symbol)}&token=${token}`;
         // No caching for real-time price
-        return await fetchJSON<FinnhubQuote>(url, 0);
+        const data = await fetchJSON<FinnhubQuote>(url, 0);
+        // Write cache file so the stale fallback works on next error
+        try {
+            const urlHash = crypto.createHash('md5').update(url).digest('hex');
+            const cacheFile = path.join(FINNHUB_CACHE_DIR, `${urlHash}.json`);
+            fs.mkdirSync(FINNHUB_CACHE_DIR, { recursive: true });
+            fs.writeFileSync(cacheFile, JSON.stringify({ ts: Date.now(), data }));
+        } catch { /* cache write failure is non-fatal */ }
+        return data;
     } catch (e) {
         console.error('Error fetching quote for', symbol, e);
         // Fallback: try stale cache (up to 1 hour old)

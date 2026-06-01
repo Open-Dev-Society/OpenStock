@@ -596,7 +596,7 @@ export default function PaperTradingDashboard({ userId, accountId }: { userId: s
                                         {sellSymbol === pos.symbol && (
                                             <tr>
                                                 <td colSpan={7} className="px-0 py-0">
-                                                    <div className="bg-yellow-500/5 border-y border-yellow-500/20 px-5 py-4 mx-0 animate-slideDown">
+                                                    <div className="bg-yellow-500/5 border-y border-yellow-500/20 px-5 py-4 mx-0 animate-slide-down">
                                                         <div className="flex items-center justify-between mb-3">
                                                             <h4 className="text-sm font-semibold text-white">
                                                                 Sell {pos.symbol}

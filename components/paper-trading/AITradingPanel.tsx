@@ -77,7 +77,7 @@ export default function AITradingPanel({ accountId, userId }: { accountId: strin
 
     const loadConfig = useCallback(async () => {
         const { getAIConfig } = await import('@/lib/actions/ai-trading.actions');
-        const cfg = await getAIConfig(accountId);
+        const cfg = await getAIConfig(accountId, userId);
         if (cfg) {
             setConfig(cfg);
             setApiEndpoint(cfg.apiEndpoint);
