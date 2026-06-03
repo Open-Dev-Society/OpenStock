@@ -88,10 +88,9 @@ async function doFetch<T>(url: string, timeoutMs = 10000): Promise<T> {
 
     // Proxy support: use system proxy if available (e.g., Clash/V2Ray on 127.0.0.1:7890)
     // Must use undici.fetch (not global fetch) for dispatcher parameter to work
+    // Use dynamic import (not require) so Next.js bundler doesn't swallow the error
     let actualFetch: (url: string | URL, init?: any) => Promise<Response> = globalThis.fetch;
-    let useProxy = false;
     try {
-        const undici = require('undici');
         const proxyUrl =
             process.env.HTTPS_PROXY ||
             process.env.https_proxy ||
@@ -99,10 +98,9 @@ async function doFetch<T>(url: string, timeoutMs = 10000): Promise<T> {
             process.env.http_proxy ||
             '';
         if (proxyUrl) {
-            const dispatcher = new undici.ProxyAgent(proxyUrl);
-            // Wrap undici.fetch with pre-configured dispatcher
-            actualFetch = (url: string | URL, init?: any) => undici.fetch(url, { ...init, dispatcher });
-            useProxy = true;
+            const { ProxyAgent, fetch: undiciFetch } = await import('undici');
+            const dispatcher = new ProxyAgent(proxyUrl);
+            actualFetch = (url: string | URL, init?: any) => undiciFetch(url, { ...init, dispatcher });
         }
     } catch {
         // undici or proxy not available, use global fetch

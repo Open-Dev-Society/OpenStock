@@ -90,6 +90,7 @@ export default function PaperTradingDashboard({ userId, accountId }: { userId: s
     const [sellStopPrice, setSellStopPrice] = useState('');
 
     // Setup / Reset state
+    const [tradeFilter, setTradeFilter] = useState('');
     const [showResetDialog, setShowResetDialog] = useState(false);
     const [setupCapital, setSetupCapital] = useState('100000');
     const [setupPeriod, setSetupPeriod] = useState('3m');
@@ -312,6 +313,7 @@ export default function PaperTradingDashboard({ userId, accountId }: { userId: s
     const accInfo = account?.account;
     const actualTotalPL = accInfo ? (accInfo.balance + totalMV) - accInfo.initialCapital : 0;
     const remaining = daysRemaining(accInfo?.endDate ?? null);
+    const filteredTrades = tradeFilter ? trades.filter(t => t.symbol.toUpperCase().includes(tradeFilter.toUpperCase())) : trades;
 
     // ════════ LOADING ════════
     if (!dataLoaded) {
@@ -697,9 +699,32 @@ export default function PaperTradingDashboard({ userId, accountId }: { userId: s
 
             {/* ── Trade History ── */}
             <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden">
-                <div className="px-5 py-4 border-b border-white/10"><h3 className="text-lg font-semibold text-white">Trade History</h3></div>
+                <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-white">Trade History</h3>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={tradeFilter}
+                            onChange={e => setTradeFilter(e.target.value.toUpperCase())}
+                            placeholder="Filter by symbol…"
+                            className="bg-black/40 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-white text-xs focus:outline-none focus:border-teal-500 w-40 placeholder:text-gray-600"
+                        />
+                        <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        {tradeFilter && (
+                            <button onClick={() => setTradeFilter('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
+                </div>
                 {trades.length === 0 ? (
                     <div className="p-8 text-center text-gray-500">No trades yet</div>
+                ) : filteredTrades.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500">No trades match "{tradeFilter}"</div>
                 ) : (
                     <div className="overflow-x-auto max-h-80 overflow-y-auto">
                         <table className="w-full text-sm">
@@ -709,7 +734,7 @@ export default function PaperTradingDashboard({ userId, accountId }: { userId: s
                                 <th className="text-right px-5 py-3 font-medium">Price</th><th className="text-right px-5 py-3 font-medium">Total</th>
                             </tr></thead>
                             <tbody className="divide-y divide-white/5">
-                                {trades.map(t => (
+                                {filteredTrades.map(t => (
                                     <tr key={t._id} className="hover:bg-white/5 transition-colors">
                                         <td className="px-5 py-3 text-gray-400 text-xs">{new Date(t.timestamp).toLocaleString()}</td>
                                         <td className="px-5 py-3"><span className="text-white font-semibold">{t.symbol}</span>{t.company && <p className="text-xs text-gray-500">{t.company}</p>}</td>

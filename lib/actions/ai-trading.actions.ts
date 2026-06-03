@@ -36,6 +36,82 @@ export async function getAIConfig(accountId: string, userId?: string) {
     }
 }
 
+function normalizeEndpoint(endpoint: string): string {
+    try {
+        const parsed = new URL(endpoint);
+        if (parsed.pathname === '/' || parsed.pathname === '') {
+            return `${endpoint.replace(/\/+$/, '')}/chat/completions`;
+        }
+    } catch {
+        // If URL parsing fails, use as-is
+    }
+    return endpoint;
+}
+
+async function testAIConnection(endpoint: string, apiKey: string, model: string): Promise<{ ok: boolean; error?: string }> {
+    try {
+        // Use global fetch (Next.js polyfilled version) with proxy from env
+        const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+        let dispatcher: any = undefined;
+        try {
+            const undici = await import('undici');
+            if (proxyUrl) {
+                dispatcher = new undici.ProxyAgent(proxyUrl);
+            }
+        } catch {
+            // undici import failed, try without proxy
+        }
+
+        const url = normalizeEndpoint(endpoint);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const fetchOptions: any = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+                model,
+                messages: [{ role: 'user', content: 'Reply with just: ok' }],
+                max_tokens: 10,
+            }),
+            signal: controller.signal,
+        };
+        if (dispatcher) fetchOptions.dispatcher = dispatcher;
+
+        let resp: Response;
+        try {
+            resp = await globalThis.fetch(url, fetchOptions);
+        } catch {
+            // If globalThis.fetch fails (e.g. no proxy support), try undici directly
+            const undici = await import('undici');
+            resp = await undici.fetch(url, fetchOptions);
+        }
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+            const text = await resp.text().catch(() => '');
+            return { ok: false, error: `HTTP ${resp.status}: ${text.slice(0, 100)}` };
+        }
+
+        const json = await resp.json() as any;
+        if (!json.choices?.[0]?.message) {
+            return { ok: false, error: 'API returned unexpected response format' };
+        }
+        // DeepSeek reasoning models put response in reasoning_content instead of content
+        const message = json.choices[0].message;
+        if (!message.content && !message.reasoning_content) {
+            return { ok: false, error: 'API response has no content' };
+        }
+
+        return { ok: true };
+    } catch (err: any) {
+        return { ok: false, error: err.message };
+    }
+}
+
 export async function saveAIConfig(accountId: string, userId: string, data: {
     apiEndpoint?: string;
     apiKey?: string;
@@ -50,14 +126,45 @@ export async function saveAIConfig(accountId: string, userId: string, data: {
         await connectToDatabase();
         const config = await AITradingConfigModel.findOneAndUpdate(
             { accountId },
-            { $set: { ...data, accountId, userId } },
+            { $set: { ...data, accountId, userId, lastTradeAt: null } },
             { upsert: true, new: true }
         );
         revalidatePath('/paper-trading');
+
+        // Only test connection if apiKey and apiEndpoint are provided
+        const apiKey = data.apiKey || config.apiKey;
+        const apiEndpoint = data.apiEndpoint || config.apiEndpoint;
+        const model = data.model || config.model;
+
+        if (apiKey && apiEndpoint) {
+            const testResult = await testAIConnection(apiEndpoint, apiKey, model);
+
+            if (testResult.ok) {
+                // Auto-enable on successful connection test
+                await AITradingConfigModel.findOneAndUpdate(
+                    { accountId },
+                    { $set: { enabled: true } }
+                );
+                const updated = await AITradingConfigModel.findOne({ accountId }).lean();
+                revalidatePath('/paper-trading');
+                return {
+                    success: true,
+                    config: JSON.parse(JSON.stringify(updated)),
+                    connectionTest: { ok: true, message: 'Connected ✓ AI auto-trading enabled' },
+                };
+            } else {
+                return {
+                    success: true,
+                    config: JSON.parse(JSON.stringify(config)),
+                    connectionTest: { ok: false, message: `Connection failed: ${testResult.error}` },
+                };
+            }
+        }
+
         return { success: true, config: JSON.parse(JSON.stringify(config)) };
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error saving AI config:', error);
-        return { success: false, error: 'Failed to save config' };
+        return { success: false, error: `Failed to save config: ${error.message}` };
     }
 }
 
@@ -249,11 +356,16 @@ ${portfolioText}
                 signal: controller.signal,
             };
             if (dispatcher) fetchOptions.dispatcher = dispatcher;
-            const resp = await undici.fetch(config.apiEndpoint, fetchOptions);
+
+            // Normalize endpoint: auto-append /chat/completions if base URL only
+            const endpoint = normalizeEndpoint(config.apiEndpoint);
+
+            const resp = await undici.fetch(endpoint, fetchOptions);
             clearTimeout(timeoutId);
 
             const json = await resp.json() as any;
-            aiResponse = json.choices?.[0]?.message?.content || '';
+            const msg = json.choices?.[0]?.message;
+            aiResponse = msg?.content || msg?.reasoning_content || '';
         } catch (err: any) {
             return { decisions: [], executed: [], errors: [`AI API 调用失败: ${err.message}`], summary: '' };
         }

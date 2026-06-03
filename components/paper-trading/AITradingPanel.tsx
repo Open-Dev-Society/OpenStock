@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Bot, Play, Save, Settings, Shield, TrendingUp, Zap, ChevronDown, ChevronRight, Loader2, AlertCircle, Activity } from 'lucide-react';
+import { Bot, Save, Settings, Shield, TrendingUp, Zap, ChevronDown, ChevronRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 interface AIConfig {
     enabled: boolean;
@@ -14,13 +14,6 @@ interface AIConfig {
     stopLossPct: number;
     tradingIntervalMin: number;
     lastTradeAt: string | null;
-}
-
-interface AITradeResult {
-    decisions: { action: string; symbol: string; shares?: number; reason: string }[];
-    executed: { symbol: string; action: string; shares: number; price: number; total: number }[];
-    errors: string[];
-    summary: string;
 }
 
 const STRATEGY_INFO: Record<string, { icon: typeof Zap; label: string; desc: string; color: string }> = {
@@ -60,8 +53,6 @@ export default function AITradingPanel({ accountId, userId }: { accountId: strin
     const [config, setConfig] = useState<AIConfig | null>(null);
     const [expanded, setExpanded] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [running, setRunning] = useState(false);
-    const [result, setResult] = useState<AITradeResult | null>(null);
     const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
     const [marketStatus, setMarketStatus] = useState<{ isOpen: boolean; label: string; nextOpen: string } | null>(null);
 
@@ -74,6 +65,7 @@ export default function AITradingPanel({ accountId, userId }: { accountId: strin
     const [maxPositionPct, setMaxPositionPct] = useState(25);
     const [stopLossPct, setStopLossPct] = useState(-10);
     const [tradingIntervalMin, setTradingIntervalMin] = useState(60);
+    const [showKey, setShowKey] = useState(false);
 
     const loadConfig = useCallback(async () => {
         const { getAIConfig } = await import('@/lib/actions/ai-trading.actions');
@@ -122,7 +114,15 @@ export default function AITradingPanel({ accountId, userId }: { accountId: strin
         });
         setSaving(false);
         if (res.success) {
-            setMessage({ text: 'AI config saved', type: 'success' });
+            if (res.connectionTest) {
+                if (res.connectionTest.ok) {
+                    setMessage({ text: res.connectionTest.message, type: 'success' });
+                } else {
+                    setMessage({ text: res.connectionTest.message, type: 'error' });
+                }
+            } else {
+                setMessage({ text: 'AI config saved', type: 'success' });
+            }
             setConfig(res.config);
         } else {
             setMessage({ text: res.error || 'Save failed', type: 'error' });
@@ -136,23 +136,6 @@ export default function AITradingPanel({ accountId, userId }: { accountId: strin
         if (res.success) {
             setConfig(prev => prev ? { ...prev, enabled: newEnabled } : null);
             setMessage({ text: newEnabled ? 'AI auto-trading enabled' : 'AI auto-trading stopped', type: 'success' });
-        }
-    };
-
-    const handleRun = async () => {
-        setRunning(true);
-        setResult(null);
-        setMessage(null);
-        const { runAITradeCycle } = await import('@/lib/actions/ai-trading.actions');
-        const res = await runAITradeCycle(accountId, true);
-        setResult(res);
-        setRunning(false);
-        if (res.errors.length > 0) {
-            setMessage({ text: res.errors[0], type: 'error' });
-        } else if (res.executed.length > 0) {
-            setMessage({ text: `${res.executed.length} trade(s) executed`, type: 'success' });
-        } else {
-            setMessage({ text: 'AI analysis complete — no action needed', type: 'success' });
         }
     };
 
@@ -208,17 +191,6 @@ export default function AITradingPanel({ accountId, userId }: { accountId: strin
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    {config?.enabled && (
-                        <button
-                            onClick={e => { e.stopPropagation(); handleRun(); }}
-                            disabled={running || (marketStatus !== null && !marketStatus.isOpen)}
-                            className="bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1"
-                            title={marketStatus && !marketStatus.isOpen ? `Market closed (${marketStatus.label})` : 'Run AI trade cycle'}
-                        >
-                            {running ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
-                            {running ? 'Running...' : 'Manual Run'}
-                        </button>
-                    )}
                     {expanded ? <ChevronDown className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}
                 </div>
             </div>
@@ -313,13 +285,22 @@ export default function AITradingPanel({ accountId, userId }: { accountId: strin
                         </div>
                         <div className="md:col-span-2">
                             <label className="block text-xs text-gray-400 mb-1">API Key</label>
-                            <input
-                                type="password"
-                                value={apiKey}
-                                onChange={e => setApiKey(e.target.value)}
-                                placeholder="sk-..."
-                                className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-mono focus:outline-none focus:border-teal-500"
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showKey ? 'text' : 'password'}
+                                    value={apiKey}
+                                    onChange={e => setApiKey(e.target.value)}
+                                    placeholder="sk-..."
+                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 pr-10 text-white text-sm font-mono focus:outline-none focus:border-teal-500"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowKey(!showKey)}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                                >
+                                    {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -382,71 +363,7 @@ export default function AITradingPanel({ accountId, userId }: { accountId: strin
                             <Save className="w-4 h-4" />
                             {saving ? 'Saving...' : 'Save Config'}
                         </button>
-                        {config?.enabled && (
-                            <button
-                                onClick={handleRun}
-                                disabled={running}
-                                className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-                            >
-                                {running ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-                                {running ? 'Analyzing...' : 'Run AI Trade'}
-                            </button>
-                        )}
                     </div>
-
-                    {/* AI Result */}
-                    {result && (
-                        <div className="space-y-3 mt-2">
-                            {/* Decisions */}
-                            {result.decisions.length > 0 && (
-                                <div>
-                                    <p className="text-xs text-gray-500 mb-2">AI Decisions</p>
-                                    <div className="space-y-1.5">
-                                        {result.decisions.map((d, i) => (
-                                            <div key={i} className={`flex items-center gap-2 text-sm px-3 py-2 rounded-lg ${
-                                                d.action === 'BUY' ? 'bg-green-500/10 text-green-400 border border-green-500/10' :
-                                                d.action === 'SELL' ? 'bg-red-500/10 text-red-400 border border-red-500/10' :
-                                                'bg-white/5 text-gray-400 border border-white/5'
-                                            }`}>
-                                                <span className="font-bold w-10">{d.action}</span>
-                                                <span className="text-white font-mono">{d.symbol}</span>
-                                                {d.shares && <span className="text-gray-400">{d.shares} shares</span>}
-                                                <span className="text-gray-500 text-xs ml-auto">{d.reason}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Executed */}
-                            {result.executed.length > 0 && (
-                                <div>
-                                    <p className="text-xs text-gray-500 mb-2">Executed Trades</p>
-                                    <div className="space-y-1.5">
-                                        {result.executed.map((t, i) => (
-                                            <div key={i} className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg bg-teal-500/10 border border-teal-500/10">
-                                                <span className={`font-bold w-10 ${t.action === 'BUY' ? 'text-green-400' : 'text-red-400'}`}>
-                                                    {t.action === 'BUY' ? 'BUY' : 'SELL'}
-                                                </span>
-                                                <span className="text-white font-mono">{t.symbol}</span>
-                                                <span className="text-gray-400">{t.shares} @ ${t.price.toFixed(2)}</span>
-                                                <span className="text-white ml-auto">${t.total.toFixed(2)}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Errors */}
-                            {result.errors.length > 0 && (
-                                <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/10 text-red-400 text-sm">
-                                    {result.errors.map((e, i) => (
-                                        <p key={i}>{e}</p>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
                 </div>
             )}
         </div>
