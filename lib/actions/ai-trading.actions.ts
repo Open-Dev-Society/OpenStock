@@ -126,7 +126,7 @@ export async function saveAIConfig(accountId: string, userId: string, data: {
         await connectToDatabase();
         const config = await AITradingConfigModel.findOneAndUpdate(
             { accountId },
-            { $set: { ...data, accountId, userId, lastTradeAt: null } },
+            { $set: { ...data, accountId, userId } },
             { upsert: true, new: true }
         );
         revalidatePath('/paper-trading');
@@ -414,13 +414,12 @@ ${portfolioText}
             }
         }
 
-        // Update lastTradeAt
-        if (executed.length > 0) {
-            await AITradingConfigModel.findOneAndUpdate(
-                { accountId },
-                { $set: { lastTradeAt: new Date() } }
-            );
-        }
+        // Update lastTradeAt after every cycle so the interval check
+        // works correctly even when AI returns HOLD decisions.
+        await AITradingConfigModel.findOneAndUpdate(
+            { accountId },
+            { $set: { lastTradeAt: new Date() } }
+        );
 
         revalidatePath('/paper-trading');
 
