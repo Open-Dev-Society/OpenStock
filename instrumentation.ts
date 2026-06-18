@@ -4,7 +4,7 @@
 // Edge Runtime doesn't support Node.js built-in modules (fs, path),
 // so we only start the scheduler in the Node.js bundle.
 
-if (process.env.NEXT_RUNTIME !== 'edge' && process.env.NODE_ENV === 'development') {
+if (process.env.NEXT_RUNTIME !== 'edge') {
     const { startAITradingScheduler } = await import('./lib/ai-trading-scheduler');
     startAITradingScheduler();
 }
