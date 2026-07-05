@@ -3,9 +3,13 @@
 import { getDateRange, validateArticle, formatArticle } from '@/lib/utils';
 import { POPULAR_STOCK_SYMBOLS } from '@/lib/constants';
 import { cache } from 'react';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as crypto from 'crypto';
 
 const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
 const NEXT_PUBLIC_FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY ?? '';
+const FINNHUB_CACHE_DIR = path.join(process.env.HOME || '/tmp', '.hermes', 'cache', 'finnhub');
 
 type FinnhubQuote = {
     c?: number;
@@ -33,17 +37,85 @@ const FINNHUB_EXCHANGE_SUFFIXES = new Set([
     'TA', 'TO', 'TW', 'TWO', 'V', 'VI', 'WA',
 ]);
 
-async function fetchJSON<T>(url: string, revalidateSeconds?: number): Promise<T> {
-    const options: RequestInit & { next?: { revalidate?: number } } = revalidateSeconds
-        ? { cache: 'force-cache', next: { revalidate: revalidateSeconds } }
-        : { cache: 'no-store' };
+async function fetchJSON<T>(url: string, revalidateSeconds?: number, timeoutMs = 10000): Promise<T> {
+    // Local file-based cache (works in dev mode unlike Next.js force-cache)
+    if (revalidateSeconds && revalidateSeconds > 0) {
+        const urlHash = crypto.createHash('md5').update(url).digest('hex');
+        const cacheFile = path.join(FINNHUB_CACHE_DIR, `${urlHash}.json`);
+        const now = Date.now();
 
-    const res = await fetch(url, options);
-    if (!res.ok) {
-        const text = await res.text().catch(() => '');
-        throw new Error(`Fetch failed ${res.status}: ${text}`);
+        try {
+            if (fs.existsSync(cacheFile)) {
+                const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+                if (now - cached.ts < revalidateSeconds * 1000) {
+                    return cached.data as T;
+                }
+            }
+        } catch {
+            // Corrupt cache, ignore
+        }
+
+        try {
+            const data = await doFetch<T>(url, timeoutMs);
+            try {
+                fs.mkdirSync(FINNHUB_CACHE_DIR, { recursive: true });
+                fs.writeFileSync(cacheFile, JSON.stringify({ ts: now, data }));
+            } catch {
+                // Cache write failure is non-fatal — still return the fresh data
+            }
+            return data;
+        } catch (e) {
+            // On fetch error, try to serve stale cache
+            try {
+                if (fs.existsSync(cacheFile)) {
+                    const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+                    console.warn(`Finnhub fetch failed, serving stale cache for: ${url.slice(0, 80)}...`);
+                    return cached.data as T;
+                }
+            } catch {}
+            throw e;
+        }
     }
-    return (await res.json()) as T;
+
+    // No caching (revalidateSeconds is 0 or undefined)
+    return doFetch<T>(url, timeoutMs);
+}
+
+// Low-level fetch with proxy support and timeout
+async function doFetch<T>(url: string, timeoutMs = 10000): Promise<T> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    // Proxy support: use system proxy if available (e.g., Clash/V2Ray on 127.0.0.1:7890)
+    // Must use undici.fetch (not global fetch) for dispatcher parameter to work
+    // Use dynamic import (not require) so Next.js bundler doesn't swallow the error
+    let actualFetch: (url: string | URL, init?: any) => Promise<Response> = globalThis.fetch;
+    try {
+        const proxyUrl =
+            process.env.HTTPS_PROXY ||
+            process.env.https_proxy ||
+            process.env.HTTP_PROXY ||
+            process.env.http_proxy ||
+            '';
+        if (proxyUrl) {
+            const { ProxyAgent, fetch: undiciFetch } = await import('undici');
+            const dispatcher = new ProxyAgent(proxyUrl);
+            actualFetch = (url: string | URL, init?: any) => undiciFetch(url, { ...init, dispatcher });
+        }
+    } catch {
+        // undici or proxy not available, use global fetch
+    }
+
+    try {
+        const res = await actualFetch(url, { signal: controller.signal });
+        if (!res.ok) {
+            const text = await res.text().catch(() => '');
+            throw new Error(`Fetch failed ${res.status}: ${text}`);
+        }
+        return (await res.json()) as T;
+    } finally {
+        clearTimeout(timer);
+    }
 }
 
 export { fetchJSON };
@@ -64,13 +136,34 @@ function getExchangeLabel(symbol: string, exchange?: string) {
 }
 
 export async function getQuote(symbol: string) {
+    const token = NEXT_PUBLIC_FINNHUB_API_KEY;
     try {
-        const token = NEXT_PUBLIC_FINNHUB_API_KEY;
         const url = `${FINNHUB_BASE_URL}/quote?symbol=${encodeURIComponent(symbol)}&token=${token}`;
         // No caching for real-time price
-        return await fetchJSON<FinnhubQuote>(url, 0);
+        const data = await fetchJSON<FinnhubQuote>(url, 0);
+        // Write cache file so the stale fallback works on next error
+        try {
+            const urlHash = crypto.createHash('md5').update(url).digest('hex');
+            const cacheFile = path.join(FINNHUB_CACHE_DIR, `${urlHash}.json`);
+            fs.mkdirSync(FINNHUB_CACHE_DIR, { recursive: true });
+            fs.writeFileSync(cacheFile, JSON.stringify({ ts: Date.now(), data }));
+        } catch { /* cache write failure is non-fatal */ }
+        return data;
     } catch (e) {
         console.error('Error fetching quote for', symbol, e);
+        // Fallback: try stale cache (up to 1 hour old)
+        try {
+            const urlHash = crypto.createHash('md5').update(`${FINNHUB_BASE_URL}/quote?symbol=${encodeURIComponent(symbol)}&token=${token}`).digest('hex');
+            const cacheFile = path.join(FINNHUB_CACHE_DIR, `${urlHash}.json`);
+            if (fs.existsSync(cacheFile)) {
+                const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+                const ageMin = (Date.now() - cached.ts) / 60000;
+                if (ageMin < 60) { // stale cache within 1 hour
+                    console.log(`Using stale cache for ${symbol} (${ageMin.toFixed(0)}min old)`);
+                    return cached.data as FinnhubQuote;
+                }
+            }
+        } catch { /* cache read failed, ignore */ }
         return null;
     }
 }
@@ -214,7 +307,9 @@ export const searchStocks = cache(async (query?: string): Promise<StockWithWatch
                         const profile = await fetchJSON<FinnhubCompanyProfile>(url, 3600);
                         return { sym, profile } as { sym: string; profile: FinnhubCompanyProfile | null };
                     } catch (e) {
-                        console.error('Error fetching profile2 for', sym, e);
+                        if ((e as Error)?.name !== 'AbortError') {
+                            console.error('Error fetching profile2 for', sym, (e as Error)?.message);
+                        }
                         return { sym, profile: null } as { sym: string; profile: FinnhubCompanyProfile | null };
                     }
                 })
