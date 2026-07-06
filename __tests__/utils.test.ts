@@ -5,6 +5,7 @@ import {
     formatChangePercent,
     getChangeColorClass,
     calculateNewsDistribution,
+    formatNumber,
 } from '@/lib/utils';
 
 describe('formatSymbolForTradingView', () => {
@@ -184,6 +185,25 @@ describe('getChangeColorClass', () => {
 
     it('returns red for negative', () => {
         expect(getChangeColorClass(-0.5)).toBe('text-red-500');
+    });
+});
+
+describe('formatNumber', () => {
+    // Finnhub's profile2 marketCapitalization is expressed in millions of USD,
+    // which formatNumber scales up by 1e6.
+    it('formats market caps (input in millions) into T/B/M/K suffixes', () => {
+        expect(formatNumber(3_000_000)).toBe('3.00T'); // 3,000,000M => $3T
+        expect(formatNumber(150_000)).toBe('150.00B'); // 150,000M => $150B
+        expect(formatNumber(150)).toBe('150.00M'); // 150M => $150M
+    });
+
+    it('returns N/A for missing or non-finite market caps', () => {
+        // Finnhub omits marketCapitalization for many symbols (e.g. ETFs); the
+        // watchlist passes that value straight through, so it must not render "NaN".
+        expect(formatNumber(undefined)).toBe('N/A');
+        expect(formatNumber(null)).toBe('N/A');
+        expect(formatNumber(NaN)).toBe('N/A');
+        expect(formatNumber(Infinity)).toBe('N/A');
     });
 });
 
