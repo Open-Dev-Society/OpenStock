@@ -29,7 +29,7 @@ export const sendSignUpEmail = inngest.createFunction(
             }
         });
 
-        await step.run('send-welcome-email', async () => {
+        const emailResult = await step.run('send-welcome-email', async () => {
             try {
 
                 const { data: { email, name } } = event;
@@ -37,6 +37,10 @@ export const sendSignUpEmail = inngest.createFunction(
 
                 console.log(`📧 Attempting to send welcome email to: ${email}`);
                 const result = await sendWelcomeEmail({ email, name, intro: introText });
+                if (result.status !== 'sent') {
+                    console.log(`Welcome email skipped for: ${email}`);
+                    return result;
+                }
                 console.log(`✅ Welcome email sent successfully to: ${email}`);
                 return result;
             } catch (error) {
@@ -45,10 +49,9 @@ export const sendSignUpEmail = inngest.createFunction(
             }
         })
 
-        return {
-            success: true,
-            message: 'Welcome email sent successfully'
-        }
+        return emailResult.status === 'sent'
+            ? { success: true, message: 'Welcome email sent successfully' }
+            : { success: true, message: 'Welcome email skipped because email credentials are not configured' };
     }
 )
 
