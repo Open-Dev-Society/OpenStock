@@ -1,35 +1,30 @@
 'use client';
 import { useEffect, useRef } from "react";
 
-const useTradingViewWidget = (scriptUrl: string, config: Record<string, unknown>, height: number | string = 600) => {
+const useTradingViewWidget = (scriptUrl: string, config: Record<string, unknown>) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const serializedConfig = JSON.stringify(config);
 
     useEffect(() => {
-        if (!containerRef.current) return;
+        const container = containerRef.current;
+        if (!container) return;
 
         // Clean up previous instance
-        containerRef.current.innerHTML = '';
+        container.innerHTML = '';
 
-        // Create wrapper with dynamic height support
-        // If autosize is true in config, we want 100% height/width
-        const isAutosize = config.autosize === true;
-        const styleHeight = isAutosize ? '100%' : `${height}px`;
-
-        containerRef.current.innerHTML = `<div class="tradingview-widget-container__widget" style="width: 100%; height: ${styleHeight};"></div>`;
+        container.innerHTML = '<div class="tradingview-widget-container__widget" style="width: 100%; height: 100%;"></div>';
 
         const script = document.createElement("script");
         script.src = scriptUrl;
         script.async = true;
-        script.innerHTML = JSON.stringify(config);
+        script.innerHTML = serializedConfig;
 
-        containerRef.current.appendChild(script);
+        container.appendChild(script);
 
         return () => {
-            if (containerRef.current) {
-                containerRef.current.innerHTML = '';
-            }
+            container.innerHTML = '';
         }
-    }, [scriptUrl, JSON.stringify(config), height]) // Use stringified config to avoid ref issues
+    }, [scriptUrl, serializedConfig])
 
     return containerRef;
 }
