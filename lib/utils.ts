@@ -119,7 +119,11 @@ export const formatPrice = (price: number) => {
 // Alias for consistency
 export const formatCurrency = formatPrice;
 
-export function formatNumber(num: number): string {
+export function formatNumber(num?: number | null): string {
+    // Guard against missing/invalid market caps (Finnhub omits this field for many
+    // symbols, e.g. ETFs). Without this, `num * 1e6` yields NaN and renders "NaN".
+    if (num === undefined || num === null || !Number.isFinite(num)) return 'N/A';
+
     // If number is small (likely already in millions from Finnhub), multiply by 1M to get actual value
     // Typical mega-cap is > 100B. 100B in millions is 100,000.
     // If we assume typical market cap input IS millions:
