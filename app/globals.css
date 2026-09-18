@@ -130,6 +130,14 @@
     --color-red-500: #FF495B;
     --color-orange-500: #FF8243;
     --color-purple-500: #D13BFF;
+
+    /* Animations */
+    --animate-slide-down: slide-down 0.2s ease-out;
+}
+
+@keyframes slide-down {
+    from { opacity: 0; max-height: 0; }
+    to   { opacity: 1; max-height: 300px; }
 }
 
 @layer base {
