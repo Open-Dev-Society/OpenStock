@@ -54,6 +54,27 @@ describe("getProviderConfig", () => {
     expect(config.apiKey).toBe("siray-key");
   });
 
+  it("returns orcarouter config when provider is orcarouter", () => {
+    process.env.ORCAROUTER_API_KEY = "orca-key";
+    const config = getProviderConfig("orcarouter");
+    expect(config.name).toBe("orcarouter");
+    expect(config.baseUrl).toBe("https://api.orcarouter.ai/v1");
+    expect(config.model).toBe("orcarouter/auto");
+    expect(config.apiKey).toBe("orca-key");
+  });
+
+  it("respects ORCAROUTER_MODEL env var", () => {
+    process.env.ORCAROUTER_MODEL = "openai/gpt-5.5";
+    const config = getProviderConfig("orcarouter");
+    expect(config.model).toBe("openai/gpt-5.5");
+  });
+
+  it("respects ORCAROUTER_BASE_URL env var", () => {
+    process.env.ORCAROUTER_BASE_URL = "https://custom.orcarouter.example/v1";
+    const config = getProviderConfig("orcarouter");
+    expect(config.baseUrl).toBe("https://custom.orcarouter.example/v1");
+  });
+
   it("reads AI_PROVIDER from env when no argument is given", () => {
     process.env.AI_PROVIDER = "minimax";
     process.env.MINIMAX_API_KEY = "k";
@@ -131,6 +152,13 @@ describe("callAIProvider", () => {
     );
   });
 
+  it("throws when ORCAROUTER_API_KEY is missing for orcarouter provider", async () => {
+    delete process.env.ORCAROUTER_API_KEY;
+    await expect(callAIProvider("hello", "orcarouter")).rejects.toThrow(
+      "ORCAROUTER_API_KEY is not set"
+    );
+  });
+
   it("calls Gemini API with correct format", async () => {
     process.env.GEMINI_API_KEY = "test-gemini-key";
 
@@ -199,6 +227,46 @@ describe("callAIProvider", () => {
     const [url, options] = mockFetch.mock.calls[0];
     expect(url).toBe("https://api.siray.ai/v1/chat/completions");
     expect(options.headers["Authorization"]).toBe("Bearer test-siray-key");
+  });
+
+  it("calls OrcaRouter API with OpenAI-compatible format", async () => {
+    process.env.ORCAROUTER_API_KEY = "test-orca-key";
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          choices: [{ message: { content: "Hello from OrcaRouter" } }],
+        }),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    const result = await callAIProvider("test prompt", "orcarouter");
+    expect(result).toBe("Hello from OrcaRouter");
+
+    const [url, options] = mockFetch.mock.calls[0];
+    expect(url).toBe("https://api.orcarouter.ai/v1/chat/completions");
+    expect(options.headers["Authorization"]).toBe("Bearer test-orca-key");
+    const body = JSON.parse(options.body);
+    expect(body.model).toBe("orcarouter/auto");
+    expect(body.messages[0].content).toBe("test prompt");
+    expect(body.temperature).toBe(0.7);
+  });
+
+  it("throws on empty OrcaRouter response", async () => {
+    process.env.ORCAROUTER_API_KEY = "k";
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ choices: [{ message: {} }] }),
+      })
+    );
+
+    await expect(callAIProvider("hello", "orcarouter")).rejects.toThrow(
+      "orcarouter returned empty response"
+    );
   });
 
   it("throws on API error response", async () => {
