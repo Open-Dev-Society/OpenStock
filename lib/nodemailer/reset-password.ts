@@ -40,6 +40,10 @@ export const sendPasswordResetEmail = async (
             </div>
         `;
 
+        if (!transporter) {
+            throw new Error('Email credentials are not configured');
+        }
+
         const info = await transporter.sendMail({
             from: `"Openstock" <${process.env.NODEMAILER_EMAIL}>`,
             to: email,

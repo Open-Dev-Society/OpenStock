@@ -11,7 +11,7 @@ import { sendPasswordResetEmail } from '@/lib/nodemailer/reset-password';
 
 describe('sendPasswordResetEmail', () => {
     const originalEnv = { ...process.env };
-    const sendMailMock = vi.mocked(transporter.sendMail);
+    const sendMailMock = vi.mocked(transporter!.sendMail);
 
     beforeEach(() => {
         process.env = {

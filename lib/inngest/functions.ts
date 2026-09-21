@@ -1,14 +1,11 @@
 import { inngest } from "@/lib/inngest/client";
 import { NEWS_SUMMARY_EMAIL_PROMPT, PERSONALIZED_WELCOME_EMAIL_PROMPT } from "@/lib/inngest/prompts";
-import { sendNewsSummaryEmail, sendWelcomeEmail } from "@/lib/nodemailer";
-import { getAllUsersForNewsEmail } from "@/lib/actions/user.actions";
-import { getWatchlistSymbolsByEmail } from "@/lib/actions/watchlist.actions";
-import { getNews } from "@/lib/actions/finnhub.actions";
-import { getFormattedTodayDate } from "@/lib/utils";
+import { sendWelcomeEmail } from "@/lib/nodemailer";
 import { callAIProviderWithFallback } from "@/lib/ai-provider";
 
 export const sendSignUpEmail = inngest.createFunction(
-    { id: 'sign-up-email', triggers: [{ event: 'app/user.created' }] },
+    { id: 'sign-up-email' },
+    { event: 'app/user.created' },
     async ({ event, step }) => {
         const userProfile = `
             - Country: ${event.data.country}
@@ -54,7 +51,8 @@ export const sendSignUpEmail = inngest.createFunction(
 
 // Rename to Weekly
 export const sendWeeklyNewsSummary = inngest.createFunction(
-    { id: 'weekly-news-summary', triggers: [{ event: 'app/send.weekly.news' }, { cron: '0 9 * * 1' }] }, // Every Monday at 9AM
+    { id: 'weekly-news-summary' },
+    [{ event: 'app/send.weekly.news' }, { cron: '0 9 * * 1' }], // Every Monday at 9AM
     async ({ step }) => {
         // Step 1: Fetch General Market News
         const articles = await step.run('fetch-general-news', async () => {
@@ -114,7 +112,6 @@ export const sendWeeklyNewsSummary = inngest.createFunction(
 
             // --- HTML EMAIL TEMPLATE ---
             // Using inline styles for compatibility. Accent Color: Teal (#20c997)
-            const logoUrl = "https://raw.githubusercontent.com/ravixalgorithm/OpenStock/main/public/assets/images/logo.png";
 
             const content = `
             <!DOCTYPE html>
@@ -203,7 +200,8 @@ export const sendWeeklyNewsSummary = inngest.createFunction(
 )
 
 export const checkStockAlerts = inngest.createFunction(
-    { id: 'check-stock-alerts', triggers: [{ cron: '*/5 * * * *' }] }, // Run every 5 minutes
+    { id: 'check-stock-alerts' },
+    { cron: '*/5 * * * *' }, // Run every 5 minutes
     async ({ step }) => {
         // Step 1: Fetch active alerts
         const activeAlerts = await step.run('fetch-active-alerts', async () => {
@@ -294,7 +292,8 @@ export const checkStockAlerts = inngest.createFunction(
 );
 
 export const checkInactiveUsers = inngest.createFunction(
-    { id: 'check-inactive-users', triggers: [{ cron: '0 10 * * *' }] }, // Run every day at 10 AM
+    { id: 'check-inactive-users' },
+    { cron: '0 10 * * *' }, // Run every day at 10 AM
     async ({ step }) => {
         // Step 1: Fetch Inactive Users
         const inactiveUsers = await step.run('fetch-inactive-users', async () => {

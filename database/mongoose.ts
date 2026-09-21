@@ -47,6 +47,15 @@ export const connectToDatabase = async () => {
         throw err;
     }
 
-    console.log(`MongoDB Connected ${MONGODB_URI} in ${process.env.NODE_ENV}`);
+    // Redact credentials from the URI (e.g. mongodb+srv://user:pass@host/db -> host/db)
+    const safeUri = (() => {
+        try {
+            return MONGODB_URI.replace(/\/\/[^@/]+@/, '//***@');
+        } catch {
+            return 'MongoDB';
+        }
+    })();
+
+    console.log(`MongoDB Connected ${safeUri} in ${process.env.NODE_ENV}`);
     return cached.conn;
 }

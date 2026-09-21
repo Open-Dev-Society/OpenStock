@@ -1,8 +1,10 @@
 'use server';
 
 import { connectToDatabase } from '@/database/mongoose';
-import { Alert, type IAlert } from '@/database/models/alert.model';
+import { Alert } from '@/database/models/alert.model';
 import { revalidatePath } from 'next/cache';
+import { auth } from '@/lib/better-auth/auth';
+import { headers } from 'next/headers';
 
 // Create a new alert
 export async function createAlert(params: {
@@ -38,28 +40,30 @@ export async function getUserAlerts(userId: string) {
     }
 }
 
-// Delete an alert
+// Delete an alert belonging to the current user
 export async function deleteAlert(alertId: string) {
     try {
+        const session = await auth.api.getSession({
+            headers: await headers()
+        });
+        if (!session?.user?.id) {
+            throw new Error('Not authenticated');
+        }
+
         await connectToDatabase();
-        await Alert.findByIdAndDelete(alertId);
+        const deleted = await Alert.findOneAndDelete({
+            _id: alertId,
+            userId: session.user.id
+        });
+
+        if (!deleted) {
+            throw new Error('Alert not found or does not belong to the current user');
+        }
+
         revalidatePath('/watchlist');
         return { success: true };
     } catch (error) {
         console.error('Error deleting alert:', error);
         throw new Error('Failed to delete alert');
-    }
-}
-
-// Toggle alert active status (optional utility)
-export async function toggleAlert(alertId: string, active: boolean) {
-    try {
-        await connectToDatabase();
-        await Alert.findByIdAndUpdate(alertId, { active });
-        revalidatePath('/watchlist');
-        return { success: true };
-    } catch (error) {
-        console.error('Error toggling alert:', error);
-        throw new Error('Failed to update alert');
     }
 }

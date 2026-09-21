@@ -87,33 +87,6 @@ export async function getCompanyProfile(symbol: string) {
     }
 }
 
-export async function getWatchlistData(symbols: string[]) {
-    if (!symbols || symbols.length === 0) return [];
-
-    // Fetch quotes and profiles in parallel
-    const promises = symbols.map(async (sym) => {
-        const [quote, profile] = await Promise.all([
-            getQuote(sym),
-            getCompanyProfile(sym)
-        ]);
-
-        return {
-            symbol: sym,
-            price: quote?.c || 0,
-            change: quote?.d || 0,
-            changePercent: quote?.dp || 0,
-            currency: profile?.currency || 'USD',
-            name: profile?.name || sym,
-            logo: profile?.logo,
-            marketCap: profile?.marketCapitalization,
-            peRatio: 0 // Finnhub 'quote' and 'profile2' don't easily give real-time PE. Might need 'metric' endpoint, but skipping for now to save rate limits.
-        };
-    });
-
-    return await Promise.all(promises);
-}
-
-
 export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> {
     try {
         const range = getDateRange(5);
