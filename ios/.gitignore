@@ -1,0 +1,8 @@
+# Generated / local-only
+Markets.xcodeproj/
+build/
+dist/
+*.xcworkspace/
+Pods/
+*.ipa
+.DS_Store

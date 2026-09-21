@@ -1,0 +1,100 @@
+name: iOS IPA
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "CFBundleShortVersionString"
+        required: false
+        default: "1.0.0"
+  push:
+    branches: [main, master]
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios-ipa.yml"
+  pull_request:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios-ipa.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-ipa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-ipa:
+    name: Build unsigned native Markets IPA
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          set -euo pipefail
+          XCODE=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          if [[ -z "${XCODE}" ]]; then
+            echo "::error::No Xcode.app found on runner"
+            exit 1
+          fi
+          echo "Using ${XCODE}"
+          sudo xcode-select -s "${XCODE}/Contents/Developer"
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Resolve version
+        id: meta
+        run: |
+          set -euo pipefail
+          VERSION="${{ github.event.inputs.version }}"
+          if [[ -z "${VERSION}" ]]; then
+            VERSION="1.0.0"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "build_number=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build IPA
+        working-directory: ios
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          MARKETS_VERSION: ${{ steps.meta.outputs.version }}
+          MARKETS_BUILD_NUMBER: ${{ steps.meta.outputs.build_number }}
+        run: |
+          chmod +x build-ipa.sh
+          ./build-ipa.sh
+
+      - name: Verify IPA
+        run: |
+          set -euo pipefail
+          IPA="ios/dist/Markets.ipa"
+          test -s "$IPA"
+          VERIFY="$(mktemp -d)"
+          unzip -q "$IPA" -d "$VERIFY"
+          APP="$VERIFY/Payload/Markets.app"
+          test -d "$APP"
+          test -f "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$APP/Info.plist"
+          # Ensure this is the native app (no web-shell URL key required)
+          if /usr/libexec/PlistBuddy -c 'Print :MarketsServerURL' "$APP/Info.plist" >/dev/null 2>&1; then
+            echo "::error::Legacy MarketsServerURL still present — expected native IPA"
+            exit 1
+          fi
+          test -f "$APP/Markets" || test -n "$(find "$APP" -maxdepth 1 -type f -perm -111 | head -1)"
+          ls -lh "$IPA"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Markets-ios-unsigned
+          path: ios/dist/Markets.ipa
+          if-no-files-found: error
+          retention-days: 14
