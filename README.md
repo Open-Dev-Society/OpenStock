@@ -247,9 +247,13 @@ volumes:
 
 ## 🚂 Deploy on Railway <a name="deploy-on-railway"></a>
 
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/openstock-1?referralCode=oYrWPR&utm_medium=integration&utm_source=template&utm_campaign=generic)
+
+The one-click template provisions OpenStock and a MongoDB database and prompts for your API keys. To set it up manually instead:
+
 OpenStock ships with a [`railway.json`](railway.json) so it can be deployed on [Railway](https://railway.com) using the existing `Dockerfile`, with a healthcheck on `/sign-in` and automatic restarts on failure.
 
-1) Create a new project on Railway and add a **MongoDB** database (`+ New → Database → MongoDB`).
+1) Create a new project on Railway and add a **MongoDB** database (`+ New → Database → MongoDB`). Make sure its TCP Proxy is enabled so `MONGO_PUBLIC_URL` is available.
 2) Add a service from this GitHub repository (`+ New → GitHub Repo`). Railway detects `railway.json` and builds with the `Dockerfile`.
 3) In the service **Variables**, set:
 
@@ -269,7 +273,7 @@ NODEMAILER_PASSWORD=your_gmail_app_password
 Notes
 - `NEXT_PUBLIC_FINNHUB_API_KEY` is inlined at build time; Railway passes it to the Docker build as a build arg, so redeploy after changing it.
 - Use `MONGO_PUBLIC_URL` (not `MONGO_URL`): `next build` connects to MongoDB while collecting page data, and Railway's private network is not available during builds.
-- For scheduled jobs (daily summaries, alerts), add your Railway domain as an app in the [Inngest dashboard](https://app.inngest.com) pointing to `https://<your-domain>/api/inngest`.
+- For scheduled jobs (news summaries, alerts), add your Railway domain as an app in the [Inngest dashboard](https://app.inngest.com) pointing to `https://<your-domain>/api/inngest`.
 - See [Environment Variables](#environment-variables) for the optional variables (Adanos, MiniMax, Kit, etc.).
 
 ## 🔐 Environment Variables <a name="environment-variables"></a>
