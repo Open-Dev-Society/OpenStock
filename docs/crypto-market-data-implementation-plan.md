@@ -2,6 +2,17 @@
 
 Status: proposed plan for the `Crypto` branch. This document turns the requirements in [crypto-market-data-requirements.md](./crypto-market-data-requirements.md) into an implementation sequence. No product code is changed by this plan.
 
+## Implementation progress
+
+Slice 0 has started using TDD:
+
+- Added the tested market-family registry in `lib/markets/market-families.ts`.
+- Added the `/markets` entry point and URL-preserved `/markets/[market]` routes.
+- Added the shared family switcher for Overview, Major Indices, Stocks, Futures, and Crypto.
+- Added an honest Crypto presentation preview; it does not claim to power OpenStock watchlists or alerts yet.
+
+Next slice: introduce the normalized instrument/quote contract and a provider-neutral adapter seam, then evaluate the Luno REST adapter against that contract.
+
 ## 1. Outcome
 
 OpenStock should let a user move between these market families without losing context:
