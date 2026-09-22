@@ -28,7 +28,7 @@ The GitNexus graph and source review identify these existing seams:
 | Watchlist UI | `components/watchlist/WatchlistTable.tsx`, `WatchlistStockChip.tsx`, `AlertsPanel.tsx`, `CreateAlertModal.tsx` | Render mixed stocks and crypto with shared quote states. |
 | Search and detail | `components/SearchCommand.tsx`, `app/(root)/stocks/[symbol]/page.tsx` | Generalize symbol routes and search results around canonical instruments. |
 
-GitNexus currently indexes 1,079 symbols, 1,731 relationships, and 56 execution flows. Its impact results are lower-bound because scope extraction is not fully verified; use the graph together with source search and tests before making broad refactors.
+GitNexus currently indexes 1,105 symbols, 1,758 relationships, and 56 execution flows. Its impact results are lower-bound because scope extraction is not fully verified; use the graph together with source search and tests before making broad refactors.
 
 ## 3. Design decisions to hold constant
 

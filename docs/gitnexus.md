@@ -45,4 +45,4 @@ Useful MCP tools:
 
 ## Current branch
 
-The `Crypto` branch was indexed at commit `99042db` with 1,079 symbols, 1,731 relationships, and 56 execution flows. The current graph identifies the existing Finnhub quote path, TradingView watchlist widget, MongoDB watchlist/alert models, and Inngest alert worker as the main seams for the Markets/Crypto work.
+The `Crypto` branch is indexed at commit `6b569d1` with 1,105 symbols, 1,758 relationships, and 56 execution flows. The current graph identifies the existing Finnhub quote path, TradingView watchlist widget, MongoDB watchlist/alert models, and Inngest alert worker as the main seams for the Markets/Crypto work.
