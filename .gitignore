@@ -35,6 +35,9 @@ yarn-error.log*
 .env.*
 !.env.example
 
+# local GitNexus index
+.gitnexus/
+
 # vercel
 .vercel
 
