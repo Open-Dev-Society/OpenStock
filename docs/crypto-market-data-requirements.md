@@ -74,7 +74,7 @@ The provider and licensing terms for any direct TradingView data API, charting l
 8. Crypto price alerts work for 24/7 markets and preserve the existing one-shot alert semantics.
 9. Provider failures degrade to a visible stale/unavailable state and never turn into a misleading zero price.
 10. Stock behavior remains backward-compatible.
-11. Users can navigate between top-level market families from one Markets surface, initially covering `Overview`, `Major Indices`, `Stocks`, `Futures`, and `Crypto`; `Forex` and `Economy` can follow without changing the navigation contract.
+11. Users can navigate between top-level market families from one Markets surface, initially covering `Overview`, `Major Indices`, `Stocks`, `Futures`, and `Crypto`, with `Forex` designed as the next app-owned extension rather than a new navigation model.
 
 ### Explicitly not in the first slice
 
@@ -92,7 +92,7 @@ The provider and licensing terms for any direct TradingView data API, charting l
 Introduce a provider-neutral instrument shape. At minimum:
 
 ```ts
-type AssetClass = 'equity' | 'crypto';
+type AssetClass = 'equity' | 'crypto' | 'forex';
 
 type Instrument = {
   id: string;                 // stable internal ID, not a display ticker
@@ -144,7 +144,7 @@ Define a `MarketDataProvider` interface with separate capabilities for:
 - optional live subscription;
 - optional news and sentiment.
 
-Finnhub remains the equity provider initially. A crypto adapter implements the minimum crypto capabilities without leaking provider-specific symbols into components, Mongo models, or alert logic.
+Finnhub remains the existing equity provider and is now the first broad-market candidate for crypto and forex. Asset-specific adapters must still be separate because the documented endpoints, symbols, entitlements, and payloads differ by asset class. No provider-specific symbol may leak into components, Mongo models, or alert logic.
 
 TradingView is represented as a presentation capability rather than as a universal `MarketDataProvider` unless a separately approved direct-data integration is selected. This keeps the architecture honest: the UI can use a TradingView widget where it is strong, while server-side features use normalized provider contracts with explicit timestamps.
 
@@ -158,11 +158,24 @@ The first Luno adapter should use public REST snapshots and market metadata with
 
 Research record: [Luno API evaluation](./research/luno-api-evaluation.md).
 
+### 4.5 Finnhub crypto and forex candidate
+
+Finnhub's official API documentation includes crypto and forex exchange lists, symbol discovery, candle history, and WebSocket trade subscriptions. This makes it a stronger first candidate for a broad OpenStock Markets experience than a single exchange adapter, while preserving the current Finnhub operational footprint.
+
+There are two important boundaries:
+
+1. Finnhub documents the existing `/quote` endpoint for real-time US stock quotes. It must not be treated as a universal quote endpoint for crypto and forex.
+2. `/crypto/candle` and `/forex/candle` are documented as Premium endpoints. Historical charting, reconnect backfill, and any first-party candle fallback therefore require an entitlement check before they become release commitments.
+
+For the application-owned path, use Finnhub exchange/symbol discovery to build a canonical instrument registry, a server-owned WebSocket subscription/cache for live updates where the plan permits it, and REST snapshots/polling as a bounded fallback. Keep credentials server-only. Finnhub's data terms, connection/rate limits, symbol coverage, and redistribution permissions remain release gates.
+
+Research record: [Finnhub crypto and forex evaluation](./research/finnhub-crypto-forex-evaluation.md).
+
 ## 5. Functional requirements
 
 ### Search and discovery
 
-- Search results must identify `Stocks` versus `Crypto`.
+- Search results must identify `Stocks`, `Crypto`, or `Forex`.
 - Search must return a stable instrument ID and provider-native symbol.
 - Search must handle common aliases such as `BTC`, `Bitcoin`, `ETH`, and `Ethereum`.
 - Search must not show a result that cannot produce a quote or detail view.
@@ -197,7 +210,7 @@ Research record: [Luno API evaluation](./research/luno-api-evaluation.md).
 | Stocks | Existing stock overview/search/detail behavior | Finnhub + TradingView |
 | Futures | Curated energy/metals/major contracts, read-only | TradingView first; provider decision required for app-owned quotes |
 | Crypto | Crypto discovery, quotes, detail, watchlist, alerts | TradingView presentation + crypto adapter for app-owned data |
-| Forex | Navigation placeholder or future slice | Not in first implementation unless provider scope expands |
+| Forex | Navigation target; app-owned discovery/quotes after provider entitlement and symbol coverage are confirmed | Finnhub candidate + TradingView presentation |
 | Economy | Navigation placeholder or future slice | Not in first implementation unless provider scope expands |
 
 ### Watchlists
@@ -288,7 +301,7 @@ Capture, at minimum:
 
 ## 8. Provider selection criteria
 
-Choose a crypto provider only after checking current commercial terms and the target deployment geography. Score candidates against:
+Choose a provider for each app-owned asset class only after checking current commercial terms and the target deployment geography. Score candidates against:
 
 1. WebSocket or streaming support for public market data.
 2. REST snapshots and historical candles for reconnects and charts.
@@ -299,6 +312,7 @@ Choose a crypto provider only after checking current commercial terms and the ta
 7. Licensing, attribution, redistribution, and delayed-data terms.
 8. Operational reliability, status page, and documented outage behavior.
 9. Cost ceiling for a free/open-source deployment.
+10. Plan entitlements for the exact crypto/forex endpoints and WebSocket access, not merely token validity.
 
 The implementation should make the provider replaceable. This avoids coupling the product model to a single exchange or to a free-tier assumption that may change.
 
@@ -356,14 +370,15 @@ The feature is ready for a first release when:
 
 ## 11. Open decisions before implementation
 
-1. Should the first release be explicitly South Africa/ZAR-focused, allowing Luno to be the first adapter, or should OpenStock choose a broader global provider for the general Crypto page?
-2. Is v1 limited to BTC/USD and ETH/USD, or does it support a larger universe?
-3. Do we need true tick/stream updates, or is a 5–15 second snapshot SLA acceptable for the first release?
-4. Should the first crypto chart use TradingView where possible, or should we introduce a first-party chart fallback immediately?
-5. Which notification channel should alerts use when they trigger?
-6. Is the GitHub fork expected to be a new remote repository under the user’s account/org, or is the isolated local branch sufficient for this working session?
-7. Should the first Markets shell include `Forex` and `Economy` as disabled/future tabs, or launch with only the five requested families?
-8. Are `Futures` and `Major Indices` presentation-only in v1, or must they also support OpenStock-owned search, watchlists, and alerts?
+1. Does the current Finnhub plan include the required crypto/forex candles and WebSocket capabilities, and may that data be redistributed by the intended deployment?
+2. Should the first release be Finnhub-first for broad crypto coverage, with Luno as an optional South Africa/ZAR venue adapter, or explicitly South Africa/ZAR-focused?
+3. Is v1 limited to BTC/USD and ETH/USD, or does it support a larger universe?
+4. Do we need true tick/stream updates, or is a 5–15 second snapshot SLA acceptable for the first release?
+5. Should the first crypto chart use TradingView where possible, or should we introduce a first-party chart fallback immediately?
+6. Which notification channel should alerts use when they trigger?
+7. Is the GitHub fork expected to be a new remote repository under the user’s account/org, or is the isolated local branch sufficient for this working session?
+8. Should the first Markets shell include `Forex` and `Economy` as disabled/future tabs, or launch with only the five requested families?
+9. Are `Futures` and `Major Indices` presentation-only in v1, or must they also support OpenStock-owned search, watchlists, and alerts?
 
 ## 12. Current risk assessment
 
