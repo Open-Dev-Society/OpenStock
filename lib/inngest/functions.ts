@@ -6,6 +6,7 @@ import { getWatchlistSymbolsByEmail } from "@/lib/actions/watchlist.actions";
 import { getNews } from "@/lib/actions/finnhub.actions";
 import { getFormattedTodayDate } from "@/lib/utils";
 import { callAIProviderWithFallback } from "@/lib/ai-provider";
+import { getAlertInstrumentKey } from "@/lib/markets/alert-routing";
 
 export const sendSignUpEmail = inngest.createFunction(
     { id: 'sign-up-email', triggers: [{ event: 'app/user.created' }] },
@@ -225,23 +226,34 @@ export const checkStockAlerts = inngest.createFunction(
             return { message: 'No active alerts to check.' };
         }
 
-        // Step 2: Group by symbol
-        const symbols = [...new Set(activeAlerts.map((a: any) => a.symbol))];
+        // Step 2: Group by canonical instrument identity
+        const requests = [...new Map(activeAlerts.map((alert: any) => [getAlertInstrumentKey(alert), alert])).values()];
 
         // Step 3: Fetch prices
         const prices = await step.run('fetch-prices', async () => {
             const { getQuote } = await import("@/lib/actions/finnhub.actions");
+            const { getCryptoQuote } = await import("@/lib/actions/crypto.actions");
             const priceMap: Record<string, number> = {};
 
             // Process in chunks to be safe
-            for (const sym of symbols) {
+            for (const request of requests as any[]) {
                 try {
-                    const quote = await getQuote(sym as string);
-                    if (quote && quote.c) {
-                        priceMap[sym as string] = quote.c;
+                    const key = getAlertInstrumentKey(request);
+                    let price: number | undefined;
+
+                    if (request.assetClass === 'crypto') {
+                        const quote = await getCryptoQuote(request.providerSymbol || request.symbol);
+                        price = quote?.price;
+                    } else {
+                        const quote = await getQuote(request.symbol);
+                        price = quote?.c;
+                    }
+
+                    if (typeof price === 'number' && Number.isFinite(price) && price > 0) {
+                        priceMap[key] = price;
                     }
                 } catch (e) {
-                    console.error(`Failed to fetch price for ${sym}`, e);
+                    console.error(`Failed to fetch price for ${request.symbol}`, e);
                 }
             }
             return priceMap;
@@ -252,8 +264,8 @@ export const checkStockAlerts = inngest.createFunction(
         const triggeredAlerts: TriggeredAlert[] = [];
 
         for (const alert of activeAlerts as any[]) {
-            const currentPrice = prices[alert.symbol];
-            if (!currentPrice) continue;
+            const currentPrice = prices[getAlertInstrumentKey(alert)];
+            if (typeof currentPrice !== 'number') continue;
 
             let isTriggered = false;
             // Simple check

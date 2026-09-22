@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react"
 import { CommandDialog, CommandEmpty, CommandInput, CommandList } from "@/components/ui/command"
 import {Button} from "@/components/ui/button";
-import {Loader2,  TrendingUp} from "lucide-react";
+import {Coins, Loader2, TrendingUp} from "lucide-react";
 import Link from "next/link";
 import {searchStocks} from "@/lib/actions/finnhub.actions";
+import {searchCryptoAssets, type CryptoAsset} from "@/lib/markets/crypto-assets";
 import {useDebounce} from "@/hooks/useDebounce";
 
 export default function SearchCommand({ renderAs = 'button', label = 'Add stock', initialStocks }: SearchCommandProps) {
@@ -13,9 +14,11 @@ export default function SearchCommand({ renderAs = 'button', label = 'Add stock'
     const [searchTerm, setSearchTerm] = useState("")
     const [loading, setLoading] = useState(false)
     const [stocks, setStocks] = useState<StockWithWatchlistStatus[]>(initialStocks);
+    const cryptoAssets = searchCryptoAssets(searchTerm);
 
     const isSearchMode = !!searchTerm.trim();
     const displayStocks = isSearchMode ? stocks : stocks?.slice(0, 10);
+    const displayCrypto = isSearchMode ? cryptoAssets : cryptoAssets.slice(0, 20);
 
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
@@ -71,21 +74,21 @@ export default function SearchCommand({ renderAs = 'button', label = 'Add stock'
             )}
             <CommandDialog open={open} onOpenChange={setOpen} className="search-dialog">
                 <div className="search-field">
-                    <CommandInput value={searchTerm} onValueChange={setSearchTerm} placeholder="Search stocks..." className="search-input" />
+                    <CommandInput value={searchTerm} onValueChange={setSearchTerm} placeholder="Search stocks or crypto..." className="search-input" />
                     {loading && <Loader2 className="search-loader" />}
                 </div>
                 <CommandList className="search-list">
                     {loading ? (
                         <CommandEmpty className="search-list-empty">Loading stocks...</CommandEmpty>
-                    ) : displayStocks?.length === 0 ? (
+                    ) : displayStocks?.length === 0 && displayCrypto.length === 0 ? (
                         <div className="search-list-indicator">
-                            {isSearchMode ? 'No results found' : 'No stocks available'}
+                            {isSearchMode ? 'No results found' : 'No markets available'}
                         </div>
                     ) : (
                         <ul>
                             <div className="search-count">
-                                {isSearchMode ? 'Search results' : 'Popular stocks'}
-                                {` `}({displayStocks?.length || 0})
+                                {isSearchMode ? 'Search results' : 'Popular markets'}
+                                {` `}({(displayStocks?.length || 0) + displayCrypto.length})
                             </div>
                             {displayStocks?.map((stock) => (
                                 <li key={stock.symbol} className="search-item">
@@ -104,6 +107,25 @@ export default function SearchCommand({ renderAs = 'button', label = 'Add stock'
                                             </div>
                                         </div>
 
+                                    </Link>
+                                </li>
+                            ))}
+                            {displayCrypto.map((asset: CryptoAsset) => (
+                                <li key={`crypto:${asset.symbol}`} className="search-item">
+                                    <Link
+                                        href={`/markets/crypto/${asset.symbol.toLowerCase()}`}
+                                        onClick={handleSelectStock}
+                                        className="search-item-link"
+                                    >
+                                        <Coins className="h-4 w-4 text-teal-400" />
+                                        <div className="flex-1">
+                                            <div className="search-item-name">
+                                                {asset.name}
+                                            </div>
+                                            <div className="text-sm text-gray-500">
+                                                {[asset.symbol, 'Crypto', asset.providerSymbol].filter(Boolean).join(' | ')}
+                                            </div>
+                                        </div>
                                     </Link>
                                 </li>
                             ))}

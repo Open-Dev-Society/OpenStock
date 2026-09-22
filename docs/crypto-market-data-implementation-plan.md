@@ -1,17 +1,20 @@
 # Crypto and Markets Implementation Plan
 
-Status: proposed plan for the `Crypto` branch. This document turns the requirements in [crypto-market-data-requirements.md](./crypto-market-data-requirements.md) into an implementation sequence. No product code is changed by this plan.
+Status: active implementation plan for the `Crypto` branch.
 
 ## Implementation progress
 
-Slice 0 has started using TDD:
+The first app-owned crypto slice is implemented using TDD:
 
 - Added the tested market-family registry in `lib/markets/market-families.ts`.
 - Added the `/markets` entry point and URL-preserved `/markets/[market]` routes.
 - Added the shared family switcher for Overview, Major Indices, Stocks, Futures, and Crypto.
-- Added an honest Crypto presentation preview; it does not claim to power OpenStock watchlists or alerts yet.
+- Added a bounded twenty-asset crypto registry and local search behavior.
+- Added the Finnhub crypto quote adapter, app-owned quote table, and crypto detail route.
+- Added crypto-aware watchlist identity, mixed watchlist chips, and alert routing.
+- Added tests for the registry, quote normalization, provider boundary, and asset-aware alert identity.
 
-Next slice: introduce the normalized instrument/quote contract and a provider-neutral adapter seam, then evaluate the Luno REST adapter against that contract.
+Next slice: validate the configured Finnhub credential and harden the small release without adding candles, WebSockets, or dynamic market-cap infrastructure.
 
 ## 1. Outcome
 

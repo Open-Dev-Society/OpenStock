@@ -7,6 +7,12 @@ interface WatchlistButtonProps {
     symbol: string;
     company: string;
     isInWatchlist: boolean;
+    assetClass?: 'equity' | 'crypto';
+    instrumentId?: string;
+    provider?: string;
+    providerSymbol?: string;
+    quoteCurrency?: string;
+    venue?: string;
     showTrashIcon?: boolean;
     type?: "button" | "icon";
     userId?: string; // Made optional for backward compat, but required for actions
@@ -17,6 +23,12 @@ const WatchlistButton = ({
     symbol,
     company,
     isInWatchlist,
+    assetClass = 'equity',
+    instrumentId,
+    provider,
+    providerSymbol,
+    quoteCurrency,
+    venue,
     showTrashIcon = false,
     type = "button",
     userId,
@@ -46,10 +58,17 @@ const WatchlistButton = ({
         try {
             if (userId) {
                 if (next) {
-                    await addToWatchlist(userId, symbol, company);
+                    await addToWatchlist(userId, symbol, company, {
+                        assetClass,
+                        instrumentId,
+                        provider,
+                        providerSymbol,
+                        quoteCurrency,
+                        venue,
+                    });
                     toast.success(`${symbol} added to watchlist`);
                 } else {
-                    await removeFromWatchlist(userId, symbol);
+                    await removeFromWatchlist(userId, symbol, { instrumentId });
                     toast.success(`${symbol} removed from watchlist`);
                 }
             }

@@ -42,10 +42,10 @@ export default async function WatchlistPage() {
                     <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-500">
                         Watchlist
                     </h1>
-                    <p className="text-gray-500 mt-1">Track your favorite stocks and manage alerts.</p>
+                    <p className="text-gray-500 mt-1">Track your favorite markets and manage alerts.</p>
                 </div>
                 <div className="flex items-center space-x-4">
-                    <SearchCommand renderAs="button" label="Add Stock" initialStocks={[]} />
+                    <SearchCommand renderAs="button" label="Add Market" initialStocks={[]} />
                 </div>
             </div>
 

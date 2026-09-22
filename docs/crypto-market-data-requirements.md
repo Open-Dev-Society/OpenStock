@@ -11,9 +11,9 @@ OpenStock is not currently a single-source, app-controlled real-time market-data
 It is already using TradingView, but in the same way the screenshot demonstrates only part of what TradingView offers: OpenStock embeds selected TradingView widgets, while TradingView’s own Markets experience is a broader, navigable market-information product.
 
 - The dashboard and detail pages primarily embed TradingView widgets. Their freshness, symbol coverage, and update cadence are controlled by TradingView and are not exposed as structured application data.
-- Finnhub powers application-owned stock search, profiles, news, quote lookups, and the five-minute alert job.
+- Finnhub powers application-owned stock search, profiles, news, quote lookups, and the five-minute alert job; the Crypto branch now adds a bounded Finnhub crypto quote adapter.
 - The active watchlist page currently renders a TradingView market-quotes widget rather than the app-owned quote table. A separate `WatchlistTable` component contains a five-second polling loop, but it is not referenced by the active page.
-- The current alert schema stores only a symbol and price condition. The worker assumes every symbol is a Finnhub stock symbol.
+- Alert and watchlist records now carry optional asset/provider identity fields so crypto symbols route separately from stock symbols; legacy stock records remain compatible.
 
 This distinction matters for the proposed Markets experience:
 
@@ -37,17 +37,17 @@ These are externally rendered embeds. The application does not receive a structu
 
 ### 2.2 Application-owned Finnhub data
 
-`lib/actions/finnhub.actions.ts` uses `fetch(..., { cache: 'no-store' })` for `getQuote`, so the app requests an uncached Finnhub quote whenever that function runs. That removes Next.js response caching; it does not make Finnhub real-time.
+`lib/actions/finnhub.actions.ts` uses `fetch(..., { cache: 'no-store' })` for stock quotes. `lib/actions/crypto.actions.ts` uses the same uncached request boundary for the mapped twenty-asset crypto universe and normalizes the result into an app-owned snapshot. A no-store fetch removes Next.js response caching; it does not make Finnhub real-time.
 
 Profiles are cached for 24 hours, search results for 30 minutes, popular-symbol profiles for one hour, and news for five minutes. Those lifetimes are reasonable for metadata/news but must never be reused as the freshness contract for prices.
 
 ### 2.3 Watchlist and alerts
 
-The active watchlist page (`WatchlistManager`) renders the TradingView watchlist widget. It does not currently display the app-owned `getWatchlistData` result.
+The active watchlist page (`WatchlistManager`) still renders the TradingView watchlist widget, but persisted crypto entries now carry canonical identity/provider fields and render as crypto-aware chips with alert actions.
 
 The legacy `WatchlistTable` contains a comment saying “every 15 seconds” but schedules a five-second interval. It refreshes the entire `stocks` dependency after each update, so the timer is recreated whenever state changes. It also fetches quote and profile data together, which would multiply provider calls if that component became active.
 
-The Inngest `checkStockAlerts` function runs every five minutes and fetches each alert symbol through Finnhub `getQuote`. It does not carry an asset class or provider identity, so crypto alerts would currently be misrouted or silently fail.
+The Inngest `checkStockAlerts` function runs every five minutes and now routes crypto alerts through `getCryptoQuote` using the alert's instrument identity. Provider errors and unusable prices are skipped rather than treated as zero.
 
 ### 2.4 TradingView’s role
 
@@ -94,9 +94,9 @@ The current release is intentionally smaller than the complete initiative:
 
 1. Keep the Markets family navigation and dark teal/blue OpenStock presentation.
 2. Provide read-only Crypto and Forex market surfaces using TradingView widgets where supported.
-3. Use Finnhub only for basic symbol/exchange discovery or simple snapshots when the selected endpoint is available without Premium access.
-4. Show clear source and capability labels; do not imply that a presentation widget is an OpenStock-owned quote stream.
-5. Defer crypto/forex watchlist persistence, alerts, historical charts, and live streaming until a later decision explicitly asks for them.
+3. Use Finnhub for the bounded twenty-asset crypto registry and simple quote snapshots; do not add Premium history or streaming.
+4. Support app-owned crypto search, detail, watchlist entries, and price alerts.
+5. Show clear source and capability labels; explicitly mark candles, streaming, and dynamic market-cap ranking as out of scope.
 
 ## 4. Domain requirements
 

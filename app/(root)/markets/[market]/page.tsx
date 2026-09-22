@@ -9,6 +9,9 @@ import {
     getMarketFamily,
     type MarketFamilySlug,
 } from '@/lib/markets/market-families';
+import { CRYPTO_ASSETS } from '@/lib/markets/crypto-assets';
+import { getTopCryptoQuotes } from '@/lib/actions/crypto.actions';
+import type { CryptoQuoteSnapshot } from '@/lib/markets/crypto-quotes';
 import { notFound } from 'next/navigation';
 
 const SCRIPT_URL = 'https://s3.tradingview.com/external-embedding/embed-widget-';
@@ -18,7 +21,7 @@ const MARKET_COPY: Record<MarketFamilySlug, string> = {
     indices: 'Major index context presented through the existing TradingView market surface.',
     stocks: 'Existing stock-market coverage, now reachable from the shared Markets surface.',
     futures: 'Read-only futures previews while app-owned futures data remains a future decision.',
-    crypto: 'Crypto presentation preview now; normalized Luno-backed quotes are the next data slice.',
+    crypto: 'The initial twenty-asset crypto universe with Finnhub-backed app-owned quote snapshots.',
 };
 
 const CRYPTO_WIDGET_CONFIG = {
@@ -27,11 +30,10 @@ const CRYPTO_WIDGET_CONFIG = {
     symbolsGroups: [
         {
             name: 'Crypto',
-            symbols: [
-                { name: 'BINANCE:BTCUSDT', displayName: 'Bitcoin / USDT' },
-                { name: 'BINANCE:ETHUSDT', displayName: 'Ethereum / USDT' },
-                { name: 'COINBASE:SOLUSD', displayName: 'Solana / USD' },
-            ],
+            symbols: CRYPTO_ASSETS.map((asset) => ({
+                name: asset.tradingViewSymbol,
+                displayName: `${asset.name} / ${asset.quoteCurrency}`,
+            })),
         },
     ],
 };
@@ -108,7 +110,8 @@ export default async function MarketPage({
     if (!family) notFound();
 
     const widget = MARKET_WIDGETS[family.slug];
-    const isCryptoPreview = family.slug === 'crypto';
+    const isCrypto = family.slug === 'crypto';
+    const cryptoQuotes = isCrypto ? await getTopCryptoQuotes() : null;
 
     return (
         <div className="flex min-h-screen flex-col gap-8">
@@ -129,12 +132,14 @@ export default async function MarketPage({
                 </div>
                 <h1 className="text-3xl font-semibold text-gray-100">{family.label}</h1>
                 <p className="max-w-3xl text-gray-400">{MARKET_COPY[family.slug]}</p>
-                {isCryptoPreview && (
+                {isCrypto && (
                     <p className="max-w-3xl rounded-lg border border-teal-400/20 bg-teal-400/5 px-4 py-3 text-sm text-teal-100">
-                        This preview does not power OpenStock watchlists or alerts yet. Those will use a normalized provider adapter, with Luno evaluated for the South Africa/ZAR slice.
+                        Quotes, search, watchlists, and alerts use OpenStock&apos;s crypto identity and Finnhub quote adapter. Candles and streaming are intentionally not included.
                     </p>
                 )}
             </header>
+
+            {cryptoQuotes && <CryptoQuoteTable rows={cryptoQuotes} />}
 
             <section aria-labelledby={`${family.slug}-market-widget`} className="grid gap-8">
                 <h2 id={`${family.slug}-market-widget`} className="sr-only">
@@ -157,5 +162,47 @@ export default async function MarketPage({
                 )}
             </section>
         </div>
+    );
+}
+
+function CryptoQuoteTable({ rows }: { rows: Array<{ asset: typeof CRYPTO_ASSETS[number]; quote: CryptoQuoteSnapshot | null }> }) {
+    return (
+        <section aria-labelledby="crypto-quotes" className="overflow-hidden rounded-xl border border-gray-800 bg-gray-900/30">
+            <div className="border-b border-gray-800 px-5 py-4">
+                <h2 id="crypto-quotes" className="text-lg font-semibold text-gray-100">Top 20 crypto assets</h2>
+                <p className="mt-1 text-sm text-gray-500">Read-only Finnhub quote snapshots in USDT.</p>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="w-full min-w-[620px] text-left text-sm">
+                    <thead className="bg-white/[0.03] text-xs uppercase tracking-wide text-gray-500">
+                        <tr>
+                            <th className="px-5 py-3 font-medium">Asset</th>
+                            <th className="px-5 py-3 font-medium">Price</th>
+                            <th className="px-5 py-3 font-medium">Change</th>
+                            <th className="px-5 py-3 font-medium">Source</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-800/80">
+                        {rows.map(({ asset, quote }) => (
+                            <tr key={asset.symbol} className="text-gray-300">
+                                <td className="px-5 py-3">
+                                    <a href={`/markets/crypto/${asset.symbol.toLowerCase()}`} className="group inline-flex flex-col">
+                                        <span className="font-medium text-gray-100 group-hover:text-teal-300">{asset.name}</span>
+                                        <span className="text-xs text-gray-500">{asset.symbol}</span>
+                                    </a>
+                                </td>
+                                <td className="px-5 py-3 font-mono">
+                                    {quote ? `${quote.price.toLocaleString(undefined, { maximumFractionDigits: 8 })} ${quote.currency}` : 'Unavailable'}
+                                </td>
+                                <td className={`px-5 py-3 font-mono ${quote?.changePercent && quote.changePercent >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                                    {quote?.changePercent == null ? '—' : `${quote.changePercent.toFixed(2)}%`}
+                                </td>
+                                <td className="px-5 py-3 text-xs text-gray-500">Finnhub</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </section>
     );
 }
