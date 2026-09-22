@@ -1,112 +1,111 @@
-<div align="center">
-  <img src="public/assets/images/logo.png" alt="OpenStock Logo" width="120" />
-  <h1>OpenStock API & Architecture</h1>
-  
-  <p>
-    <b>Modern. Open. Resilient.</b>
-  </p>
+# OpenStock B3 — data and architecture
 
-  <p>
-    <img src="https://img.shields.io/badge/status-active-success?style=for-the-badge" alt="Status" />
-    <img src="https://img.shields.io/badge/AI-Gemini%20%2B%20Siray-blueviolet?style=for-the-badge" alt="AI Stack" />
-    <img src="https://img.shields.io/badge/license-AGPL--3.0-blue?style=for-the-badge" alt="License" />
-  </p>
-</div>
+OpenStock currently exposes a server-rendered dashboard rather than a public REST API. Data acquisition lives in Next.js server actions and external widgets.
 
----
-
-## 🏗️ Architecture Overview
-
-OpenStock leverages a resilient event-driven architecture powered by **Inngest**. We prioritize uptime for our generative features by utilizing a multi-provider AI strategy.
-
-### 🧠 Intelligent Model Routing
-
-We don't rely on a single point of failure. Our AI infrastructure automatically routes around outages.
+## Active request flow
 
 ```mermaid
-graph LR
-    A[User Action / Cron] -->|Trigger| B(Inngest Function);
-    B --> C{Primary Provider};
-    C -->|Gemini 2.5 Flash Lite| D[Generate Content];
-    C -.->|Error / Rate Limit| E{Fallback Provider};
-    E -->|Siray.ai Ultra| D;
-    D --> F[Email / Notification];
-    
-    style C fill:#20c997,stroke:#333,stroke-width:2px,color:black
-    style E fill:#3b82f6,stroke:#333,stroke-width:2px,color:white
-    style D fill:#fff,stroke:#333,stroke-width:2px,color:black
+flowchart LR
+    Browser --> Next[Next.js server components]
+    Next --> Search[brapi /api/v2/tickers]
+    Next --> RSS[RSS and Atom feeds]
+    Next --> TV[TradingView embeds]
+    Search --> Queue[Single-concurrency brapi queue]
+    RSS --> Filter[Date, relevance, impact, dedupe]
+    Filter --> News[Same-day news table]
 ```
 
----
+## brapi integration
 
-## 🤝 AI Partners
+Implementation: `lib/actions/finnhub.actions.ts`.
 
-### Primary: Google Gemini
-The workhorse of our generative content. Fast, efficient, and deeply integrated via Inngest.
+The filename is retained for compatibility, but the active quote/search provider is brapi.
 
-### Fallback: Siray.ai
-> [!IMPORTANT]
-> **Zero Downtime Guarantee.**
-> When Gemini wavers, **Siray.ai** takes over instantly. No user request is ever dropped.
+| Function | Boundary | Cache | Failure behavior |
+|---|---|---:|---|
+| `searchStocks(query?)` | `GET /api/v2/tickers` | 15 min | logs and returns no results |
+| `getQuote(symbol)` | `GET /api/v2/stocks/quote` | no-store | logs and returns `null` |
+| `getCompanyProfile(symbol)` | `GET /api/v2/stocks/quote` | no-store | logs and returns `null` |
+| `getWatchlistData(symbols)` | batched stock quote | no-store | logs and returns no rows |
 
-<div align="center">
-  <br/>
-  <a href="https://www.siray.ai/">
-    <img src="public/assets/icons/siray.svg" alt="Siray.ai Logo" width="180" />
-  </a>
-  <p><i>The robust infrastructure backing OpenStock.</i></p>
-</div>
+All brapi calls share a process-wide request queue because the observed public contract permits one concurrent request. `BRAPI_API_TOKEN` is sent as a bearer token when configured.
 
----
+No unavailable value is replaced with a synthetic quote.
 
-## ⚡ Serverless Functions (Inngest)
+## Market-news integration
 
-Our background jobs are defined in `lib/inngest/functions.ts`.
+Acquisition: `lib/actions/market-news.actions.ts`.
+Parsing and ranking: `lib/market-news.ts`.
 
-| ID | Type | Schedule/Trigger | Purpose |
-| :--- | :--- | :--- | :--- |
-| `sign-up-email` | 🔔 Event | `app/user.created` | **Personalized Onboarding.** Generates a custom welcome message based on user quiz results. |
-| `weekly-news-summary` | ⏱️ Cron | `0 9 * * 1` (Mon 9AM) | **Market Intelligence.** Summarizes top financial news and broadcasts to all users via Kit. |
-| `check-stock-alerts` | ⏱️ Cron | `*/5 * * * *` | **Real-time Monitoring.** Checks user price targets against live market data. |
-| `check-inactive-users` | ⏱️ Cron | `0 10 * * *` | **Re-engagement.** Identifies dormant users (>30 days) and sends a "We miss you" nudge. |
+### Sources
 
----
+- Bloomberg — Google News query scoped to `bloomberg.com`
+- Reuters — Google News query scoped to `reuters.com`
+- Valor Econômico — Google News query scoped to `valor.globo.com`
+- InfoMoney — native RSS
+- Banco Central — official Atom feed
+- Agência Brasil Economia — native RSS
 
-## 🔌 API Integrations
+### Admission rules
 
-<details>
-<summary><b>📈 Stock Data: Finnhub</b></summary>
-<br/>
+An article is shown only when all conditions pass:
 
-*   **Base URL:** `https://finnhub.io/api/v1`
-*   **Key Features:** Real-time quotes, technical indicators, market news.
-*   **Auth:** `NEXT_PUBLIC_FINNHUB_API_KEY`
+1. valid RSS/Atom record;
+2. valid HTTP(S) URL and publication date;
+3. publication day equals today in `America/Sao_Paulo`;
+4. timestamp is not more than one hour in the future;
+5. headline/summary matches a configured market-signal group;
+6. headline is not on the exclusion list;
+7. URL/title has not already been selected.
 
-</details>
+The output is ordered newest-first and capped by publisher concentration. Impact is a deterministic function of category strength, title match, provider rank, secondary signals, and recency.
 
-<details>
-<summary><b>📧 Email & Marketing: Kit (ConvertKit)</b></summary>
-<br/>
+### Resource bounds
 
-*   **Role:** High-volume user broadcasts and tag management.
-*   **Key Endpoints:**
-    *   `POST /v3/tags/{tag_id}/subscribe` (User Migration)
-    *   `POST /v3/broadcasts` (Newsletters)
-*   **Auth:** `KIT_API_KEY` • `KIT_API_SECRET`
+- 10-second timeout per feed;
+- 1.5 MB maximum XML response;
+- five-minute Next.js revalidation;
+- 30 output items maximum;
+- eight items maximum per publisher.
 
-</details>
+## TradingView integration
 
-<details>
-<summary><b>🗄️ Database: MongoDB Atlas</b></summary>
-<br/>
+Widget configuration lives in `lib/constants.ts`. All active symbols use the `BMFBOVESPA` exchange prefix. The product embeds:
 
-*   **Connection:** Standard URI (DNS SRV bypassed for maximum reliability).
-*   **Collections:** `users`, `watchlists`, `alerts`.
+- market overview;
+- B3 hot lists;
+- selected quotes;
+- symbol info;
+- daily and baseline charts;
+- technical analysis;
+- company profile;
+- financial statements.
 
-</details>
+The iframe containers are intentionally inert and ignore pointer input so no click can navigate outside OpenStock.
 
----
+## Optional sentiment
 
-<div align="center">
-  <sub>Documentation © Open Dev Society. Built with ❤️ for the Open Source Community.</sub>
-</div>
+`ADANOS_API_KEY` enables the stock sentiment card. Without the key, stock details remain functional and simply omit the optional card.
+
+## Legacy server modules
+
+The repository still contains an Inngest route, MongoDB persistence, alerts, Kit, and email modules inherited from the upstream architecture. They are not required by the current dashboard or its no-login flow. See issue [#98](https://github.com/Open-Dev-Society/OpenStock/issues/98) before extending these modules.
+
+## Environment
+
+See [`.env.example`](./.env.example) and [`README.md`](./README.md).
+
+## Verification
+
+```bash
+npm test
+npm run build
+npx eslint \
+  components/Header.tsx \
+  components/MarketTickerStrip.tsx \
+  components/MarketNewsGrid.tsx \
+  lib/market-news.ts \
+  lib/actions/market-news.actions.ts
+```
+
+For known repository-wide legacy diagnostics, see [`docs/HANDOFF.md`](./docs/HANDOFF.md).

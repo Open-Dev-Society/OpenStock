@@ -1,56 +1,12 @@
 import { inngest } from "@/lib/inngest/client";
-import { NEWS_SUMMARY_EMAIL_PROMPT, PERSONALIZED_WELCOME_EMAIL_PROMPT } from "@/lib/inngest/prompts";
-import { sendNewsSummaryEmail, sendWelcomeEmail } from "@/lib/nodemailer";
+import { NEWS_SUMMARY_EMAIL_PROMPT } from "@/lib/inngest/prompts";
+import { sendNewsSummaryEmail } from "@/lib/nodemailer";
 import { getAllUsersForNewsEmail } from "@/lib/actions/user.actions";
 import { getWatchlistSymbolsByEmail } from "@/lib/actions/watchlist.actions";
 import { getNews } from "@/lib/actions/finnhub.actions";
 import { getFormattedTodayDate } from "@/lib/utils";
 import { callAIProviderWithFallback } from "@/lib/ai-provider";
 
-export const sendSignUpEmail = inngest.createFunction(
-    { id: 'sign-up-email', triggers: [{ event: 'app/user.created' }] },
-    async ({ event, step }) => {
-        const userProfile = `
-            - Country: ${event.data.country}
-            - Investment goals: ${event.data.investmentGoals}
-            - Risk tolerance: ${event.data.riskTolerance}
-            - Preferred industry: ${event.data.preferredIndustry}
-        `
-
-        const prompt = PERSONALIZED_WELCOME_EMAIL_PROMPT.replace('{{userProfile}}', userProfile)
-
-
-        const introText = await step.run('generate-welcome-intro', async () => {
-            try {
-                return await callAIProviderWithFallback(prompt);
-            } catch (error) {
-                console.error("⚠️ All AI providers failed for welcome email", error);
-                return 'Thanks for joining Openstock. You now have the tools to track markets and make smarter moves.';
-            }
-        });
-
-        await step.run('send-welcome-email', async () => {
-            try {
-
-                const { data: { email, name } } = event;
-                // introText is already a plain string from the AI provider
-
-                console.log(`📧 Attempting to send welcome email to: ${email}`);
-                const result = await sendWelcomeEmail({ email, name, intro: introText });
-                console.log(`✅ Welcome email sent successfully to: ${email}`);
-                return result;
-            } catch (error) {
-                console.error('❌ Error sending welcome email:', error);
-                throw error;
-            }
-        })
-
-        return {
-            success: true,
-            message: 'Welcome email sent successfully'
-        }
-    }
-)
 
 // Rename to Weekly
 export const sendWeeklyNewsSummary = inngest.createFunction(

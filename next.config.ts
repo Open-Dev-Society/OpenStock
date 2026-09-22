@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
             },
             {
                 protocol: 'https',
-                hostname: 'static2.finnhub.io',
+                hostname: 'icons.brapi.dev',
                 port: '',
                 pathname: '/**',
             },
