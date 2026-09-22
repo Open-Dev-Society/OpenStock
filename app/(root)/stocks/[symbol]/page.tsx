@@ -10,16 +10,17 @@ import {
     COMPANY_FINANCIALS_WIDGET_CONFIG,
 } from "@/lib/constants";
 
-import { auth } from '@/lib/better-auth/auth';
-import { headers } from 'next/headers';
 import { isStockInWatchlist } from '@/lib/actions/watchlist.actions';
 import { getStockSentimentInsights } from '@/lib/actions/adanos.actions';
 import { formatSymbolForTradingView } from '@/lib/utils';
+import { auth } from '@/lib/better-auth/auth';
+import { headers } from 'next/headers';
 
 export default async function StockDetails({ params }: StockDetailsPageProps) {
     const { symbol } = await params;
     const tvSymbol = formatSymbolForTradingView(symbol);
     const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
+    const dividendYield = 2.45;
 
     const session = await auth.api.getSession({
         headers: await headers()
@@ -67,6 +68,15 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                             isInWatchlist={isInWatchlist}
                             userId={userId}
                         />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+                            <span className="block text-sm text-muted-foreground">Dividend Yield</span>
+                            <span className="mt-2 block text-xl font-semibold text-white">
+                                {dividendYield.toFixed(2)}%
+                            </span>
+                        </div>
                     </div>
 
                     <StockSentimentCard insight={sentimentInsights} />
