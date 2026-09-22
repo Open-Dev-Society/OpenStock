@@ -87,16 +87,20 @@ Goal: remove the decisions that would otherwise force a rewrite.
 Tasks:
 
 1. Compare crypto providers for REST quotes, WebSocket streaming, search/metadata, historical candles, rate limits, regional availability, and commercial terms.
-2. Validate the exact symbol/venue representation for BTC/USD and ETH/USD.
-3. Decide whether v1 supports one venue per pair or a venue selector.
-4. Decide whether Major Indices and Futures are presentation-only in v1 or need app-owned search, watchlists, and alerts.
-5. Confirm alert notification behavior; the existing worker logs trigger intent but does not deliver a user-facing notification.
+2. Validate Luno as the first venue candidate using public endpoints for `XBTZAR` and `ETHZAR`, then confirm the current South Africa pair matrix.
+3. Validate the exact symbol/venue representation for Luno ZAR pairs and any initial crypto/crypto pairs.
+4. Decide whether v1 supports one venue per pair or a venue selector.
+5. Decide whether Major Indices and Futures are presentation-only in v1 or need app-owned search, watchlists, and alerts.
+6. Confirm alert notification behavior; the existing worker logs trigger intent but does not deliver a user-facing notification.
+7. Revoke the exposed key from the screenshot and create a replacement only if authenticated candles or streaming are approved.
 
 Exit criteria:
 
 - One provider is selected for the first crypto adapter.
 - The supported crypto instrument matrix is written down.
 - Provider limits and licensing assumptions are accepted.
+
+Current recommendation: keep Luno as the leading candidate for a deliberately scoped South Africa/ZAR venue slice, not as the sole provider for a broad global Crypto page. Public REST snapshots should be the first implementation; credentials should not be required until a measured latency or candle requirement justifies them. If the product promise is global crypto coverage, select a broader provider and add Luno as an optional venue adapter instead.
 
 ### Phase 1 — Markets navigation shell
 
@@ -159,12 +163,13 @@ Goal: support app-owned crypto search and quotes for the selected initial instru
 
 Tasks:
 
-1. Implement the selected provider adapter with strict symbol mapping and timeout/error handling.
+1. Implement the selected provider adapter (Luno only if the release is local/ZAR-focused) with strict symbol mapping and timeout/error handling.
 2. Add crypto search results with asset class, venue, pair, quote currency, and provider identity.
 3. Add BTC/USD and ETH/USD detail summaries using the shared quote contract.
 4. Preserve TradingView charts where the provider/pair mapping is available; a chart failure must not block quote, watchlist, or alert actions.
 5. Add a visible data source and freshness state to crypto quote surfaces.
 6. Add rate-limit protection, short-lived metadata caching, and request coalescing for repeated symbols.
+7. If streaming is approved, run the Luno WebSocket connection server-side with reconnect/backoff, sequence validation, and one shared subscription cache rather than one connection per browser component.
 
 Likely files:
 
@@ -291,7 +296,7 @@ The initiative is complete when:
 
 ## 8. Decisions required before Phase 3
 
-1. Which crypto provider and venue(s) should v1 support?
+1. Is the first Crypto experience South Africa/ZAR-focused, or does it require broad global aggregation from day one?
 2. Should Major Indices and Futures be presentation-only in v1?
 3. Which notification channel should crypto alerts use?
 4. Is one-minute-ish alert evaluation sufficient, or is streaming required for the first release?

@@ -2,7 +2,7 @@
 
 Status: requirements baseline / architecture discovery
 
-Branch: `codex/crypto-market-data-analysis`
+Branch: `Crypto`
 
 ## 1. Executive summary
 
@@ -147,6 +147,16 @@ Define a `MarketDataProvider` interface with separate capabilities for:
 Finnhub remains the equity provider initially. A crypto adapter implements the minimum crypto capabilities without leaking provider-specific symbols into components, Mongo models, or alert logic.
 
 TradingView is represented as a presentation capability rather than as a universal `MarketDataProvider` unless a separately approved direct-data integration is selected. This keeps the architecture honest: the UI can use a TradingView widget where it is strong, while server-side features use normalized provider contracts with explicit timestamps.
+
+### 4.4 Luno candidate provider
+
+Luno is a valuable candidate for an exchange-specific crypto adapter, especially for a South Africa-focused experience, but it should not be treated as the sole general-purpose crypto provider. Its public API exposes ticker, order book, recent trades, and market metadata endpoints, plus a WebSocket market stream for lower-latency updates. Luno documents a 300-calls-per-minute REST limit, a 50-session streaming limit, and market data that may be cached for up to one second.
+
+Luno's South Africa market list includes locally relevant ZAR pairs such as BTC/ZAR and ETH/ZAR, in addition to crypto/crypto pairs. This is a product advantage for the initial user experience, but it is not the same as global market coverage: Luno prices and liquidity are venue-specific, and pair availability varies by country.
+
+The first Luno adapter should use public REST snapshots and market metadata without credentials. A server-side WebSocket stream or authenticated candle access can be evaluated later if the freshness SLA requires it. Any Luno key must remain server-only, read-only, IP-restricted/expiring where possible, and must never be placed in `NEXT_PUBLIC_*` variables. Luno's terms and data-redistribution permissions must also be reviewed before exposing its data as a public OpenStock service.
+
+Research record: [Luno API evaluation](./research/luno-api-evaluation.md).
 
 ## 5. Functional requirements
 
@@ -346,7 +356,7 @@ The feature is ready for a first release when:
 
 ## 11. Open decisions before implementation
 
-1. Which crypto provider and which quote venue(s) are in scope for v1?
+1. Should the first release be explicitly South Africa/ZAR-focused, allowing Luno to be the first adapter, or should OpenStock choose a broader global provider for the general Crypto page?
 2. Is v1 limited to BTC/USD and ETH/USD, or does it support a larger universe?
 3. Do we need true tick/stream updates, or is a 5–15 second snapshot SLA acceptable for the first release?
 4. Should the first crypto chart use TradingView where possible, or should we introduce a first-party chart fallback immediately?
