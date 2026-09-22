@@ -62,7 +62,7 @@ The provider and licensing terms for any direct TradingView data API, charting l
 
 ## 3. Product goals
 
-### Must have for the first crypto slice
+### Target capabilities for the complete initiative
 
 1. Users can search for supported cryptocurrencies using human-friendly names and canonical symbols.
 2. Users can open a crypto detail page from search.
@@ -84,6 +84,19 @@ The provider and licensing terms for any direct TradingView data API, charting l
 - Guaranteed exchange-grade real-time SLAs.
 - Replacing every TradingView widget with a first-party chart renderer.
 - Rebuilding all of TradingView’s community, news, screener, calendar, and broker surfaces inside OpenStock.
+- Premium crypto/forex candle history.
+- Finnhub WebSocket connections, streaming fan-out, and quote caches.
+- First-party chart rendering or historical backfill.
+
+### Simplified first implementation scope
+
+The current release is intentionally smaller than the complete initiative:
+
+1. Keep the Markets family navigation and dark teal/blue OpenStock presentation.
+2. Provide read-only Crypto and Forex market surfaces using TradingView widgets where supported.
+3. Use Finnhub only for basic symbol/exchange discovery or simple snapshots when the selected endpoint is available without Premium access.
+4. Show clear source and capability labels; do not imply that a presentation widget is an OpenStock-owned quote stream.
+5. Defer crypto/forex watchlist persistence, alerts, historical charts, and live streaming until a later decision explicitly asks for them.
 
 ## 4. Domain requirements
 
@@ -140,7 +153,7 @@ Define a `MarketDataProvider` interface with separate capabilities for:
 - instrument search;
 - instrument metadata;
 - quote snapshot;
-- historical candles;
+- historical candles (deferred);
 - optional live subscription;
 - optional news and sentiment.
 
@@ -160,14 +173,14 @@ Research record: [Luno API evaluation](./research/luno-api-evaluation.md).
 
 ### 4.5 Finnhub crypto and forex candidate
 
-Finnhub's official API documentation includes crypto and forex exchange lists, symbol discovery, candle history, and WebSocket trade subscriptions. This makes it a stronger first candidate for a broad OpenStock Markets experience than a single exchange adapter, while preserving the current Finnhub operational footprint.
+Finnhub's official API documentation includes crypto and forex exchange lists and symbol discovery. This makes it a stronger first candidate for a broad OpenStock Markets experience than a single exchange adapter, while preserving the current Finnhub operational footprint.
 
 There are two important boundaries:
 
 1. Finnhub documents the existing `/quote` endpoint for real-time US stock quotes. It must not be treated as a universal quote endpoint for crypto and forex.
-2. `/crypto/candle` and `/forex/candle` are documented as Premium endpoints. Historical charting, reconnect backfill, and any first-party candle fallback therefore require an entitlement check before they become release commitments.
+2. `/crypto/candle` and `/forex/candle` are deliberately outside the current release.
 
-For the application-owned path, use Finnhub exchange/symbol discovery to build a canonical instrument registry, a server-owned WebSocket subscription/cache for live updates where the plan permits it, and REST snapshots/polling as a bounded fallback. Keep credentials server-only. Finnhub's data terms, connection/rate limits, symbol coverage, and redistribution permissions remain release gates.
+For the simplified release, use Finnhub exchange/symbol discovery and only the simplest non-Premium snapshot capability that is confirmed for the account. Do not build a WebSocket subscription/cache, candle history, or first-party chart fallback. Keep credentials server-only. Finnhub's data terms, rate limits, symbol coverage, and redistribution permissions remain release gates.
 
 Research record: [Finnhub crypto and forex evaluation](./research/finnhub-crypto-forex-evaluation.md).
 
@@ -209,8 +222,8 @@ Research record: [Finnhub crypto and forex evaluation](./research/finnhub-crypto
 | Major Indices | Curated global index list and charts | TradingView symbols first; normalized quotes later |
 | Stocks | Existing stock overview/search/detail behavior | Finnhub + TradingView |
 | Futures | Curated energy/metals/major contracts, read-only | TradingView first; provider decision required for app-owned quotes |
-| Crypto | Crypto discovery, quotes, detail, watchlist, alerts | TradingView presentation + crypto adapter for app-owned data |
-| Forex | Navigation target; app-owned discovery/quotes after provider entitlement and symbol coverage are confirmed | Finnhub candidate + TradingView presentation |
+| Crypto | Read-only market preview and discovery; app-owned watchlist/alerts deferred | TradingView presentation + minimal Finnhub discovery/snapshot candidate |
+| Forex | Read-only market preview and discovery; app-owned quotes deferred | TradingView presentation + minimal Finnhub discovery/snapshot candidate |
 | Economy | Navigation placeholder or future slice | Not in first implementation unless provider scope expands |
 
 ### Watchlists
@@ -247,7 +260,9 @@ These are product defaults to validate with the chosen provider:
 
 The UI must display the absolute `receivedAt` time even when it displays a friendly state. This allows users and developers to distinguish a frozen UI from a delayed provider.
 
-### Delivery strategy
+### Complete-initiative delivery strategy
+
+The following is retained as the longer-term design, not as current-release scope. The current release uses TradingView presentation widgets and does not create a stream, cache, or candle pipeline.
 
 1. REST snapshot on initial page load.
 2. Server-owned normalized quote endpoint for browser consumers.
@@ -368,17 +383,14 @@ The feature is ready for a first release when:
 - Provider keys are not shipped to the browser unless explicitly required and documented.
 - Data freshness, provider attribution, and delay limitations are visible to users.
 
-## 11. Open decisions before implementation
+## 11. Open decisions before the fuller app-owned data phase
 
-1. Does the current Finnhub plan include the required crypto/forex candles and WebSocket capabilities, and may that data be redistributed by the intended deployment?
-2. Should the first release be Finnhub-first for broad crypto coverage, with Luno as an optional South Africa/ZAR venue adapter, or explicitly South Africa/ZAR-focused?
-3. Is v1 limited to BTC/USD and ETH/USD, or does it support a larger universe?
-4. Do we need true tick/stream updates, or is a 5–15 second snapshot SLA acceptable for the first release?
-5. Should the first crypto chart use TradingView where possible, or should we introduce a first-party chart fallback immediately?
-6. Which notification channel should alerts use when they trigger?
-7. Is the GitHub fork expected to be a new remote repository under the user’s account/org, or is the isolated local branch sufficient for this working session?
-8. Should the first Markets shell include `Forex` and `Economy` as disabled/future tabs, or launch with only the five requested families?
-9. Are `Futures` and `Major Indices` presentation-only in v1, or must they also support OpenStock-owned search, watchlists, and alerts?
+1. When we expand beyond read-only presentation, should Finnhub remain the broad provider with Luno as an optional South Africa/ZAR venue adapter?
+2. Is the later instrument universe limited to BTC/USD and ETH/USD, or does it support a larger set?
+3. Which notification channel should alerts use in the later app-owned phase?
+4. Is the GitHub fork expected to be a new remote repository under the user’s account/org, or is the isolated local branch sufficient for this working session?
+5. Should `Economy` remain a future tab while Crypto and Forex are read-only market surfaces?
+6. Are `Futures` and `Major Indices` presentation-only in the fuller product, or must they also support OpenStock-owned search, watchlists, and alerts?
 
 ## 12. Current risk assessment
 

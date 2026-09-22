@@ -97,14 +97,13 @@ Goal: remove the decisions that would otherwise force a rewrite.
 
 Tasks:
 
-1. Compare Finnhub and Luno for REST snapshots, WebSocket streaming, search/metadata, historical candles, rate limits, regional availability, plan entitlements, and commercial terms.
-2. Confirm whether the current Finnhub plan includes `/crypto/candle`, `/forex/candle`, and the required WebSocket capabilities.
-3. Validate Finnhub crypto/forex exchange and symbol discovery, including the exact provider-native symbol representation for the initial instrument matrix.
-4. Validate Luno as an optional South Africa venue using public endpoints for `XBTZAR` and `ETHZAR`, then confirm the current pair matrix.
-5. Decide whether v1 supports one venue per pair or a venue selector.
+1. Confirm the simplest non-Premium Finnhub discovery/snapshot calls available for the intended account plan.
+2. Validate Finnhub crypto/forex exchange and symbol discovery, including the exact provider-native symbol representation for the initial presentation matrix.
+3. Validate Luno as an optional South Africa venue using public endpoints for `XBTZAR` and `ETHZAR`, then confirm the current pair matrix.
+4. Decide whether v1 is presentation-only or includes a small read-only snapshot list.
+5. Keep candles, WebSocket streaming, first-party charts, watchlist migration, and alerts outside the current release.
 6. Decide whether Major Indices and Futures are presentation-only in v1 or need app-owned search, watchlists, and alerts.
-7. Confirm alert notification behavior; the existing worker logs trigger intent but does not deliver a user-facing notification.
-8. Revoke the exposed key from the screenshot and create a replacement only if authenticated candles or streaming are approved.
+7. Revoke the exposed key from the screenshot; no credential is needed for the current read-only presentation slice.
 
 Exit criteria:
 
@@ -112,7 +111,7 @@ Exit criteria:
 - The supported crypto instrument matrix is written down.
 - Provider limits and licensing assumptions are accepted.
 
-Current recommendation: make Finnhub the first provider candidate for broad crypto and forex, subject to plan entitlement, symbol coverage, and redistribution review. Keep Luno as an optional South Africa/ZAR venue adapter. Do not assume the existing stock `/quote` action covers the new asset classes; implement explicit Finnhub crypto/forex adapters behind the normalized provider boundary.
+Current recommendation: use TradingView for the current read-only presentation slice and keep Finnhub as the first candidate for basic discovery/snapshots. Do not add Premium candles, WebSocket infrastructure, first-party charts, watchlist migration, or alerts until explicitly requested. Keep Luno as an optional South Africa/ZAR venue adapter.
 
 ### Phase 1 — Markets navigation shell
 
@@ -171,17 +170,15 @@ Exit criteria:
 
 ### Phase 3 — Crypto adapter and discovery
 
-Goal: support app-owned crypto search and quotes for the selected initial instrument set.
+Goal: support a small read-only crypto surface without premium history or streaming infrastructure.
 
 Tasks:
 
-1. Implement a Finnhub crypto adapter if the plan gate passes, with strict symbol mapping, timeout/error handling, and no reuse of the stock-only `/quote` path. Keep Luno as a later optional venue adapter if ZAR liquidity is a product requirement.
-2. Add crypto search results with asset class, venue, pair, quote currency, and provider identity.
-3. Add BTC/USD and ETH/USD detail summaries using the shared quote contract.
-4. Preserve TradingView charts where the provider/pair mapping is available; a chart failure must not block quote, watchlist, or alert actions.
-5. Add a visible data source and freshness state to crypto quote surfaces.
-6. Add rate-limit protection, short-lived metadata caching, and request coalescing for repeated symbols.
-7. If streaming is approved, run the Finnhub WebSocket connection server-side with reconnect/backoff, provider-message validation, and one shared subscription cache rather than one connection per browser component.
+1. Implement only a minimal Finnhub crypto discovery/snapshot adapter if a non-Premium endpoint is confirmed, with strict symbol mapping and timeout/error handling.
+2. Add read-only crypto discovery with asset class, venue, pair, quote currency, and provider identity.
+3. Keep BTC/USD and ETH/USD as presentation examples rather than promising a broad instrument universe.
+4. Preserve TradingView widgets for visual market data.
+5. Add a visible source/capability label; do not add streaming, candle history, chart fallback, watchlist migration, or alerts.
 
 Likely files:
 
@@ -197,21 +194,20 @@ Exit criteria:
 - Provider outages show an explicit unavailable/stale state rather than zero-valued data.
 - Stock search/detail behavior remains unchanged.
 
-### Phase 3b — Forex adapter and discovery
+### Phase 3b — Forex presentation and discovery
 
-Goal: extend the same normalized market-data path to currency pairs without inventing a second navigation or watchlist model.
+Goal: add a simple read-only forex surface without inventing a second navigation model.
 
 Tasks:
 
-1. Confirm Finnhub forex symbol/exchange coverage and the account entitlement for forex candles.
-2. Add a `finnhub-forex-provider` with base/counter currency identity, quote normalization, and market-status semantics appropriate for a near-24/5 market.
-3. Reuse the canonical instrument, freshness, search, watchlist, and alert contracts; do not model a forex pair as a stock ticker.
-4. Keep TradingView as the presentation fallback where a provider-native chart is unavailable.
+1. Confirm Finnhub forex symbol/exchange coverage and any simple non-Premium snapshot capability.
+2. Add read-only discovery only if the provider contract is straightforward and available to the account.
+3. Keep TradingView as the presentation layer; do not add candle history, streaming, watchlists, or alerts.
 
 Exit criteria:
 
-- A supported currency pair has a stable identity, normalized quote, source, and freshness state.
-- Forex availability and weekend/market-closed behavior are visible rather than inferred from a zero quote.
+- A supported currency pair has a stable identity and source label.
+- Forex availability is visible rather than inferred from a zero quote.
 
 ### Phase 4 — Mixed watchlists and migration
 
@@ -322,11 +318,9 @@ The initiative is complete when:
 - Provider failures, stale data, and unsupported capabilities are visible and recoverable.
 - The implementation, migration, test coverage, and provider attribution are documented.
 
-## 8. Decisions required before Phase 3
+## 8. Decisions required before the fuller app-owned data phase
 
-1. Does the current Finnhub plan include the required crypto/forex candle and WebSocket capabilities, and may the data be redistributed?
-2. Is the first Crypto experience Finnhub-first for broad coverage, with Luno as an optional ZAR venue, or explicitly South Africa/ZAR-focused?
-3. Should Major Indices and Futures be presentation-only in v1?
-4. Which notification channel should crypto alerts use?
-5. Is one-minute-ish alert evaluation sufficient, or is streaming required for the first release?
-6. Should the detail URL remain `/stocks/[symbol]` with an asset-aware model, or should all instruments move to a new `/markets/[instrumentId]` route?
+1. When we expand beyond read-only presentation, should Finnhub remain the broad provider with Luno as an optional ZAR venue?
+2. Should Major Indices and Futures remain presentation-only in the fuller product?
+3. Which notification channel should crypto alerts use later?
+4. Should the detail URL remain `/stocks/[symbol]` with an asset-aware model, or should all instruments move to a new `/markets/[instrumentId]` route?

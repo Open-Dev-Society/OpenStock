@@ -82,8 +82,8 @@ TradingView's free tier embeddable widgets have several restrictions:
    - India NSE/BSE: Available but with delays
    - Chinese A-shares: Not available in free tier
    - Crypto and forex support are exposed through separate Finnhub API areas, not the stock `/quote` contract.
-   - Crypto and forex candle endpoints require Premium access according to the current official API documentation.
-   - Exchange/symbol discovery and WebSocket availability must be verified against the account plan before enabling app-owned crypto or forex features.
+   - Premium candles and WebSocket infrastructure are intentionally outside the current OpenStock release scope.
+   - Basic exchange/symbol discovery or snapshot availability must be verified before enabling app-owned crypto or forex features.
 
 ## 🔧 Troubleshooting
 
