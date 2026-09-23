@@ -48,6 +48,19 @@
 
 OpenStock is an open-source alternative to expensive market platforms. Track real-time prices, set personalized alerts, and explore detailed company insights — built openly, for everyone, forever free.
 
+## QuantAgent research results
+
+The authenticated `/research` page can read an existing QuantAgent run summary and integrity-checked Markdown report. It does not expose a task submission, cancellation, resume, rerun, or trading action.
+
+Configure these variables on the OpenStock server only:
+
+```dotenv
+QUANTAGENT_API_BASE_URL=http://127.0.0.1:8765
+QUANTAGENT_API_BEARER_TOKEN=replace-with-at-least-32-random-characters
+```
+
+The browser never receives the bearer token. OpenStock sends two uncached, non-redirecting `GET` requests from the Next.js server to QuantAgent v1. Plain HTTP is accepted only for loopback hosts; remote services must use HTTPS.
+
 Note: OpenStock is community-built and not a brokerage. Market data may be delayed based on provider rules and your configuration. Nothing here is financial advice.
 
 ## 📋 Table of Contents
