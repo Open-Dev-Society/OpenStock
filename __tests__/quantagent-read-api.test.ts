@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto"
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
@@ -11,6 +12,7 @@ import {
 
 const token = "p3b-test-token-with-at-least-32-characters"
 const report = readFileSync(resolve(__dirname, "fixtures/quantagent-thesis-report.md"), "utf8")
+const reportSha256 = createHash("sha256").update(report).digest("hex")
 const runId = "20260923T005454Z-b3cfb532"
 
 const summary = {
@@ -52,7 +54,10 @@ function fixtureFetch() {
   return vi.fn<typeof fetch>(async (input) => {
     const url = input.toString()
     if (url.endsWith("/report")) {
-      return new Response(report, { status: 200, headers: { "content-type": "text/markdown" } })
+      return new Response(report, {
+        status: 200,
+        headers: { "content-type": "text/markdown", etag: `"${reportSha256}"` },
+      })
     }
     return new Response(JSON.stringify(summary), { status: 200, headers: { "content-type": "application/json" } })
   })
@@ -90,6 +95,73 @@ describe("QuantAgent read API adapter", () => {
     const fetchMock = fixtureFetch()
     await expect(loadQuantAgentRun("../secret", { baseUrl: "http://127.0.0.1:8765", bearerToken: token }, fetchMock)).rejects.toMatchObject({ code: "invalid_run_id" })
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it("rejects a summary for a different run", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async (input) => {
+      if (input.toString().endsWith("/report")) {
+        return new Response(report, { headers: { etag: `"${reportSha256}"` } })
+      }
+      return new Response(JSON.stringify({ ...summary, run_id: "another-run" }))
+    })
+
+    await expect(loadQuantAgentRun(runId, { baseUrl: "http://127.0.0.1:8765", bearerToken: token }, fetchMock)).rejects.toMatchObject({ code: "invalid_response" })
+  })
+
+  it("rejects a report without a matching integrity ETag", async () => {
+    for (const etag of [null, `"${"0".repeat(64)}"`]) {
+      const fetchMock = vi.fn<typeof fetch>(async (input) => {
+        if (input.toString().endsWith("/report")) {
+          return new Response(report, { headers: etag ? { etag } : undefined })
+        }
+        return new Response(JSON.stringify(summary))
+      })
+
+      await expect(loadQuantAgentRun(runId, { baseUrl: "http://127.0.0.1:8765", bearerToken: token }, fetchMock)).rejects.toMatchObject({ code: "artifact_integrity_error" })
+    }
+  })
+
+  it("rejects inconsistent final report metadata", async () => {
+    for (const invalidSummary of [
+      { ...summary, final: null },
+      {
+        ...summary,
+        steps: summary.steps.map((step, index) => index === summary.steps.length - 1
+          ? { ...step, output_sha256: "0".repeat(64) }
+          : step),
+      },
+    ]) {
+      const fetchMock = vi.fn<typeof fetch>(async (input) => {
+        if (input.toString().endsWith("/report")) {
+          return new Response(report, { headers: { etag: `"${reportSha256}"` } })
+        }
+        return new Response(JSON.stringify(invalidSummary))
+      })
+
+      await expect(loadQuantAgentRun(runId, { baseUrl: "http://127.0.0.1:8765", bearerToken: token }, fetchMock)).rejects.toMatchObject({ code: "artifact_integrity_error" })
+    }
+  })
+
+  it("cancels an oversized streamed response before buffering the remainder", async () => {
+    let cancelled = false
+    let pulls = 0
+    const oversized = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulls += 1
+        controller.enqueue(new Uint8Array(1024 * 1024))
+      },
+      cancel() {
+        cancelled = true
+      },
+    })
+    const fetchMock = vi.fn<typeof fetch>(async (input) => {
+      if (input.toString().endsWith("/report")) return new Response(oversized)
+      return new Response(JSON.stringify(summary))
+    })
+
+    await expect(loadQuantAgentRun(runId, { baseUrl: "http://127.0.0.1:8765", bearerToken: token }, fetchMock)).rejects.toMatchObject({ code: "invalid_response" })
+    expect(cancelled).toBe(true)
+    expect(pulls).toBeLessThanOrEqual(6)
   })
 
   it("maps public upstream errors without echoing their body", async () => {

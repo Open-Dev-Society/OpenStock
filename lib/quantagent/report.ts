@@ -140,12 +140,14 @@ export function parseThesisReport(markdown: string): ParsedThesisReport {
   if (!/^[a-f0-9]{64}$/.test(previousStateSha256) || !/^[a-f0-9]{64}$/.test(evidenceBundleSha256)) {
     throw new Error("QuantAgent report has invalid revision lineage")
   }
+  const asOf = metadataValue(metadata, "As of")
+  if (Number.isNaN(Date.parse(asOf))) throw new Error("QuantAgent report has an invalid As of timestamp")
 
   return {
     title: decode(titleLine.slice(2)),
     thesisId: thesisMatch[1],
     version: Number(thesisMatch[2]),
-    asOf: metadataValue(metadata, "As of"),
+    asOf,
     assessment: metadataValue(metadata, "Assessment"),
     researchSuggestion: metadataValue(metadata, "Research suggestion"),
     evidenceSufficient: parseBoolean(metadataValue(metadata, "Evidence sufficient"), "evidence flag"),

@@ -31,4 +31,10 @@ describe("parseThesisReport", () => {
       "invalid revision lineage",
     )
   })
+
+  it("rejects an invalid As of timestamp before rendering", () => {
+    expect(() => parseThesisReport(report.replace("2026-09-22T00:00:00+00:00", "not-a-date"))).toThrow(
+      "invalid As of timestamp",
+    )
+  })
 })

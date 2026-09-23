@@ -152,13 +152,69 @@ function endpoint(base: URL, runId: string, report = false): URL {
 }
 
 async function readBounded(response: Response, limit: number): Promise<string> {
-  const declared = Number(response.headers.get("content-length"))
-  if (Number.isFinite(declared) && declared > limit) {
+  return decodeUtf8(await readBoundedBytes(response, limit))
+}
+
+async function readBoundedBytes(response: Response, limit: number): Promise<Uint8Array> {
+  const contentLength = response.headers.get("content-length")
+  const declared = contentLength === null ? null : Number(contentLength)
+  if (declared !== null && Number.isFinite(declared) && declared > limit) {
+    await response.body?.cancel().catch(() => undefined)
     throw new QuantAgentReadError("invalid_response", "QuantAgent response is too large")
   }
-  const body = await response.text()
-  if (body.length > limit) throw new QuantAgentReadError("invalid_response", "QuantAgent response is too large")
+  if (!response.body) return new Uint8Array()
+
+  const reader = response.body.getReader()
+  const chunks: Uint8Array[] = []
+  let length = 0
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      length += value.byteLength
+      if (length > limit) {
+        await reader.cancel().catch(() => undefined)
+        throw new QuantAgentReadError("invalid_response", "QuantAgent response is too large")
+      }
+      chunks.push(value)
+    }
+  } catch (error) {
+    if (error instanceof QuantAgentReadError) throw error
+    throw new QuantAgentReadError("invalid_response", "QuantAgent response could not be read")
+  } finally {
+    reader.releaseLock()
+  }
+
+  const body = new Uint8Array(length)
+  let offset = 0
+  for (const chunk of chunks) {
+    body.set(chunk, offset)
+    offset += chunk.byteLength
+  }
   return body
+}
+
+function decodeUtf8(bytes: Uint8Array): string {
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes)
+  } catch {
+    throw new QuantAgentReadError("invalid_response", "QuantAgent response is not valid UTF-8")
+  }
+}
+
+async function digestSha256(bytes: Uint8Array): Promise<string> {
+  const input = new ArrayBuffer(bytes.byteLength)
+  new Uint8Array(input).set(bytes)
+  const digest = await crypto.subtle.digest("SHA-256", input)
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("")
+}
+
+function reportEtag(response: Response): string {
+  const match = response.headers.get("etag")?.match(/^"([a-f0-9]{64})"$/)
+  if (!match) {
+    throw new QuantAgentReadError("artifact_integrity_error", "QuantAgent report is missing a valid integrity ETag")
+  }
+  return match[1]
 }
 
 async function failure(response: Response): Promise<QuantAgentReadError> {
@@ -220,9 +276,25 @@ export async function loadQuantAgentRun(
     throw new QuantAgentReadError("invalid_response", "QuantAgent returned invalid JSON")
   }
   const summary = parseRunSummary(summaryValue)
+  if (summary.run_id !== runId) {
+    throw new QuantAgentReadError("invalid_response", "QuantAgent returned a mismatched run summary")
+  }
   if (!summary.links.report) return { summary, report: null, rawReport: null }
   if (reportResult.status === "rejected") throw reportResult.reason
-  const rawReport = await readBounded(reportResult.value, MAX_REPORT_LENGTH)
+  const finalStep = summary.steps.at(-1)
+  if (
+    !summary.final
+    || summary.final.contract !== "quantagent.report.v1"
+    || finalStep?.output_contract !== summary.final.contract
+    || finalStep.output_sha256 !== summary.final.content_sha256
+  ) {
+    throw new QuantAgentReadError("artifact_integrity_error", "QuantAgent report metadata is inconsistent")
+  }
+  const reportBytes = await readBoundedBytes(reportResult.value, MAX_REPORT_LENGTH)
+  if (await digestSha256(reportBytes) !== reportEtag(reportResult.value)) {
+    throw new QuantAgentReadError("artifact_integrity_error", "QuantAgent report failed integrity validation")
+  }
+  const rawReport = decodeUtf8(reportBytes)
   try {
     return { summary, report: parseThesisReport(rawReport), rawReport }
   } catch {
