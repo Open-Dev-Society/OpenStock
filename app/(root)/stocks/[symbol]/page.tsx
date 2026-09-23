@@ -20,7 +20,7 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
     const { symbol } = await params;
     const tvSymbol = formatSymbolForTradingView(symbol);
     const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
-    const dividendYield = 2.45;
+    const dividendYield: number | null = 2.45; // TODO: replace with real Finnhub data
 
     const session = await auth.api.getSession({
         headers: await headers()
@@ -74,8 +74,7 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                         <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
                             <span className="block text-sm text-muted-foreground">Dividend Yield</span>
                             <span className="mt-2 block text-xl font-semibold text-white">
-                                {dividendYield.toFixed(2)}%
-                            </span>
+                                {dividendYield !== null ? `${dividendYield.toFixed(2)}%` : "—"}                            </span>
                         </div>
                     </div>
 
