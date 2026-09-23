@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NAV_ITEMS } from '@/lib/constants';
+import { MARKET_OVERVIEW_WIDGET_CONFIG, NAV_ITEMS } from '@/lib/constants';
 import {
     MARKET_FAMILIES,
     getMarketFamily,
@@ -43,5 +43,32 @@ describe('market families', () => {
             href: '/markets',
             label: 'Markets',
         });
+    });
+
+    it('includes transport and energy categories in the market overview', () => {
+        expect(MARKET_OVERVIEW_WIDGET_CONFIG.tabs.map((tab) => tab.title)).toEqual([
+            'Financial',
+            'Technology',
+            'Services',
+            'Transport',
+            'Energy',
+        ]);
+
+        expect(MARKET_OVERVIEW_WIDGET_CONFIG.tabs).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    title: 'Transport',
+                    symbols: expect.arrayContaining([
+                        expect.objectContaining({ s: 'NYSE:UPS' }),
+                    ]),
+                }),
+                expect.objectContaining({
+                    title: 'Energy',
+                    symbols: expect.arrayContaining([
+                        expect.objectContaining({ s: 'NYSE:XOM' }),
+                    ]),
+                }),
+            ]),
+        );
     });
 });

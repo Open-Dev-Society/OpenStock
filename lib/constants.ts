@@ -88,6 +88,28 @@ export const MARKET_OVERVIEW_WIDGET_CONFIG = {
                 { s: 'NYSE:V', d: 'Visa' },
             ],
         },
+        {
+            title: 'Transport',
+            symbols: [
+                { s: 'NYSE:UPS', d: 'United Parcel Service' },
+                { s: 'NYSE:FDX', d: 'FedEx' },
+                { s: 'NYSE:UNP', d: 'Union Pacific' },
+                { s: 'NASDAQ:CSX', d: 'CSX' },
+                { s: 'NYSE:UBER', d: 'Uber Technologies' },
+                { s: 'NYSE:DAL', d: 'Delta Air Lines' },
+            ],
+        },
+        {
+            title: 'Energy',
+            symbols: [
+                { s: 'NYSE:XOM', d: 'Exxon Mobil' },
+                { s: 'NYSE:CVX', d: 'Chevron' },
+                { s: 'NYSE:COP', d: 'ConocoPhillips' },
+                { s: 'NYSE:SLB', d: 'SLB' },
+                { s: 'NYSE:EOG', d: 'EOG Resources' },
+                { s: 'NYSE:OXY', d: 'Occidental Petroleum' },
+            ],
+        },
     ],
     support_host: 'https://www.tradingview.com', // TradingView host
     backgroundColor: '#141414', // background color
