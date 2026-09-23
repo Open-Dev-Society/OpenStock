@@ -4,9 +4,11 @@ import { RunLocator } from "@/components/research/RunLocator"
 
 export function ResearchFrame({
   runId,
+  showLocator = true,
   children,
 }: {
   runId?: string
+  showLocator?: boolean
   children: ReactNode
 }) {
   return (
@@ -15,7 +17,7 @@ export function ResearchFrame({
         <h1>Research</h1>
         <p>Review an existing QuantAgent run without starting a new task.</p>
       </header>
-      <RunLocator defaultRunId={runId} />
+      {showLocator && <RunLocator defaultRunId={runId} />}
       {children}
     </section>
   )

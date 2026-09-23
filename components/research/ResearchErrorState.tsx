@@ -13,7 +13,7 @@ const ERROR_COPY: Record<QuantAgentReadErrorCode, { title: string; description: 
   },
   access_denied: {
     title: "This result is not available to this account",
-    description: "QuantAgent denied access to the requested run collection.",
+    description: "Research access is limited to the configured OpenStock account, or QuantAgent denied this run.",
   },
   run_not_found: {
     title: "Run not found",
