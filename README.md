@@ -59,7 +59,7 @@ QUANTAGENT_API_BASE_URL=http://127.0.0.1:8765
 QUANTAGENT_API_BEARER_TOKEN=replace-with-at-least-32-random-characters
 ```
 
-The browser never receives the bearer token. OpenStock sends two uncached, non-redirecting `GET` requests from the Next.js server to QuantAgent v1. Plain HTTP is accepted only for loopback hosts; remote services must use HTTPS.
+The browser never receives the bearer token. OpenStock sends two uncached, non-redirecting `GET` requests from the Next.js server to QuantAgent v1. Plain HTTP is accepted only for literal loopback IPs (`127.0.0.1` or `[::1]`); hostnames, including `localhost`, must use HTTPS.
 
 Note: OpenStock is community-built and not a brokerage. Market data may be delayed based on provider rules and your configuration. Nothing here is financial advice.
 

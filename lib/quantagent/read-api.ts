@@ -138,7 +138,7 @@ export function normalizeQuantAgentBaseUrl(raw: string): URL {
   } catch {
     throw new QuantAgentReadError("configuration_error", "QUANTAGENT_API_BASE_URL is invalid")
   }
-  const loopback = url.hostname === "127.0.0.1" || url.hostname === "localhost" || url.hostname === "[::1]"
+  const loopback = url.hostname === "127.0.0.1" || url.hostname === "[::1]"
   if (url.username || url.password || url.search || url.hash || (url.protocol !== "https:" && !(url.protocol === "http:" && loopback))) {
     throw new QuantAgentReadError("configuration_error", "QuantAgent API must use HTTPS or loopback HTTP without URL credentials")
   }

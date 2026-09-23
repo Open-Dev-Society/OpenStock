@@ -82,7 +82,7 @@ describe("QuantAgent read API adapter", () => {
 
   it("repeating the read cannot create or duplicate a task", async () => {
     const fetchMock = fixtureFetch()
-    const config = { baseUrl: "http://localhost:8765", bearerToken: token }
+    const config = { baseUrl: "http://127.0.0.1:8765", bearerToken: token }
 
     await loadQuantAgentRun(runId, config, fetchMock)
     await loadQuantAgentRun(runId, config, fetchMock)
@@ -170,8 +170,10 @@ describe("QuantAgent read API adapter", () => {
     await expect(loadQuantAgentRun("missing-run", { baseUrl: "http://127.0.0.1:8765", bearerToken: token }, fetchMock)).rejects.toMatchObject({ code: "run_not_found", status: 404 })
   })
 
-  it("allows loopback HTTP but rejects remote plaintext and URL credentials", () => {
+  it("allows literal loopback HTTP but rejects hostname-based plaintext and URL credentials", () => {
     expect(normalizeQuantAgentBaseUrl("http://127.0.0.1:8765").origin).toBe("http://127.0.0.1:8765")
+    expect(normalizeQuantAgentBaseUrl("http://[::1]:8765").origin).toBe("http://[::1]:8765")
+    expect(() => normalizeQuantAgentBaseUrl("http://localhost:8765")).toThrow(QuantAgentReadError)
     expect(() => normalizeQuantAgentBaseUrl("http://example.com")).toThrow(QuantAgentReadError)
     expect(() => normalizeQuantAgentBaseUrl("https://token@example.com")).toThrow(QuantAgentReadError)
   })
