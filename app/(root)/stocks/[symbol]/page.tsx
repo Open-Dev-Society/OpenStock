@@ -69,9 +69,11 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                             userId={userId}
                         />
                     </div>
-<div className="mt-2 w-fit min-w-[140px] rounded-lg border border-white/10 bg-white/[0.03] p-4 flex flex-col gap-1 transition-colors hover:bg-white/[0.06]">
-    <span className="text-sm text-muted-foreground">Dividend Yield</span>
-    <span className="text-xl font-semibold text-white">
+<div className="w-fit min-w-[160px] rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] px-5 py-4 flex flex-col gap-1.5 transition-all hover:border-white/20 hover:bg-white/[0.06]">
+    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        Dividend Yield
+    </span>
+    <span className="text-2xl font-semibold text-white leading-tight">
         {dividendYield !== null ? `${dividendYield.toFixed(2)}%` : "—"}
     </span>
 </div>
