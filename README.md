@@ -61,6 +61,8 @@ QUANTAGENT_API_BEARER_TOKEN=replace-with-at-least-32-random-characters
 
 The browser never receives the bearer token. OpenStock sends two uncached, non-redirecting `GET` requests from the Next.js server to QuantAgent v1. Plain HTTP is accepted only for literal loopback IPs (`127.0.0.1` or `[::1]`); hostnames, including `localhost`, must use HTTPS.
 
+For an optional local contract check, start QuantAgent with a completed thesis run, set `QUANTAGENT_LIVE_RUN_ID` to that run ID alongside the two server variables above, then run `npm test -- __tests__/quantagent-live-contract.test.ts`. The test performs real authenticated reads and checks report integrity and public error mapping; it is skipped when the three variables are not set. Use test-only credentials and do not commit them.
+
 Note: OpenStock is community-built and not a brokerage. Market data may be delayed based on provider rules and your configuration. Nothing here is financial advice.
 
 ## 📋 Table of Contents
