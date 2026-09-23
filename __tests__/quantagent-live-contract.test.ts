@@ -1,10 +1,21 @@
 import { describe, expect, it } from "vitest"
 
-import { loadQuantAgentRun } from "@/lib/quantagent/read-api"
+import { loadQuantAgentRun, QuantAgentReadError } from "@/lib/quantagent/read-api"
 
 const baseUrl = process.env.QUANTAGENT_API_BASE_URL
 const bearerToken = process.env.QUANTAGENT_API_BEARER_TOKEN
 const runId = process.env.QUANTAGENT_LIVE_RUN_ID
+
+async function captureReadError(promise: Promise<unknown>) {
+  try {
+    await promise
+  } catch (error) {
+    expect(error).toBeInstanceOf(QuantAgentReadError)
+    const normalized = error as QuantAgentReadError
+    return { ...normalized, message: normalized.message }
+  }
+  throw new Error("Expected a QuantAgent read error")
+}
 
 describe.skipIf(!baseUrl || !bearerToken || !runId)("QuantAgent live read contract", () => {
   const config = { baseUrl: baseUrl!, bearerToken: bearerToken! }
@@ -23,12 +34,23 @@ describe.skipIf(!baseUrl || !bearerToken || !runId)("QuantAgent live read contra
   })
 
   it("maps authentication and missing-run errors without returning upstream details", async () => {
-    await expect(loadQuantAgentRun(selectedRunId, {
+    const authenticationError = await captureReadError(loadQuantAgentRun(selectedRunId, {
       ...config,
       bearerToken: "incorrect-live-test-token-with-at-least-32-characters",
-    })).rejects.toMatchObject({ code: "authentication_required", status: 401 })
+    }))
+    expect(authenticationError).toStrictEqual({
+      code: "authentication_required",
+      message: "QuantAgent request failed with 401",
+      name: "QuantAgentReadError",
+      status: 401,
+    })
 
-    await expect(loadQuantAgentRun("api-00000000000000000000000000000000", config))
-      .rejects.toMatchObject({ code: "run_not_found", status: 404 })
+    const missingRunError = await captureReadError(loadQuantAgentRun("api-00000000000000000000000000000000", config))
+    expect(missingRunError).toStrictEqual({
+      code: "run_not_found",
+      message: "QuantAgent request failed with 404",
+      name: "QuantAgentReadError",
+      status: 404,
+    })
   })
 })
