@@ -6,6 +6,7 @@ import { getCryptoQuote } from "@/lib/actions/crypto.actions";
 import { removeFromWatchlist } from "@/lib/actions/watchlist.actions";
 import CreateAlertModal from "./CreateAlertModal";
 import { toast } from "sonner";
+import CryptoAssetIcon from "@/components/markets/CryptoAssetIcon";
 
 interface CryptoWatchlistChipProps {
     userId: string;
@@ -51,6 +52,7 @@ export default function CryptoWatchlistChip({
 
     return (
         <div className="group flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700/80 rounded-full border border-teal-900/70 transition-all">
+            <CryptoAssetIcon symbol={providerSymbol ?? symbol} name={company} size="sm" />
             <span className="font-semibold text-sm text-white">{symbol}</span>
             <span className="text-[10px] uppercase tracking-wide text-teal-300">Crypto</span>
             <div className="w-px h-4 bg-gray-600 mx-1" />

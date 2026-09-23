@@ -7,6 +7,7 @@ import CreateAlertModal from '@/components/watchlist/CreateAlertModal';
 import { getCryptoQuote } from '@/lib/actions/crypto.actions';
 import { isInstrumentInWatchlist } from '@/lib/actions/watchlist.actions';
 import { getCryptoAsset } from '@/lib/markets/crypto-assets';
+import CryptoAssetIcon from '@/components/markets/CryptoAssetIcon';
 
 export default async function CryptoDetails({
     params,
@@ -31,9 +32,12 @@ export default async function CryptoDetails({
             <header className="flex flex-col gap-3">
                 <p className="text-sm font-medium uppercase tracking-[0.2em] text-teal-400">Crypto</p>
                 <div className="flex flex-wrap items-end justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-semibold text-gray-100">{asset.name} <span className="text-gray-500">({asset.symbol})</span></h1>
-                        <p className="mt-2 text-gray-400">Finnhub app-owned quote · {asset.providerSymbol}</p>
+                    <div className="flex items-center gap-3">
+                        <CryptoAssetIcon asset={asset} size="lg" />
+                        <div>
+                            <h1 className="text-3xl font-semibold text-gray-100">{asset.name} <span className="text-gray-500">({asset.symbol})</span></h1>
+                            <p className="mt-2 text-gray-400">Finnhub app-owned quote · {asset.providerSymbol}</p>
+                        </div>
                     </div>
                     {userId && (
                         <div className="flex items-center gap-2">

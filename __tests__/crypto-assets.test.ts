@@ -27,6 +27,13 @@ describe('crypto asset registry', () => {
         expect(getCryptoAsset('BINANCE:ETHUSDT')?.symbol).toBe('ETH');
     });
 
+    it('provides a stable logo URL for every supported asset', () => {
+        expect(CRYPTO_ASSETS.every((asset) => (
+            asset.iconUrl === `https://assets.coincap.io/assets/icons/${asset.symbol.toLowerCase()}@2x.png`
+        ))).toBe(true);
+        expect(getCryptoAsset('btc')?.iconUrl).toContain('/btc@2x.png');
+    });
+
     it('searches the app-owned universe by symbol or name', () => {
         expect(searchCryptoAssets('doge').map((asset) => asset.symbol)).toEqual(['DOGE']);
         expect(searchCryptoAssets('chain').map((asset) => asset.symbol)).toEqual(['LINK']);

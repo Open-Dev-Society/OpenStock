@@ -12,6 +12,7 @@ import {
 import { CRYPTO_ASSETS } from '@/lib/markets/crypto-assets';
 import { getTopCryptoQuotes } from '@/lib/actions/crypto.actions';
 import type { CryptoQuoteSnapshot } from '@/lib/markets/crypto-quotes';
+import CryptoAssetIcon from '@/components/markets/CryptoAssetIcon';
 import { notFound } from 'next/navigation';
 
 const SCRIPT_URL = 'https://s3.tradingview.com/external-embedding/embed-widget-';
@@ -186,10 +187,13 @@ function CryptoQuoteTable({ rows }: { rows: Array<{ asset: typeof CRYPTO_ASSETS[
                         {rows.map(({ asset, quote }) => (
                             <tr key={asset.symbol} className="text-gray-300">
                                 <td className="px-5 py-3">
-                                    <a href={`/markets/crypto/${asset.symbol.toLowerCase()}`} className="group inline-flex flex-col">
-                                        <span className="font-medium text-gray-100 group-hover:text-teal-300">{asset.name}</span>
-                                        <span className="text-xs text-gray-500">{asset.symbol}</span>
-                                    </a>
+                                    <div className="flex items-center gap-3">
+                                        <CryptoAssetIcon asset={asset} size="sm" />
+                                        <a href={`/markets/crypto/${asset.symbol.toLowerCase()}`} className="group inline-flex flex-col">
+                                            <span className="font-medium text-gray-100 group-hover:text-teal-300">{asset.name}</span>
+                                            <span className="text-xs text-gray-500">{asset.symbol}</span>
+                                        </a>
+                                    </div>
                                 </td>
                                 <td className="px-5 py-3 font-mono">
                                     {quote ? `${quote.price.toLocaleString(undefined, { maximumFractionDigits: 8 })} ${quote.currency}` : 'Unavailable'}

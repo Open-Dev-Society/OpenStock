@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react"
 import { CommandDialog, CommandEmpty, CommandInput, CommandList } from "@/components/ui/command"
 import {Button} from "@/components/ui/button";
-import {Coins, Loader2, TrendingUp} from "lucide-react";
+import {Loader2, TrendingUp} from "lucide-react";
 import Link from "next/link";
 import {searchStocks} from "@/lib/actions/finnhub.actions";
 import {searchCryptoAssets, type CryptoAsset} from "@/lib/markets/crypto-assets";
+import CryptoAssetIcon from "@/components/markets/CryptoAssetIcon";
 import {useDebounce} from "@/hooks/useDebounce";
 
 export default function SearchCommand({ renderAs = 'button', label = 'Add stock', initialStocks }: SearchCommandProps) {
@@ -117,7 +118,7 @@ export default function SearchCommand({ renderAs = 'button', label = 'Add stock'
                                         onClick={handleSelectStock}
                                         className="search-item-link"
                                     >
-                                        <Coins className="h-4 w-4 text-teal-400" />
+                                        <CryptoAssetIcon asset={asset} size="sm" />
                                         <div className="flex-1">
                                             <div className="search-item-name">
                                                 {asset.name}

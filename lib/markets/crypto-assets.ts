@@ -5,6 +5,7 @@ export type CryptoAsset = {
     providerSymbol: string;
     tradingViewSymbol: string;
     quoteCurrency: 'USDT';
+    iconUrl: string;
 };
 
 // Deliberately bounded for the first app-owned crypto release. This is a
@@ -39,6 +40,7 @@ export const CRYPTO_ASSETS = [
         providerSymbol,
         tradingViewSymbol: providerSymbol,
         quoteCurrency: 'USDT' as const,
+        iconUrl: `https://assets.coincap.io/assets/icons/${asset.symbol.toLowerCase()}@2x.png`,
     };
 }) satisfies readonly CryptoAsset[];
 
