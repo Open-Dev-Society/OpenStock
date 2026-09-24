@@ -9,7 +9,7 @@
  * Each provider returns a plain-text string from the model.
  */
 
-export type AIProviderName = "gemini" | "minimax" | "siray";
+export type AIProviderName = "gemini" | "minimax" | "siray" | "9router" | "ninerouter";
 
 export interface AIProviderConfig {
   name: AIProviderName;
@@ -30,14 +30,27 @@ export function getProviderConfig(
     "gemini";
 
   switch (name) {
+    case "9router":
+    case "ninerouter":
+      return {
+        name: "9router",
+        apiKey:
+          process.env.NINEROUTER_KEY ||
+          process.env.NINEROUTER_API_KEY ||
+          "sk-0881d6aee36a48c7-21gy8f-af3d3174",
+        baseUrl:
+          process.env.NINEROUTER_URL ||
+          process.env.NINEROUTER_BASE_URL ||
+          "http://localhost:20128",
+        model: process.env.NINEROUTER_MODEL || "gemini",
+      };
+
     case "minimax":
       return {
         name: "minimax",
         apiKey: process.env.MINIMAX_API_KEY || "",
         baseUrl:
           process.env.MINIMAX_BASE_URL || "https://api.minimax.io/v1",
-        // Defaults to the current MiniMax-M3 model. Set MINIMAX_MODEL to
-        // select another model (e.g. the previous MiniMax-M2.7).
         model: process.env.MINIMAX_MODEL || "MiniMax-M3",
       };
 
@@ -62,19 +75,23 @@ export function getProviderConfig(
 }
 
 /**
- * Get the fallback provider: if the primary is Gemini use MiniMax,
- * otherwise fall back to Gemini.
+ * Get the fallback provider: if primary fails, try secondary
  */
 export function getFallbackProviderName(
   primary: AIProviderName
 ): AIProviderName {
+  if (primary === "9router" || primary === "ninerouter") {
+    if (process.env.GEMINI_API_KEY) return "gemini";
+    if (process.env.MINIMAX_API_KEY) return "minimax";
+    return "9router";
+  }
   if (primary === "gemini") {
-    // Prefer MiniMax as fallback when a key is available, else Siray
+    if (process.env.NINEROUTER_KEY || process.env.NINEROUTER_URL) return "9router";
     if (process.env.MINIMAX_API_KEY) return "minimax";
     if (process.env.SIRAY_API_KEY) return "siray";
-    return "minimax"; // caller will see missing-key error
+    return "minimax";
   }
-  return "gemini";
+  return "9router";
 }
 
 // ── Provider call implementations ──────────────────────────────────
@@ -115,7 +132,8 @@ async function callOpenAICompatible(
     );
   }
 
-  const url = `${config.baseUrl}/chat/completions`;
+  const normalizedBase = config.baseUrl.replace(/\/+$/, "").replace(/\/v1$/, "");
+  const url = `${normalizedBase}/v1/chat/completions`;
 
   const res = await fetch(url, {
     method: "POST",
@@ -127,12 +145,14 @@ async function callOpenAICompatible(
       model: config.model,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
+      stream: false,
     }),
   });
 
   if (!res.ok) {
+    const errorText = await res.text().catch(() => "");
     throw new Error(
-      `${config.name} API error: ${res.status} ${res.statusText}`
+      `${config.name} API error: ${res.status} ${res.statusText} ${errorText}`
     );
   }
 
