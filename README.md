@@ -411,19 +411,28 @@ public/assets/images/   # logos and screenshots
 Automated 4-hour (4h) time-frame quantitative backtester and nightly parameter explorer.
 
 ### What Was Added
-- **4h OHLCV Data Layer** (`lib/market/ohlcv4h.ts`): Fetches Finnhub candles at 240-minute resolution.
-- **Backtesting Engine** (`lib/strategy/backtest4h.ts`): Vectorized EMA crossover simulation with 4h bar adjustments (annualized over 1,512 bars/year), computing Sharpe, cumulative return, max drawdown, and per-symbol breakdowns.
-- **MongoDB Persistence** (`database/models/backtestResult.model.ts`, `database/models/best4hStrategy.model.ts`): Indexed collection for runs and top performers.
-- **Inngest Pipelines** (`lib/inngest/functions.ts`): Event-driven runner (`strategy/backtest.requested`) and daily 02:00 UTC parameter grid sweep (`nightly-4h-research`).
+- **4h OHLCV Data Layer** (`lib/market/ohlcv4h.ts`): Fetches 1h Finnhub candles with `X-Finnhub-Token` and aggregates them into true 4-hour intra-day bars.
+- **Multi-Strategy Backtesting Engine** (`lib/strategy/backtest4h.ts`):
+  - **EMA Crossover** (`ema_crossover`): `params: { fastPeriod: 12, slowPeriod: 26 }`.
+  - **RSI Oversold** (`rsi_oversold`): `params: { period: 14, oversold: 30, overbought: 70 }`.
+  - **Donchian Breakout** (`breakout`): `params: { lookback: 20 }`.
+  - Computes dynamically annualized Sharpe, cumulative returns, max drawdown, win rates, and per-symbol breakdowns.
+- **MongoDB Persistence** (`database/models/backtestResult.model.ts`, `database/models/best4hStrategy.model.ts`): Indexed collections for backtest history and top-performing leaderboards.
+- **Inngest Pipelines** (`lib/inngest/functions.ts`): Event-driven runner (`strategy/backtest.requested`) and daily 02:00 UTC grid sweep (`nightly-4h-research`).
 - **REST Endpoints** (`app/api/strategy/*`): Routes to dispatch backtests, fetch job progress, and inspect highest-Sharpe setups.
 
 ### Nightly Cron Schedule
-The `nightly-4h-research` Inngest function triggers every day at 02:00 UTC (`0 2 * * *`). It tests an EMA grid (`fast=[8, 13, 21]`, `slow=[34, 55, 89]`) across `AAPL`, `MSFT`, `NVDA`, `SPY`, and `QQQ` over a 365-day lookback, persisting the best setup to the `Best4hStrategy` collection.
+The `nightly-4h-research` Inngest function triggers every day at 02:00 UTC (`0 2 * * *`). It tests:
+- EMA grid: `fast=[8, 13, 21]`, `slow=[34, 55, 89]`
+- RSI grid: `period=[10, 14, 21]`, `oversold=[25, 30]`, `overbought=[70, 75]`
+- Breakout grid: `lookback=[10, 20, 40]`
+Across `AAPL`, `MSFT`, `NVDA`, `SPY`, and `QQQ` over a 365-day lookback, updating `Best4hStrategy` with the top performer.
 
 ### Example cURL Commands
 
-#### 1. Trigger Backtest
+#### 1. Trigger Backtest (EMA, RSI, or Breakout)
 ```bash
+# EMA Crossover
 curl -X POST http://localhost:3000/api/strategy/backtest \
   -H "Content-Type: application/json" \
   -d '{
@@ -432,6 +441,24 @@ curl -X POST http://localhost:3000/api/strategy/backtest \
     "symbols": ["AAPL", "NVDA", "SPY"],
     "from": "2025-01-01T00:00:00.000Z",
     "to": "2026-01-01T00:00:00.000Z"
+  }'
+
+# RSI Oversold
+curl -X POST http://localhost:3000/api/strategy/backtest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "rsi_oversold",
+    "params": { "period": 14, "oversold": 30, "overbought": 70 },
+    "symbols": ["AAPL", "NVDA"]
+  }'
+
+# Donchian Breakout
+curl -X POST http://localhost:3000/api/strategy/backtest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "breakout",
+    "params": { "lookback": 20 },
+    "symbols": ["QQQ", "SPY"]
   }'
 ```
 

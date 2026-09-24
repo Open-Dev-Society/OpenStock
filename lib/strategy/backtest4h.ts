@@ -140,8 +140,12 @@ function computeMetricsFromSignals(
   }
 
   const totalReturn = equity - 1;
-  const barsPerYear = 1512; // 6 bars/day * 252 trading days
   const n = returns.length;
+  const firstTime = candles[warmupBars].time.getTime();
+  const lastTime = candles[barsCount - 1].time.getTime();
+  const years = (lastTime - firstTime) / (365.25 * 24 * 3600 * 1000);
+  const barsPerYear = years > 0 ? n / years : 0;
+
   const meanReturn = returns.reduce((acc, v) => acc + v, 0) / n;
   const variance =
     returns.reduce((acc, v) => acc + Math.pow(v - meanReturn, 2), 0) /
@@ -149,9 +153,9 @@ function computeMetricsFromSignals(
   const stdDev = Math.sqrt(variance);
 
   const sharpe =
-    stdDev > 0 ? (meanReturn / stdDev) * Math.sqrt(barsPerYear) : 0;
+    stdDev > 0 && barsPerYear > 0 ? (meanReturn / stdDev) * Math.sqrt(barsPerYear) : 0;
   const annualizedReturn =
-    n > 0 ? Math.pow(1 + totalReturn, barsPerYear / n) - 1 : 0;
+    n > 0 && barsPerYear > 0 ? Math.pow(1 + totalReturn, barsPerYear / n) - 1 : 0;
   const winRate =
     totalPositionBars > 0 ? winningTrades / totalPositionBars : 0;
 
@@ -269,6 +273,26 @@ export async function runBacktest(
 
   for (const sym of config.symbols) {
     const candles = await getOhlcv4h(sym, fromSec, toSec);
+    let warmupBars = 0;
+    switch (config.type) {
+      case "rsi_oversold":
+        warmupBars = config.params.period || config.params.rsiPeriod || 14;
+        break;
+      case "breakout":
+        warmupBars = config.params.lookback || config.params.period || 20;
+        break;
+      case "ema_crossover":
+      default:
+        warmupBars = config.params.slowPeriod || config.params.slow || 26;
+        break;
+    }
+
+    if (!candles || candles.length <= warmupBars) {
+      throw new Error(
+        `Insufficient 4h candles for ${sym}: got ${candles ? candles.length : 0}, requires > ${warmupBars} bars for warmup`
+      );
+    }
+
     let metrics: StrategyMetrics;
 
     switch (config.type) {

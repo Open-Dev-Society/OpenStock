@@ -5,22 +5,66 @@ import BacktestResult from "@/database/models/backtestResult.model";
 import { StrategyConfig } from "@/lib/strategy/backtest4h";
 
 export async function POST(req: NextRequest) {
+  let docId: string | null = null;
   try {
     const body = await req.json();
 
-    if (!body.type || !body.symbols || !Array.isArray(body.symbols) || body.symbols.length === 0) {
+    const allowedTypes = ["ema_crossover", "rsi_oversold", "breakout"];
+    if (!body.type || !allowedTypes.includes(body.type)) {
       return NextResponse.json(
-        { ok: false, error: "Missing required fields: type, symbols" },
+        { ok: false, error: `Invalid or missing type. Must be one of: ${allowedTypes.join(", ")}` },
+        { status: 400 }
+      );
+    }
+
+    if (!body.symbols || !Array.isArray(body.symbols) || body.symbols.length === 0) {
+      return NextResponse.json(
+        { ok: false, error: "Missing or empty symbols array" },
+        { status: 400 }
+      );
+    }
+
+    if (body.symbols.length > 20) {
+      return NextResponse.json(
+        { ok: false, error: "Symbols array exceeds maximum limit of 20 symbols" },
+        { status: 400 }
+      );
+    }
+
+    const cleanSymbols = body.symbols
+      .filter((s: unknown) => typeof s === "string" && s.trim().length > 0)
+      .map((s: string) => s.trim().toUpperCase());
+
+    if (cleanSymbols.length === 0) {
+      return NextResponse.json(
+        { ok: false, error: "No valid symbol strings provided" },
+        { status: 400 }
+      );
+    }
+
+    const fromDate = body.from ? new Date(body.from) : new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+    const toDate = body.to ? new Date(body.to) : new Date();
+
+    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+      return NextResponse.json(
+        { ok: false, error: "Invalid date format for 'from' or 'to'" },
+        { status: 400 }
+      );
+    }
+
+    if (fromDate.getTime() >= toDate.getTime()) {
+      return NextResponse.json(
+        { ok: false, error: "'from' date must be strictly before 'to' date" },
         { status: 400 }
       );
     }
 
     const config: StrategyConfig = {
-      type: body.type || "ema_crossover",
-      params: body.params || { fastPeriod: 12, slowPeriod: 26 },
-      symbols: body.symbols.map((s: string) => s.toUpperCase()),
-      from: body.from ? new Date(body.from) : new Date(Date.now() - 365 * 24 * 60 * 60 * 1000),
-      to: body.to ? new Date(body.to) : new Date(),
+      type: body.type,
+      params: body.params && typeof body.params === "object" ? body.params : {},
+      symbols: cleanSymbols,
+      from: fromDate,
+      to: toDate,
     };
 
     await connectToDatabase();
@@ -35,19 +79,28 @@ export async function POST(req: NextRequest) {
       status: "running",
     });
 
-    const docId = (doc._id as any).toString();
+    docId = (doc._id as any).toString();
 
-    await inngest.send({
-      name: "strategy/backtest.requested",
-      data: {
-        backtestId: docId,
-        type: config.type,
-        params: config.params,
-        symbols: config.symbols,
-        from: (config.from as Date).toISOString(),
-        to: (config.to as Date).toISOString(),
-      },
-    });
+    try {
+      await inngest.send({
+        name: "strategy/backtest.requested",
+        data: {
+          backtestId: docId,
+          type: config.type,
+          params: config.params,
+          symbols: config.symbols,
+          from: (config.from as Date).toISOString(),
+          to: (config.to as Date).toISOString(),
+        },
+      });
+    } catch (sendErr: any) {
+      console.error("inngest.send failed, updating backtest record to failed:", sendErr);
+      await BacktestResult.findByIdAndUpdate(docId, {
+        status: "failed",
+        error: `Job dispatch failed: ${sendErr?.message || "Inngest unavailable"}`,
+      });
+      throw sendErr;
+    }
 
     return NextResponse.json(
       { ok: true, backtestId: docId },
