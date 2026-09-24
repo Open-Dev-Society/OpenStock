@@ -494,7 +494,7 @@ export const run4hBacktestFunction = inngest.createFunction(
             }
 
             const doc = await BacktestResult.create({
-                timeframe: "4h",
+                timeframe: config.timeframe || "4h",
                 strategyType: config.type,
                 params: config.params,
                 symbols: config.symbols,

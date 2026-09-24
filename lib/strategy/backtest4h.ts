@@ -14,6 +14,7 @@ export interface StrategyConfig {
   symbols: string[];
   from: Date | string;
   to: Date | string;
+  timeframe?: string;
 }
 
 export interface StrategyMetrics {
@@ -691,7 +692,7 @@ export async function runBacktest(
   const allTrades: IBacktestTrade[] = [];
 
   for (const sym of config.symbols) {
-    const candles = await getOhlcv4h(sym, fromSec, toSec);
+    const candles = await getOhlcv4h(sym, fromSec, toSec, config.timeframe || "4h");
     let warmupBars = 0;
     switch (config.type) {
       case "rsi_oversold":
@@ -720,7 +721,7 @@ export async function runBacktest(
 
     if (!candles || candles.length <= warmupBars) {
       throw new Error(
-        `Insufficient 4h candles for ${sym}: got ${candles ? candles.length : 0}, requires > ${warmupBars} bars for warmup`
+        `Insufficient ${config.timeframe || "4h"} candles for ${sym}: got ${candles ? candles.length : 0}, requires > ${warmupBars} bars for warmup`
       );
     }
 

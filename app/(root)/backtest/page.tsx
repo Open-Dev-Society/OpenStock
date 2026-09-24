@@ -34,6 +34,7 @@ interface Trade {
 
 interface BacktestData {
   _id: string;
+  timeframe?: string;
   strategyType: string;
   symbols: string[];
   params: Record<string, number>;
@@ -57,6 +58,7 @@ export default function BacktestDashboardPage() {
     'ema_crossover' | 'rsi_oversold' | 'breakout' | 'liquidity_sweep' | 'supertrend' | 'fair_value_gap' | 'order_block'
   >('liquidity_sweep');
   const [symbol, setSymbol] = useState('BINANCE:BTCUSDT');
+  const [timeframe, setTimeframe] = useState<'15m' | '1h' | '4h' | '1d'>('4h');
   const [lookbackDays, setLookbackDays] = useState(365);
 
   // Strategy Params
@@ -145,6 +147,7 @@ export default function BacktestDashboardPage() {
     const payload = {
       type: strategyType,
       symbols: [symbol.trim()],
+      timeframe,
       params: getParamsForType(),
       from: from.toISOString(),
       to: now.toISOString(),
@@ -217,10 +220,10 @@ export default function BacktestDashboardPage() {
             <span className="p-2 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20">
               <Layers className="h-6 w-6" />
             </span>
-            Quant Strategy Backtester &amp; Trade Ledger
+            Multi-Timeframe Quant Backtester &amp; Trade Ledger
           </h1>
           <p className="text-gray-400 text-sm mt-1">
-            Evaluate 4-hour historical algorithmic strategies, inspect individual trade execution prices, track balance growth, and query 9Router AI analysis.
+            Evaluate 15m, 1h, 4h, and daily historical algorithmic strategies, inspect individual trade execution prices, track balance growth, and query 9Router AI analysis.
           </p>
         </div>
 
@@ -250,7 +253,7 @@ export default function BacktestDashboardPage() {
           Strategy Parameters &amp; Asset Configuration
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Strategy Selector */}
           <div>
             <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
@@ -261,13 +264,13 @@ export default function BacktestDashboardPage() {
               onChange={(e) => setStrategyType(e.target.value as any)}
               className="w-full bg-gray-950 border border-gray-700 text-gray-200 rounded-lg p-2.5 text-sm focus:border-teal-500 outline-none"
             >
-              <option value="liquidity_sweep">4H Liquidity Sweep &amp; Reclaim (BTC / Crypto)</option>
-              <option value="supertrend">4H LuxAlgo SuperTrend (ATR Trailing Stop)</option>
-              <option value="fair_value_gap">4H LuxAlgo Smart Money FVG (Imbalance Retest)</option>
-              <option value="order_block">4H LuxAlgo SMC Order Block (Displacement Retest)</option>
-              <option value="ema_crossover">4H Dual EMA Crossover (Trend Following)</option>
-              <option value="rsi_oversold">4H RSI Oversold / Overbought (Mean Reversion)</option>
-              <option value="breakout">4H Donchian Channel Breakout (Momentum)</option>
+              <option value="liquidity_sweep">Liquidity Sweep &amp; Reclaim (BTC / Crypto)</option>
+              <option value="supertrend">LuxAlgo SuperTrend (ATR Trailing Stop)</option>
+              <option value="fair_value_gap">LuxAlgo Smart Money FVG (Imbalance Retest)</option>
+              <option value="order_block">LuxAlgo SMC Order Block (Displacement Retest)</option>
+              <option value="ema_crossover">Dual EMA Crossover (Trend Following)</option>
+              <option value="rsi_oversold">RSI Oversold / Overbought (Mean Reversion)</option>
+              <option value="breakout">Donchian Channel Breakout (Momentum)</option>
             </select>
           </div>
 
@@ -284,6 +287,23 @@ export default function BacktestDashboardPage() {
             />
           </div>
 
+          {/* Timeframe Selector */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              Candle Timeframe
+            </label>
+            <select
+              value={timeframe}
+              onChange={(e) => setTimeframe(e.target.value as any)}
+              className="w-full bg-gray-950 border border-gray-700 text-gray-200 rounded-lg p-2.5 text-sm focus:border-teal-500 outline-none"
+            >
+              <option value="15m">15m (15 Minutes - Intraday)</option>
+              <option value="1h">1h (1 Hour - Short Swing)</option>
+              <option value="4h">4h (4 Hours - Swing)</option>
+              <option value="1d">1d (1 Day - Macro Trend)</option>
+            </select>
+          </div>
+
           {/* Timeframe Range */}
           <div>
             <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
@@ -294,6 +314,7 @@ export default function BacktestDashboardPage() {
               onChange={(e) => setLookbackDays(Number(e.target.value))}
               className="w-full bg-gray-950 border border-gray-700 text-gray-200 rounded-lg p-2.5 text-sm focus:border-teal-500 outline-none"
             >
+              <option value={30}>Last 30 Days</option>
               <option value={90}>Last 3 Months (90 days)</option>
               <option value={180}>Last 6 Months (180 days)</option>
               <option value={365}>Last 1 Year (365 days)</option>
@@ -316,7 +337,7 @@ export default function BacktestDashboardPage() {
               ) : (
                 <>
                   <Play className="h-4 w-4 fill-current" />
-                  Run 4H Backtest
+                  Run {timeframe.toUpperCase()} Backtest
                 </>
               )}
             </Button>
@@ -669,7 +690,7 @@ export default function BacktestDashboardPage() {
                         })}
                       </td>
                       <td className="py-3 px-4 text-gray-200">${t.exitPrice.toFixed(2)}</td>
-                      <td className="py-3 px-4 text-gray-400">{t.durationBars * 4}h ({t.durationBars}b)</td>
+                      <td className="py-3 px-4 text-gray-400">{t.durationBars} bars ({activeBacktest?.timeframe || timeframe})</td>
                       <td className={`py-3 px-4 font-bold ${isWin ? 'text-emerald-400' : 'text-rose-400'}`}>
                         {isWin ? '+' : ''}{(t.returnPct * 100).toFixed(2)}%
                       </td>

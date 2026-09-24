@@ -85,18 +85,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const validTimeframes = ["15m", "30m", "1h", "4h", "1d"];
+    const timeframe =
+      typeof body.timeframe === "string" && validTimeframes.includes(body.timeframe.toLowerCase().trim())
+        ? body.timeframe.toLowerCase().trim()
+        : "4h";
+
     const config: StrategyConfig = {
       type: body.type,
       params: body.params && typeof body.params === "object" ? body.params : {},
       symbols: cleanSymbols,
       from: fromDate,
       to: toDate,
+      timeframe,
     };
 
     await connectToDatabase();
 
     const doc = await BacktestResult.create({
-      timeframe: "4h",
+      timeframe,
       strategyType: config.type,
       params: config.params,
       symbols: config.symbols,
