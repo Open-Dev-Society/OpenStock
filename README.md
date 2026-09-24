@@ -416,6 +416,7 @@ Automated 4-hour (4h) time-frame quantitative backtester and nightly parameter e
   - **EMA Crossover** (`ema_crossover`): `params: { fastPeriod: 12, slowPeriod: 26 }`.
   - **RSI Oversold** (`rsi_oversold`): `params: { period: 14, oversold: 30, overbought: 70 }`.
   - **Donchian Breakout** (`breakout`): `params: { lookback: 20 }`.
+  - **Bitcoin Liquidity Sweep** (`liquidity_sweep`): `params: { lookback: 20, volMultiplier: 1.2 }`. Exploits false-breakout sweeps and range reclaims.
   - Computes dynamically annualized Sharpe, cumulative returns, max drawdown, win rates, and per-symbol breakdowns.
 - **MongoDB Persistence** (`database/models/backtestResult.model.ts`, `database/models/best4hStrategy.model.ts`): Indexed collections for backtest history and top-performing leaderboards.
 - **Inngest Pipelines** (`lib/inngest/functions.ts`): Event-driven runner (`strategy/backtest.requested`) and daily 02:00 UTC grid sweep (`nightly-4h-research`).
@@ -426,11 +427,12 @@ The `nightly-4h-research` Inngest function triggers every day at 02:00 UTC (`0 2
 - EMA grid: `fast=[8, 13, 21]`, `slow=[34, 55, 89]`
 - RSI grid: `period=[10, 14, 21]`, `oversold=[25, 30]`, `overbought=[70, 75]`
 - Breakout grid: `lookback=[10, 20, 40]`
+- Liquidity Sweep grid: `lookback=[15, 20, 30]`, `volMultiplier=[1.2, 1.5]`
 Across `AAPL`, `MSFT`, `NVDA`, `SPY`, and `QQQ` over a 365-day lookback, updating `Best4hStrategy` with the top performer.
 
 ### Example cURL Commands
 
-#### 1. Trigger Backtest (EMA, RSI, or Breakout)
+#### 1. Trigger Backtest (EMA, RSI, Breakout, or Liquidity Sweep)
 ```bash
 # EMA Crossover
 curl -X POST http://localhost:3000/api/strategy/backtest \
@@ -459,6 +461,15 @@ curl -X POST http://localhost:3000/api/strategy/backtest \
     "type": "breakout",
     "params": { "lookback": 20 },
     "symbols": ["QQQ", "SPY"]
+  }'
+
+# Bitcoin / Crypto Liquidity Sweep & Reclaim
+curl -X POST http://localhost:3000/api/strategy/backtest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "liquidity_sweep",
+    "params": { "lookback": 20, "volMultiplier": 1.2 },
+    "symbols": ["BINANCE:BTCUSDT"]
   }'
 ```
 

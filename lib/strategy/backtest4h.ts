@@ -1,7 +1,7 @@
 import { getOhlcv4h, Candle4h } from "@/lib/market/ohlcv4h";
 
 export interface StrategyConfig {
-  type: "ema_crossover" | "rsi_oversold" | "breakout";
+  type: "ema_crossover" | "rsi_oversold" | "breakout" | "liquidity_sweep";
   params: Record<string, number>;
   symbols: string[];
   from: Date | string;
@@ -263,6 +263,74 @@ export function evaluateBreakout(
   return computeMetricsFromSignals(candles, signals, lookback);
 }
 
+export function evaluateLiquiditySweep(
+  candles: Candle4h[],
+  lookback: number = 20,
+  volMultiplier: number = 1.2
+): StrategyMetrics {
+  const barsCount = candles.length;
+  if (barsCount < lookback + 1) {
+    return computeMetricsFromSignals(candles, [], lookback);
+  }
+
+  const signals: number[] = new Array(barsCount).fill(0);
+  let currentPosition = 0;
+  let targetMidpoint = 0;
+  let barsInTrade = 0;
+
+  for (let i = lookback; i < barsCount; i++) {
+    let highestHigh = -Infinity;
+    let lowestLow = Infinity;
+    let volSum = 0;
+
+    for (let j = i - lookback; j < i; j++) {
+      if (candles[j].high > highestHigh) highestHigh = candles[j].high;
+      if (candles[j].low < lowestLow) lowestLow = candles[j].low;
+      volSum += candles[j].volume;
+    }
+
+    const avgVol = volSum / lookback;
+    const currentClose = candles[i].close;
+    const currentLow = candles[i].low;
+    const currentHigh = candles[i].high;
+    const currentVol = candles[i].volume;
+    const hasVolSurge = avgVol > 0 ? currentVol >= avgVol * volMultiplier : true;
+
+    // Check exit conditions if in position
+    if (currentPosition === 1) {
+      barsInTrade++;
+      if (currentClose >= targetMidpoint || barsInTrade >= 6) {
+        currentPosition = 0;
+      }
+    } else if (currentPosition === -1) {
+      barsInTrade++;
+      if (currentClose <= targetMidpoint || barsInTrade >= 6) {
+        currentPosition = 0;
+      }
+    }
+
+    // Check new sweep triggers if flat
+    if (currentPosition === 0) {
+      // Bullish Sweep: pierced below rolling low, reclaimed and closed above
+      if (currentLow < lowestLow && currentClose > lowestLow && hasVolSurge) {
+        currentPosition = 1;
+        targetMidpoint = (highestHigh + lowestLow) / 2;
+        barsInTrade = 0;
+      }
+      // Bearish Sweep: pierced above rolling high, closed back below
+      else if (currentHigh > highestHigh && currentClose < highestHigh && hasVolSurge) {
+        currentPosition = -1;
+        targetMidpoint = (highestHigh + lowestLow) / 2;
+        barsInTrade = 0;
+      }
+    }
+
+    signals[i] = currentPosition;
+  }
+
+  return computeMetricsFromSignals(candles, signals, lookback);
+}
+
 export async function runBacktest(
   config: StrategyConfig
 ): Promise<BacktestResult> {
@@ -280,6 +348,9 @@ export async function runBacktest(
         break;
       case "breakout":
         warmupBars = config.params.lookback || config.params.period || 20;
+        break;
+      case "liquidity_sweep":
+        warmupBars = config.params.lookback || 20;
         break;
       case "ema_crossover":
       default:
@@ -306,6 +377,12 @@ export async function runBacktest(
       case "breakout": {
         const lookback = config.params.lookback || config.params.period || 20;
         metrics = evaluateBreakout(candles, lookback);
+        break;
+      }
+      case "liquidity_sweep": {
+        const lookback = config.params.lookback || 20;
+        const volMultiplier = config.params.volMultiplier || 1.2;
+        metrics = evaluateLiquiditySweep(candles, lookback, volMultiplier);
         break;
       }
       case "ema_crossover":

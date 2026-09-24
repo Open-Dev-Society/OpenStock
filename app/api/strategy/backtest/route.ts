@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const allowedTypes = ["ema_crossover", "rsi_oversold", "breakout"];
+    const allowedTypes = ["ema_crossover", "rsi_oversold", "breakout", "liquidity_sweep"];
     if (!body.type || !allowedTypes.includes(body.type)) {
       return NextResponse.json(
         { ok: false, error: `Invalid or missing type. Must be one of: ${allowedTypes.join(", ")}` },

@@ -554,7 +554,7 @@ export const nightly4hResearchFunction = inngest.createFunction(
         const now = new Date();
         const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
 
-        const configsToTest: Array<{ type: "ema_crossover" | "rsi_oversold" | "breakout"; params: Record<string, number> }> = [];
+        const configsToTest: Array<{ type: "ema_crossover" | "rsi_oversold" | "breakout" | "liquidity_sweep"; params: Record<string, number> }> = [];
 
         // 1. EMA Crossover grid
         for (const fast of [8, 13, 21]) {
@@ -582,6 +582,16 @@ export const nightly4hResearchFunction = inngest.createFunction(
                 type: "breakout",
                 params: { lookback },
             });
+        }
+
+        // 4. Bitcoin/Crypto Liquidity Sweep & Reclaim grid
+        for (const lookback of [15, 20, 30]) {
+            for (const volMultiplier of [1.2, 1.5]) {
+                configsToTest.push({
+                    type: "liquidity_sweep",
+                    params: { lookback, volMultiplier },
+                });
+            }
         }
 
         const dispatchedIds = await step.run("dispatch-grid-events", async () => {

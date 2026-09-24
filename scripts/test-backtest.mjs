@@ -96,12 +96,38 @@ function evaluateBreakoutSignals(candles, lookback) {
 }
 
 const testCandles = [
-  { high: 10, low: 8, close: 9 },
-  { high: 11, low: 9, close: 10 },
-  { high: 12, low: 10, close: 11 },
-  { high: 15, low: 11, close: 14 } // Breakout above 12
+  { high: 10, low: 8, close: 9, volume: 100 },
+  { high: 11, low: 9, close: 10, volume: 100 },
+  { high: 12, low: 10, close: 11, volume: 100 },
+  { high: 15, low: 11, close: 14, volume: 100 } // Breakout above 12
 ];
 const breakoutSignals = evaluateBreakoutSignals(testCandles, 2);
 assert.strictEqual(breakoutSignals[3], 1, "Breakout candle should trigger long position");
 
-console.log("✅ 4h Backtest EMA, RSI, and Breakout math verified!");
+// 6. Verify Bitcoin Liquidity Sweep & Reclaim logic
+function evaluateSweepSignals(candles, lookback) {
+  const signals = new Array(candles.length).fill(0);
+  let pos = 0;
+  for (let i = lookback; i < candles.length; i++) {
+    let lowest = Infinity;
+    for (let j = i - lookback; j < i; j++) {
+      if (candles[j].low < lowest) lowest = candles[j].low;
+    }
+    // Bullish sweep: dipped below lowest low of range, but closed back above it
+    if (candles[i].low < lowest && candles[i].close > lowest) {
+      pos = 1;
+    }
+    signals[i] = pos;
+  }
+  return signals;
+}
+
+const sweepCandles = [
+  { high: 100, low: 90, close: 95 },
+  { high: 98, low: 92, close: 94 },
+  { high: 96, low: 88, close: 93 } // low dipped to 88 (<90), closed at 93 (>90)
+];
+const sweepSignals = evaluateSweepSignals(sweepCandles, 2);
+assert.strictEqual(sweepSignals[2], 1, "Bullish liquidity sweep must trigger long signal");
+
+console.log("✅ 4h Backtest EMA, RSI, Breakout, and Liquidity Sweep math verified!");
