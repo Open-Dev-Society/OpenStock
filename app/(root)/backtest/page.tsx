@@ -53,7 +53,9 @@ interface BacktestData {
 }
 
 export default function BacktestDashboardPage() {
-  const [strategyType, setStrategyType] = useState<'ema_crossover' | 'rsi_oversold' | 'breakout' | 'liquidity_sweep'>('liquidity_sweep');
+  const [strategyType, setStrategyType] = useState<
+    'ema_crossover' | 'rsi_oversold' | 'breakout' | 'liquidity_sweep' | 'supertrend' | 'fair_value_gap' | 'order_block'
+  >('liquidity_sweep');
   const [symbol, setSymbol] = useState('BINANCE:BTCUSDT');
   const [lookbackDays, setLookbackDays] = useState(365);
 
@@ -66,6 +68,14 @@ export default function BacktestDashboardPage() {
   const [breakoutLookback, setBreakoutLookback] = useState(20);
   const [sweepLookback, setSweepLookback] = useState(20);
   const [volMultiplier, setVolMultiplier] = useState(1.2);
+
+  // LuxAlgo Strategy Parameters
+  const [atrPeriod, setAtrPeriod] = useState(10);
+  const [multiplier, setMultiplier] = useState(3);
+  const [minGapPct, setMinGapPct] = useState(0.3);
+  const [fvgHoldBars, setFvgHoldBars] = useState(8);
+  const [obLookback, setObLookback] = useState(20);
+  const [obHoldBars, setObHoldBars] = useState(8);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,6 +125,12 @@ export default function BacktestDashboardPage() {
         return { lookback: breakoutLookback };
       case 'liquidity_sweep':
         return { lookback: sweepLookback, volMultiplier };
+      case 'supertrend':
+        return { atrPeriod, multiplier };
+      case 'fair_value_gap':
+        return { minGapPct, holdBars: fvgHoldBars };
+      case 'order_block':
+        return { lookback: obLookback, holdBars: obHoldBars };
     }
   };
 
@@ -246,6 +262,9 @@ export default function BacktestDashboardPage() {
               className="w-full bg-gray-950 border border-gray-700 text-gray-200 rounded-lg p-2.5 text-sm focus:border-teal-500 outline-none"
             >
               <option value="liquidity_sweep">4H Liquidity Sweep &amp; Reclaim (BTC / Crypto)</option>
+              <option value="supertrend">4H LuxAlgo SuperTrend (ATR Trailing Stop)</option>
+              <option value="fair_value_gap">4H LuxAlgo Smart Money FVG (Imbalance Retest)</option>
+              <option value="order_block">4H LuxAlgo SMC Order Block (Displacement Retest)</option>
               <option value="ema_crossover">4H Dual EMA Crossover (Trend Following)</option>
               <option value="rsi_oversold">4H RSI Oversold / Overbought (Mean Reversion)</option>
               <option value="breakout">4H Donchian Channel Breakout (Momentum)</option>
@@ -391,6 +410,77 @@ export default function BacktestDashboardPage() {
                   step="0.1"
                   value={volMultiplier}
                   onChange={(e) => setVolMultiplier(Number(e.target.value))}
+                  className="bg-gray-950 border-gray-700 text-gray-200 mt-1"
+                />
+              </div>
+            </>
+          )}
+
+          {strategyType === 'supertrend' && (
+            <>
+              <div>
+                <label className="text-xs text-gray-400">ATR Period (bars)</label>
+                <Input
+                  type="number"
+                  value={atrPeriod}
+                  onChange={(e) => setAtrPeriod(Number(e.target.value))}
+                  className="bg-gray-950 border-gray-700 text-gray-200 mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400">ATR Multiplier</label>
+                <Input
+                  type="number"
+                  step="0.5"
+                  value={multiplier}
+                  onChange={(e) => setMultiplier(Number(e.target.value))}
+                  className="bg-gray-950 border-gray-700 text-gray-200 mt-1"
+                />
+              </div>
+            </>
+          )}
+
+          {strategyType === 'fair_value_gap' && (
+            <>
+              <div>
+                <label className="text-xs text-gray-400">Min Gap Threshold (%)</label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={minGapPct}
+                  onChange={(e) => setMinGapPct(Number(e.target.value))}
+                  className="bg-gray-950 border-gray-700 text-gray-200 mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400">Max Hold Period (bars)</label>
+                <Input
+                  type="number"
+                  value={fvgHoldBars}
+                  onChange={(e) => setFvgHoldBars(Number(e.target.value))}
+                  className="bg-gray-950 border-gray-700 text-gray-200 mt-1"
+                />
+              </div>
+            </>
+          )}
+
+          {strategyType === 'order_block' && (
+            <>
+              <div>
+                <label className="text-xs text-gray-400">Swing Break Lookback (bars)</label>
+                <Input
+                  type="number"
+                  value={obLookback}
+                  onChange={(e) => setObLookback(Number(e.target.value))}
+                  className="bg-gray-950 border-gray-700 text-gray-200 mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400">Max Hold Period (bars)</label>
+                <Input
+                  type="number"
+                  value={obHoldBars}
+                  onChange={(e) => setObHoldBars(Number(e.target.value))}
                   className="bg-gray-950 border-gray-700 text-gray-200 mt-1"
                 />
               </div>

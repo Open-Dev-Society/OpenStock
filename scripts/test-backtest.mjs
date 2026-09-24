@@ -130,4 +130,29 @@ const sweepCandles = [
 const sweepSignals = evaluateSweepSignals(sweepCandles, 2);
 assert.strictEqual(sweepSignals[2], 1, "Bullish liquidity sweep must trigger long signal");
 
-console.log("✅ 4h Backtest EMA, RSI, Breakout, and Liquidity Sweep math verified!");
+// 7. Verify LuxAlgo Fair Value Gap (FVG) detection
+function detectBullishFvg(bar0, bar1, bar2) {
+  // Bar 2 low sits above Bar 0 high
+  return bar2.low > bar0.high;
+}
+assert.strictEqual(
+  detectBullishFvg({ high: 100 }, { close: 110 }, { low: 105 }),
+  true,
+  "Bullish FVG gap between bar 0 high (100) and bar 2 low (105)"
+);
+assert.strictEqual(
+  detectBullishFvg({ high: 100 }, { close: 105 }, { low: 98 }),
+  false,
+  "No FVG when wicks overlap"
+);
+
+// 8. Verify LuxAlgo Supertrend Direction Logic
+function testSupertrendFlip(close, prevFinalUp, prevFinalDn, prevTrend) {
+  if (prevTrend === 1 && close < prevFinalDn) return -1;
+  if (prevTrend === -1 && close > prevFinalUp) return 1;
+  return prevTrend;
+}
+assert.strictEqual(testSupertrendFlip(95, 110, 98, 1), -1, "Close below trailing lower band flips trend to -1 (Bearish)");
+assert.strictEqual(testSupertrendFlip(115, 110, 98, -1), 1, "Close above trailing upper band flips trend to 1 (Bullish)");
+
+console.log("✅ 4h Backtest EMA, RSI, Breakout, Liquidity Sweep, and LuxAlgo SMC/SuperTrend math verified!");

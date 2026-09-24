@@ -555,7 +555,10 @@ export const nightly4hResearchFunction = inngest.createFunction(
         const now = new Date();
         const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
 
-        const configsToTest: Array<{ type: "ema_crossover" | "rsi_oversold" | "breakout" | "liquidity_sweep"; params: Record<string, number> }> = [];
+        const configsToTest: Array<{
+            type: "ema_crossover" | "rsi_oversold" | "breakout" | "liquidity_sweep" | "supertrend" | "fair_value_gap" | "order_block";
+            params: Record<string, number>;
+        }> = [];
 
         // 1. EMA Crossover grid
         for (const fast of [8, 13, 21]) {
@@ -591,6 +594,36 @@ export const nightly4hResearchFunction = inngest.createFunction(
                 configsToTest.push({
                     type: "liquidity_sweep",
                     params: { lookback, volMultiplier },
+                });
+            }
+        }
+
+        // 5. LuxAlgo SuperTrend (ATR Trailing Stop) grid
+        for (const atrPeriod of [10, 14]) {
+            for (const multiplier of [2.0, 3.0]) {
+                configsToTest.push({
+                    type: "supertrend",
+                    params: { atrPeriod, multiplier },
+                });
+            }
+        }
+
+        // 6. LuxAlgo Smart Money Concepts: Fair Value Gap (FVG) grid
+        for (const minGapPct of [0.3, 0.5]) {
+            for (const holdBars of [6, 10]) {
+                configsToTest.push({
+                    type: "fair_value_gap",
+                    params: { minGapPct, holdBars },
+                });
+            }
+        }
+
+        // 7. LuxAlgo Smart Money Concepts: Order Block Retest grid
+        for (const lookback of [15, 20]) {
+            for (const holdBars of [6, 10]) {
+                configsToTest.push({
+                    type: "order_block",
+                    params: { lookback, holdBars },
                 });
             }
         }

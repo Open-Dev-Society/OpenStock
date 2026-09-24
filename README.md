@@ -416,59 +416,54 @@ Automated 4-hour (4h) time-frame quantitative backtester and nightly parameter e
   - **EMA Crossover** (`ema_crossover`): `params: { fastPeriod: 12, slowPeriod: 26 }`.
   - **RSI Oversold** (`rsi_oversold`): `params: { period: 14, oversold: 30, overbought: 70 }`.
   - **Donchian Breakout** (`breakout`): `params: { lookback: 20 }`.
-  - **Bitcoin Liquidity Sweep** (`liquidity_sweep`): `params: { lookback: 20, volMultiplier: 1.2 }`. Exploits false-breakout sweeps and range reclaims.
+  - **Bitcoin Liquidity Sweep** (`liquidity_sweep`): `params: { lookback: 20, volMultiplier: 1.2 }`.
+  - **LuxAlgo SuperTrend** (`supertrend`): `params: { atrPeriod: 10, multiplier: 3.0 }`. Volatility-ratcheted ATR trailing stop system.
+  - **LuxAlgo Fair Value Gap** (`fair_value_gap`): `params: { minGapPct: 0.3, holdBars: 8 }`. 3-bar Smart Money imbalance mitigation at consequent encroachment.
+  - **LuxAlgo Order Block Retest** (`order_block`): `params: { lookback: 20, holdBars: 8 }`. Displacement structure breaks with institutional order block mitigation entries.
   - Computes dynamically annualized Sharpe, cumulative returns, max drawdown, win rates, and per-symbol breakdowns.
 - **MongoDB Persistence** (`database/models/backtestResult.model.ts`, `database/models/best4hStrategy.model.ts`): Indexed collections for backtest history and top-performing leaderboards.
 - **Inngest Pipelines** (`lib/inngest/functions.ts`): Event-driven runner (`strategy/backtest.requested`) and daily 02:00 UTC grid sweep (`nightly-4h-research`).
-- **REST Endpoints** (`app/api/strategy/*`): Routes to dispatch backtests, fetch job progress, and inspect highest-Sharpe setups.
+- **REST Endpoints** (`app/api/strategy/*`): Routes to dispatch backtests, fetch job progress, inspect trade ledgers, and query AI audits.
 
 ### Nightly Cron Schedule
-The `nightly-4h-research` Inngest function triggers every day at 02:00 UTC (`0 2 * * *`). It tests:
+The `nightly-4h-research` Inngest function triggers every day at 02:00 UTC (`0 2 * * *`). It sweeps parameter grids across all 7 strategy types:
 - EMA grid: `fast=[8, 13, 21]`, `slow=[34, 55, 89]`
 - RSI grid: `period=[10, 14, 21]`, `oversold=[25, 30]`, `overbought=[70, 75]`
 - Breakout grid: `lookback=[10, 20, 40]`
 - Liquidity Sweep grid: `lookback=[15, 20, 30]`, `volMultiplier=[1.2, 1.5]`
+- SuperTrend grid: `atrPeriod=[10, 14]`, `multiplier=[2.0, 3.0]`
+- Fair Value Gap grid: `minGapPct=[0.3, 0.5]`, `holdBars=[6, 10]`
+- Order Block grid: `lookback=[15, 20]`, `holdBars=[6, 10]`
 Across `AAPL`, `MSFT`, `NVDA`, `SPY`, and `QQQ` over a 365-day lookback, updating `Best4hStrategy` with the top performer.
 
 ### Example cURL Commands
 
-#### 1. Trigger Backtest (EMA, RSI, Breakout, or Liquidity Sweep)
+#### 1. Trigger Backtest (EMA, RSI, Breakout, Liquidity Sweep, SuperTrend, FVG, or Order Block)
 ```bash
-# EMA Crossover
+# LuxAlgo SuperTrend
 curl -X POST http://localhost:3000/api/strategy/backtest \
   -H "Content-Type: application/json" \
   -d '{
-    "type": "ema_crossover",
-    "params": { "fastPeriod": 12, "slowPeriod": 26 },
-    "symbols": ["AAPL", "NVDA", "SPY"],
-    "from": "2025-01-01T00:00:00.000Z",
-    "to": "2026-01-01T00:00:00.000Z"
+    "type": "supertrend",
+    "params": { "atrPeriod": 10, "multiplier": 3 },
+    "symbols": ["BINANCE:BTCUSDT"]
   }'
 
-# RSI Oversold
+# LuxAlgo Fair Value Gap (FVG)
 curl -X POST http://localhost:3000/api/strategy/backtest \
   -H "Content-Type: application/json" \
   -d '{
-    "type": "rsi_oversold",
-    "params": { "period": 14, "oversold": 30, "overbought": 70 },
-    "symbols": ["AAPL", "NVDA"]
+    "type": "fair_value_gap",
+    "params": { "minGapPct": 0.5, "holdBars": 8 },
+    "symbols": ["BINANCE:BTCUSDT"]
   }'
 
-# Donchian Breakout
+# LuxAlgo Order Block Retest
 curl -X POST http://localhost:3000/api/strategy/backtest \
   -H "Content-Type: application/json" \
   -d '{
-    "type": "breakout",
-    "params": { "lookback": 20 },
-    "symbols": ["QQQ", "SPY"]
-  }'
-
-# Bitcoin / Crypto Liquidity Sweep & Reclaim
-curl -X POST http://localhost:3000/api/strategy/backtest \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "liquidity_sweep",
-    "params": { "lookback": 20, "volMultiplier": 1.2 },
+    "type": "order_block",
+    "params": { "lookback": 20, "holdBars": 8 },
     "symbols": ["BINANCE:BTCUSDT"]
   }'
 ```

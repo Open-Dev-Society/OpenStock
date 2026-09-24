@@ -2,7 +2,14 @@ import { getOhlcv4h, Candle4h } from "@/lib/market/ohlcv4h";
 import { IBacktestTrade } from "@/database/models/backtestResult.model";
 
 export interface StrategyConfig {
-  type: "ema_crossover" | "rsi_oversold" | "breakout" | "liquidity_sweep";
+  type:
+    | "ema_crossover"
+    | "rsi_oversold"
+    | "breakout"
+    | "liquidity_sweep"
+    | "supertrend"
+    | "fair_value_gap"
+    | "order_block";
   params: Record<string, number>;
   symbols: string[];
   from: Date | string;
@@ -399,6 +406,281 @@ export function evaluateLiquiditySweep(
   return computeMetricsFromSignals(candles, signals, lookback, symbol);
 }
 
+// ── LuxAlgo Supertrend ATR Trailing Stop ──────────────────────────────
+export function evaluateSupertrend(
+  candles: Candle4h[],
+  atrPeriod: number = 10,
+  multiplier: number = 3,
+  symbol: string = "UNKNOWN"
+): StrategyEvaluationResult {
+  const barsCount = candles.length;
+  if (barsCount < atrPeriod + 2) {
+    return computeMetricsFromSignals(candles, [], atrPeriod, symbol);
+  }
+
+  const tr: number[] = new Array(barsCount).fill(0);
+  tr[0] = candles[0].high - candles[0].low;
+  for (let i = 1; i < barsCount; i++) {
+    const hl = candles[i].high - candles[i].low;
+    const hc = Math.abs(candles[i].high - candles[i - 1].close);
+    const lc = Math.abs(candles[i].low - candles[i - 1].close);
+    tr[i] = Math.max(hl, hc, lc);
+  }
+
+  const atr: number[] = new Array(barsCount).fill(0);
+  let trSum = 0;
+  for (let i = 0; i < atrPeriod; i++) trSum += tr[i];
+  atr[atrPeriod - 1] = trSum / atrPeriod;
+
+  for (let i = atrPeriod; i < barsCount; i++) {
+    atr[i] = (atr[i - 1] * (atrPeriod - 1) + tr[i]) / atrPeriod;
+  }
+
+  const signals: number[] = new Array(barsCount).fill(0);
+  let finalUp = 0;
+  let finalDn = 0;
+  let trend = 1;
+
+  for (let i = atrPeriod; i < barsCount; i++) {
+    const hl2 = (candles[i].high + candles[i].low) / 2;
+    const basicUp = hl2 + multiplier * atr[i];
+    const basicDn = hl2 - multiplier * atr[i];
+
+    if (i === atrPeriod) {
+      finalUp = basicUp;
+      finalDn = basicDn;
+      trend = candles[i].close > finalUp ? 1 : -1;
+    } else {
+      const prevClose = candles[i - 1].close;
+      finalUp = prevClose <= finalUp || basicUp < finalUp ? basicUp : finalUp;
+      finalDn = prevClose >= finalDn || basicDn > finalDn ? basicDn : finalDn;
+
+      if (trend === 1 && candles[i].close < finalDn) {
+        trend = -1;
+      } else if (trend === -1 && candles[i].close > finalUp) {
+        trend = 1;
+      }
+    }
+
+    signals[i] = trend;
+  }
+
+  return computeMetricsFromSignals(candles, signals, atrPeriod, symbol);
+}
+
+// ── LuxAlgo Smart Money Concepts: Fair Value Gap (FVG) ─────────────────
+export function evaluateFairValueGap(
+  candles: Candle4h[],
+  minGapPct: number = 0.3,
+  holdBars: number = 8,
+  symbol: string = "UNKNOWN"
+): StrategyEvaluationResult {
+  const barsCount = candles.length;
+  if (barsCount < 10) {
+    return computeMetricsFromSignals(candles, [], 5, symbol);
+  }
+
+  const signals: number[] = new Array(barsCount).fill(0);
+  let currentPosition = 0;
+  let targetPrice = 0;
+  let barsInTrade = 0;
+
+  interface FvgZone {
+    type: "bull" | "bear";
+    top: number;
+    bottom: number;
+    ce: number;
+    createdIdx: number;
+  }
+  const activeZones: FvgZone[] = [];
+
+  for (let i = 2; i < barsCount; i++) {
+    const bar0 = candles[i - 2];
+    const bar2 = candles[i];
+
+    if (bar2.low > bar0.high) {
+      const gapPct = ((bar2.low - bar0.high) / bar0.high) * 100;
+      if (gapPct >= minGapPct) {
+        activeZones.push({
+          type: "bull",
+          top: bar2.low,
+          bottom: bar0.high,
+          ce: (bar2.low + bar0.high) / 2,
+          createdIdx: i,
+        });
+      }
+    } else if (bar2.high < bar0.low) {
+      const gapPct = ((bar0.low - bar2.high) / bar0.low) * 100;
+      if (gapPct >= minGapPct) {
+        activeZones.push({
+          type: "bear",
+          top: bar0.low,
+          bottom: bar2.high,
+          ce: (bar0.low + bar2.high) / 2,
+          createdIdx: i,
+        });
+      }
+    }
+
+    const currClose = candles[i].close;
+    const currLow = candles[i].low;
+    const currHigh = candles[i].high;
+
+    if (currentPosition === 1) {
+      barsInTrade++;
+      if (currClose >= targetPrice || barsInTrade >= holdBars) {
+        currentPosition = 0;
+      }
+    } else if (currentPosition === -1) {
+      barsInTrade++;
+      if (currClose <= targetPrice || barsInTrade >= holdBars) {
+        currentPosition = 0;
+      }
+    }
+
+    if (currentPosition === 0) {
+      for (let z = activeZones.length - 1; z >= 0; z--) {
+        const zone = activeZones[z];
+        if (i - zone.createdIdx > 30) {
+          activeZones.splice(z, 1);
+          continue;
+        }
+
+        if (zone.type === "bull") {
+          if (currLow <= zone.ce && currClose > zone.bottom) {
+            currentPosition = 1;
+            targetPrice = zone.top * 1.025;
+            barsInTrade = 0;
+            activeZones.splice(z, 1);
+            break;
+          }
+        } else if (zone.type === "bear") {
+          if (currHigh >= zone.ce && currClose < zone.top) {
+            currentPosition = -1;
+            targetPrice = zone.bottom * 0.975;
+            barsInTrade = 0;
+            activeZones.splice(z, 1);
+            break;
+          }
+        }
+      }
+    }
+
+    signals[i] = currentPosition;
+  }
+
+  return computeMetricsFromSignals(candles, signals, 5, symbol);
+}
+
+// ── LuxAlgo Smart Money Concepts: Order Block Retest ──────────────────
+export function evaluateOrderBlock(
+  candles: Candle4h[],
+  lookback: number = 20,
+  holdBars: number = 8,
+  symbol: string = "UNKNOWN"
+): StrategyEvaluationResult {
+  const barsCount = candles.length;
+  if (barsCount < lookback + 5) {
+    return computeMetricsFromSignals(candles, [], lookback, symbol);
+  }
+
+  const signals: number[] = new Array(barsCount).fill(0);
+  let currentPosition = 0;
+  let targetPrice = 0;
+  let barsInTrade = 0;
+
+  interface OrderBlockZone {
+    type: "bull" | "bear";
+    top: number;
+    bottom: number;
+    idx: number;
+  }
+  const obZones: OrderBlockZone[] = [];
+
+  for (let i = lookback; i < barsCount; i++) {
+    let priorHigh = -Infinity;
+    let priorLow = Infinity;
+    for (let j = i - lookback; j < i; j++) {
+      if (candles[j].high > priorHigh) priorHigh = candles[j].high;
+      if (candles[j].low < priorLow) priorLow = candles[j].low;
+    }
+
+    if (candles[i].close > priorHigh) {
+      for (let k = i - 1; k >= i - 6 && k >= 0; k--) {
+        if (candles[k].close < candles[k].open) {
+          obZones.push({
+            type: "bull",
+            top: candles[k].high,
+            bottom: candles[k].low,
+            idx: i,
+          });
+          break;
+        }
+      }
+    } else if (candles[i].close < priorLow) {
+      for (let k = i - 1; k >= i - 6 && k >= 0; k--) {
+        if (candles[k].close > candles[k].open) {
+          obZones.push({
+            type: "bear",
+            top: candles[k].high,
+            bottom: candles[k].low,
+            idx: i,
+          });
+          break;
+        }
+      }
+    }
+
+    const currClose = candles[i].close;
+    const currLow = candles[i].low;
+    const currHigh = candles[i].high;
+
+    if (currentPosition === 1) {
+      barsInTrade++;
+      if (currClose >= targetPrice || barsInTrade >= holdBars) {
+        currentPosition = 0;
+      }
+    } else if (currentPosition === -1) {
+      barsInTrade++;
+      if (currClose <= targetPrice || barsInTrade >= holdBars) {
+        currentPosition = 0;
+      }
+    }
+
+    if (currentPosition === 0) {
+      for (let z = obZones.length - 1; z >= 0; z--) {
+        const ob = obZones[z];
+        if (i - ob.idx > 30) {
+          obZones.splice(z, 1);
+          continue;
+        }
+
+        if (ob.type === "bull") {
+          if (currLow <= ob.top && currClose >= ob.bottom) {
+            currentPosition = 1;
+            targetPrice = currClose * 1.03;
+            barsInTrade = 0;
+            obZones.splice(z, 1);
+            break;
+          }
+        } else if (ob.type === "bear") {
+          if (currHigh >= ob.bottom && currClose <= ob.top) {
+            currentPosition = -1;
+            targetPrice = currClose * 0.97;
+            barsInTrade = 0;
+            obZones.splice(z, 1);
+            break;
+          }
+        }
+      }
+    }
+
+    signals[i] = currentPosition;
+  }
+
+  return computeMetricsFromSignals(candles, signals, lookback, symbol);
+}
+
 export async function runBacktest(
   config: StrategyConfig
 ): Promise<BacktestResult> {
@@ -419,6 +701,15 @@ export async function runBacktest(
         warmupBars = config.params.lookback || config.params.period || 20;
         break;
       case "liquidity_sweep":
+        warmupBars = config.params.lookback || 20;
+        break;
+      case "supertrend":
+        warmupBars = config.params.atrPeriod || 10;
+        break;
+      case "fair_value_gap":
+        warmupBars = 6;
+        break;
+      case "order_block":
         warmupBars = config.params.lookback || 20;
         break;
       case "ema_crossover":
@@ -452,6 +743,24 @@ export async function runBacktest(
         const lookback = config.params.lookback || 20;
         const volMultiplier = config.params.volMultiplier || 1.2;
         evalResult = evaluateLiquiditySweep(candles, lookback, volMultiplier, sym);
+        break;
+      }
+      case "supertrend": {
+        const atrPeriod = config.params.atrPeriod || 10;
+        const multiplier = config.params.multiplier || 3;
+        evalResult = evaluateSupertrend(candles, atrPeriod, multiplier, sym);
+        break;
+      }
+      case "fair_value_gap": {
+        const minGapPct = config.params.minGapPct || 0.3;
+        const holdBars = config.params.holdBars || 8;
+        evalResult = evaluateFairValueGap(candles, minGapPct, holdBars, sym);
+        break;
+      }
+      case "order_block": {
+        const lookback = config.params.lookback || 20;
+        const holdBars = config.params.holdBars || 8;
+        evalResult = evaluateOrderBlock(candles, lookback, holdBars, sym);
         break;
       }
       case "ema_crossover":
