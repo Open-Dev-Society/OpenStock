@@ -106,20 +106,31 @@ async function fetchBinance4hCandles(
   to: number
 ): Promise<Candle4h[]> {
   const pair = normalizeBinancePair(sym);
-  const startTimeMs = from * 1000;
+  let currentStartMs = from * 1000;
   const endTimeMs = to * 1000;
+  const allRows: any[] = [];
 
-  const url = `https://api.binance.com/api/v3/klines?symbol=${pair}&interval=4h&startTime=${startTimeMs}&endTime=${endTimeMs}&limit=1000`;
+  // Paginate through Binance 1000-candle limits to cover full history to present day
+  while (currentStartMs < endTimeMs) {
+    const url = `https://api.binance.com/api/v3/klines?symbol=${pair}&interval=4h&startTime=${currentStartMs}&endTime=${endTimeMs}&limit=1000`;
 
-  const res = await fetch(url, { headers: { Accept: "application/json" } });
-  if (!res.ok) {
-    throw new Error(`Binance HTTP ${res.status}`);
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!res.ok) {
+      throw new Error(`Binance HTTP ${res.status}`);
+    }
+
+    const batch = await res.json();
+    if (!Array.isArray(batch) || batch.length === 0) break;
+
+    allRows.push(...batch);
+
+    const lastBarTime = batch[batch.length - 1][0];
+    if (lastBarTime >= endTimeMs || batch.length < 1000) break;
+
+    currentStartMs = lastBarTime + 1;
   }
 
-  const raw = await res.json();
-  if (!Array.isArray(raw)) return [];
-
-  return raw.map((row: any) => ({
+  return allRows.map((row: any) => ({
     time: new Date(row[0]),
     open: parseFloat(row[1]),
     high: parseFloat(row[2]),
