@@ -406,6 +406,45 @@ public/assets/images/   # logos and screenshots
     - Templates for welcome and news summary emails.
 
 
+## 🧠 4h Strategy Researcher & Backtester
+
+Automated 4-hour (4h) time-frame quantitative backtester and nightly parameter explorer.
+
+### What Was Added
+- **4h OHLCV Data Layer** (`lib/market/ohlcv4h.ts`): Fetches Finnhub candles at 240-minute resolution.
+- **Backtesting Engine** (`lib/strategy/backtest4h.ts`): Vectorized EMA crossover simulation with 4h bar adjustments (annualized over 1,512 bars/year), computing Sharpe, cumulative return, max drawdown, and per-symbol breakdowns.
+- **MongoDB Persistence** (`database/models/backtestResult.model.ts`, `database/models/best4hStrategy.model.ts`): Indexed collection for runs and top performers.
+- **Inngest Pipelines** (`lib/inngest/functions.ts`): Event-driven runner (`strategy/backtest.requested`) and daily 02:00 UTC parameter grid sweep (`nightly-4h-research`).
+- **REST Endpoints** (`app/api/strategy/*`): Routes to dispatch backtests, fetch job progress, and inspect highest-Sharpe setups.
+
+### Nightly Cron Schedule
+The `nightly-4h-research` Inngest function triggers every day at 02:00 UTC (`0 2 * * *`). It tests an EMA grid (`fast=[8, 13, 21]`, `slow=[34, 55, 89]`) across `AAPL`, `MSFT`, `NVDA`, `SPY`, and `QQQ` over a 365-day lookback, persisting the best setup to the `Best4hStrategy` collection.
+
+### Example cURL Commands
+
+#### 1. Trigger Backtest
+```bash
+curl -X POST http://localhost:3000/api/strategy/backtest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "ema_crossover",
+    "params": { "fastPeriod": 12, "slowPeriod": 26 },
+    "symbols": ["AAPL", "NVDA", "SPY"],
+    "from": "2025-01-01T00:00:00.000Z",
+    "to": "2026-01-01T00:00:00.000Z"
+  }'
+```
+
+#### 2. Get Backtest Results
+```bash
+curl http://localhost:3000/api/strategy/backtest/66f29a0b12c34d56e78f90ab
+```
+
+#### 3. Query Best 4h Strategies
+```bash
+curl http://localhost:3000/api/strategy/best-4h
+```
+
 ## 🌍 Market Support <a name="market-support"></a>
 
 OpenStock supports **30+ international stock exchanges** including NSE, LSE, TSX, and more. However, please be aware of important limitations based on our data providers.

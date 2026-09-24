@@ -6,6 +6,10 @@ import { getWatchlistSymbolsByEmail } from "@/lib/actions/watchlist.actions";
 import { getNews } from "@/lib/actions/finnhub.actions";
 import { getFormattedTodayDate } from "@/lib/utils";
 import { callAIProviderWithFallback } from "@/lib/ai-provider";
+import { connectToDatabase } from "@/database/mongoose";
+import BacktestResult from "@/database/models/backtestResult.model";
+import Best4hStrategy from "@/database/models/best4hStrategy.model";
+import { runBacktest, StrategyConfig } from "@/lib/strategy/backtest4h";
 
 export const sendSignUpEmail = inngest.createFunction(
     { id: 'sign-up-email', triggers: [{ event: 'app/user.created' }] },
@@ -462,5 +466,193 @@ export const checkInactiveUsers = inngest.createFunction(
         });
 
         return { processed: inactiveUsers.length, sent: results };
+    }
+);
+
+export const run4hBacktestFunction = inngest.createFunction(
+    { id: "run-4h-backtest", name: "Run 4h Strategy Backtest" },
+    { event: "strategy/backtest.requested" },
+    async ({ event, step }) => {
+        const { backtestId, ...config } = event.data as StrategyConfig & {
+            backtestId?: string;
+        };
+
+        console.log(
+            `[Inngest] Starting 4h backtest: ${config.type} for [${config.symbols.join(
+                ", "
+            )}]`
+        );
+
+        const docId = await step.run("initialize-db-record", async () => {
+            await connectToDatabase();
+            if (backtestId) {
+                await BacktestResult.findByIdAndUpdate(backtestId, {
+                    status: "running",
+                    error: null,
+                });
+                return backtestId;
+            }
+
+            const doc = await BacktestResult.create({
+                timeframe: "4h",
+                strategyType: config.type,
+                params: config.params,
+                symbols: config.symbols,
+                from: new Date(config.from),
+                to: new Date(config.to),
+                status: "running",
+            });
+            return (doc._id as any).toString();
+        });
+
+        try {
+            const result = await step.run("execute-backtest", async () => {
+                return await runBacktest({
+                    ...config,
+                    from: new Date(config.from),
+                    to: new Date(config.to),
+                });
+            });
+
+            await step.run("save-backtest-results", async () => {
+                await connectToDatabase();
+                await BacktestResult.findByIdAndUpdate(docId, {
+                    metrics: result.metrics,
+                    perSymbolMetrics: result.perSymbolMetrics,
+                    status: "completed",
+                });
+            });
+
+            console.log(
+                `[Inngest] Completed 4h backtest ${docId}. Sharpe: ${result.metrics.sharpe.toFixed(
+                    2
+                )}, Total Return: ${(result.metrics.totalReturn * 100).toFixed(2)}%`
+            );
+
+            return { ok: true, backtestId: docId, metrics: result.metrics };
+        } catch (err: any) {
+            console.error(`[Inngest] Backtest ${docId} failed:`, err);
+            await step.run("record-failure", async () => {
+                await connectToDatabase();
+                await BacktestResult.findByIdAndUpdate(docId, {
+                    status: "failed",
+                    error: err?.message || "Unknown backtest error",
+                });
+            });
+            throw err;
+        }
+    }
+);
+
+export const nightly4hResearchFunction = inngest.createFunction(
+    { id: "nightly-4h-research", name: "Nightly 4h Strategy Research Grid" },
+    { cron: "0 2 * * *" },
+    async ({ step }) => {
+        console.log("[Inngest Cron] Triggering nightly 4h strategy research sweep across EMA, RSI, and Breakout");
+
+        const symbols = ["AAPL", "MSFT", "NVDA", "SPY", "QQQ"];
+        const now = new Date();
+        const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+
+        const configsToTest: Array<{ type: "ema_crossover" | "rsi_oversold" | "breakout"; params: Record<string, number> }> = [];
+
+        // 1. EMA Crossover grid
+        for (const fast of [8, 13, 21]) {
+            for (const slow of [34, 55, 89]) {
+                configsToTest.push({
+                    type: "ema_crossover",
+                    params: { fastPeriod: fast, slowPeriod: slow },
+                });
+            }
+        }
+
+        // 2. RSI Oversold/Overbought grid
+        for (const period of [10, 14, 21]) {
+            for (const oversold of [25, 30]) {
+                configsToTest.push({
+                    type: "rsi_oversold",
+                    params: { period, oversold, overbought: 100 - oversold },
+                });
+            }
+        }
+
+        // 3. Donchian / Channel Breakout grid
+        for (const lookback of [10, 20, 40]) {
+            configsToTest.push({
+                type: "breakout",
+                params: { lookback },
+            });
+        }
+
+        const dispatchedIds = await step.run("dispatch-grid-events", async () => {
+            await connectToDatabase();
+            const events: any[] = [];
+            const createdIds: string[] = [];
+
+            for (const item of configsToTest) {
+                const doc = await BacktestResult.create({
+                    timeframe: "4h",
+                    strategyType: item.type,
+                    params: item.params,
+                    symbols,
+                    from: oneYearAgo,
+                    to: now,
+                    status: "running",
+                });
+
+                const docId = (doc._id as any).toString();
+                createdIds.push(docId);
+                events.push({
+                    name: "strategy/backtest.requested",
+                    data: {
+                        backtestId: docId,
+                        type: item.type,
+                        params: item.params,
+                        symbols,
+                        from: oneYearAgo.toISOString(),
+                        to: now.toISOString(),
+                    },
+                });
+            }
+
+            await inngest.send(events);
+            return createdIds;
+        });
+
+        // Wait for dispatched jobs to settle
+        await step.sleep("wait-for-grid-runs", "3m");
+
+        await step.run("update-best-strategy", async () => {
+            await connectToDatabase();
+            const best = await BacktestResult.findOne({
+                _id: { $in: dispatchedIds },
+                status: "completed",
+            })
+                .sort({ "metrics.sharpe": -1 })
+                .exec();
+
+            if (best && best.metrics) {
+                await Best4hStrategy.findOneAndUpdate(
+                    { timeframe: "4h" },
+                    {
+                        updatedAt: new Date(),
+                        timeframe: "4h",
+                        strategyType: best.strategyType,
+                        params: best.params,
+                        symbols: best.symbols,
+                        metrics: best.metrics,
+                        backtestId: best._id,
+                    },
+                    { upsert: true, new: true }
+                );
+                console.log(
+                    `[Inngest Cron] Best 4h strategy updated: type=${best.strategyType}, params=${JSON.stringify(
+                        best.params
+                    )}, Sharpe=${best.metrics.sharpe.toFixed(2)}`
+                );
+            }
+        });
+
+        return { ok: true, totalConfigs: dispatchedIds.length };
     }
 );
