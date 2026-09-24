@@ -2,17 +2,18 @@ import mongoose from "mongoose";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-// FIX: Set Google DNS and force IPv4 to avoid querySrv ECONNREFUSED
+// FIX: Only override DNS when connecting to Atlas SRV clusters to preserve local/container DNS
 import dns from 'dns';
-try {
-    // This is often more effective than setServers for Node 17+
-    if (dns.setDefaultResultOrder) {
-        dns.setDefaultResultOrder('ipv4first');
+if (MONGODB_URI && MONGODB_URI.startsWith('mongodb+srv://')) {
+    try {
+        if (dns.setDefaultResultOrder) {
+            dns.setDefaultResultOrder('ipv4first');
+        }
+        dns.setServers(['8.8.8.8']);
+        console.log('MongoDB: Custom DNS settings applied for Atlas SRV');
+    } catch (e) {
+        console.error('Failed to set custom DNS:', e);
     }
-    dns.setServers(['8.8.8.8']);
-    console.log('MongoDB: Custom DNS settings applied');
-} catch (e) {
-    console.error('Failed to set custom DNS:', e);
 }
 
 declare global {
