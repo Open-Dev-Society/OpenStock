@@ -261,6 +261,7 @@ export default function BacktestDashboardPage() {
             { label: 'BTC', sym: 'BINANCE:BTCUSDT' },
             { label: 'ETH', sym: 'BINANCE:ETHUSDT' },
             { label: 'SOL', sym: 'BINANCE:SOLUSDT' },
+            { label: 'HYPE', sym: 'BINANCE:HYPEUSDT' },
             { label: 'NVDA', sym: 'NVDA' },
             { label: 'AAPL', sym: 'AAPL' },
             { label: 'MSFT', sym: 'MSFT' },

@@ -13,6 +13,7 @@ Direct tick-by-tick real candle ingestion from `api.binance.com`:
 - `BINANCE:BTCUSDT` - Bitcoin (Digital Gold / Macro Momentum)
 - `BINANCE:ETHUSDT` - Ethereum (Smart Contract Layer 1)
 - `BINANCE:SOLUSDT` - Solana (High-Throughput Layer 1)
+- `BINANCE:HYPEUSDT` - Hyperliquid (DEX Perpetual & L1 Ecosystem)
 - `BINANCE:BNBUSDT` - BNB (Binance Ecosystem)
 - `BINANCE:XRPUSDT` - Ripple (Cross-Border Liquidity)
 - `BINANCE:DOGEUSDT` - Dogecoin (High-Beta Meme Liquidity)

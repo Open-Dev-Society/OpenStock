@@ -10,6 +10,7 @@ export const QUANT_SYMBOL_UNIVERSE: QuantSymbol[] = [
   { symbol: "BINANCE:BTCUSDT", name: "Bitcoin / Tether", category: "crypto", exchange: "Binance" },
   { symbol: "BINANCE:ETHUSDT", name: "Ethereum / Tether", category: "crypto", exchange: "Binance" },
   { symbol: "BINANCE:SOLUSDT", name: "Solana / Tether", category: "crypto", exchange: "Binance" },
+  { symbol: "BINANCE:HYPEUSDT", name: "Hyperliquid / Tether", category: "crypto", exchange: "Binance" },
   { symbol: "BINANCE:BNBUSDT", name: "BNB / Tether", category: "crypto", exchange: "Binance" },
   { symbol: "BINANCE:XRPUSDT", name: "Ripple / Tether", category: "crypto", exchange: "Binance" },
   { symbol: "BINANCE:DOGEUSDT", name: "Dogecoin / Tether", category: "crypto", exchange: "Binance" },

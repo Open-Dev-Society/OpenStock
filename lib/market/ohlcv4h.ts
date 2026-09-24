@@ -141,38 +141,50 @@ async function fetchBinanceCandles(
 ): Promise<Candle4h[]> {
   const pair = normalizeBinancePair(sym);
   const interval = toBinanceInterval(timeframe);
-  let currentStartMs = from * 1000;
-  const endTimeMs = to * 1000;
-  const allRows: any[] = [];
 
-  // Paginate through Binance 1000-candle limits to cover full history
-  while (currentStartMs < endTimeMs) {
-    const url = `https://api.binance.com/api/v3/klines?symbol=${pair}&interval=${interval}&startTime=${currentStartMs}&endTime=${endTimeMs}&limit=1000`;
+  // Helper to paginate klines from a Binance host (Spot or Futures)
+  async function fetchFromHost(baseUrl: string): Promise<Candle4h[]> {
+    let currentStartMs = from * 1000;
+    const endTimeMs = to * 1000;
+    const allRows: any[] = [];
 
-    const res = await fetch(url, { headers: { Accept: "application/json" } });
-    if (!res.ok) {
-      throw new Error(`Binance HTTP ${res.status}`);
+    while (currentStartMs < endTimeMs) {
+      const url = `${baseUrl}?symbol=${pair}&interval=${interval}&startTime=${currentStartMs}&endTime=${endTimeMs}&limit=1000`;
+      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!res.ok) break;
+
+      const batch = await res.json();
+      if (!Array.isArray(batch) || batch.length === 0) break;
+
+      allRows.push(...batch);
+      const lastBarTime = batch[batch.length - 1][0];
+      if (lastBarTime >= endTimeMs || batch.length < 1000) break;
+      currentStartMs = lastBarTime + 1;
     }
 
-    const batch = await res.json();
-    if (!Array.isArray(batch) || batch.length === 0) break;
-
-    allRows.push(...batch);
-
-    const lastBarTime = batch[batch.length - 1][0];
-    if (lastBarTime >= endTimeMs || batch.length < 1000) break;
-
-    currentStartMs = lastBarTime + 1;
+    return allRows.map((row: any) => ({
+      time: new Date(row[0]),
+      open: parseFloat(row[1]),
+      high: parseFloat(row[2]),
+      low: parseFloat(row[3]),
+      close: parseFloat(row[4]),
+      volume: parseFloat(row[5]),
+    }));
   }
 
-  return allRows.map((row: any) => ({
-    time: new Date(row[0]),
-    open: parseFloat(row[1]),
-    high: parseFloat(row[2]),
-    low: parseFloat(row[3]),
-    close: parseFloat(row[4]),
-    volume: parseFloat(row[5]),
-  }));
+  // 1. Try Binance Spot
+  const spotCandles = await fetchFromHost("https://api.binance.com/api/v3/klines");
+  if (spotCandles.length >= 30) {
+    return spotCandles;
+  }
+
+  // 2. If newly listed on spot (like HYPE) or only traded as perpetuals, use Binance Futures
+  const futuresCandles = await fetchFromHost("https://fapi.binance.com/fapi/v1/klines");
+  if (futuresCandles.length > spotCandles.length) {
+    return futuresCandles;
+  }
+
+  return spotCandles;
 }
 
 async function fetchYahooCandles(
