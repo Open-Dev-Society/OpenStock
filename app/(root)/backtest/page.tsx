@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { QUANT_SYMBOL_UNIVERSE } from '@/lib/market/symbols';
 
 interface Trade {
   id: string;
@@ -253,6 +254,36 @@ export default function BacktestDashboardPage() {
           Strategy Parameters &amp; Asset Configuration
         </h2>
 
+        {/* Quick Ticker Chips */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 pb-1 border-b border-gray-800/80">
+          <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mr-1">Quick Select:</span>
+          {[
+            { label: 'BTC', sym: 'BINANCE:BTCUSDT' },
+            { label: 'ETH', sym: 'BINANCE:ETHUSDT' },
+            { label: 'SOL', sym: 'BINANCE:SOLUSDT' },
+            { label: 'NVDA', sym: 'NVDA' },
+            { label: 'AAPL', sym: 'AAPL' },
+            { label: 'MSFT', sym: 'MSFT' },
+            { label: 'SPY', sym: 'SPY' },
+            { label: 'QQQ', sym: 'QQQ' },
+            { label: 'MSTR', sym: 'MSTR' },
+            { label: 'COIN', sym: 'COIN' },
+          ].map((chip) => (
+            <button
+              key={chip.sym}
+              type="button"
+              onClick={() => setSymbol(chip.sym)}
+              className={`text-xs px-2.5 py-1 rounded-md font-mono transition-all ${
+                symbol === chip.sym
+                  ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40 font-bold'
+                  : 'bg-gray-950 text-gray-400 hover:text-gray-200 hover:bg-gray-800 border border-gray-800'
+              }`}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Strategy Selector */}
           <div>
@@ -276,9 +307,45 @@ export default function BacktestDashboardPage() {
 
           {/* Symbol */}
           <div>
-            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-              Ticker Symbol
-            </label>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Ticker Symbol
+              </label>
+              <select
+                onChange={(e) => {
+                  if (e.target.value) setSymbol(e.target.value);
+                }}
+                className="bg-transparent text-[11px] text-teal-400 hover:text-teal-300 outline-none cursor-pointer"
+                defaultValue=""
+              >
+                <option value="" disabled className="bg-gray-900 text-gray-400">All Tickers ▾</option>
+                <optgroup label="Crypto Majors (Binance)" className="bg-gray-900 text-gray-200">
+                  {QUANT_SYMBOL_UNIVERSE.filter(s => s.category === 'crypto').map(s => (
+                    <option key={s.symbol} value={s.symbol}>{s.name} ({s.symbol.replace('BINANCE:', '')})</option>
+                  ))}
+                </optgroup>
+                <optgroup label="Tech Mega-Caps" className="bg-gray-900 text-gray-200">
+                  {QUANT_SYMBOL_UNIVERSE.filter(s => s.category === 'tech').map(s => (
+                    <option key={s.symbol} value={s.symbol}>{s.name} ({s.symbol})</option>
+                  ))}
+                </optgroup>
+                <optgroup label="ETFs & Indices" className="bg-gray-900 text-gray-200">
+                  {QUANT_SYMBOL_UNIVERSE.filter(s => s.category === 'etf').map(s => (
+                    <option key={s.symbol} value={s.symbol}>{s.name} ({s.symbol})</option>
+                  ))}
+                </optgroup>
+                <optgroup label="High-Beta & Crypto Proxies" className="bg-gray-900 text-gray-200">
+                  {QUANT_SYMBOL_UNIVERSE.filter(s => s.category === 'growth').map(s => (
+                    <option key={s.symbol} value={s.symbol}>{s.name} ({s.symbol})</option>
+                  ))}
+                </optgroup>
+                <optgroup label="Blue-Chip & Defensive" className="bg-gray-900 text-gray-200">
+                  {QUANT_SYMBOL_UNIVERSE.filter(s => s.category === 'bluechip').map(s => (
+                    <option key={s.symbol} value={s.symbol}>{s.name} ({s.symbol})</option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
             <Input
               value={symbol}
               onChange={(e) => setSymbol(e.target.value)}

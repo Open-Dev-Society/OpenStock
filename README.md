@@ -423,7 +423,13 @@ Automated 4-hour (4h) time-frame quantitative backtester and nightly parameter e
   - Computes dynamically annualized Sharpe, cumulative returns, max drawdown, win rates, and per-symbol breakdowns.
 - **MongoDB Persistence** (`database/models/backtestResult.model.ts`, `database/models/best4hStrategy.model.ts`): Indexed collections for backtest history and top-performing leaderboards.
 - **Inngest Pipelines** (`lib/inngest/functions.ts`): Event-driven runner (`strategy/backtest.requested`) and daily 02:00 UTC grid sweep (`nightly-4h-research`).
-- **REST Endpoints** (`app/api/strategy/*`): Routes to dispatch backtests, fetch job progress, inspect trade ledgers, and query AI audits.
+- **Quant Symbol Universe (80+ Assets)** (`lib/market/symbols.ts`): Built-in crypto majors (Binance), tech mega-caps, sector ETFs, and high-beta proxies. See [docs/QUANT_WIKI.md](./docs/QUANT_WIKI.md) for the complete asset ledger.
+- **REST Endpoints** (`app/api/strategy/*`):
+  - `GET /api/strategy/symbols`: List all 80+ supported symbols grouped by category.
+  - `POST /api/strategy/backtest`: Dispatch or synchronously run backtests (`runDirect: true`).
+  - `GET /api/strategy/backtest/:id`: Inspect closed trade ledgers, entry/exit prices, and running balances.
+  - `GET /api/strategy/best-4h`: Query highest-Sharpe leaderboard snapshot.
+  - `POST /api/strategy/analyze`: One-click AI audit via local 9Router (`gemini`).
 
 ### Nightly Cron Schedule
 The `nightly-4h-research` Inngest function triggers every day at 02:00 UTC (`0 2 * * *`). It sweeps parameter grids across all 7 strategy types:
