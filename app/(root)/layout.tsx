@@ -7,15 +7,22 @@ import DonatePopup from "@/components/DonatePopup";
 import SirayBanner from "@/components/SirayBanner";
 
 const Layout = async ({ children }: { children: React.ReactNode }) => {
-    const session = await auth.api.getSession({ headers: await headers() });
+    let user = {
+        id: "guest",
+        name: "Guest",
+        email: "guest@openstock.dev",
+    };
 
-    if (!session?.user) redirect('/sign-in');
-
-    const user = {
-        id: session.user.id,
-        name: session.user.name,
-        email: session.user.email,
-    }
+    try {
+        const session = await auth.api.getSession({ headers: await headers() });
+        if (session?.user) {
+            user = {
+                id: session.user.id,
+                name: session.user.name,
+                email: session.user.email,
+            };
+        }
+    } catch (_) {}
 
     return (
         <main className="min-h-screen text-gray-400">

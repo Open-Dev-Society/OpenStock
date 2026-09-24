@@ -12,15 +12,15 @@ import SearchCommand from '@/components/SearchCommand';
 import { Loader2 } from 'lucide-react';
 
 export default async function WatchlistPage() {
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
-
-    if (!session) {
-        redirect('/sign-in');
-    }
-
-    const userId = session.user.id;
+    let userId = "guest";
+    try {
+        const session = await auth.api.getSession({
+            headers: await headers()
+        });
+        if (session?.user) {
+            userId = session.user.id;
+        }
+    } catch (_) {}
 
     // Parallel data fetching
     const [watchlistItems, alerts, news] = await Promise.all([
