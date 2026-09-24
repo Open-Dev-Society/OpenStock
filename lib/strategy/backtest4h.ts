@@ -1,4 +1,5 @@
 import { getOhlcv4h, Candle4h } from "@/lib/market/ohlcv4h";
+import { IBacktestTrade } from "@/database/models/backtestResult.model";
 
 export interface StrategyConfig {
   type: "ema_crossover" | "rsi_oversold" | "breakout" | "liquidity_sweep";
@@ -23,10 +24,16 @@ export interface SymbolBacktestResult {
   metrics: StrategyMetrics;
 }
 
+export interface StrategyEvaluationResult {
+  metrics: StrategyMetrics;
+  trades: IBacktestTrade[];
+}
+
 export interface BacktestResult {
   config: StrategyConfig;
   metrics: StrategyMetrics;
   perSymbolMetrics: SymbolBacktestResult[];
+  trades: IBacktestTrade[];
 }
 
 function calculateEma(values: number[], period: number): number[] {
@@ -77,29 +84,44 @@ function calculateRsi(closes: number[], period: number): number[] {
 function computeMetricsFromSignals(
   candles: Candle4h[],
   signals: number[],
-  warmupBars: number
-): StrategyMetrics {
+  warmupBars: number,
+  symbol: string = "UNKNOWN",
+  initialBalance: number = 10000
+): StrategyEvaluationResult {
   const barsCount = candles.length;
   if (barsCount < warmupBars + 1) {
     return {
-      totalReturn: 0,
-      annualizedReturn: 0,
-      sharpe: 0,
-      maxDrawdown: 0,
-      winRate: 0,
-      tradesCount: 0,
-      barsCount,
+      metrics: {
+        totalReturn: 0,
+        annualizedReturn: 0,
+        sharpe: 0,
+        maxDrawdown: 0,
+        winRate: 0,
+        tradesCount: 0,
+        barsCount,
+      },
+      trades: [],
     };
   }
 
   const closes = candles.map((c) => c.close);
   const returns: number[] = [];
+  const trades: IBacktestTrade[] = [];
   let tradesCount = 0;
   let winningTrades = 0;
   let totalPositionBars = 0;
 
+  let currentBalance = initialBalance;
+  let inTrade = false;
+  let tradeType: "long" | "short" = "long";
+  let entryPrice = 0;
+  let entryTime = new Date();
+  let entryBarIdx = 0;
+  let tradeIndex = 1;
+
   for (let i = warmupBars + 1; i < barsCount; i++) {
     const prevSignal = signals[i - 1];
+    const currSignal = signals[i];
     const prevClose = closes[i - 1];
     const currClose = closes[i];
     const barReturn = prevClose !== 0 ? (currClose - prevClose) / prevClose : 0;
@@ -114,17 +136,56 @@ function computeMetricsFromSignals(
     if (signals[i] !== signals[i - 1]) {
       tradesCount++;
     }
+
+    // Trade closing logic
+    if (inTrade && (currSignal !== prevSignal || i === barsCount - 1)) {
+      const exitPrice = currClose;
+      const returnPct =
+        tradeType === "long"
+          ? (exitPrice - entryPrice) / entryPrice
+          : (entryPrice - exitPrice) / entryPrice;
+      const tradePnl = currentBalance * returnPct;
+      currentBalance += tradePnl;
+
+      trades.push({
+        id: `${symbol}-${tradeIndex++}`,
+        symbol,
+        type: tradeType,
+        entryTime,
+        entryPrice: Math.round(entryPrice * 100) / 100,
+        exitTime: candles[i].time,
+        exitPrice: Math.round(exitPrice * 100) / 100,
+        pnl: Math.round(tradePnl * 100) / 100,
+        returnPct: Math.round(returnPct * 10000) / 10000,
+        balance: Math.round(currentBalance * 100) / 100,
+        durationBars: Math.max(1, i - entryBarIdx),
+      });
+
+      inTrade = false;
+    }
+
+    // Trade opening logic
+    if (!inTrade && currSignal !== 0) {
+      inTrade = true;
+      tradeType = currSignal === 1 ? "long" : "short";
+      entryPrice = currClose;
+      entryTime = candles[i].time;
+      entryBarIdx = i;
+    }
   }
 
   if (returns.length === 0) {
     return {
-      totalReturn: 0,
-      annualizedReturn: 0,
-      sharpe: 0,
-      maxDrawdown: 0,
-      winRate: 0,
-      tradesCount,
-      barsCount,
+      metrics: {
+        totalReturn: 0,
+        annualizedReturn: 0,
+        sharpe: 0,
+        maxDrawdown: 0,
+        winRate: 0,
+        tradesCount,
+        barsCount,
+      },
+      trades,
     };
   }
 
@@ -160,24 +221,28 @@ function computeMetricsFromSignals(
     totalPositionBars > 0 ? winningTrades / totalPositionBars : 0;
 
   return {
-    totalReturn,
-    annualizedReturn,
-    sharpe,
-    maxDrawdown,
-    winRate,
-    tradesCount,
-    barsCount,
+    metrics: {
+      totalReturn,
+      annualizedReturn,
+      sharpe,
+      maxDrawdown,
+      winRate,
+      tradesCount,
+      barsCount,
+    },
+    trades,
   };
 }
 
 export function evaluateEmaCrossover(
   candles: Candle4h[],
   fastPeriod: number,
-  slowPeriod: number
-): StrategyMetrics {
+  slowPeriod: number,
+  symbol: string = "UNKNOWN"
+): StrategyEvaluationResult {
   const barsCount = candles.length;
   if (barsCount < slowPeriod + 1) {
-    return computeMetricsFromSignals(candles, [], slowPeriod);
+    return computeMetricsFromSignals(candles, [], slowPeriod, symbol);
   }
 
   const closes = candles.map((c) => c.close);
@@ -195,18 +260,19 @@ export function evaluateEmaCrossover(
     }
   }
 
-  return computeMetricsFromSignals(candles, signals, slowPeriod);
+  return computeMetricsFromSignals(candles, signals, slowPeriod, symbol);
 }
 
 export function evaluateRsiOversold(
   candles: Candle4h[],
   period: number,
   oversold: number,
-  overbought: number
-): StrategyMetrics {
+  overbought: number,
+  symbol: string = "UNKNOWN"
+): StrategyEvaluationResult {
   const barsCount = candles.length;
   if (barsCount < period + 1) {
-    return computeMetricsFromSignals(candles, [], period);
+    return computeMetricsFromSignals(candles, [], period, symbol);
   }
 
   const closes = candles.map((c) => c.close);
@@ -226,16 +292,17 @@ export function evaluateRsiOversold(
     signals[i] = currentPosition;
   }
 
-  return computeMetricsFromSignals(candles, signals, period);
+  return computeMetricsFromSignals(candles, signals, period, symbol);
 }
 
 export function evaluateBreakout(
   candles: Candle4h[],
-  lookback: number
-): StrategyMetrics {
+  lookback: number,
+  symbol: string = "UNKNOWN"
+): StrategyEvaluationResult {
   const barsCount = candles.length;
   if (barsCount < lookback + 1) {
-    return computeMetricsFromSignals(candles, [], lookback);
+    return computeMetricsFromSignals(candles, [], lookback, symbol);
   }
 
   const signals: number[] = new Array(barsCount).fill(0);
@@ -260,17 +327,18 @@ export function evaluateBreakout(
     signals[i] = currentPosition;
   }
 
-  return computeMetricsFromSignals(candles, signals, lookback);
+  return computeMetricsFromSignals(candles, signals, lookback, symbol);
 }
 
 export function evaluateLiquiditySweep(
   candles: Candle4h[],
   lookback: number = 20,
-  volMultiplier: number = 1.2
-): StrategyMetrics {
+  volMultiplier: number = 1.2,
+  symbol: string = "UNKNOWN"
+): StrategyEvaluationResult {
   const barsCount = candles.length;
   if (barsCount < lookback + 1) {
-    return computeMetricsFromSignals(candles, [], lookback);
+    return computeMetricsFromSignals(candles, [], lookback, symbol);
   }
 
   const signals: number[] = new Array(barsCount).fill(0);
@@ -328,7 +396,7 @@ export function evaluateLiquiditySweep(
     signals[i] = currentPosition;
   }
 
-  return computeMetricsFromSignals(candles, signals, lookback);
+  return computeMetricsFromSignals(candles, signals, lookback, symbol);
 }
 
 export async function runBacktest(
@@ -338,6 +406,7 @@ export async function runBacktest(
   const toSec = Math.floor(new Date(config.to).getTime() / 1000);
 
   const perSymbolMetrics: SymbolBacktestResult[] = [];
+  const allTrades: IBacktestTrade[] = [];
 
   for (const sym of config.symbols) {
     const candles = await getOhlcv4h(sym, fromSec, toSec);
@@ -364,38 +433,41 @@ export async function runBacktest(
       );
     }
 
-    let metrics: StrategyMetrics;
+    let evalResult: StrategyEvaluationResult;
 
     switch (config.type) {
       case "rsi_oversold": {
         const period = config.params.period || config.params.rsiPeriod || 14;
         const oversold = config.params.oversold || config.params.oversoldThreshold || 30;
         const overbought = config.params.overbought || config.params.overboughtThreshold || 70;
-        metrics = evaluateRsiOversold(candles, period, oversold, overbought);
+        evalResult = evaluateRsiOversold(candles, period, oversold, overbought, sym);
         break;
       }
       case "breakout": {
         const lookback = config.params.lookback || config.params.period || 20;
-        metrics = evaluateBreakout(candles, lookback);
+        evalResult = evaluateBreakout(candles, lookback, sym);
         break;
       }
       case "liquidity_sweep": {
         const lookback = config.params.lookback || 20;
         const volMultiplier = config.params.volMultiplier || 1.2;
-        metrics = evaluateLiquiditySweep(candles, lookback, volMultiplier);
+        evalResult = evaluateLiquiditySweep(candles, lookback, volMultiplier, sym);
         break;
       }
       case "ema_crossover":
       default: {
         const fastPeriod = config.params.fastPeriod || config.params.fast || 12;
         const slowPeriod = config.params.slowPeriod || config.params.slow || 26;
-        metrics = evaluateEmaCrossover(candles, fastPeriod, slowPeriod);
+        evalResult = evaluateEmaCrossover(candles, fastPeriod, slowPeriod, sym);
         break;
       }
     }
 
-    perSymbolMetrics.push({ symbol: sym, metrics });
+    perSymbolMetrics.push({ symbol: sym, metrics: evalResult.metrics });
+    allTrades.push(...evalResult.trades);
   }
+
+  allTrades.sort((a, b) => new Date(a.entryTime).getTime() - new Date(b.entryTime).getTime());
 
   const count = perSymbolMetrics.length;
   const aggregateMetrics: StrategyMetrics =
@@ -437,5 +509,6 @@ export async function runBacktest(
     config,
     metrics: aggregateMetrics,
     perSymbolMetrics,
+    trades: allTrades,
   };
 }

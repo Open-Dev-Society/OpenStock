@@ -10,6 +10,20 @@ export interface IBacktestMetrics {
   barsCount: number;
 }
 
+export interface IBacktestTrade {
+  id: string;
+  symbol: string;
+  type: "long" | "short";
+  entryTime: Date;
+  entryPrice: number;
+  exitTime: Date;
+  exitPrice: number;
+  pnl: number;
+  returnPct: number;
+  balance: number;
+  durationBars: number;
+}
+
 export interface IBacktestResult extends Document {
   createdAt: Date;
   timeframe: string;
@@ -23,9 +37,27 @@ export interface IBacktestResult extends Document {
     symbol: string;
     metrics: IBacktestMetrics;
   }>;
+  trades?: IBacktestTrade[];
   status: "running" | "completed" | "failed";
   error?: string;
 }
+
+const TradeSchema = new Schema<IBacktestTrade>(
+  {
+    id: { type: String, required: true },
+    symbol: { type: String, required: true },
+    type: { type: String, enum: ["long", "short"], required: true },
+    entryTime: { type: Date, required: true },
+    entryPrice: { type: Number, required: true },
+    exitTime: { type: Date, required: true },
+    exitPrice: { type: Number, required: true },
+    pnl: { type: Number, required: true },
+    returnPct: { type: Number, required: true },
+    balance: { type: Number, required: true },
+    durationBars: { type: Number, required: true },
+  },
+  { _id: false }
+);
 
 const MetricsSchema = new Schema<IBacktestMetrics>(
   {
@@ -56,6 +88,7 @@ const BacktestResultSchema = new Schema<IBacktestResult>(
         metrics: { type: MetricsSchema, required: true },
       },
     ],
+    trades: [TradeSchema],
     status: {
       type: String,
       enum: ["running", "completed", "failed"],

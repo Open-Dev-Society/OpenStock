@@ -519,6 +519,7 @@ export const run4hBacktestFunction = inngest.createFunction(
                 await BacktestResult.findByIdAndUpdate(docId, {
                     metrics: result.metrics,
                     perSymbolMetrics: result.perSymbolMetrics,
+                    trades: result.trades,
                     status: "completed",
                 });
             });

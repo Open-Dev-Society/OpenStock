@@ -2,7 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { inngest } from "@/lib/inngest/client";
 import { connectToDatabase } from "@/database/mongoose";
 import BacktestResult from "@/database/models/backtestResult.model";
-import { StrategyConfig } from "@/lib/strategy/backtest4h";
+import { StrategyConfig, runBacktest } from "@/lib/strategy/backtest4h";
+
+export async function GET(_req: NextRequest) {
+  try {
+    await connectToDatabase();
+    const list = await BacktestResult.find()
+      .sort({ createdAt: -1 })
+      .limit(30)
+      .lean();
+
+    return NextResponse.json({ ok: true, data: list }, { status: 200 });
+  } catch (error: any) {
+    console.error("GET /api/strategy/backtest error:", error);
+    return NextResponse.json(
+      { ok: false, error: error?.message || "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST(req: NextRequest) {
   let docId: string | null = null;
@@ -80,6 +98,34 @@ export async function POST(req: NextRequest) {
     });
 
     docId = (doc._id as any).toString();
+
+    // If runDirect is specified, execute synchronously for immediate UI feedback
+    if (body.runDirect === true) {
+      try {
+        const result = await runBacktest(config);
+        const updatedDoc = await BacktestResult.findByIdAndUpdate(
+          docId,
+          {
+            metrics: result.metrics,
+            perSymbolMetrics: result.perSymbolMetrics,
+            trades: result.trades,
+            status: "completed",
+          },
+          { new: true }
+        ).lean();
+
+        return NextResponse.json(
+          { ok: true, backtestId: docId, data: updatedDoc },
+          { status: 200 }
+        );
+      } catch (runErr: any) {
+        await BacktestResult.findByIdAndUpdate(docId, {
+          status: "failed",
+          error: runErr?.message || "Execution error",
+        });
+        throw runErr;
+      }
+    }
 
     try {
       await inngest.send({
