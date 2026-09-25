@@ -18,6 +18,7 @@ import {
   evaluateMacdCross,
   evaluateOvernight,
   evaluateSmaGolden,
+  evaluateTensorTradeRl,
 } from "@/lib/strategy/backtest4h";
 import { Candle4h } from "@/lib/market/ohlcv4h";
 
@@ -168,6 +169,13 @@ describe("AlphaStudio Quantitative Strategy & Indicator Integration", () => {
     it("evaluates sma_golden", () => {
       const res = evaluateSmaGolden(candles, 10, 30, "TEST");
       expect(res.metrics).toBeDefined();
+    });
+
+    it("evaluates tensortrade_rl adaptive Q-policy", () => {
+      const res = evaluateTensorTradeRl(candles, 20, 2.0, "BINANCE:BTCUSDT");
+      expect(res.metrics).toBeDefined();
+      expect(Number.isFinite(res.metrics.sortino)).toBe(true);
+      expect(Number.isFinite(res.metrics.calmar)).toBe(true);
     });
   });
 

@@ -11,7 +11,7 @@ import {
   StrategyExportBundle,
 } from "@/lib/strategy/codeExport";
 
-const VALID_PLATFORMS: ExportPlatform[] = ["pine", "vectorbt", "nautilus", "qlib", "all"];
+const VALID_PLATFORMS: ExportPlatform[] = ["pine", "vectorbt", "nautilus", "qlib", "tensortrade", "all"];
 
 /**
  * Helper to determine if an exported result is a single platform item.

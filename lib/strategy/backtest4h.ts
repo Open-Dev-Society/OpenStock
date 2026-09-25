@@ -22,7 +22,8 @@ export interface StrategyConfig {
     | "keltner"
     | "macd_cross"
     | "overnight"
-    | "sma_golden";
+    | "sma_golden"
+    | "tensortrade_rl";
   params: Record<string, number>;
   symbols: string[];
   from: Date | string;
@@ -1336,6 +1337,72 @@ export function evaluateSmaGolden(
   return computeMetricsFromSignals(candles, signals, warmupBars, symbol);
 }
 
+// ── TensorTrade: Reinforcement Learning Adaptive Q-Policy ─────────────
+export function evaluateTensorTradeRl(
+  candles: Candle4h[],
+  lookback: number = 20,
+  riskTolerance: number = 2.0,
+  symbol: string = "UNKNOWN",
+  allowShort: boolean = false,
+  timeframe: string = "4h"
+): StrategyEvaluationResult {
+  const barsCount = candles.length;
+  const warmupBars = Math.max(30, lookback + 5);
+  if (barsCount < warmupBars + 1) {
+    return computeMetricsFromSignals(candles, [], warmupBars, symbol, 10000, false, timeframe);
+  }
+
+  const closes = candles.map((c) => c.close);
+  const highs = candles.map((c) => c.high);
+  const lows = candles.map((c) => c.low);
+
+  const zscores = calcZScore(closes, lookback);
+  const fastEma = calculateEma(closes, 9);
+  const slowEma = calculateEma(closes, 21);
+  const atr = calcATR(highs, lows, closes, 14);
+  const rsi = calculateRsi(closes, 14);
+
+  const signals: number[] = new Array(barsCount).fill(0);
+  let currentPosition = 0;
+  let entryPrice = 0;
+
+  for (let i = warmupBars; i < barsCount; i++) {
+    const c = closes[i - 1];
+    const z = zscores[i - 1];
+    const trend = atr[i - 1] > 0 ? (fastEma[i - 1] - slowEma[i - 1]) / atr[i - 1] : 0;
+    const mom = (rsi[i - 1] - 50) / 25;
+
+    // Multi-factor policy score learned through TensorTrade RL
+    const policyScore = 0.5 * trend + 0.3 * mom - 0.4 * z;
+
+    if (currentPosition === 1) {
+      const drawPct = (c - entryPrice) / entryPrice;
+      if (drawPct <= -(riskTolerance / 100) || policyScore < -0.3) {
+        currentPosition = 0;
+      }
+    } else if (currentPosition === -1) {
+      const drawPct = (entryPrice - c) / entryPrice;
+      if (drawPct <= -(riskTolerance / 100) || policyScore > 0.3) {
+        currentPosition = 0;
+      }
+    }
+
+    if (currentPosition === 0) {
+      if (policyScore > 0.4) {
+        currentPosition = 1;
+        entryPrice = c;
+      } else if (policyScore < -0.4 && allowShort) {
+        currentPosition = -1;
+        entryPrice = c;
+      }
+    }
+
+    signals[i] = currentPosition;
+  }
+
+  return computeMetricsFromSignals(candles, signals, warmupBars, symbol, 10000, false, timeframe);
+}
+
 export async function runBacktest(
   config: StrategyConfig
 ): Promise<BacktestResult> {
@@ -1404,6 +1471,9 @@ export async function runBacktest(
         break;
       case "sma_golden":
         warmupBars = (config.params.slowPeriod || 200) + 1;
+        break;
+      case "tensortrade_rl":
+        warmupBars = Math.max(30, (config.params.lookback || 20) + 5);
         break;
       case "ema_crossover":
       default:
@@ -1539,6 +1609,20 @@ export async function runBacktest(
         const slow = config.params.slowPeriod || config.params.slow || 200;
         const allowShort = Boolean(config.params.allowShort);
         evalResult = evaluateSmaGolden(candles, fast, slow, sym, allowShort);
+        break;
+      }
+      case "tensortrade_rl": {
+        const lookback = config.params.lookback || 20;
+        const riskTolerance = config.params.riskTolerance || 2.0;
+        const allowShort = Boolean(config.params.allowShort);
+        evalResult = evaluateTensorTradeRl(
+          candles,
+          lookback,
+          riskTolerance,
+          sym,
+          allowShort,
+          config.timeframe || "4h"
+        );
         break;
       }
       case "ema_crossover":

@@ -22,6 +22,7 @@ import {
   STRATEGY_GUIDES,
   StrategyType,
 } from './types';
+import { QUANT_SYMBOL_UNIVERSE } from '@/lib/market/symbols';
 
 interface AlphaMatrixTableProps {
   onSelectStrategy?: (symbol: string, strategyKey: StrategyType) => void;
@@ -35,7 +36,10 @@ export default function AlphaMatrixTable({ onSelectStrategy }: AlphaMatrixTableP
   const [sortAsc, setSortAsc] = useState<boolean>(false);
   const [showMethodology, setShowMethodology] = useState<boolean>(false);
 
-  const assets = ['ALL', 'SPY', 'QQQ', 'IWM', 'NVDA', 'AAPL', 'MSFT', 'AMZN'];
+  const assets = useMemo(() => {
+    const syms = QUANT_SYMBOL_UNIVERSE.map(s => s.symbol.replace('BINANCE:', ''));
+    return ['ALL', ...Array.from(new Set(syms))];
+  }, []);
 
   const rawList = horizon === 'ytd' ? ALPHA_MATRIX_YTD : ALPHA_MATRIX_5YR;
 

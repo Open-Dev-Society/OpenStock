@@ -18,7 +18,8 @@ export type StrategyType =
   | 'adx_trend'
   | 'stoch_rsi'
   | 'zscore_rev'
-  | 'keltner';
+  | 'keltner'
+  | 'tensortrade_rl';
 
 export interface MatrixItem {
   symbol: string;
@@ -68,6 +69,7 @@ export const STRATEGY_OPTIONS: { value: StrategyType; label: string; group: stri
   { value: 'breakout', label: 'Donchian Channel Breakout (Momentum)', group: 'Momentum & Breakout' },
   { value: 'overnight_hold', label: 'Overnight Gap Drift (Close-to-Open Holding)', group: 'Session & Drift' },
   { value: 'buy_and_hold', label: 'Passive Buy & Hold (Benchmark)', group: 'Benchmark' },
+  { value: 'tensortrade_rl', label: 'TensorTrade Deep RL Adaptive Q-Policy (Strategy Discovery)', group: 'Reinforcement Learning' },
 ];
 
 export const STRATEGY_GUIDES: StrategyGuide[] = [
@@ -126,6 +128,13 @@ export const STRATEGY_GUIDES: StrategyGuide[] = [
     description: 'Passive continuous long exposure across the full sample window. Serves as baseline for alpha and drawdown comparison.',
     rule: '100% Invested continuous exposure',
     category: 'Benchmark',
+  },
+  {
+    id: 'tensortrade_rl',
+    name: 'TensorTrade Deep RL Q-Policy',
+    description: 'Multi-factor adaptive policy combining trend (EMA spread), momentum (RSI), and mean-reversion (Z-Score) signals with risk-adjusted Sortino reward optimization.',
+    rule: 'Long: PolicyScore > 0.4 | Exit: PolicyScore < -0.3 | StopLoss: -RiskTol%',
+    category: 'Momentum',
   },
 ];
 

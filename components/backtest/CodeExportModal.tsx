@@ -10,6 +10,7 @@ import {
   FileCode,
   X,
   ExternalLink,
+  Cpu,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StrategyType } from './types';
@@ -24,7 +25,7 @@ interface CodeExportModalProps {
   params: Record<string, number>;
 }
 
-type TabType = 'pine' | 'vectorbt' | 'nautilus' | 'qlib';
+type TabType = 'pine' | 'vectorbt' | 'nautilus' | 'qlib' | 'tensortrade';
 
 export default function CodeExportModal({
   open,
@@ -162,6 +163,18 @@ export default function CodeExportModal({
             >
               <Code className="h-3.5 w-3.5" />
               Microsoft Qlib
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('tensortrade')}
+              className={`px-4 py-2 text-xs font-bold font-mono rounded-t-lg transition-all border-b-2 flex items-center gap-2 ${
+                activeTab === 'tensortrade'
+                  ? 'border-teal-400 text-teal-300 bg-gray-900'
+                  : 'border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800/40'
+              }`}
+            >
+              <Cpu className="h-3.5 w-3.5" />
+              TensorTrade (RL)
             </button>
           </div>
 

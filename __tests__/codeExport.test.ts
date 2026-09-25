@@ -8,6 +8,7 @@ import {
   generateVectorbtScript,
   generateNautilusStrategy,
   generateQlibFactor,
+  generateTensorTradeScript,
   SupportedStrategyType,
   STRATEGY_DEFINITIONS,
   StrategyExportBundle,
@@ -16,7 +17,7 @@ import {
 import { GET, POST } from "@/app/api/strategy/export/route";
 import { NextRequest } from "next/server";
 
-const ALL_16_STRATEGIES: SupportedStrategyType[] = [
+const ALL_17_STRATEGIES: SupportedStrategyType[] = [
   "supertrend",
   "fair_value_gap",
   "order_block",
@@ -33,14 +34,15 @@ const ALL_16_STRATEGIES: SupportedStrategyType[] = [
   "macd_cross",
   "overnight",
   "sma_golden",
+  "tensortrade_rl",
 ];
 
 describe("codeExport - Registry & Normalization", () => {
-  it("registers exactly 16 strategy types", () => {
+  it("registers exactly 17 strategy types", () => {
     const list = getSupportedStrategies();
-    expect(list.length).toBe(16);
+    expect(list.length).toBe(17);
     const types = list.map((s) => s.type);
-    for (const strat of ALL_16_STRATEGIES) {
+    for (const strat of ALL_17_STRATEGIES) {
       expect(types).toContain(strat);
     }
   });
@@ -48,6 +50,8 @@ describe("codeExport - Registry & Normalization", () => {
   it("normalizes canonical strategy names and aliases", () => {
     expect(normalizeStrategyType("supertrend")).toBe("supertrend");
     expect(normalizeStrategyType("super_trend")).toBe("supertrend");
+    expect(normalizeStrategyType("tensortrade")).toBe("tensortrade_rl");
+    expect(normalizeStrategyType("deep_rl")).toBe("tensortrade_rl");
     expect(normalizeStrategyType("ema_cross")).toBe("ema_crossover");
     expect(normalizeStrategyType("ema-crossover")).toBe("ema_crossover");
     expect(normalizeStrategyType("rsi_pullback")).toBe("rsi_oversold");
@@ -83,10 +87,10 @@ describe("codeExport - Registry & Normalization", () => {
   });
 });
 
-describe("codeExport - Multi-Platform Code Generation for all 16 strategies", () => {
-  ALL_16_STRATEGIES.forEach((stratType) => {
+describe("codeExport - Multi-Platform Code Generation for all 17 strategies", () => {
+  ALL_17_STRATEGIES.forEach((stratType) => {
     describe(`Strategy: ${stratType}`, () => {
-      it("exports full bundle containing all 4 platforms", () => {
+      it("exports full bundle containing all 5 platforms", () => {
         const bundle = exportStrategyCode({
           type: stratType,
           symbol: "NVDA",
@@ -101,6 +105,7 @@ describe("codeExport - Multi-Platform Code Generation for all 16 strategies", ()
         expect(bundle.exports.vectorbt).toBeDefined();
         expect(bundle.exports.nautilus).toBeDefined();
         expect(bundle.exports.qlib).toBeDefined();
+        expect(bundle.exports.tensortrade).toBeDefined();
       });
 
       it("generates valid TradingView Pine Script v5 with entries, exits, and alert conditions", () => {
@@ -172,6 +177,22 @@ describe("codeExport - Multi-Platform Code Generation for all 16 strategies", ()
         expect(item.filename).toContain("GOOGL");
         expect(item.filename.endsWith("_qlib.txt")).toBe(true);
       });
+
+      it("generates valid TensorTrade RL training and discovery Python script", () => {
+        const item = generateTensorTradeScript({
+          type: stratType,
+          symbol: "BTCUSDT",
+          timeframe: "4h",
+        });
+
+        expect(item.platform).toBe("tensortrade");
+        expect(item.language).toBe("python");
+        expect(item.code).toContain("import tensortrade.env.default as default");
+        expect(item.code).toContain("def create_tensortrade_env");
+        expect(item.code).toContain("def discover_optimal_strategy");
+        expect(item.filename).toContain("BTCUSDT");
+        expect(item.filename.endsWith("_tensortrade.py")).toBe(true);
+      });
     });
   });
 
@@ -203,6 +224,13 @@ describe("codeExport - Multi-Platform Code Generation for all 16 strategies", ()
     ) as ExportResultItem;
     expect(qlibItem.platform).toBe("qlib");
     expect(qlibItem.code).toContain("ATR(10)");
+
+    const tensorItem = exportStrategyCode(
+      { type: "supertrend", symbol: "BTCUSDT" },
+      "tensortrade"
+    ) as ExportResultItem;
+    expect(tensorItem.platform).toBe("tensortrade");
+    expect(tensorItem.code).toContain("import tensortrade.env.default as default");
   });
 
   it("reflects custom parameter values in generated scripts", () => {
@@ -246,7 +274,8 @@ describe("API Route: app/api/strategy/export/route.ts", () => {
     expect(json.data.supportedPlatforms).toContain("vectorbt");
     expect(json.data.supportedPlatforms).toContain("nautilus");
     expect(json.data.supportedPlatforms).toContain("qlib");
-    expect(json.data.supportedStrategies.length).toBe(16);
+    expect(json.data.supportedPlatforms).toContain("tensortrade");
+    expect(json.data.supportedStrategies.length).toBe(17);
   });
 
   it("GET exports code for a strategy type query parameter", async () => {
@@ -291,6 +320,7 @@ describe("API Route: app/api/strategy/export/route.ts", () => {
     expect(json.data.exports.vectorbt.code).toContain("vectorbt");
     expect(json.data.exports.nautilus.code).toContain("OrderBlockStrategy");
     expect(json.data.exports.qlib.code).toContain("Min($low, 25)");
+    expect(json.data.exports.tensortrade.code).toContain("import tensortrade.env.default as default");
   });
 
   it("POST returns 400 when invalid strategy type is passed", async () => {
