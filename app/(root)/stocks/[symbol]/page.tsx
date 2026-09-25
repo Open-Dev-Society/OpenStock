@@ -10,16 +10,17 @@ import {
     COMPANY_FINANCIALS_WIDGET_CONFIG,
 } from "@/lib/constants";
 
-import { auth } from '@/lib/better-auth/auth';
-import { headers } from 'next/headers';
 import { isStockInWatchlist } from '@/lib/actions/watchlist.actions';
 import { getStockSentimentInsights } from '@/lib/actions/adanos.actions';
 import { formatSymbolForTradingView } from '@/lib/utils';
+import { auth } from '@/lib/better-auth/auth';
+import { headers } from 'next/headers';
 
 export default async function StockDetails({ params }: StockDetailsPageProps) {
     const { symbol } = await params;
     const tvSymbol = formatSymbolForTradingView(symbol);
     const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
+    const dividendYield: number | null = 2.45; // TODO: replace with real Finnhub data
 
     const session = await auth.api.getSession({
         headers: await headers()
@@ -68,6 +69,14 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                             userId={userId}
                         />
                     </div>
+<div className="w-fit min-w-[160px] rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] px-5 py-4 flex flex-col gap-1.5 transition-all hover:border-white/20 hover:bg-white/[0.06]">
+    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        Dividend Yield
+    </span>
+    <span className="text-2xl font-semibold text-white leading-tight">
+        {dividendYield !== null ? `${dividendYield.toFixed(2)}%` : "—"}
+    </span>
+</div>
 
                     <StockSentimentCard insight={sentimentInsights} />
 
