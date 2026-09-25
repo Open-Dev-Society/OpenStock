@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import WatchlistStockChip from './WatchlistStockChip';
+import CryptoWatchlistChip from './CryptoWatchlistChip';
 import TradingViewWatchlist from './TradingViewWatchlist';
 import { Button } from '@/components/ui/button';
 import { ArrowDownAZ, ArrowUpZA, ArrowUpDown } from 'lucide-react';
@@ -34,7 +35,9 @@ export default function WatchlistManager({ initialItems, userId }: WatchlistMana
         });
     }, [initialItems, sortOrder]);
 
-    const watchlistSymbols = sortedItems.map((item) => item.symbol);
+    const watchlistSymbols = sortedItems.map((item) =>
+        item.assetClass === 'crypto' ? (item.providerSymbol ?? item.symbol) : item.symbol,
+    );
 
     return (
         <div className="space-y-6">
@@ -75,15 +78,28 @@ export default function WatchlistManager({ initialItems, userId }: WatchlistMana
                 {watchlistSymbols.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                         {sortedItems.map((item) => (
-                            <WatchlistStockChip
-                                key={item.symbol}
-                                symbol={item.symbol}
-                                userId={userId}
-                            />
+                            item.assetClass === 'crypto' ? (
+                                <CryptoWatchlistChip
+                                    key={item.instrumentId ?? item.symbol}
+                                    userId={userId}
+                                    symbol={item.symbol}
+                                    company={item.company}
+                                    instrumentId={item.instrumentId}
+                                    provider={item.provider}
+                                    providerSymbol={item.providerSymbol}
+                                    quoteCurrency={item.quoteCurrency}
+                                />
+                            ) : (
+                                <WatchlistStockChip
+                                    key={item.symbol}
+                                    symbol={item.symbol}
+                                    userId={userId}
+                                />
+                            )
                         ))}
                     </div>
                 ) : (
-                    <p className="text-sm text-gray-500 italic">No stocks in watchlist.</p>
+                    <p className="text-sm text-gray-500 italic">No markets in watchlist.</p>
                 )}
             </div>
 

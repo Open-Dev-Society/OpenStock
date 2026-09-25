@@ -81,8 +81,9 @@ TradingView's free tier embeddable widgets have several restrictions:
 2. **Market-Specific**:
    - India NSE/BSE: Available but with delays
    - Chinese A-shares: Not available in free tier
-   - Forex: Not available
-   - Cryptocurrencies: Not available
+   - Crypto and forex support are exposed through separate Finnhub API areas, not the stock `/quote` contract.
+   - Premium candles and WebSocket infrastructure are intentionally outside the current OpenStock release scope.
+   - Basic exchange/symbol discovery or snapshot availability must be verified before enabling app-owned crypto or forex features.
 
 ## 🔧 Troubleshooting
 
@@ -124,8 +125,8 @@ The OpenStock community is working on:
 - [ ] Fallback chart libraries for unsupported symbols
 - [ ] Market availability checker before displaying widgets
 - [ ] Alternative data sources for emerging markets
-- [ ] Forex support
-- [ ] Cryptocurrency support
+- [ ] Forex support (provider entitlement and symbol coverage under evaluation)
+- [ ] Cryptocurrency support (Finnhub candidate; Luno optional for ZAR venue coverage)
 - [ ] Custom indicators and drawing tools
 - [ ] Paper trading features
 

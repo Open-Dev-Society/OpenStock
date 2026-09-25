@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenStock current market-data architecture</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --paper:#050505; --paper-2:#141414; --ink:#f5f5f5; --muted:#CCDADC; --soft:#9095A1; --rule:rgba(204,218,220,.14); --accent:#0FEDBE; --accent-tint:rgba(15,237,190,.10); --link:#5862FF; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:'Geist',sans-serif; }
+    main { width:min(1240px, calc(100% - 48px)); margin:0 auto; padding:40px 0 48px; }
+    .eyebrow { margin:0 0 8px; color:var(--accent); font:500 12px 'Geist Mono',monospace; letter-spacing:.18em; text-transform:uppercase; }
+    h1 { margin:0; font:400 40px/1.05 'Instrument Serif',serif; letter-spacing:-.02em; }
+    .subtitle { max-width:780px; margin:12px 0 28px; color:var(--muted); font-size:16px; line-height:1.5; }
+    .frame { border:1px solid var(--rule); border-radius:8px; background:var(--paper-2); padding:12px; overflow-x:auto; }
+    svg { display:block; width:100%; min-width:980px; height:auto; }
+    .cards { display:grid; grid-template-columns:1.15fr .85fr; gap:16px; margin-top:20px; }
+    .card { border:1px solid var(--rule); border-radius:6px; padding:20px; background:#0b0b0b; }
+    .card .label { margin:0 0 8px; color:var(--soft); font:500 12px 'Geist Mono',monospace; letter-spacing:.14em; text-transform:uppercase; }
+    .card h2 { margin:0 0 8px; font-size:18px; font-weight:600; }
+    .card p { margin:0; color:var(--muted); line-height:1.5; }
+    footer { margin-top:24px; padding-top:12px; border-top:1px solid var(--rule); color:var(--soft); font:400 12px 'Geist Mono',monospace; }
+  </style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">CURRENT STATE · OPENSTOCK</p>
+  <h1>Two market-data paths, one fixed dashboard</h1>
+  <p class="subtitle">OpenStock already uses TradingView for rich visual market surfaces and Finnhub for app-owned stock actions. The gap is that those paths do not share a canonical instrument, quote-freshness, or alert contract.</p>
+  <div class="frame">
+    <svg viewBox="0 0 1200 700" role="img" aria-labelledby="openstock-current-architecture-title openstock-current-architecture-desc">
+      <title id="openstock-current-architecture-title">OpenStock current market-data architecture</title>
+      <desc id="openstock-current-architecture-desc">Current architecture showing browser UI, Next.js components, TradingView embeds, Finnhub server actions, MongoDB persistence, and the five-minute Inngest alert job.</desc>
+      <defs>
+        <marker id="oca-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#CCDADC"/></marker>
+        <marker id="oca-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#5862FF"/></marker>
+        <marker id="oca-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#0FEDBE"/></marker>
+      </defs>
+
+      <!-- zones -->
+      <rect x="32" y="80" width="216" height="480" rx="8" fill="rgba(204,218,220,.03)" stroke="rgba(204,218,220,.18)"/>
+      <rect x="280" y="80" width="560" height="480" rx="8" fill="rgba(204,218,220,.03)" stroke="rgba(204,218,220,.18)"/>
+      <rect x="884" y="80" width="268" height="480" rx="8" fill="rgba(204,218,220,.03)" stroke="rgba(204,218,220,.18)"/>
+      <rect x="48" y="84" width="104" height="16" rx="2" fill="#050505"/><text x="100" y="96" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".16em">BROWSER</text>
+      <rect x="296" y="84" width="136" height="16" rx="2" fill="#050505"/><text x="364" y="96" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".16em">OPENSTOCK APP</text>
+      <rect x="900" y="84" width="168" height="16" rx="2" fill="#050505"/><text x="984" y="96" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".16em">EXTERNAL PROVIDERS</text>
+
+      <!-- connectors first -->
+      <path d="M212 280 H256 Q264 280 264 272 V184 Q264 176 272 176 H320" fill="none" stroke="#CCDADC" stroke-width="1.2" marker-end="url(#oca-arrow)"/>
+      <path d="M410 216 V304" fill="none" stroke="#CCDADC" stroke-width="1.2" marker-end="url(#oca-arrow)"/>
+      <path d="M500 176 H588" fill="none" stroke="#CCDADC" stroke-width="1.2" marker-end="url(#oca-arrow)"/>
+      <path d="M688 216 V304" fill="none" stroke="#CCDADC" stroke-width="1.2" marker-end="url(#oca-arrow)"/>
+      <path d="M500 344 H832 Q840 344 840 336 V208 Q840 200 848 200 H916" fill="none" stroke="#5862FF" stroke-width="1.2" marker-end="url(#oca-link)"/>
+      <path d="M788 176 H844 Q852 176 852 184 V368 Q852 376 860 376 H916" fill="none" stroke="#5862FF" stroke-width="1.2" marker-end="url(#oca-link)"/>
+      <path d="M688 384 V400 Q688 408 680 408 H562 Q554 408 554 416 V432" fill="none" stroke="#CCDADC" stroke-width="1.2" marker-end="url(#oca-arrow)"/>
+      <path d="M654 472 H820 Q828 472 828 464 V384 Q828 376 836 376 H916" fill="none" stroke="#CCDADC" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#oca-arrow)"/>
+
+      <!-- labels with opaque masks -->
+      <rect x="244" y="224" width="72" height="16" rx="2" fill="#050505"/><text x="280" y="236" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".06em">NAVIGATE</text>
+      <rect x="520" y="160" width="52" height="16" rx="2" fill="#050505"/><text x="546" y="172" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".06em">ACTION</text>
+      <rect x="808" y="248" width="48" height="16" rx="2" fill="#050505"/><text x="832" y="260" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".06em">EMBED</text>
+      <rect x="860" y="284" width="48" height="16" rx="2" fill="#050505"/><text x="884" y="296" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".06em">QUOTE</text>
+      <rect x="604" y="392" width="60" height="16" rx="2" fill="#050505"/><text x="634" y="404" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".06em">ALERTS</text>
+      <rect x="756" y="452" width="56" height="16" rx="2" fill="#050505"/><text x="784" y="464" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".06em">5-MIN</text>
+
+      <!-- nodes -->
+      <g>
+        <rect x="68" y="240" width="144" height="80" rx="6" fill="#141414" stroke="#9095A1"/>
+        <rect x="76" y="248" width="40" height="16" rx="2" fill="transparent" stroke="#9095A1"/><text x="96" y="260" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">INPUT</text>
+        <text x="140" y="282" text-anchor="middle" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist',sans-serif">Browser UI</text>
+        <text x="140" y="300" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">user / route</text>
+      </g>
+      <g>
+        <rect x="320" y="136" width="180" height="80" rx="6" fill="#141414" stroke="#f5f5f5"/>
+        <rect x="328" y="144" width="40" height="16" rx="2" fill="transparent" stroke="#9095A1"/><text x="348" y="156" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">UI</text>
+        <text x="410" y="178" text-anchor="middle" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist',sans-serif">Next.js routes</text>
+        <text x="410" y="196" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">App Router · components</text>
+      </g>
+      <g>
+        <rect x="320" y="304" width="180" height="80" rx="6" fill="rgba(15,237,190,.10)" stroke="#0FEDBE" stroke-width="1.2"/>
+        <rect x="328" y="312" width="48" height="16" rx="2" fill="transparent" stroke="#0FEDBE"/><text x="352" y="324" text-anchor="middle" fill="#0FEDBE" font-size="8" font-family="'Geist Mono',monospace">EMBED</text>
+        <text x="410" y="346" text-anchor="middle" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist',sans-serif">TradingView widgets</text>
+        <text x="410" y="364" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">overview · quotes · charts</text>
+      </g>
+      <g>
+        <rect x="588" y="136" width="200" height="80" rx="6" fill="#141414" stroke="#f5f5f5"/>
+        <rect x="596" y="144" width="48" height="16" rx="2" fill="transparent" stroke="#9095A1"/><text x="620" y="156" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">SERVER</text>
+        <text x="688" y="178" text-anchor="middle" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist',sans-serif">Finnhub actions</text>
+        <text x="688" y="196" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">search · quote · news</text>
+      </g>
+      <g>
+        <rect x="588" y="304" width="200" height="80" rx="6" fill="#141414" stroke="#9095A1"/>
+        <rect x="596" y="312" width="48" height="16" rx="2" fill="transparent" stroke="#9095A1"/><text x="620" y="324" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">STORE</text>
+        <text x="688" y="346" text-anchor="middle" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist',sans-serif">MongoDB</text>
+        <text x="688" y="364" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">watchlist · alerts</text>
+      </g>
+      <g>
+        <rect x="454" y="432" width="200" height="80" rx="6" fill="#141414" stroke="#9095A1"/>
+        <rect x="462" y="440" width="48" height="16" rx="2" fill="transparent" stroke="#9095A1"/><text x="486" y="452" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">JOB</text>
+        <text x="554" y="474" text-anchor="middle" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist',sans-serif">Inngest alert check</text>
+        <text x="554" y="492" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">stock assumptions · 5 min</text>
+      </g>
+      <g>
+        <rect x="916" y="160" width="200" height="80" rx="6" fill="#141414" stroke="#9095A1"/>
+        <rect x="924" y="168" width="52" height="16" rx="2" fill="transparent" stroke="#9095A1"/><text x="950" y="180" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">VENDOR</text>
+        <text x="1016" y="202" text-anchor="middle" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist',sans-serif">TradingView</text>
+        <text x="1016" y="220" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">widget-rendered data</text>
+      </g>
+      <g>
+        <rect x="916" y="336" width="200" height="80" rx="6" fill="#141414" stroke="#9095A1"/>
+        <rect x="924" y="344" width="52" height="16" rx="2" fill="transparent" stroke="#9095A1"/><text x="950" y="356" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">VENDOR</text>
+        <text x="1016" y="378" text-anchor="middle" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist',sans-serif">Finnhub API</text>
+        <text x="1016" y="396" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">stock data · rate limits</text>
+      </g>
+
+      <!-- legend -->
+      <line x1="32" y1="604" x2="1168" y2="604" stroke="rgba(204,218,220,.14)" stroke-width=".8"/>
+      <text x="32" y="628" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".16em">LEGEND</text>
+      <line x1="128" y1="624" x2="168" y2="624" stroke="#CCDADC" stroke-width="1.2" marker-end="url(#oca-arrow)"/><text x="180" y="628" fill="#CCDADC" font-size="8" font-family="'Geist Mono',monospace">INTERNAL</text>
+      <line x1="288" y1="624" x2="328" y2="624" stroke="#5862FF" stroke-width="1.2" marker-end="url(#oca-link)"/><text x="340" y="628" fill="#CCDADC" font-size="8" font-family="'Geist Mono',monospace">EXTERNAL/API</text>
+      <line x1="484" y1="624" x2="524" y2="624" stroke="#CCDADC" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#oca-arrow)"/><text x="536" y="628" fill="#CCDADC" font-size="8" font-family="'Geist Mono',monospace">SCHEDULED</text>
+      <rect x="680" y="616" width="16" height="16" rx="3" fill="rgba(15,237,190,.10)" stroke="#0FEDBE"/><text x="708" y="628" fill="#CCDADC" font-size="8" font-family="'Geist Mono',monospace">CURRENT FOCAL INTEGRATION</text>
+    </svg>
+  </div>
+  <section class="cards" aria-label="Current-state observations">
+    <article class="card"><p class="label">Provider-managed</p><h2>TradingView is already in the product</h2><p>The dashboard and stock detail pages use TradingView embeds for charts, quotes, heatmaps, timelines, technicals, and financial views. That explains the live-looking visuals.</p></article>
+    <article class="card"><p class="label">Application gap</p><h2>Freshness and alerts are separate</h2><p>OpenStock does not receive a normalized quote stream from the embeds. Its scheduled alert path still assumes Finnhub stock symbols and has no shared freshness contract.</p></article>
+  </section>
+  <footer>OpenStock requirements analysis · current state · generated on the Crypto branch</footer>
+</main>
+</body>
+</html>

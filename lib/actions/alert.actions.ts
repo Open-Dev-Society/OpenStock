@@ -10,11 +10,17 @@ export async function createAlert(params: {
     symbol: string;
     targetPrice: number;
     condition: 'ABOVE' | 'BELOW';
+    assetClass?: 'equity' | 'crypto';
+    instrumentId?: string;
+    provider?: string;
+    providerSymbol?: string;
+    currency?: string;
 }) {
     try {
         await connectToDatabase();
         const newAlert = await Alert.create({
             ...params,
+            assetClass: params.assetClass ?? 'equity',
             active: true,
             // expiresAt handled by default value in schema
         });

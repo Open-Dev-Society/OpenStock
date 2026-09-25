@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenStock Markets target architecture</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --paper:#050505; --paper-2:#141414; --ink:#f5f5f5; --muted:#CCDADC; --soft:#9095A1; --rule:rgba(204,218,220,.14); --accent:#0FEDBE; --link:#5862FF; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:'Geist',sans-serif; }
+    main { width:min(1240px, calc(100% - 48px)); margin:0 auto; padding:40px 0 48px; }
+    .eyebrow { margin:0 0 8px; color:var(--accent); font:500 12px 'Geist Mono',monospace; letter-spacing:.18em; text-transform:uppercase; }
+    h1 { margin:0; font:400 40px/1.05 'Instrument Serif',serif; letter-spacing:-.02em; }
+    .subtitle { max-width:820px; margin:12px 0 28px; color:var(--muted); font-size:16px; line-height:1.5; }
+    .frame { border:1px solid var(--rule); border-radius:8px; background:var(--paper-2); padding:12px; overflow-x:auto; }
+    svg { display:block; width:100%; min-width:980px; height:auto; }
+    .cards { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:20px; }
+    .card { border:1px solid var(--rule); border-radius:6px; padding:20px; background:#0b0b0b; }
+    .card .label { margin:0 0 8px; color:var(--soft); font:500 12px 'Geist Mono',monospace; letter-spacing:.14em; text-transform:uppercase; }
+    .card h2 { margin:0 0 8px; font-size:18px; font-weight:600; }
+    .card p { margin:0; color:var(--muted); line-height:1.5; }
+    footer { margin-top:24px; padding-top:12px; border-top:1px solid var(--rule); color:var(--soft); font:400 12px 'Geist Mono',monospace; }
+  </style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">TARGET STATE · CRYPTO + MARKETS</p>
+  <h1>One Markets shell, two honest data roles</h1>
+  <p class="subtitle">The proposed architecture keeps TradingView where it is excellent—visual market presentation—while adding a normalized OpenStock quote path for identity, freshness, watchlists, and alerts across stocks and crypto.</p>
+  <div class="frame">
+    <svg viewBox="0 0 1200 700" role="img" aria-labelledby="openstock-markets-target-architecture-title openstock-markets-target-architecture-desc">
+      <title id="openstock-markets-target-architecture-title">OpenStock Markets target architecture</title>
+      <desc id="openstock-markets-target-architecture-desc">Target architecture showing a URL-preserved Markets shell, TradingView presentation, a normalized quote gateway, instrument registry, equity and crypto adapters, market providers, MongoDB, and Inngest alerts.</desc>
+      <defs>
+        <marker id="omt-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#CCDADC"/></marker>
+        <marker id="omt-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#5862FF"/></marker>
+        <marker id="omt-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#0FEDBE"/></marker>
+      </defs>
+
+      <!-- zones -->
+      <rect x="32" y="80" width="216" height="480" rx="8" fill="rgba(204,218,220,.03)" stroke="rgba(204,218,220,.18)"/>
+      <rect x="280" y="80" width="560" height="480" rx="8" fill="rgba(204,218,220,.03)" stroke="rgba(204,218,220,.18)"/>
+      <rect x="884" y="80" width="268" height="480" rx="8" fill="rgba(204,218,220,.03)" stroke="rgba(204,218,220,.18)"/>
+      <rect x="48" y="84" width="104" height="16" rx="2" fill="#050505"/><text x="100" y="96" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".16em">CLIENT</text>
+      <rect x="296" y="84" width="136" height="16" rx="2" fill="#050505"/><text x="364" y="96" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".16em">OPENSTOCK CORE</text>
+      <rect x="900" y="84" width="168" height="16" rx="2" fill="#050505"/><text x="984" y="96" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".16em">PROVIDERS + STATE</text>
+
+      <!-- connectors first -->
+      <path d="M212 280 H256 Q264 280 264 288 V332 Q264 340 272 340 H320" fill="none" stroke="#CCDADC" stroke-width="1.2" marker-end="url(#omt-arrow)"/>
+      <path d="M420 216 V300" fill="none" stroke="#5862FF" stroke-width="1.2" marker-end="url(#omt-link)"/>
+      <path d="M420 380 V464" fill="none" stroke="#CCDADC" stroke-width="1.2" marker-end="url(#omt-arrow)"/>
+      <path d="M520 340 H560 Q568 340 568 332 V268 Q568 260 576 260 H608" fill="none" stroke="#CCDADC" stroke-width="1.2" marker-end="url(#omt-arrow)"/>
+      <path d="M520 356 H548 Q556 356 556 364 V388 Q556 396 564 396 H608" fill="none" stroke="#0FEDBE" stroke-width="1.2" marker-end="url(#omt-accent)"/>
+      <path d="M788 260 H828 Q836 260 836 268 V332 Q836 340 844 340 H916" fill="none" stroke="#5862FF" stroke-width="1.2" marker-end="url(#omt-link)"/>
+      <path d="M788 396 H812 Q820 396 820 388 V368 Q820 360 828 360 H916" fill="none" stroke="#0FEDBE" stroke-width="1.2" marker-end="url(#omt-accent)"/>
+      <path d="M420 544 V576 Q420 584 428 584 H864 Q872 584 872 576 V532 Q872 524 880 524 H916" fill="none" stroke="#CCDADC" stroke-width="1.2" marker-end="url(#omt-arrow)"/>
+      <path d="M788 532 H824 Q832 532 832 524 V496 Q832 488 824 488 H560 Q552 488 552 480 V388 Q552 380 544 380 H520" fill="none" stroke="#CCDADC" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#omt-arrow)"/>
+      <path d="M916 524 H852 Q844 524 844 532 V540 Q844 548 836 548 H788" fill="none" stroke="#CCDADC" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#omt-arrow)"/>
+
+      <!-- labels with opaque masks -->
+      <rect x="236" y="292" width="92" height="16" rx="2" fill="#050505"/><text x="282" y="304" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".06em">MARKET ROUTE</text>
+      <rect x="440" y="248" width="56" height="16" rx="2" fill="#050505"/><text x="468" y="260" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".06em">EMBED</text>
+      <rect x="532" y="276" width="44" height="16" rx="2" fill="#050505"/><text x="554" y="288" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".06em">EQUITY</text>
+      <rect x="524" y="364" width="48" height="16" rx="2" fill="#050505"/><text x="548" y="376" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".06em">CRYPTO</text>
+      <rect x="832" y="308" width="64" height="16" rx="2" fill="#050505"/><text x="864" y="320" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".06em">SNAPSHOT</text>
+      <rect x="748" y="548" width="64" height="16" rx="2" fill="#050505"/><text x="780" y="560" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".06em">PERSIST</text>
+      <rect x="624" y="472" width="72" height="16" rx="2" fill="#050505"/><text x="660" y="484" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".06em">EVALUATE</text>
+
+      <!-- nodes -->
+      <g>
+        <rect x="68" y="240" width="144" height="80" rx="6" fill="#141414" stroke="#9095A1"/>
+        <rect x="76" y="248" width="40" height="16" rx="2" fill="transparent" stroke="#9095A1"/><text x="96" y="260" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">ROUTE</text>
+        <text x="140" y="282" text-anchor="middle" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist',sans-serif">Markets shell</text>
+        <text x="140" y="300" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">/markets/:family</text>
+      </g>
+      <g>
+        <rect x="320" y="136" width="200" height="80" rx="6" fill="#141414" stroke="#5862FF" stroke-width="1.2"/>
+        <rect x="328" y="144" width="48" height="16" rx="2" fill="transparent" stroke="#5862FF"/><text x="352" y="156" text-anchor="middle" fill="#5862FF" font-size="8" font-family="'Geist Mono',monospace">VIEW</text>
+        <text x="420" y="178" text-anchor="middle" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist',sans-serif">TV presentation</text>
+        <text x="420" y="196" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">overview · charts · heatmaps</text>
+      </g>
+      <g>
+        <rect x="320" y="300" width="200" height="80" rx="6" fill="rgba(15,237,190,.10)" stroke="#0FEDBE" stroke-width="1.2"/>
+        <rect x="328" y="308" width="56" height="16" rx="2" fill="transparent" stroke="#0FEDBE"/><text x="356" y="320" text-anchor="middle" fill="#0FEDBE" font-size="8" font-family="'Geist Mono',monospace">CORE</text>
+        <text x="420" y="342" text-anchor="middle" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist',sans-serif">Quote gateway</text>
+        <text x="420" y="360" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">freshness · cache · fan-out</text>
+      </g>
+      <g>
+        <rect x="320" y="464" width="200" height="80" rx="6" fill="#141414" stroke="#9095A1"/>
+        <rect x="328" y="472" width="56" height="16" rx="2" fill="transparent" stroke="#9095A1"/><text x="356" y="484" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">MODEL</text>
+        <text x="420" y="506" text-anchor="middle" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist',sans-serif">Instrument registry</text>
+        <text x="420" y="524" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">identity · venue · mapping</text>
+      </g>
+      <g>
+        <rect x="608" y="220" width="180" height="80" rx="6" fill="#141414" stroke="#9095A1"/>
+        <rect x="616" y="228" width="56" height="16" rx="2" fill="transparent" stroke="#9095A1"/><text x="644" y="240" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">ADAPTER</text>
+        <text x="698" y="262" text-anchor="middle" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist',sans-serif">Equity adapter</text>
+        <text x="698" y="280" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">Finnhub symbols</text>
+      </g>
+      <g>
+        <rect x="608" y="356" width="180" height="80" rx="6" fill="#141414" stroke="#0FEDBE"/>
+        <rect x="616" y="364" width="56" height="16" rx="2" fill="transparent" stroke="#0FEDBE"/><text x="644" y="376" text-anchor="middle" fill="#0FEDBE" font-size="8" font-family="'Geist Mono',monospace">ADAPTER</text>
+        <text x="698" y="398" text-anchor="middle" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist',sans-serif">Crypto adapter</text>
+        <text x="698" y="416" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">REST + live stream</text>
+      </g>
+      <g>
+        <rect x="608" y="492" width="180" height="80" rx="6" fill="#141414" stroke="#9095A1"/>
+        <rect x="616" y="500" width="48" height="16" rx="2" fill="transparent" stroke="#9095A1"/><text x="640" y="512" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">JOB</text>
+        <text x="698" y="534" text-anchor="middle" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist',sans-serif">Alert evaluator</text>
+        <text x="698" y="552" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">asset-aware · idempotent</text>
+      </g>
+      <g>
+        <rect x="916" y="300" width="200" height="80" rx="6" fill="#141414" stroke="#9095A1"/>
+        <rect x="924" y="308" width="64" height="16" rx="2" fill="transparent" stroke="#9095A1"/><text x="956" y="320" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">SOURCES</text>
+        <text x="1016" y="342" text-anchor="middle" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist',sans-serif">Market providers</text>
+        <text x="1016" y="360" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">Finnhub · crypto API/WS</text>
+      </g>
+      <g>
+        <rect x="916" y="484" width="200" height="80" rx="6" fill="#141414" stroke="#9095A1"/>
+        <rect x="924" y="492" width="48" height="16" rx="2" fill="transparent" stroke="#9095A1"/><text x="948" y="504" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">STORE</text>
+        <text x="1016" y="526" text-anchor="middle" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist',sans-serif">MongoDB</text>
+        <text x="1016" y="544" text-anchor="middle" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace">instrument · watchlist · alerts</text>
+      </g>
+
+      <!-- legend -->
+      <line x1="32" y1="604" x2="1168" y2="604" stroke="rgba(204,218,220,.14)" stroke-width=".8"/>
+      <text x="32" y="628" fill="#9095A1" font-size="8" font-family="'Geist Mono',monospace" letter-spacing=".16em">LEGEND</text>
+      <line x1="128" y1="624" x2="168" y2="624" stroke="#CCDADC" stroke-width="1.2" marker-end="url(#omt-arrow)"/><text x="180" y="628" fill="#CCDADC" font-size="8" font-family="'Geist Mono',monospace">INTERNAL</text>
+      <line x1="288" y1="624" x2="328" y2="624" stroke="#5862FF" stroke-width="1.2" marker-end="url(#omt-link)"/><text x="340" y="628" fill="#CCDADC" font-size="8" font-family="'Geist Mono',monospace">PRESENTATION/API</text>
+      <line x1="524" y1="624" x2="564" y2="624" stroke="#0FEDBE" stroke-width="1.2" marker-end="url(#omt-accent)"/><text x="576" y="628" fill="#CCDADC" font-size="8" font-family="'Geist Mono',monospace">CRYPTO PATH</text>
+      <line x1="732" y1="624" x2="772" y2="624" stroke="#CCDADC" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#omt-arrow)"/><text x="784" y="628" fill="#CCDADC" font-size="8" font-family="'Geist Mono',monospace">ASYNC / RETURN</text>
+    </svg>
+  </div>
+  <section class="cards" aria-label="Target-state decisions">
+    <article class="card"><p class="label">Navigation</p><h2>Markets becomes a route</h2><p>Preserve the selected family in the URL: Overview, Major Indices, Stocks, Futures, and Crypto can evolve independently without hard-coding the dashboard to stocks.</p></article>
+    <article class="card"><p class="label">Truth boundary</p><h2>Widgets do not become APIs</h2><p>TradingView remains a presentation surface. Search, persistence, freshness badges, and alerts use the normalized quote gateway and provider adapters.</p></article>
+    <article class="card"><p class="label">Crypto slice</p><h2>One adapter, not one-off symbols</h2><p>Crypto pairs resolve through the instrument registry, then flow through REST snapshots and a live-stream-capable adapter with polling fallback.</p></article>
+  </section>
+  <footer>OpenStock requirements analysis · target state · generated on the Crypto branch</footer>
+</main>
+</body>
+</html>

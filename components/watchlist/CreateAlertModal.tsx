@@ -14,6 +14,11 @@ interface CreateAlertModalProps {
     symbol: string;
     currentPrice: number;
     companyName?: string; // Optional prop for better display
+    assetClass?: 'equity' | 'crypto';
+    instrumentId?: string;
+    provider?: string;
+    providerSymbol?: string;
+    currency?: string;
     onAlertCreated?: () => void;
     children?: React.ReactNode;
     // Controlled props
@@ -26,6 +31,11 @@ export default function CreateAlertModal({
     symbol,
     currentPrice,
     companyName = "",
+    assetClass = 'equity',
+    instrumentId,
+    provider,
+    providerSymbol,
+    currency = 'USD',
     onAlertCreated,
     children,
     open: controlledOpen,
@@ -56,6 +66,11 @@ export default function CreateAlertModal({
                 symbol,
                 targetPrice: parseFloat(targetPrice),
                 condition,
+                assetClass,
+                instrumentId,
+                provider,
+                providerSymbol,
+                currency,
             });
             toast.success("Alert created successfully");
             setOpen?.(false);
@@ -94,7 +109,9 @@ export default function CreateAlertModal({
 
                     {/* Stock Identifier */}
                     <div className="grid gap-2">
-                        <Label className="text-gray-400 text-sm font-medium">Stock identifier</Label>
+                        <Label className="text-gray-400 text-sm font-medium">
+                            {assetClass === 'crypto' ? 'Crypto identifier' : 'Stock identifier'}
+                        </Label>
                         <div className="relative">
                             <Input
                                 disabled
@@ -135,14 +152,14 @@ export default function CreateAlertModal({
                     <div className="grid gap-2">
                         <Label className="text-gray-400 text-sm font-medium">Threshold value</Label>
                         <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-500 font-semibold">$</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-500 font-semibold text-xs">{currency}</span>
                             <Input
                                 type="number"
                                 step="0.01"
                                 value={targetPrice}
                                 onChange={(e) => setTargetPrice(e.target.value)}
                                 placeholder="eg: 140"
-                                className="pl-7 bg-[#1C1C1F] border-gray-800 text-white placeholder:text-gray-600 focus:border-yellow-500 focus:ring-yellow-500/20 transition-all rounded-md h-10 font-mono"
+                                className="pl-14 bg-[#1C1C1F] border-gray-800 text-white placeholder:text-gray-600 focus:border-yellow-500 focus:ring-yellow-500/20 transition-all rounded-md h-10 font-mono"
                             />
                         </div>
                     </div>

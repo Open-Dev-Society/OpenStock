@@ -263,6 +263,8 @@ BETTER_AUTH_URL=http://localhost:3000
 # Finnhub
 # Note: NEXT_PUBLIC_FINNHUB_API_KEY is required for Vercel deployment
 NEXT_PUBLIC_FINNHUB_API_KEY=your_finnhub_key
+# Server-only alias used by the app-owned crypto quote adapter
+FINNHUB_API_KEY=your_finnhub_key
 FINNHUB_BASE_URL=https://finnhub.io/api/v1
 
 # Sentiment insights (optional)
@@ -304,6 +306,8 @@ BETTER_AUTH_URL=http://localhost:3000
 # Finnhub
 # Note: NEXT_PUBLIC_FINNHUB_API_KEY is required for Vercel deployment
 NEXT_PUBLIC_FINNHUB_API_KEY=your_finnhub_key
+# Server-only alias used by the app-owned crypto quote adapter
+FINNHUB_API_KEY=your_finnhub_key
 FINNHUB_BASE_URL=https://finnhub.io/api/v1
 
 # Sentiment insights (optional)
