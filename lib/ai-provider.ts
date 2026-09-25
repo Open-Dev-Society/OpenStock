@@ -2,14 +2,15 @@
  * AI Provider abstraction for OpenStock.
  *
  * Supports multiple LLM backends via the AI_PROVIDER environment variable:
- *   - "gemini"  (default) – Google Gemini REST API
- *   - "minimax" – MiniMax (OpenAI-compatible)
- *   - "siray"   – Siray.ai (OpenAI-compatible)
+ *   - "gemini"     (default) – Google Gemini REST API
+ *   - "minimax"    – MiniMax (OpenAI-compatible)
+ *   - "siray"      – Siray.ai (OpenAI-compatible)
+ *   - "orcarouter" – OrcaRouter (OpenAI-compatible AI gateway)
  *
  * Each provider returns a plain-text string from the model.
  */
 
-export type AIProviderName = "gemini" | "minimax" | "siray";
+export type AIProviderName = "gemini" | "minimax" | "siray" | "orcarouter";
 
 export interface AIProviderConfig {
   name: AIProviderName;
@@ -47,6 +48,18 @@ export function getProviderConfig(
         apiKey: process.env.SIRAY_API_KEY || "",
         baseUrl: "https://api.siray.ai/v1",
         model: "siray-1.0-ultra",
+      };
+
+    case "orcarouter":
+      return {
+        name: "orcarouter",
+        apiKey: process.env.ORCAROUTER_API_KEY || "",
+        baseUrl:
+          process.env.ORCAROUTER_BASE_URL || "https://api.orcarouter.ai/v1",
+        // Defaults to the OrcaRouter auto router, which picks the best model
+        // for each request. Set ORCAROUTER_MODEL to select a specific model
+        // (e.g. "openai/gpt-5.5", "anthropic/claude-opus-4.8").
+        model: process.env.ORCAROUTER_MODEL || "orcarouter/auto",
       };
 
     case "gemini":
@@ -159,7 +172,7 @@ export async function callAIProvider(
   if (config.name === "gemini") {
     return callGemini(prompt, config);
   }
-  // MiniMax and Siray both use OpenAI-compatible endpoints
+  // MiniMax, Siray and OrcaRouter all use OpenAI-compatible endpoints
   return callOpenAICompatible(prompt, config);
 }
 
