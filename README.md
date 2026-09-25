@@ -58,15 +58,16 @@ Note: OpenStock is community-built and not a brokerage. Market data may be delay
 4. 🔋 [Features](#features)
 5. 🤸 [Quick Start](#quick-start)
 6. 🐳 [Docker Setup](#docker-setup)
-7. 🔐 [Environment Variables](#environment-variables)
-8. 🧱 [Project Structure](#project-structure)
-9. 📡 [Data & Integrations](#data--integrations)
-10. 🌍 [Market Support](#market-support)
-11. 🧪 [Scripts & Tooling](#scripts--tooling)
-12. 🤝 [Contributing](#contributing)
-13. 🛡️ [Security](#security)
-14. 📜 [License](#license)
-15. 🙏 [Acknowledgements](#acknowledgements)
+7. 🚂 [Deploy on Railway](#deploy-on-railway)
+8. 🔐 [Environment Variables](#environment-variables)
+9. 🧱 [Project Structure](#project-structure)
+10. 📡 [Data & Integrations](#data--integrations)
+11. 🌍 [Market Support](#market-support)
+12. 🧪 [Scripts & Tooling](#scripts--tooling)
+13. 🤝 [Contributing](#contributing)
+14. 🛡️ [Security](#security)
+15. 📜 [License](#license)
+16. 🙏 [Acknowledgements](#acknowledgements)
 
 ## ✨ Introduction <a name="introduction"></a>
 
@@ -243,6 +244,37 @@ services:
 volumes:
   mongo-data:
 ```
+
+## 🚂 Deploy on Railway <a name="deploy-on-railway"></a>
+
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/openstock-1?referralCode=oYrWPR&utm_medium=integration&utm_source=template&utm_campaign=generic)
+
+The one-click template provisions OpenStock and a MongoDB database and prompts for your API keys. To set it up manually instead:
+
+OpenStock ships with a [`railway.json`](railway.json) so it can be deployed on [Railway](https://railway.com) using the existing `Dockerfile`, with a healthcheck on `/sign-in` and automatic restarts on failure.
+
+1) Create a new project on Railway and add a **MongoDB** database (`+ New → Database → MongoDB`). Make sure its TCP Proxy is enabled so `MONGO_PUBLIC_URL` is available.
+2) Add a service from this GitHub repository (`+ New → GitHub Repo`). Railway detects `railway.json` and builds with the `Dockerfile`.
+3) In the service **Variables**, set:
+
+```env
+MONGODB_URI=${{MongoDB.MONGO_PUBLIC_URL}}
+BETTER_AUTH_SECRET=${{secret(32)}}
+BETTER_AUTH_URL=https://${{RAILWAY_PUBLIC_DOMAIN}}
+NEXT_PUBLIC_FINNHUB_API_KEY=your_finnhub_key
+GEMINI_API_KEY=your_gemini_api_key
+INNGEST_SIGNING_KEY=your_inngest_signing_key
+NODEMAILER_EMAIL=youraddress@gmail.com
+NODEMAILER_PASSWORD=your_gmail_app_password
+```
+
+4) Under **Settings → Networking**, generate a public domain, then redeploy.
+
+Notes
+- `NEXT_PUBLIC_FINNHUB_API_KEY` is inlined at build time; Railway passes it to the Docker build as a build arg, so redeploy after changing it.
+- Use `MONGO_PUBLIC_URL` (not `MONGO_URL`): `next build` connects to MongoDB while collecting page data, and Railway's private network is not available during builds.
+- For scheduled jobs (news summaries, alerts), add your Railway domain as an app in the [Inngest dashboard](https://app.inngest.com) pointing to `https://<your-domain>/api/inngest`.
+- See [Environment Variables](#environment-variables) for the optional variables (Adanos, MiniMax, Kit, etc.).
 
 ## 🔐 Environment Variables <a name="environment-variables"></a>
 

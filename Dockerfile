@@ -17,6 +17,11 @@ RUN npm install
 # Copy all project files
 COPY . .
 
+# NEXT_PUBLIC_* variables are inlined at build time, so they must be available
+# during `npm run build` (Railway passes service variables as build args)
+ARG NEXT_PUBLIC_FINNHUB_API_KEY
+ENV NEXT_PUBLIC_FINNHUB_API_KEY=$NEXT_PUBLIC_FINNHUB_API_KEY
+
 # Build the Next.js application
 RUN npm run build
 # Or if using pnpm:
