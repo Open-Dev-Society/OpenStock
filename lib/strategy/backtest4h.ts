@@ -9,7 +9,20 @@ export interface StrategyConfig {
     | "liquidity_sweep"
     | "supertrend"
     | "fair_value_gap"
-    | "order_block";
+    | "order_block"
+    | "macd_momentum"
+    | "bollinger_reversion"
+    | "overnight_hold"
+    | "buy_and_hold"
+    | "hma_trend"
+    | "adx_trend"
+    | "stoch_rsi"
+    | "zscore_rev"
+    | "bb_rev"
+    | "keltner"
+    | "macd_cross"
+    | "overnight"
+    | "sma_golden";
   params: Record<string, number>;
   symbols: string[];
   from: Date | string;
@@ -21,8 +34,12 @@ export interface StrategyMetrics {
   totalReturn: number;
   annualizedReturn: number;
   sharpe: number;
+  sortino: number;
+  calmar: number;
+  profitFactor: number;
   maxDrawdown: number;
   winRate: number;
+  exposure: number;
   tradesCount: number;
   barsCount: number;
 }
@@ -89,12 +106,267 @@ function calculateRsi(closes: number[], period: number): number[] {
   return rsi;
 }
 
+export function calcSMA(values: number[], period: number): number[] {
+  const n = values.length;
+  const p = Math.max(1, Math.round(period));
+  const sma = new Array(n).fill(values[0] || 0);
+  if (n < p) return sma;
+
+  let sum = 0;
+  for (let i = 0; i < p; i++) sum += values[i];
+  sma[p - 1] = sum / p;
+
+  for (let i = p; i < n; i++) {
+    sum += values[i] - values[i - p];
+    sma[i] = sum / p;
+  }
+  return sma;
+}
+
+export function calcWMA(prices: number[], period: number): number[] {
+  const n = prices.length;
+  const p = Math.max(1, Math.round(period));
+  const wma = new Array(n).fill(prices[0] || 0);
+  if (n < p) return wma;
+
+  const denom = (p * (p + 1)) / 2;
+  let sum = 0;
+  let weightedSum = 0;
+
+  for (let i = 0; i < p; i++) {
+    sum += prices[i];
+    weightedSum += prices[i] * (i + 1);
+  }
+  wma[p - 1] = weightedSum / denom;
+
+  for (let i = p; i < n; i++) {
+    weightedSum += prices[i] * p - sum;
+    sum += prices[i] - prices[i - p];
+    wma[i] = weightedSum / denom;
+  }
+  return wma;
+}
+
+export function calcHMA(prices: number[], period: number): number[] {
+  const p = Math.max(2, Math.round(period));
+  const halfP = Math.max(1, Math.round(p / 2));
+  const sqrtP = Math.max(1, Math.round(Math.sqrt(p)));
+  const wmaHalf = calcWMA(prices, halfP);
+  const wmaFull = calcWMA(prices, p);
+  const diff = new Array(prices.length);
+  for (let i = 0; i < prices.length; i++) {
+    diff[i] = 2 * wmaHalf[i] - wmaFull[i];
+  }
+  return calcWMA(diff, sqrtP);
+}
+
+export function calcATR(
+  highs: number[],
+  lows: number[],
+  closes: number[],
+  period: number
+): number[] {
+  const n = closes.length;
+  if (n === 0) return [];
+  const p = Math.max(1, Math.round(period));
+  const tr = new Array(n);
+  tr[0] = highs[0] - lows[0];
+  for (let i = 1; i < n; i++) {
+    tr[i] = Math.max(
+      highs[i] - lows[i],
+      Math.abs(highs[i] - closes[i - 1]),
+      Math.abs(lows[i] - closes[i - 1])
+    );
+  }
+
+  const atr = new Array(n).fill(tr[0]);
+  if (n < p) return atr;
+
+  let sum = 0;
+  for (let i = 0; i < p; i++) sum += tr[i];
+  atr[p - 1] = sum / p;
+
+  for (let i = p; i < n; i++) {
+    atr[i] = (atr[i - 1] * (p - 1) + tr[i]) / p;
+  }
+  return atr;
+}
+
+export function calcADX(
+  highs: number[],
+  lows: number[],
+  closes: number[],
+  period: number
+): { adx: number[]; plusDI: number[]; minusDI: number[] } {
+  const n = closes.length;
+  if (n === 0) return { adx: [], plusDI: [], minusDI: [] };
+  const p = Math.max(1, Math.round(period));
+
+  const tr = new Array(n);
+  const plusDM = new Array(n);
+  const minusDM = new Array(n);
+
+  tr[0] = highs[0] - lows[0];
+  plusDM[0] = 0;
+  minusDM[0] = 0;
+
+  for (let i = 1; i < n; i++) {
+    tr[i] = Math.max(
+      highs[i] - lows[i],
+      Math.abs(highs[i] - closes[i - 1]),
+      Math.abs(lows[i] - closes[i - 1])
+    );
+    const upMove = highs[i] - highs[i - 1];
+    const downMove = lows[i - 1] - lows[i];
+    plusDM[i] = upMove > downMove && upMove > 0 ? upMove : 0;
+    minusDM[i] = downMove > upMove && downMove > 0 ? downMove : 0;
+  }
+
+  const trSmooth = calculateEma(tr, p);
+  const plusDMSmooth = calculateEma(plusDM, p);
+  const minusDMSmooth = calculateEma(minusDM, p);
+
+  const dx = new Array(n).fill(0);
+  const plusDI = new Array(n).fill(0);
+  const minusDI = new Array(n).fill(0);
+
+  for (let i = 0; i < n; i++) {
+    plusDI[i] = trSmooth[i] === 0 ? 0 : (plusDMSmooth[i] / trSmooth[i]) * 100;
+    minusDI[i] = trSmooth[i] === 0 ? 0 : (minusDMSmooth[i] / trSmooth[i]) * 100;
+    const sum = plusDI[i] + minusDI[i];
+    dx[i] = sum === 0 ? 0 : (Math.abs(plusDI[i] - minusDI[i]) / sum) * 100;
+  }
+
+  const adx = calculateEma(dx, p);
+  return { adx, plusDI, minusDI };
+}
+
+export function calcStochRSI(
+  prices: number[],
+  period: number,
+  smoothK: number = 3,
+  smoothD: number = 3
+): { k: number[]; d: number[] } {
+  const rsi = calculateRsi(prices, period);
+  const n = prices.length;
+  const p = Math.max(1, Math.round(period));
+  const rawStoch = new Array(n).fill(50);
+
+  for (let i = p - 1; i < n; i++) {
+    let minRsi = rsi[i];
+    let maxRsi = rsi[i];
+    const start = Math.max(0, i - p + 1);
+    for (let j = start; j < i; j++) {
+      if (rsi[j] < minRsi) minRsi = rsi[j];
+      if (rsi[j] > maxRsi) maxRsi = rsi[j];
+    }
+    rawStoch[i] =
+      maxRsi - minRsi === 0 ? 50 : ((rsi[i] - minRsi) / (maxRsi - minRsi)) * 100;
+  }
+  const k = calcSMA(rawStoch, smoothK);
+  const d = calcSMA(k, smoothD);
+  return { k, d };
+}
+
+export function calcZScore(prices: number[], period: number): number[] {
+  const n = prices.length;
+  const zscores = new Array(n).fill(0);
+  const p = Math.max(2, Math.round(period));
+  if (n < p) return zscores;
+
+  let sum = 0;
+  let sumSq = 0;
+  for (let i = 0; i < p; i++) {
+    sum += prices[i];
+    sumSq += prices[i] * prices[i];
+  }
+  let mean = sum / p;
+  let variance = Math.max(0, sumSq / p - mean * mean);
+  let std = Math.sqrt(variance);
+  zscores[p - 1] = std === 0 ? 0 : (prices[p - 1] - mean) / std;
+
+  for (let i = p; i < n; i++) {
+    const prev = prices[i - p];
+    const curr = prices[i];
+    sum += curr - prev;
+    sumSq += curr * curr - prev * prev;
+    mean = sum / p;
+    variance = Math.max(0, sumSq / p - mean * mean);
+    std = Math.sqrt(variance);
+    zscores[i] = std === 0 ? 0 : (curr - mean) / std;
+  }
+  return zscores;
+}
+
+export function calcBollingerBands(
+  prices: number[],
+  period: number,
+  stdDevMult: number = 2
+): { upper: number[]; middle: number[]; lower: number[] } {
+  const n = prices.length;
+  const p = Math.max(2, Math.round(period));
+  const middle = calcSMA(prices, p);
+  const upper = new Array(n).fill(prices[0] || 0);
+  const lower = new Array(n).fill(prices[0] || 0);
+
+  if (n < p) return { upper, middle, lower };
+
+  let sum = 0;
+  let sumSq = 0;
+  for (let i = 0; i < p; i++) {
+    sum += prices[i];
+    sumSq += prices[i] * prices[i];
+  }
+  let mean = sum / p;
+  let variance = Math.max(0, sumSq / p - mean * mean);
+  let std = Math.sqrt(variance);
+  upper[p - 1] = middle[p - 1] + stdDevMult * std;
+  lower[p - 1] = middle[p - 1] - stdDevMult * std;
+
+  for (let i = p; i < n; i++) {
+    const prev = prices[i - p];
+    const curr = prices[i];
+    sum += curr - prev;
+    sumSq += curr * curr - prev * prev;
+    mean = sum / p;
+    variance = Math.max(0, sumSq / p - mean * mean);
+    std = Math.sqrt(variance);
+    upper[i] = middle[i] + stdDevMult * std;
+    lower[i] = middle[i] - stdDevMult * std;
+  }
+
+  return { upper, middle, lower };
+}
+
+export function calcKeltner(
+  highs: number[],
+  lows: number[],
+  closes: number[],
+  emaPeriod: number = 20,
+  atrPeriod: number = 10,
+  atrMult: number = 1.5
+): { upper: number[]; middle: number[]; lower: number[] } {
+  const n = closes.length;
+  const middle = calculateEma(closes, emaPeriod);
+  const atr = calcATR(highs, lows, closes, atrPeriod);
+  const upper = new Array(n).fill(0);
+  const lower = new Array(n).fill(0);
+
+  for (let i = 0; i < n; i++) {
+    upper[i] = middle[i] + atrMult * atr[i];
+    lower[i] = middle[i] - atrMult * atr[i];
+  }
+
+  return { upper, middle, lower };
+}
+
 function computeMetricsFromSignals(
   candles: Candle4h[],
   signals: number[],
   warmupBars: number,
   symbol: string = "UNKNOWN",
-  initialBalance: number = 10000
+  initialBalance: number = 10000,
+  isOvernight: boolean = false
 ): StrategyEvaluationResult {
   const barsCount = candles.length;
   if (barsCount < warmupBars + 1) {
@@ -103,8 +375,12 @@ function computeMetricsFromSignals(
         totalReturn: 0,
         annualizedReturn: 0,
         sharpe: 0,
+        sortino: 0,
+        calmar: 0,
+        profitFactor: 0,
         maxDrawdown: 0,
         winRate: 0,
+        exposure: 0,
         tradesCount: 0,
         barsCount,
       },
@@ -127,58 +403,87 @@ function computeMetricsFromSignals(
   let entryBarIdx = 0;
   let tradeIndex = 1;
 
-  for (let i = warmupBars + 1; i < barsCount; i++) {
-    const prevSignal = signals[i - 1];
-    const currSignal = signals[i];
-    const prevClose = closes[i - 1];
-    const currClose = closes[i];
-    const barReturn = prevClose !== 0 ? (currClose - prevClose) / prevClose : 0;
-    const stratReturn = prevSignal * barReturn;
-    returns.push(stratReturn);
-
-    if (prevSignal !== 0) {
+  if (isOvernight) {
+    for (let i = 1; i < barsCount; i++) {
+      const prevClose = closes[i - 1];
+      const currOpen = candles[i].open;
+      const barReturn = prevClose !== 0 ? (currOpen - prevClose) / prevClose : 0;
+      returns.push(barReturn);
       totalPositionBars++;
-      if (stratReturn > 0) winningTrades++;
-    }
-
-    if (signals[i] !== signals[i - 1]) {
+      if (barReturn > 0) winningTrades++;
       tradesCount++;
-    }
 
-    // Trade closing logic
-    if (inTrade && (currSignal !== prevSignal || i === barsCount - 1)) {
-      const exitPrice = currClose;
-      const returnPct =
-        tradeType === "long"
-          ? (exitPrice - entryPrice) / entryPrice
-          : (entryPrice - exitPrice) / entryPrice;
-      const tradePnl = currentBalance * returnPct;
+      const tradePnl = currentBalance * barReturn;
       currentBalance += tradePnl;
 
       trades.push({
         id: `${symbol}-${tradeIndex++}`,
         symbol,
-        type: tradeType,
-        entryTime,
-        entryPrice: Math.round(entryPrice * 100) / 100,
+        type: "long",
+        entryTime: candles[i - 1].time,
+        entryPrice: Math.round(prevClose * 100) / 100,
         exitTime: candles[i].time,
-        exitPrice: Math.round(exitPrice * 100) / 100,
+        exitPrice: Math.round(currOpen * 100) / 100,
         pnl: Math.round(tradePnl * 100) / 100,
-        returnPct: Math.round(returnPct * 10000) / 10000,
+        returnPct: Math.round(barReturn * 10000) / 10000,
         balance: Math.round(currentBalance * 100) / 100,
-        durationBars: Math.max(1, i - entryBarIdx),
+        durationBars: 1,
       });
-
-      inTrade = false;
     }
+  } else {
+    for (let i = warmupBars + 1; i < barsCount; i++) {
+      const prevSignal = signals[i - 1];
+      const currSignal = signals[i];
+      const prevClose = closes[i - 1];
+      const currClose = closes[i];
+      const barReturn = prevClose !== 0 ? (currClose - prevClose) / prevClose : 0;
+      const stratReturn = prevSignal * barReturn;
+      returns.push(stratReturn);
 
-    // Trade opening logic
-    if (!inTrade && currSignal !== 0) {
-      inTrade = true;
-      tradeType = currSignal === 1 ? "long" : "short";
-      entryPrice = currClose;
-      entryTime = candles[i].time;
-      entryBarIdx = i;
+      if (prevSignal !== 0) {
+        totalPositionBars++;
+        if (stratReturn > 0) winningTrades++;
+      }
+
+      if (currSignal !== prevSignal) {
+        tradesCount++;
+      }
+
+      // Trade closing logic
+      if (inTrade && (currSignal !== prevSignal || i === barsCount - 1)) {
+        const exitPrice = currClose;
+        const returnPct =
+          tradeType === "long"
+            ? (exitPrice - entryPrice) / entryPrice
+            : (entryPrice - exitPrice) / entryPrice;
+        const tradePnl = currentBalance * returnPct;
+        currentBalance += tradePnl;
+
+        trades.push({
+          id: `${symbol}-${tradeIndex++}`,
+          symbol,
+          type: tradeType,
+          entryTime,
+          entryPrice: Math.round(entryPrice * 100) / 100,
+          exitTime: candles[i].time,
+          exitPrice: Math.round(exitPrice * 100) / 100,
+          pnl: Math.round(tradePnl * 100) / 100,
+          returnPct: Math.round(returnPct * 10000) / 10000,
+          balance: Math.round(currentBalance * 100) / 100,
+          durationBars: Math.max(1, i - entryBarIdx),
+        });
+
+        inTrade = false;
+      }
+
+      // Trade opening logic
+      if (!inTrade && currSignal !== 0) {
+        inTrade = true;
+        tradeType = currSignal === 1 ? "long" : "short";
+        entryPrice = currClose;
+        entryTime = candles[i].time;
+        entryBarIdx = i;
+      }
     }
   }
 
@@ -188,8 +493,12 @@ function computeMetricsFromSignals(
         totalReturn: 0,
         annualizedReturn: 0,
         sharpe: 0,
+        sortino: 0,
+        calmar: 0,
+        profitFactor: 0,
         maxDrawdown: 0,
         winRate: 0,
+        exposure: 0,
         tradesCount,
         barsCount,
       },
@@ -210,31 +519,88 @@ function computeMetricsFromSignals(
 
   const totalReturn = equity - 1;
   const n = returns.length;
-  const firstTime = candles[warmupBars].time.getTime();
-  const lastTime = candles[barsCount - 1].time.getTime();
-  const years = (lastTime - firstTime) / (365.25 * 24 * 3600 * 1000);
-  const barsPerYear = years > 0 ? n / years : 0;
+  const firstTime = candles[warmupBars]?.time
+    ? new Date(candles[warmupBars].time).getTime()
+    : new Date(candles[0].time).getTime();
+  const lastTime = new Date(candles[barsCount - 1].time).getTime();
+  const years = Math.max((lastTime - firstTime) / (365.25 * 24 * 3600 * 1000), 0.01);
+  const barsPerYear = years > 0 ? n / years : 252 * 6;
 
   const meanReturn = returns.reduce((acc, v) => acc + v, 0) / n;
   const variance =
-    returns.reduce((acc, v) => acc + Math.pow(v - meanReturn, 2), 0) /
-    (n > 1 ? n - 1 : 1);
+    n > 1
+      ? returns.reduce((acc, v) => acc + Math.pow(v - meanReturn, 2), 0) / (n - 1)
+      : 0;
   const stdDev = Math.sqrt(variance);
 
   const sharpe =
     stdDev > 0 && barsPerYear > 0 ? (meanReturn / stdDev) * Math.sqrt(barsPerYear) : 0;
   const annualizedReturn =
-    n > 0 && barsPerYear > 0 ? Math.pow(1 + totalReturn, barsPerYear / n) - 1 : 0;
+    n > 0 && barsPerYear > 0 && totalReturn > -1
+      ? Math.pow(1 + totalReturn, barsPerYear / n) - 1
+      : totalReturn <= -1
+      ? -1
+      : 0;
+
+  // 1. Sortino Ratio (annualized mean return over downside semi-deviation where r < 0 over total N)
+  const downsideSumSq = returns.reduce((acc, v) => (v < 0 ? acc + v * v : acc), 0);
+  const downsideVariance = n > 0 ? downsideSumSq / n : 0;
+  const downsideDev = Math.sqrt(downsideVariance);
+  const sortino =
+    downsideDev > 0 && barsPerYear > 0
+      ? (meanReturn / downsideDev) * Math.sqrt(barsPerYear)
+      : meanReturn > 0
+      ? 99.9
+      : 0;
+
+  // 2. Calmar Ratio (annualized return over max drawdown, bounded when MDD is 0)
+  const calmar =
+    maxDrawdown > 0
+      ? annualizedReturn / maxDrawdown
+      : annualizedReturn > 0
+      ? 99.9
+      : 0;
+
+  // 3. Profit Factor (gross winning dollars / gross losing dollars)
+  const grossProfit = trades
+    .filter((t) => t.pnl > 0)
+    .reduce((acc, t) => acc + t.pnl, 0);
+  const grossLoss = Math.abs(
+    trades
+      .filter((t) => t.pnl < 0)
+      .reduce((acc, t) => acc + t.pnl, 0)
+  );
+  const profitFactor =
+    grossLoss > 0
+      ? Math.round((grossProfit / grossLoss) * 100) / 100
+      : grossProfit > 0
+      ? 99.9
+      : 0;
+
+  // 4. Exposure Percentage (bars in market / total bars)
+  const exposure =
+    barsCount > 0
+      ? Math.round((totalPositionBars / barsCount) * 10000) / 100
+      : 0;
+
   const winRate =
-    totalPositionBars > 0 ? winningTrades / totalPositionBars : 0;
+    trades.length > 0
+      ? Math.round((trades.filter((t) => t.pnl > 0).length / trades.length) * 10000) / 10000
+      : totalPositionBars > 0
+      ? winningTrades / totalPositionBars
+      : 0;
 
   return {
     metrics: {
       totalReturn,
       annualizedReturn,
       sharpe,
+      sortino,
+      calmar,
+      profitFactor,
       maxDrawdown,
       winRate,
+      exposure,
       tradesCount,
       barsCount,
     },
@@ -682,6 +1048,284 @@ export function evaluateOrderBlock(
   return computeMetricsFromSignals(candles, signals, lookback, symbol);
 }
 
+// ── AlphaStudio: Hull Moving Average (HMA) Trend ─────────────────────
+export function evaluateHmaTrend(
+  candles: Candle4h[],
+  fastPeriod: number = 9,
+  slowPeriod: number = 21,
+  symbol: string = "UNKNOWN",
+  allowShort: boolean = false
+): StrategyEvaluationResult {
+  const barsCount = candles.length;
+  const warmupBars = slowPeriod + Math.round(Math.sqrt(slowPeriod)) + 2;
+  if (barsCount < warmupBars + 1) {
+    return computeMetricsFromSignals(candles, [], warmupBars, symbol);
+  }
+
+  const closes = candles.map((c) => c.close);
+  const hmaFast = calcHMA(closes, fastPeriod);
+  const hmaSlow = calcHMA(closes, slowPeriod);
+
+  const signals: number[] = new Array(barsCount).fill(0);
+  for (let i = warmupBars; i < barsCount; i++) {
+    signals[i] = hmaFast[i - 1] > hmaSlow[i - 1] ? 1 : (allowShort ? -1 : 0);
+  }
+
+  return computeMetricsFromSignals(candles, signals, warmupBars, symbol);
+}
+
+// ── AlphaStudio: ADX Directional Trend & Momentum ─────────────────────
+export function evaluateAdxTrend(
+  candles: Candle4h[],
+  period: number = 14,
+  adxThreshold: number = 25,
+  symbol: string = "UNKNOWN",
+  allowShort: boolean = false
+): StrategyEvaluationResult {
+  const barsCount = candles.length;
+  const warmupBars = period * 2;
+  if (barsCount < warmupBars + 1) {
+    return computeMetricsFromSignals(candles, [], warmupBars, symbol);
+  }
+
+  const highs = candles.map((c) => c.high);
+  const lows = candles.map((c) => c.low);
+  const closes = candles.map((c) => c.close);
+  const { adx, plusDI, minusDI } = calcADX(highs, lows, closes, period);
+
+  const signals: number[] = new Array(barsCount).fill(0);
+  for (let i = warmupBars; i < barsCount; i++) {
+    if (adx[i - 1] >= adxThreshold) {
+      if (plusDI[i - 1] > minusDI[i - 1]) {
+        signals[i] = 1;
+      } else if (minusDI[i - 1] > plusDI[i - 1]) {
+        signals[i] = allowShort ? -1 : 0;
+      } else {
+        signals[i] = 0;
+      }
+    } else {
+      signals[i] = 0;
+    }
+  }
+
+  return computeMetricsFromSignals(candles, signals, warmupBars, symbol);
+}
+
+// ── AlphaStudio: Stochastic RSI Momentum Swing ───────────────────────
+export function evaluateStochRsi(
+  candles: Candle4h[],
+  period: number = 14,
+  smoothK: number = 3,
+  smoothD: number = 3,
+  oversold: number = 20,
+  overbought: number = 80,
+  symbol: string = "UNKNOWN",
+  allowShort: boolean = false
+): StrategyEvaluationResult {
+  const barsCount = candles.length;
+  const warmupBars = period + smoothK + smoothD + 2;
+  if (barsCount < warmupBars + 1) {
+    return computeMetricsFromSignals(candles, [], warmupBars, symbol);
+  }
+
+  const closes = candles.map((c) => c.close);
+  const { k, d } = calcStochRSI(closes, period, smoothK, smoothD);
+
+  const signals: number[] = new Array(barsCount).fill(0);
+  let currentPosition = 0;
+
+  for (let i = warmupBars; i < barsCount; i++) {
+    if (k[i - 1] < oversold && k[i - 1] > d[i - 1]) {
+      currentPosition = 1;
+    } else if (k[i - 1] > overbought && k[i - 1] < d[i - 1]) {
+      currentPosition = allowShort ? -1 : 0;
+    }
+    signals[i] = currentPosition;
+  }
+
+  return computeMetricsFromSignals(candles, signals, warmupBars, symbol);
+}
+
+// ── AlphaStudio: Z-Score Statistical Mean Reversion ───────────────────
+export function evaluateZScoreRev(
+  candles: Candle4h[],
+  period: number = 20,
+  threshold: number = 2.0,
+  symbol: string = "UNKNOWN",
+  allowShort: boolean = false
+): StrategyEvaluationResult {
+  const barsCount = candles.length;
+  const warmupBars = period + 2;
+  if (barsCount < warmupBars + 1) {
+    return computeMetricsFromSignals(candles, [], warmupBars, symbol);
+  }
+
+  const closes = candles.map((c) => c.close);
+  const zscores = calcZScore(closes, period);
+
+  const signals: number[] = new Array(barsCount).fill(0);
+  let currentPosition = 0;
+
+  for (let i = warmupBars; i < barsCount; i++) {
+    if (zscores[i - 1] <= -threshold) {
+      currentPosition = 1;
+    } else if (zscores[i - 1] >= 0 && currentPosition === 1) {
+      currentPosition = 0;
+    } else if (zscores[i - 1] >= threshold && allowShort) {
+      currentPosition = -1;
+    } else if (zscores[i - 1] <= 0 && currentPosition === -1) {
+      currentPosition = 0;
+    }
+    signals[i] = currentPosition;
+  }
+
+  return computeMetricsFromSignals(candles, signals, warmupBars, symbol);
+}
+
+// ── AlphaStudio: Bollinger Bands Mean Reversion ───────────────────────
+export function evaluateBbRev(
+  candles: Candle4h[],
+  period: number = 20,
+  stdDevMult: number = 2.0,
+  symbol: string = "UNKNOWN",
+  allowShort: boolean = false
+): StrategyEvaluationResult {
+  const barsCount = candles.length;
+  const warmupBars = period + 2;
+  if (barsCount < warmupBars + 1) {
+    return computeMetricsFromSignals(candles, [], warmupBars, symbol);
+  }
+
+  const closes = candles.map((c) => c.close);
+  const { upper, middle, lower } = calcBollingerBands(closes, period, stdDevMult);
+
+  const signals: number[] = new Array(barsCount).fill(0);
+  let currentPosition = 0;
+
+  for (let i = warmupBars; i < barsCount; i++) {
+    if (closes[i - 1] < lower[i - 1]) {
+      currentPosition = 1;
+    } else if (closes[i - 1] > middle[i - 1] && currentPosition === 1) {
+      currentPosition = 0;
+    } else if (closes[i - 1] > upper[i - 1] && allowShort) {
+      currentPosition = -1;
+    } else if (closes[i - 1] < middle[i - 1] && currentPosition === -1) {
+      currentPosition = 0;
+    }
+    signals[i] = currentPosition;
+  }
+
+  return computeMetricsFromSignals(candles, signals, warmupBars, symbol);
+}
+
+// ── AlphaStudio: Keltner Channel Reversion ────────────────────────────
+export function evaluateKeltner(
+  candles: Candle4h[],
+  emaPeriod: number = 20,
+  atrPeriod: number = 10,
+  atrMult: number = 1.5,
+  symbol: string = "UNKNOWN",
+  allowShort: boolean = false
+): StrategyEvaluationResult {
+  const barsCount = candles.length;
+  const warmupBars = Math.max(emaPeriod, atrPeriod) + 2;
+  if (barsCount < warmupBars + 1) {
+    return computeMetricsFromSignals(candles, [], warmupBars, symbol);
+  }
+
+  const highs = candles.map((c) => c.high);
+  const lows = candles.map((c) => c.low);
+  const closes = candles.map((c) => c.close);
+  const { upper, middle, lower } = calcKeltner(highs, lows, closes, emaPeriod, atrPeriod, atrMult);
+
+  const signals: number[] = new Array(barsCount).fill(0);
+  let currentPosition = 0;
+
+  for (let i = warmupBars; i < barsCount; i++) {
+    if (closes[i - 1] < lower[i - 1]) {
+      currentPosition = 1;
+    } else if (closes[i - 1] > middle[i - 1] && currentPosition === 1) {
+      currentPosition = 0;
+    } else if (closes[i - 1] > upper[i - 1] && allowShort) {
+      currentPosition = -1;
+    } else if (closes[i - 1] < middle[i - 1] && currentPosition === -1) {
+      currentPosition = 0;
+    }
+    signals[i] = currentPosition;
+  }
+
+  return computeMetricsFromSignals(candles, signals, warmupBars, symbol);
+}
+
+// ── AlphaStudio: MACD Momentum Cross ──────────────────────────────────
+export function evaluateMacdCross(
+  candles: Candle4h[],
+  fastPeriod: number = 12,
+  slowPeriod: number = 26,
+  signalPeriod: number = 9,
+  symbol: string = "UNKNOWN",
+  allowShort: boolean = false
+): StrategyEvaluationResult {
+  const barsCount = candles.length;
+  const warmupBars = slowPeriod + signalPeriod + 2;
+  if (barsCount < warmupBars + 1) {
+    return computeMetricsFromSignals(candles, [], warmupBars, symbol);
+  }
+
+  const closes = candles.map((c) => c.close);
+  const fastEma = calculateEma(closes, fastPeriod);
+  const slowEma = calculateEma(closes, slowPeriod);
+  const macd = new Array(barsCount);
+  for (let i = 0; i < barsCount; i++) macd[i] = fastEma[i] - slowEma[i];
+  const signalLine = calculateEma(macd, signalPeriod);
+
+  const signals: number[] = new Array(barsCount).fill(0);
+  for (let i = warmupBars; i < barsCount; i++) {
+    signals[i] = macd[i - 1] > signalLine[i - 1] ? 1 : (allowShort ? -1 : 0);
+  }
+
+  return computeMetricsFromSignals(candles, signals, warmupBars, symbol);
+}
+
+// ── AlphaStudio: Overnight Gap Drift (Close to Open) ──────────────────
+export function evaluateOvernight(
+  candles: Candle4h[],
+  symbol: string = "UNKNOWN"
+): StrategyEvaluationResult {
+  const barsCount = candles.length;
+  if (barsCount < 2) {
+    return computeMetricsFromSignals(candles, [], 0, symbol);
+  }
+
+  return computeMetricsFromSignals(candles, [], 0, symbol, 10000, true);
+}
+
+// ── AlphaStudio: Dual SMA Golden/Death Cross ──────────────────────────
+export function evaluateSmaGolden(
+  candles: Candle4h[],
+  fastPeriod: number = 50,
+  slowPeriod: number = 200,
+  symbol: string = "UNKNOWN",
+  allowShort: boolean = false
+): StrategyEvaluationResult {
+  const barsCount = candles.length;
+  const warmupBars = slowPeriod + 1;
+  if (barsCount < warmupBars + 1) {
+    return computeMetricsFromSignals(candles, [], warmupBars, symbol);
+  }
+
+  const closes = candles.map((c) => c.close);
+  const smaFast = calcSMA(closes, fastPeriod);
+  const smaSlow = calcSMA(closes, slowPeriod);
+
+  const signals: number[] = new Array(barsCount).fill(0);
+  for (let i = warmupBars; i < barsCount; i++) {
+    signals[i] = smaFast[i - 1] > smaSlow[i - 1] ? 1 : (allowShort ? -1 : 0);
+  }
+
+  return computeMetricsFromSignals(candles, signals, warmupBars, symbol);
+}
+
 export async function runBacktest(
   config: StrategyConfig
 ): Promise<BacktestResult> {
@@ -712,6 +1356,44 @@ export async function runBacktest(
         break;
       case "order_block":
         warmupBars = config.params.lookback || 20;
+        break;
+      case "hma_trend":
+        warmupBars =
+          (config.params.slowPeriod || 21) +
+          Math.round(Math.sqrt(config.params.slowPeriod || 21)) +
+          2;
+        break;
+      case "adx_trend":
+        warmupBars = (config.params.period || 14) * 2;
+        break;
+      case "stoch_rsi":
+        warmupBars =
+          (config.params.period || 14) +
+          (config.params.smoothK || 3) +
+          (config.params.smoothD || 3) +
+          2;
+        break;
+      case "zscore_rev":
+        warmupBars = (config.params.period || 20) + 2;
+        break;
+      case "bb_rev":
+        warmupBars = (config.params.period || 20) + 2;
+        break;
+      case "keltner":
+        warmupBars =
+          Math.max(config.params.emaPeriod || 20, config.params.atrPeriod || 10) + 2;
+        break;
+      case "macd_cross":
+        warmupBars =
+          (config.params.slowPeriod || 26) +
+          (config.params.signalPeriod || 9) +
+          2;
+        break;
+      case "overnight":
+        warmupBars = 1;
+        break;
+      case "sma_golden":
+        warmupBars = (config.params.slowPeriod || 200) + 1;
         break;
       case "ema_crossover":
       default:
@@ -764,6 +1446,91 @@ export async function runBacktest(
         evalResult = evaluateOrderBlock(candles, lookback, holdBars, sym);
         break;
       }
+      case "hma_trend": {
+        const fast = config.params.fastPeriod || config.params.fast || 9;
+        const slow = config.params.slowPeriod || config.params.slow || 21;
+        const allowShort = Boolean(config.params.allowShort);
+        evalResult = evaluateHmaTrend(candles, fast, slow, sym, allowShort);
+        break;
+      }
+      case "adx_trend": {
+        const period = config.params.period || 14;
+        const threshold =
+          config.params.adxThreshold || config.params.minStrength || 25;
+        const allowShort = Boolean(config.params.allowShort);
+        evalResult = evaluateAdxTrend(candles, period, threshold, sym, allowShort);
+        break;
+      }
+      case "stoch_rsi": {
+        const period = config.params.period || 14;
+        const smoothK = config.params.smoothK || 3;
+        const smoothD = config.params.smoothD || 3;
+        const oversold = config.params.oversold || 20;
+        const overbought = config.params.overbought || 80;
+        const allowShort = Boolean(config.params.allowShort);
+        evalResult = evaluateStochRsi(
+          candles,
+          period,
+          smoothK,
+          smoothD,
+          oversold,
+          overbought,
+          sym,
+          allowShort
+        );
+        break;
+      }
+      case "zscore_rev": {
+        const period = config.params.period || 20;
+        const threshold =
+          config.params.threshold !== undefined ? config.params.threshold : 2.0;
+        const allowShort = Boolean(config.params.allowShort);
+        evalResult = evaluateZScoreRev(candles, period, threshold, sym, allowShort);
+        break;
+      }
+      case "bb_rev": {
+        const period = config.params.period || 20;
+        const stdDevMult =
+          config.params.stdDevMult || config.params.mult || 2.0;
+        const allowShort = Boolean(config.params.allowShort);
+        evalResult = evaluateBbRev(candles, period, stdDevMult, sym, allowShort);
+        break;
+      }
+      case "keltner": {
+        const emaPeriod = config.params.emaPeriod || config.params.period || 20;
+        const atrPeriod = config.params.atrPeriod || 10;
+        const atrMult =
+          config.params.atrMult || config.params.multiplier || 1.5;
+        const allowShort = Boolean(config.params.allowShort);
+        evalResult = evaluateKeltner(
+          candles,
+          emaPeriod,
+          atrPeriod,
+          atrMult,
+          sym,
+          allowShort
+        );
+        break;
+      }
+      case "macd_cross": {
+        const fast = config.params.fastPeriod || config.params.fast || 12;
+        const slow = config.params.slowPeriod || config.params.slow || 26;
+        const signal = config.params.signalPeriod || config.params.signal || 9;
+        const allowShort = Boolean(config.params.allowShort);
+        evalResult = evaluateMacdCross(candles, fast, slow, signal, sym, allowShort);
+        break;
+      }
+      case "overnight": {
+        evalResult = evaluateOvernight(candles, sym);
+        break;
+      }
+      case "sma_golden": {
+        const fast = config.params.fastPeriod || config.params.fast || 50;
+        const slow = config.params.slowPeriod || config.params.slow || 200;
+        const allowShort = Boolean(config.params.allowShort);
+        evalResult = evaluateSmaGolden(candles, fast, slow, sym, allowShort);
+        break;
+      }
       case "ema_crossover":
       default: {
         const fastPeriod = config.params.fastPeriod || config.params.fast || 12;
@@ -786,8 +1553,12 @@ export async function runBacktest(
           totalReturn: 0,
           annualizedReturn: 0,
           sharpe: 0,
+          sortino: 0,
+          calmar: 0,
+          profitFactor: 0,
           maxDrawdown: 0,
           winRate: 0,
+          exposure: 0,
           tradesCount: 0,
           barsCount: 0,
         }
@@ -801,11 +1572,19 @@ export async function runBacktest(
             ) / count,
           sharpe:
             perSymbolMetrics.reduce((s, m) => s + m.metrics.sharpe, 0) / count,
+          sortino:
+            perSymbolMetrics.reduce((s, m) => s + m.metrics.sortino, 0) / count,
+          calmar:
+            perSymbolMetrics.reduce((s, m) => s + m.metrics.calmar, 0) / count,
+          profitFactor:
+            perSymbolMetrics.reduce((s, m) => s + m.metrics.profitFactor, 0) / count,
           maxDrawdown: Math.max(
             ...perSymbolMetrics.map((m) => m.metrics.maxDrawdown)
           ),
           winRate:
             perSymbolMetrics.reduce((s, m) => s + m.metrics.winRate, 0) / count,
+          exposure:
+            perSymbolMetrics.reduce((s, m) => s + m.metrics.exposure, 0) / count,
           tradesCount: perSymbolMetrics.reduce(
             (s, m) => s + m.metrics.tradesCount,
             0

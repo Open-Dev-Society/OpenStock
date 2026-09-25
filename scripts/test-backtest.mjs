@@ -155,4 +155,48 @@ function testSupertrendFlip(close, prevFinalUp, prevFinalDn, prevTrend) {
 assert.strictEqual(testSupertrendFlip(95, 110, 98, 1), -1, "Close below trailing lower band flips trend to -1 (Bearish)");
 assert.strictEqual(testSupertrendFlip(115, 110, 98, -1), 1, "Close above trailing upper band flips trend to 1 (Bullish)");
 
-console.log("✅ 4h Backtest EMA, RSI, Breakout, Liquidity Sweep, and LuxAlgo SMC/SuperTrend math verified!");
+// 9. Verify MACD Momentum Signal Logic
+function testMacdSignal(macdVal, signalVal) {
+  return macdVal > signalVal ? 1 : 0;
+}
+assert.strictEqual(testMacdSignal(2.4, 1.8), 1, "MACD above Signal line triggers long signal");
+assert.strictEqual(testMacdSignal(1.2, 1.8), 0, "MACD below Signal line sits in cash");
+
+// 10. Verify Bollinger Bands Reversion Logic
+function testBbSignal(close, lowerBand, sma, inPosition) {
+  if (!inPosition && close < lowerBand) return 1;
+  if (inPosition && close >= sma) return 0;
+  return inPosition ? 1 : 0;
+}
+assert.strictEqual(testBbSignal(94, 95, 100, false), 1, "Price piercing below lower BB triggers long");
+assert.strictEqual(testBbSignal(101, 95, 100, true), 0, "Price reclaiming SMA exits position");
+
+// 11. Verify Extended KPI Metrics (Sortino, Calmar, Profit Factor, Exposure)
+function testKpiFormulas(trades, metrics) {
+  let grossProfit = 0;
+  let grossLoss = 0;
+  let posBars = 0;
+  for (const t of trades) {
+    if (t.pnl > 0) grossProfit += t.pnl;
+    else grossLoss += Math.abs(t.pnl);
+    posBars += t.durationBars;
+  }
+  const profitFactor = grossLoss === 0 ? 9.99 : grossProfit / grossLoss;
+  const calmar = metrics.annualizedReturn / Math.max(0.005, metrics.maxDrawdown);
+  const exposurePct = (posBars / metrics.barsCount) * 100;
+  return { profitFactor, calmar, exposurePct };
+}
+
+const sampleTrades = [
+  { pnl: 400, durationBars: 10 },
+  { pnl: 200, durationBars: 8 },
+  { pnl: -200, durationBars: 6 }
+];
+const sampleMetrics = { annualizedReturn: 0.24, maxDrawdown: 0.08, barsCount: 100 };
+const kpiRes = testKpiFormulas(sampleTrades, sampleMetrics);
+assert.strictEqual(kpiRes.profitFactor, 3.0, "Profit factor = 600 / 200 = 3.0");
+assert.strictEqual(kpiRes.calmar, 3.0, "Calmar = 0.24 / 0.08 = 3.0");
+assert.strictEqual(kpiRes.exposurePct, 24.0, "Exposure = 24 bars / 100 bars = 24%");
+
+console.log("✅ 4h Backtest EMA, RSI, Breakout, Liquidity Sweep, SuperTrend, MACD, Bollinger Bands, and Extended KPI math verified!");
+

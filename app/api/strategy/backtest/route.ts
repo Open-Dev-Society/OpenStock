@@ -35,6 +35,15 @@ export async function POST(req: NextRequest) {
       "supertrend",
       "fair_value_gap",
       "order_block",
+      "hma_trend",
+      "adx_trend",
+      "stoch_rsi",
+      "zscore_rev",
+      "bb_rev",
+      "keltner",
+      "macd_cross",
+      "overnight",
+      "sma_golden",
     ];
     if (!body.type || !allowedTypes.includes(body.type)) {
       return NextResponse.json(

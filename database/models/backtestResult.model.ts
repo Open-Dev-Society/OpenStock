@@ -4,8 +4,12 @@ export interface IBacktestMetrics {
   totalReturn: number;
   annualizedReturn: number;
   sharpe: number;
+  sortino: number;
+  calmar: number;
+  profitFactor: number;
   maxDrawdown: number;
   winRate: number;
+  exposure: number;
   tradesCount: number;
   barsCount: number;
 }
@@ -64,8 +68,12 @@ const MetricsSchema = new Schema<IBacktestMetrics>(
     totalReturn: { type: Number, required: true },
     annualizedReturn: { type: Number, default: 0 },
     sharpe: { type: Number, required: true },
+    sortino: { type: Number, default: 0 },
+    calmar: { type: Number, default: 0 },
+    profitFactor: { type: Number, default: 0 },
     maxDrawdown: { type: Number, required: true },
     winRate: { type: Number, default: 0 },
+    exposure: { type: Number, default: 0 },
     tradesCount: { type: Number, default: 0 },
     barsCount: { type: Number, default: 0 },
   },
