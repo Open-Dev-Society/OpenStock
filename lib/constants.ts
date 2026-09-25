@@ -1,31 +1,11 @@
 export const NAV_ITEMS = [
-    { href: '/', label: 'Dashboard' },
-    { href: '/search', label: 'Search' },
-    { href: '/watchlist', label: 'Watchlist' },
-    { href: '/api-docs', label: 'API Docs' },
+    { href: '/', label: 'Mercado' },
+    { href: '/#noticias', label: 'Notícias' },
+    { href: '/api-docs', label: 'Dados & API' },
+    { href: '/help', label: 'Ajuda' },
+    { href: '/about', label: 'Sobre' },
 ];
 
-// Sign-up form select options
-export const INVESTMENT_GOALS = [
-    { value: 'Growth', label: 'Growth' },
-    { value: 'Income', label: 'Income' },
-    { value: 'Balanced', label: 'Balanced' },
-    { value: 'Conservative', label: 'Conservative' },
-];
-
-export const RISK_TOLERANCE_OPTIONS = [
-    { value: 'Low', label: 'Low' },
-    { value: 'Medium', label: 'Medium' },
-    { value: 'High', label: 'High' },
-];
-
-export const PREFERRED_INDUSTRIES = [
-    { value: 'Technology', label: 'Technology' },
-    { value: 'Healthcare', label: 'Healthcare' },
-    { value: 'Finance', label: 'Finance' },
-    { value: 'Energy', label: 'Energy' },
-    { value: 'Consumer Goods', label: 'Consumer Goods' },
-];
 
 export const ALERT_TYPE_OPTIONS = [
     { value: 'upper', label: 'Upper' },
@@ -37,135 +17,129 @@ export const CONDITION_OPTIONS = [
     { value: 'less', label: 'Less than (<)' },
 ];
 
-// TradingView Charts
+// TradingView widgets configured exclusively for B3/BM&FBOVESPA symbols.
 export const MARKET_OVERVIEW_WIDGET_CONFIG = {
-    colorTheme: 'dark', // dark mode
-    dateRange: '12M', // last 12 months
-    locale: 'en', // language
-    largeChartUrl: '', // link to a large chart if needed
-    isTransparent: true, // makes background transparent
-    showFloatingTooltip: true, // show tooltip on hover
-    plotLineColorGrowing: '#0FEDBE', // line color when price goes up
-    plotLineColorFalling: '#0FEDBE', // line color when price falls
-    gridLineColor: 'rgba(240, 243, 250, 0)', // grid line color
-    scaleFontColor: '#DBDBDB', // font color for scale
-    belowLineFillColorGrowing: 'rgba(41, 98, 255, 0.12)', // fill under line when growing
-    belowLineFillColorFalling: 'rgba(41, 98, 255, 0.12)', // fill under line when falling
-    belowLineFillColorGrowingBottom: 'rgba(41, 98, 255, 0)',
-    belowLineFillColorFallingBottom: 'rgba(41, 98, 255, 0)',
-    symbolActiveColor: 'rgba(15, 237, 190, 0.05)', // highlight color for active symbol
+    colorTheme: 'dark',
+    dateRange: '12M',
+    locale: 'br',
+    largeChartUrl: '',
+    isTransparent: true,
+    showFloatingTooltip: true,
+    plotLineColorGrowing: '#0FEDBE',
+    plotLineColorFalling: '#EF4444',
+    gridLineColor: 'rgba(240, 243, 250, 0)',
+    scaleFontColor: '#DBDBDB',
+    belowLineFillColorGrowing: 'rgba(15, 237, 190, 0.12)',
+    belowLineFillColorFalling: 'rgba(239, 68, 68, 0.12)',
+    belowLineFillColorGrowingBottom: 'rgba(15, 237, 190, 0)',
+    belowLineFillColorFallingBottom: 'rgba(239, 68, 68, 0)',
+    symbolActiveColor: 'rgba(15, 237, 190, 0.05)',
     tabs: [
         {
-            title: 'Financial',
+            title: 'Índices',
             symbols: [
-                { s: 'NYSE:JPM', d: 'JPMorgan Chase' },
-                { s: 'NYSE:WFC', d: 'Wells Fargo Co New' },
-                { s: 'NYSE:BAC', d: 'Bank Amer Corp' },
-                { s: 'NYSE:HSBC', d: 'Hsbc Hldgs Plc' },
-                { s: 'NYSE:C', d: 'Citigroup Inc' },
-                { s: 'NYSE:MA', d: 'Mastercard Incorporated' },
+                { s: 'BMFBOVESPA:IBOV', d: 'Ibovespa' },
+                { s: 'BMFBOVESPA:IFIX', d: 'Índice de Fundos Imobiliários' },
+                { s: 'BMFBOVESPA:ICON', d: 'Índice de Consumo' },
+                { s: 'BMFBOVESPA:IMAT', d: 'Índice de Materiais Básicos' },
             ],
         },
         {
-            title: 'Technology',
+            title: 'Bancos',
             symbols: [
-                { s: 'NASDAQ:AAPL', d: 'Apple' },
-                { s: 'NASDAQ:GOOGL', d: 'Alphabet' },
-                { s: 'NASDAQ:MSFT', d: 'Microsoft' },
-                { s: 'NASDAQ:META', d: 'Meta Platforms' },
-                { s: 'NYSE:ORCL', d: 'Oracle Corp' },
-                { s: 'NASDAQ:INTC', d: 'Intel Corp' },
+                { s: 'BMFBOVESPA:ITUB4', d: 'Itaú Unibanco' },
+                { s: 'BMFBOVESPA:BBDC4', d: 'Bradesco' },
+                { s: 'BMFBOVESPA:BBAS3', d: 'Banco do Brasil' },
+                { s: 'BMFBOVESPA:BPAC11', d: 'BTG Pactual' },
             ],
         },
         {
-            title: 'Services',
+            title: 'Empresas',
             symbols: [
-                { s: 'NASDAQ:AMZN', d: 'Amazon' },
-                { s: 'NYSE:BABA', d: 'Alibaba Group Hldg Ltd' },
-                { s: 'NYSE:T', d: 'At&t Inc' },
-                { s: 'NYSE:WMT', d: 'Walmart' },
-                { s: 'NYSE:V', d: 'Visa' },
+                { s: 'BMFBOVESPA:PETR4', d: 'Petrobras' },
+                { s: 'BMFBOVESPA:VALE3', d: 'Vale' },
+                { s: 'BMFBOVESPA:WEGE3', d: 'WEG' },
+                { s: 'BMFBOVESPA:ABEV3', d: 'Ambev' },
             ],
         },
     ],
-    support_host: 'https://www.tradingview.com', // TradingView host
-    backgroundColor: '#141414', // background color
-    width: '100%', // full width
-    height: 600, // height in px
-    showSymbolLogo: true, // show logo next to symbols
-    showChart: true, // display mini chart
+    support_host: 'https://www.tradingview.com',
+    backgroundColor: '#121820',
+    width: '100%',
+    height: 600,
+    showSymbolLogo: true,
+    showChart: true,
 };
 
-export const HEATMAP_WIDGET_CONFIG = {
-    dataSource: 'SPX500',
-    blockSize: 'market_cap_basic',
-    blockColor: 'change',
-    grouping: 'sector',
-    isTransparent: true,
-    locale: 'en',
-    symbolUrl: '',
+export const B3_HOTLIST_WIDGET_CONFIG = {
     colorTheme: 'dark',
-    exchanges: [],
-    hasTopBar: false,
-    isDataSetEnabled: false,
-    isZoomEnabled: true,
-    hasSymbolTooltip: true,
-    isMonoSize: false,
+    dateRange: '1D',
+    exchange: 'BMFBOVESPA',
+    showChart: true,
+    locale: 'br',
     width: '100%',
-    height: '600',
+    height: 600,
+    largeChartUrl: '',
+    isTransparent: true,
+    showSymbolLogo: true,
+    showFloatingTooltip: true,
+    plotLineColorGrowing: '#0FEDBE',
+    plotLineColorFalling: '#EF4444',
+    gridLineColor: 'rgba(240, 243, 250, 0)',
+    scaleFontColor: '#DBDBDB',
+    belowLineFillColorGrowing: 'rgba(15, 237, 190, 0.12)',
+    belowLineFillColorFalling: 'rgba(239, 68, 68, 0.12)',
+    belowLineFillColorGrowingBottom: 'rgba(15, 237, 190, 0)',
+    belowLineFillColorFallingBottom: 'rgba(239, 68, 68, 0)',
+    symbolActiveColor: 'rgba(15, 237, 190, 0.05)',
 };
 
 export const TOP_STORIES_WIDGET_CONFIG = {
     displayMode: 'regular',
-    feedMode: 'market',
+    feedMode: 'symbol',
+    symbol: 'BMFBOVESPA:IBOV',
     colorTheme: 'dark',
     isTransparent: true,
-    locale: 'en',
-    market: 'stock',
+    locale: 'br',
     width: '100%',
     height: '600',
 };
 
 export const MARKET_DATA_WIDGET_CONFIG = {
-    title: 'Stocks',
+    title: 'B3',
     width: '100%',
     height: 600,
-    locale: 'en',
+    locale: 'br',
     showSymbolLogo: true,
     colorTheme: 'dark',
     isTransparent: false,
-    backgroundColor: '#0F0F0F',
+    backgroundColor: '#121820',
     symbolsGroups: [
         {
-            name: 'Financial',
+            name: 'Bancos',
             symbols: [
-                { name: 'NYSE:JPM', displayName: 'JPMorgan Chase' },
-                { name: 'NYSE:WFC', displayName: 'Wells Fargo Co New' },
-                { name: 'NYSE:BAC', displayName: 'Bank Amer Corp' },
-                { name: 'NYSE:HSBC', displayName: 'Hsbc Hldgs Plc' },
-                { name: 'NYSE:C', displayName: 'Citigroup Inc' },
-                { name: 'NYSE:MA', displayName: 'Mastercard Incorporated' },
+                { name: 'BMFBOVESPA:ITUB4', displayName: 'Itaú Unibanco' },
+                { name: 'BMFBOVESPA:BBDC4', displayName: 'Bradesco' },
+                { name: 'BMFBOVESPA:BBAS3', displayName: 'Banco do Brasil' },
+                { name: 'BMFBOVESPA:BPAC11', displayName: 'BTG Pactual' },
             ],
         },
         {
-            name: 'Technology',
+            name: 'Commodities e energia',
             symbols: [
-                { name: 'NASDAQ:AAPL', displayName: 'Apple' },
-                { name: 'NASDAQ:GOOGL', displayName: 'Alphabet' },
-                { name: 'NASDAQ:MSFT', displayName: 'Microsoft' },
-                { name: 'NASDAQ:FB', displayName: 'Meta Platforms' },
-                { name: 'NYSE:ORCL', displayName: 'Oracle Corp' },
-                { name: 'NASDAQ:INTC', displayName: 'Intel Corp' },
+                { name: 'BMFBOVESPA:PETR4', displayName: 'Petrobras PN' },
+                { name: 'BMFBOVESPA:VALE3', displayName: 'Vale' },
+                { name: 'BMFBOVESPA:PRIO3', displayName: 'PRIO' },
+                { name: 'BMFBOVESPA:SUZB3', displayName: 'Suzano' },
             ],
         },
         {
-            name: 'Services',
+            name: 'Indústria e consumo',
             symbols: [
-                { name: 'NASDAQ:AMZN', displayName: 'Amazon' },
-                { name: 'NYSE:BABA', displayName: 'Alibaba Group Hldg Ltd' },
-                { name: 'NYSE:T', displayName: 'At&t Inc' },
-                { name: 'NYSE:WMT', displayName: 'Walmart' },
-                { name: 'NYSE:V', displayName: 'Visa' },
+                { name: 'BMFBOVESPA:WEGE3', displayName: 'WEG' },
+                { name: 'BMFBOVESPA:ABEV3', displayName: 'Ambev' },
+                { name: 'BMFBOVESPA:RENT3', displayName: 'Localiza' },
+                { name: 'BMFBOVESPA:RADL3', displayName: 'Raia Drogasil' },
             ],
         },
     ],
@@ -175,7 +149,7 @@ export const SYMBOL_INFO_WIDGET_CONFIG = (symbol: string) => ({
     symbol: symbol.toUpperCase(),
     colorTheme: 'dark',
     isTransparent: true,
-    locale: 'en',
+    locale: 'br',
     width: '100%',
     height: 170,
 });
@@ -190,14 +164,14 @@ export const CANDLE_CHART_WIDGET_CONFIG = (symbol: string) => ({
     hide_volume: false,
     hotlist: false,
     interval: 'D',
-    locale: 'en',
+    locale: 'br',
     save_image: false,
     style: 1,
     symbol: symbol.toUpperCase(),
     theme: 'dark',
     timezone: 'exchange',
-    backgroundColor: '#141414',
-    gridColor: '#141414',
+    backgroundColor: '#121820',
+    gridColor: '#242d38',
     watchlist: [],
     withdateranges: false,
     compareSymbols: [],
@@ -216,14 +190,14 @@ export const BASELINE_WIDGET_CONFIG = (symbol: string) => ({
     hide_volume: false,
     hotlist: false,
     interval: 'D',
-    locale: 'en',
+    locale: 'br',
     save_image: false,
     style: 10,
     symbol: symbol.toUpperCase(),
     theme: 'dark',
     timezone: 'exchange',
-    backgroundColor: '#141414',
-    gridColor: '#141414',
+    backgroundColor: '#121820',
+    gridColor: '#242d38',
     watchlist: [],
     withdateranges: false,
     compareSymbols: [],
@@ -236,7 +210,7 @@ export const TECHNICAL_ANALYSIS_WIDGET_CONFIG = (symbol: string) => ({
     symbol: symbol.toUpperCase(),
     colorTheme: 'dark',
     isTransparent: 'true',
-    locale: 'en',
+    locale: 'br',
     width: '100%',
     height: 400,
     interval: '1h',
@@ -247,7 +221,7 @@ export const COMPANY_PROFILE_WIDGET_CONFIG = (symbol: string) => ({
     symbol: symbol.toUpperCase(),
     colorTheme: 'dark',
     isTransparent: 'true',
-    locale: 'en',
+    locale: 'br',
     width: '100%',
     height: 440,
 });
@@ -256,74 +230,12 @@ export const COMPANY_FINANCIALS_WIDGET_CONFIG = (symbol: string) => ({
     symbol: symbol.toUpperCase(),
     colorTheme: 'dark',
     isTransparent: 'true',
-    locale: 'en',
+    locale: 'br',
     width: '100%',
     height: 464,
     displayMode: 'regular',
     largeChartUrl: '',
 });
-
-export const POPULAR_STOCK_SYMBOLS = [
-    // Tech Giants (the big technology companies)
-    'AAPL',
-    'MSFT',
-    'GOOGL',
-    'AMZN',
-    'TSLA',
-    'META',
-    'NVDA',
-    'NFLX',
-    'ORCL',
-    'CRM',
-
-    // Growing Tech Companies
-    'ADBE',
-    'INTC',
-    'AMD',
-    'PYPL',
-    'UBER',
-    'ZOOM',
-    'SPOT',
-    'SQ',
-    'SHOP',
-    'ROKU',
-
-    // Newer Tech Companies
-    'SNOW',
-    'PLTR',
-    'COIN',
-    'RBLX',
-    'DDOG',
-    'CRWD',
-    'NET',
-    'OKTA',
-    'TWLO',
-    'ZM',
-
-    // Consumer & Delivery Apps
-    'DOCU',
-    'PTON',
-    'PINS',
-    'SNAP',
-    'LYFT',
-    'DASH',
-    'ABNB',
-    'RIVN',
-    'LCID',
-    'NIO',
-
-    // International Companies
-    'XPEV',
-    'LI',
-    'BABA',
-    'JD',
-    'PDD',
-    'TME',
-    'BILI',
-    'DIDI',
-    'GRAB',
-    'SE',
-];
 
 export const NO_MARKET_NEWS =
     '<p class="mobile-text" style="margin:0 0 20px 0;font-size:16px;line-height:1.6;color:#4b5563;">No market news available today. Please check back tomorrow.</p>';
@@ -338,19 +250,3 @@ export const WATCHLIST_TABLE_HEADER = [
     'Alert',
     'Action',
 ];
-
-export const PASSWORD_RULES = [
-    { label: 'At least 8 characters', test: (pw: string) => pw.length >= 8 },
-    { label: 'At least 1 uppercase letter', test: (pw: string) => /[A-Z]/.test(pw) },
-    { label: 'At least 1 lowercase letter', test: (pw: string) => /[a-z]/.test(pw) },
-    { label: 'At least 1 number', test: (pw: string) => /[0-9]/.test(pw) },
-] as const;
-
-export const PASSWORD_VALIDATION = {
-    required: 'Password is required',
-    minLength: { value: 8, message: 'Password must be at least 8 characters' },
-    pattern: {
-        value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/,
-        message: 'Password must include uppercase, lowercase, and a number',
-    },
-};

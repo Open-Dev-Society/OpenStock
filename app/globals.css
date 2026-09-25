@@ -487,3 +487,638 @@
 .scrollbar-hide-default::-webkit-scrollbar-thumb:hover {
     background-color: #9095A1;
 }
+
+/* === FINVIZ-INSPIRED TERMINAL UI === */
+:root, .dark {
+    --background: #0d1117;
+    --foreground: #d8dee6;
+    --card: #141a22;
+    --card-foreground: #d8dee6;
+    --popover: #171d25;
+    --popover-foreground: #d8dee6;
+    --primary: #3b82f6;
+    --primary-foreground: #ffffff;
+    --secondary: #202833;
+    --secondary-foreground: #d8dee6;
+    --muted: #202833;
+    --muted-foreground: #8993a0;
+    --accent: #263241;
+    --accent-foreground: #ffffff;
+    --border: #2c3541;
+    --input: #2c3541;
+    --ring: #4c91e8;
+    --radius: 0.2rem;
+}
+
+html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+    background: #0d1117;
+}
+
+body {
+    min-width: 320px;
+    background: #0d1117;
+    color: #c7ced8;
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+body::before {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    content: '';
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(42, 55, 71, 0.16), transparent 180px);
+}
+
+::selection {
+    background: #245c96;
+    color: #fff;
+}
+
+.container {
+    width: 100%;
+    max-width: 1680px;
+    padding-right: 12px;
+    padding-left: 12px;
+}
+
+.finviz-shell {
+    min-height: 100vh;
+    background: transparent;
+    color: #aeb7c2;
+}
+
+.finviz-content {
+    min-height: calc(100vh - 126px);
+    padding-top: 12px;
+    padding-bottom: 18px;
+}
+
+.finviz-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid #303946;
+    background: #111720;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.finviz-header-main {
+    display: flex;
+    min-height: 50px;
+    align-items: center;
+    gap: 18px;
+}
+
+.finviz-wordmark {
+    display: inline-flex;
+    align-items: baseline;
+    color: #f5f7fa;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    white-space: nowrap;
+}
+
+.finviz-wordmark strong {
+    color: #67a6e8;
+    font-weight: 800;
+}
+
+.finviz-wordmark em {
+    margin-left: 6px;
+    padding: 1px 4px;
+    border: 1px solid #385b7c;
+    border-radius: 2px;
+    color: #85b9eb;
+    font-size: 9px;
+    font-style: normal;
+    letter-spacing: 0.08em;
+}
+
+.finviz-header-search {
+    width: min(280px, 38vw);
+}
+
+.finviz-header-search .search-btn {
+    width: 100%;
+    height: 28px;
+    justify-content: flex-start;
+    padding: 0 10px;
+    border: 1px solid #364250;
+    border-radius: 3px;
+    background: #1b222c;
+    color: #909aa7;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.025);
+}
+
+.finviz-header-search .search-btn:hover {
+    border-color: #4d6f92;
+    background: #202a36;
+    color: #dbe4ed;
+}
+
+.finviz-market-status {
+    display: flex;
+    margin-left: auto;
+    align-items: center;
+    gap: 6px;
+    color: #7e8997;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+}
+
+.finviz-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4fba78;
+    box-shadow: 0 0 0 3px rgba(79, 186, 120, 0.1);
+}
+
+.finviz-nav {
+    overflow-x: auto;
+    border-top: 1px solid #242d38;
+    background: #181e27;
+}
+
+.finviz-nav-list {
+    display: flex;
+    min-width: max-content;
+    height: 31px;
+    align-items: stretch;
+    gap: 0;
+}
+
+.finviz-nav-list li {
+    display: flex;
+}
+
+.finviz-nav-list a {
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    border-right: 1px solid #2b3440;
+    color: #aab3be;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.finviz-nav-list a:hover, .finviz-nav-list a.active {
+    background: #242c37;
+    color: #fff;
+}
+
+.finviz-nav-list a.active {
+    box-shadow: inset 0 -2px #4b94dc;
+}
+
+.home-wrapper, .finviz-stock-page {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.finviz-page-heading {
+    display: flex;
+    min-height: 42px;
+    align-items: flex-end;
+    justify-content: space-between;
+    border-bottom: 1px solid #2a3340;
+    padding: 2px 2px 8px;
+}
+
+.finviz-page-heading h1 {
+    margin: 1px 0 0;
+    color: #e6ebf1;
+    font-size: 20px;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+}
+
+.finviz-eyebrow, .finviz-delay-label {
+    color: #778391;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+}
+
+.finviz-delay-label {
+    padding-bottom: 2px;
+}
+
+.finviz-ticker-strip {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    overflow: hidden;
+    border: 1px solid #2c3541;
+    border-radius: 3px;
+    background: #151b23;
+}
+
+.finviz-ticker-card {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border-right: 1px solid #2c3541;
+    color: inherit;
+}
+
+.finviz-ticker-card:last-child {
+    border-right: 0;
+}
+
+.finviz-ticker-card:hover {
+    background: #1e2631;
+}
+
+.finviz-ticker-card > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.finviz-ticker-card strong {
+    color: #e2e7ed;
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.finviz-ticker-card span {
+    overflow: hidden;
+    color: #7f8995;
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.finviz-ticker-value {
+    align-items: flex-end;
+    text-align: right;
+}
+
+.finviz-ticker-value .positive { color: #53be7d; }
+
+.finviz-ticker-value .negative { color: #e76c75; }
+
+.finviz-dashboard-grid, .finviz-stock-primary, .finviz-stock-secondary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.finviz-panel {
+    overflow: hidden;
+    border: 1px solid #2d3743;
+    border-radius: 3px;
+    background: #121820;
+    box-shadow: 0 1px 2px rgba(0,0,0,.28);
+}
+
+.finviz-panel-title {
+    display: flex;
+    height: 31px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    border-bottom: 1px solid #303a47;
+    background: linear-gradient(180deg, #232c37, #1b222c);
+}
+
+.finviz-panel-title h2 {
+    color: #d9e0e8;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.finviz-panel-title span {
+    color: #4fb978;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: .08em;
+}
+
+.tradingview-widget-container,
+
+.custom-chart.tradingview-widget-container iframe {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #121820 !important;
+}
+
+.finviz-pulse-panel {
+    min-height: 451px;
+}
+
+.finviz-pulse-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border-bottom: 1px solid #2d3743;
+    background: #151c24;
+}
+
+.finviz-pulse-stats > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    padding: 12px;
+    border-right: 1px solid #2d3743;
+}
+
+.finviz-pulse-stats > div:last-child { border-right: 0; }
+
+.finviz-pulse-stats strong {
+    color: #e0e6ed;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.finviz-pulse-stats span {
+    margin-top: 5px;
+    color: #788391;
+    font-size: 9px;
+    text-transform: uppercase;
+}
+
+.finviz-pulse-list article {
+    display: grid;
+    min-height: 51px;
+    grid-template-columns: 48px 54px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-bottom: 1px solid #252e39;
+}
+
+.finviz-pulse-list article:last-child { border-bottom: 0; }
+
+.finviz-pulse-list article:nth-child(even) { background: #151c24; }
+
+.finviz-pulse-list time {
+    color: #8994a1;
+    font-family: var(--font-geist-mono);
+    font-size: 10px;
+}
+
+.finviz-pulse-list article > span {
+    width: fit-content;
+    padding: 2px 4px;
+    border: 1px solid;
+    border-radius: 2px;
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.finviz-pulse-list .high { border-color: #7f343c; color: #ff7b85; }
+
+.finviz-pulse-list .medium { border-color: #76591a; color: #f4c451; }
+
+.finviz-pulse-list .low { border-color: #2f6b48; color: #64c989; }
+
+.finviz-pulse-list h3 {
+    overflow: hidden;
+    color: #d5dce5;
+    font-size: 11px;
+    font-weight: 550;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+.finviz-news-panel {
+    scroll-margin-top: 92px;
+    border: 1px solid #2d3743;
+    border-radius: 3px;
+    background: #121820;
+}
+
+.finviz-section-heading {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 10px;
+    border-bottom: 1px solid #303a47;
+    background: linear-gradient(180deg, #232c37, #1b222c);
+}
+
+.finviz-section-heading h2 {
+    color: #dce3eb;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.finviz-section-heading p, .finviz-section-heading > span {
+    margin-top: 1px;
+    color: #7e8996;
+    font-size: 10px;
+}
+
+.finviz-news-table {
+    overflow: hidden;
+}
+
+.finviz-news-header {
+    border-bottom: 1px solid #313b47;
+    background: #171e27;
+    color: #778392;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+.finviz-news-row {
+    min-height: 31px;
+    border-bottom: 1px solid #242d38;
+    background: #11171e;
+}
+
+.finviz-news-row.alternate {
+    background: #151c24;
+}
+
+.finviz-news-row:hover {
+    background: #1e2732;
+}
+
+.finviz-news-row h3 {
+    color: #d8dee6;
+    font-size: 12px;
+    font-weight: 550;
+}
+
+.finviz-stock-page > .finviz-panel,
+.finviz-stock-primary, .finviz-stock-secondary,
+.finviz-stock-page > section {
+    margin-top: 0;
+}
+
+.finviz-stock-page > section[class*='rounded-'] {
+    border-radius: 3px !important;
+    background: #121820 !important;
+}
+
+.search-dialog {
+    top: 28px;
+    width: min(720px, calc(100vw - 24px));
+    border: 1px solid #3a4654 !important;
+    border-radius: 3px !important;
+    background: #171e27 !important;
+    box-shadow: 0 18px 55px rgba(0,0,0,.6);
+}
+
+.search-field, .search-list, .search-input {
+    background: #171e27 !important;
+}
+
+.search-input {
+    height: 42px;
+    font-size: 12px;
+}
+
+.search-count {
+    padding: 6px 10px;
+    border-color: #303a47;
+    background: #202833;
+    color: #8c97a4;
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.search-item { margin: 0; }
+
+.search-item-link {
+    min-height: 43px;
+    border-color: #29323d;
+}
+
+.search-item-name { font-size: 12px; }
+
+.terminal-page {
+    max-width: 1120px !important;
+    padding: 0 0 24px !important;
+    color: #aab4c0;
+}
+
+.terminal-page > .text-center:first-child,
+.terminal-page > section:first-child {
+    margin-bottom: 10px !important;
+    padding: 18px !important;
+    border: 1px solid #2d3743;
+    border-radius: 3px;
+    background: #151b23;
+    text-align: left;
+}
+
+.terminal-page h1 {
+    color: #e3e8ee !important;
+    font-size: 24px !important;
+    letter-spacing: -0.02em;
+}
+
+.terminal-page h2 { font-size: 16px !important; }
+
+.terminal-page p { font-size: 12px; line-height: 1.55; }
+
+.terminal-page .rounded-3xl,
+.terminal-page .rounded-2xl,
+.terminal-page .rounded-xl,
+.terminal-page .rounded-lg {
+    border-radius: 3px !important;
+}
+
+.terminal-page [class*='bg-gradient'] {
+    background-image: none !important;
+    background-color: #151b23 !important;
+}
+
+.finviz-footer {
+    border-top: 1px solid #2a3440;
+    background: #111720;
+    color: #778290;
+    font-size: 10px;
+}
+
+.finviz-footer-content {
+    display: grid;
+    min-height: 42px;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 16px;
+}
+
+.finviz-footer-content strong { color: #aab4bf; }
+
+.finviz-footer-content nav { display: flex; gap: 14px; }
+
+.finviz-footer-content a { color: #8693a1; }
+
+.finviz-footer-content a:hover { color: #dce3ea; }
+
+.finviz-footer-content > span:last-child { text-align: right; }
+
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: #0d1117; }
+::-webkit-scrollbar-thumb { border: 2px solid #0d1117; background: #35404d; }
+::-webkit-scrollbar-thumb:hover { background: #485565; }
+
+.finviz-page-heading,
+.finviz-ticker-strip,
+.finviz-dashboard-grid,
+.finviz-news-panel,
+.finviz-stock-primary,
+.finviz-stock-secondary {
+    width: 100%;
+}
+
+@media (max-width: 900px) {
+    .finviz-dashboard-grid, .finviz-stock-primary, .finviz-stock-secondary {
+        grid-template-columns: 1fr;
+    }
+
+    .finviz-ticker-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .finviz-ticker-card { border-bottom: 1px solid #2c3541; }
+    .finviz-market-status { display: none; }
+}
+
+@media (max-width: 640px) {
+    .container { padding-right: 8px; padding-left: 8px; }
+    .finviz-header-main { gap: 10px; }
+    .finviz-wordmark { font-size: 17px; }
+    .finviz-header-search { width: auto; flex: 1; }
+    .finviz-nav-list a { padding: 0 11px; font-size: 10px; }
+    .finviz-content { padding-top: 8px; }
+    .finviz-page-heading h1 { font-size: 17px; }
+    .finviz-delay-label { display: none; }
+    .finviz-ticker-strip { display: flex; overflow-x: auto; }
+    .finviz-ticker-card { min-width: 175px; }
+    .finviz-section-heading { align-items: flex-start; }
+    .finviz-news-row { min-height: 38px; }
+    .finviz-news-row h3 { font-size: 11px; }
+    .finviz-footer-content { grid-template-columns: 1fr; padding-top: 10px; padding-bottom: 10px; text-align: center; }
+    .finviz-footer-content nav { justify-content: center; }
+    .finviz-footer-content > span:last-child { text-align: center; }
+}

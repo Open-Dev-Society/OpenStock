@@ -1,42 +1,66 @@
 'use server';
 
-import { getDateRange, validateArticle, formatArticle } from '@/lib/utils';
-import { POPULAR_STOCK_SYMBOLS } from '@/lib/constants';
+import { getDateRange, validateArticle } from '@/lib/utils';
 import { cache } from 'react';
 
+const BRAPI_BASE_URL = (process.env.BRAPI_BASE_URL || 'https://brapi.dev').replace(/\/$/, '');
+const BRAPI_API_TOKEN = process.env.BRAPI_API_TOKEN ?? '';
 const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
-const NEXT_PUBLIC_FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY ?? '';
+const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY ?? '';
 
-type FinnhubQuote = {
-    c?: number;
-    d?: number;
-    dp?: number;
+type BrapiQuoteSnapshot = {
+    shortName: string;
+    longName: string;
+    currency: string;
+    regularMarketPrice: number;
+    regularMarketChange: number;
+    regularMarketChangePercent: number;
+    marketCap: number | null;
+    logourl: string;
 };
 
-type FinnhubCompanyProfile = {
-    currency?: string;
-    exchange?: string;
-    logo?: string;
-    marketCapitalization?: number;
-    name?: string;
-    ticker?: string;
+type BrapiQuoteSeries = {
+    requestedSymbol: string;
+    symbol: string;
+    changed: boolean;
+    data: BrapiQuoteSnapshot;
 };
 
-type SearchStockCandidate = FinnhubSearchResult & {
-    __exchange?: string;
+type BrapiQuoteResponse = {
+    results: BrapiQuoteSeries[];
 };
 
-const FINNHUB_EXCHANGE_SUFFIXES = new Set([
-    'AS', 'AT', 'AX', 'BA', 'BK', 'BO', 'BR', 'CO', 'DE', 'F', 'HE', 'HK',
-    'IL', 'IS', 'JK', 'JO', 'KL', 'KQ', 'KS', 'L', 'LS', 'MC', 'MI', 'MX',
-    'NS', 'NZ', 'OL', 'PA', 'PR', 'SA', 'SI', 'SS', 'ST', 'SW', 'SZ', 'T',
-    'TA', 'TO', 'TW', 'TWO', 'V', 'VI', 'WA',
-]);
+type BrapiTicker = {
+    symbol: string;
+    name: string;
+    longName: string | null;
+    assetType: string | null;
+    subType: string | null;
+    exchange: 'B3';
+    currency: 'BRL';
+    isActive: boolean;
+    quote: {
+        lastPrice: number | null;
+        changePercent: number | null;
+    };
+};
 
-async function fetchJSON<T>(url: string, revalidateSeconds?: number): Promise<T> {
+type BrapiTickerResponse = {
+    results: BrapiTicker[];
+};
+
+declare global {
+    var brapiRequestQueue: Promise<void> | undefined;
+}
+
+async function fetchJSON<T>(
+    url: string,
+    revalidateSeconds?: number,
+    headers?: HeadersInit
+): Promise<T> {
     const options: RequestInit & { next?: { revalidate?: number } } = revalidateSeconds
-        ? { cache: 'force-cache', next: { revalidate: revalidateSeconds } }
-        : { cache: 'no-store' };
+        ? { cache: 'force-cache', next: { revalidate: revalidateSeconds }, headers }
+        : { cache: 'no-store', headers };
 
     const res = await fetch(url, options);
     if (!res.ok) {
@@ -48,221 +72,171 @@ async function fetchJSON<T>(url: string, revalidateSeconds?: number): Promise<T>
 
 export { fetchJSON };
 
-function getExchangeLabel(symbol: string, exchange?: string) {
-    if (exchange?.trim()) {
-        return exchange.trim();
+async function withBrapiRequest<T>(request: () => Promise<T>): Promise<T> {
+    const previous = globalThis.brapiRequestQueue ?? Promise.resolve();
+    let release: () => void = () => {};
+    const turn = new Promise<void>((resolve) => { release = resolve; });
+    globalThis.brapiRequestQueue = previous.then(() => turn);
+
+    await previous;
+    try {
+        return await request();
+    } finally {
+        release();
     }
+}
 
-    const parts = symbol.split('.');
-    const suffix = parts.length > 1 ? parts[parts.length - 1].toUpperCase() : '';
+function brapiHeaders(): HeadersInit | undefined {
+    return BRAPI_API_TOKEN ? { Authorization: `Bearer ${BRAPI_API_TOKEN}` } : undefined;
+}
 
-    if (!suffix) {
-        return 'US';
-    }
+function normalizeB3Symbol(symbol: string) {
+    return symbol.trim().toUpperCase().replace(/^BMFBOVESPA:/, '').replace(/\.SA$/, '');
+}
 
-    return FINNHUB_EXCHANGE_SUFFIXES.has(suffix) ? suffix : 'US';
+async function getBrapiQuotes(symbols: string[]) {
+    const normalized = [...new Set(symbols.map(normalizeB3Symbol).filter(Boolean))];
+    if (normalized.length === 0) return [];
+
+    const url = `${BRAPI_BASE_URL}/api/v2/stocks/quote?symbols=${encodeURIComponent(normalized.join(','))}`;
+    const response = await withBrapiRequest(() =>
+        fetchJSON<BrapiQuoteResponse>(url, 0, brapiHeaders())
+    );
+    return response.results || [];
 }
 
 export async function getQuote(symbol: string) {
     try {
-        const token = NEXT_PUBLIC_FINNHUB_API_KEY;
-        const url = `${FINNHUB_BASE_URL}/quote?symbol=${encodeURIComponent(symbol)}&token=${token}`;
-        // No caching for real-time price
-        return await fetchJSON<FinnhubQuote>(url, 0);
-    } catch (e) {
-        console.error('Error fetching quote for', symbol, e);
+        const [quote] = await getBrapiQuotes([symbol]);
+        if (!quote) return null;
+        return {
+            c: quote.data.regularMarketPrice,
+            d: quote.data.regularMarketChange,
+            dp: quote.data.regularMarketChangePercent,
+        };
+    } catch (error) {
+        console.error('Error fetching B3 quote for', symbol, error);
         return null;
     }
 }
 
 export async function getCompanyProfile(symbol: string) {
     try {
-        const token = NEXT_PUBLIC_FINNHUB_API_KEY;
-        const url = `${FINNHUB_BASE_URL}/stock/profile2?symbol=${encodeURIComponent(symbol)}&token=${token}`;
-        // Cache profile for 24 hours
-        return await fetchJSON<FinnhubCompanyProfile>(url, 86400);
-    } catch (e) {
-        console.error('Error fetching profile for', symbol, e);
+        const [quote] = await getBrapiQuotes([symbol]);
+        if (!quote) return null;
+        return {
+            currency: quote.data.currency,
+            exchange: 'B3',
+            logo: quote.data.logourl,
+            marketCapitalization: quote.data.marketCap ?? undefined,
+            name: quote.data.longName || quote.data.shortName,
+            ticker: quote.symbol,
+        };
+    } catch (error) {
+        console.error('Error fetching B3 company profile for', symbol, error);
         return null;
     }
 }
 
 export async function getWatchlistData(symbols: string[]) {
-    if (!symbols || symbols.length === 0) return [];
+    if (!symbols?.length) return [];
 
-    // Fetch quotes and profiles in parallel
-    const promises = symbols.map(async (sym) => {
-        const [quote, profile] = await Promise.all([
-            getQuote(sym),
-            getCompanyProfile(sym)
-        ]);
+    try {
+        const quotes = await getBrapiQuotes(symbols);
+        const byRequestedSymbol = new Map(
+            quotes.map((quote) => [normalizeB3Symbol(quote.requestedSymbol), quote])
+        );
 
-        return {
-            symbol: sym,
-            price: quote?.c || 0,
-            change: quote?.d || 0,
-            changePercent: quote?.dp || 0,
-            currency: profile?.currency || 'USD',
-            name: profile?.name || sym,
-            logo: profile?.logo,
-            marketCap: profile?.marketCapitalization,
-            peRatio: 0 // Finnhub 'quote' and 'profile2' don't easily give real-time PE. Might need 'metric' endpoint, but skipping for now to save rate limits.
-        };
-    });
+        return symbols.flatMap((symbol) => {
+            const quote = byRequestedSymbol.get(normalizeB3Symbol(symbol));
+            if (!quote) return [];
 
-    return await Promise.all(promises);
+            return [{
+                symbol: quote.symbol,
+                price: quote.data.regularMarketPrice,
+                change: quote.data.regularMarketChange,
+                changePercent: quote.data.regularMarketChangePercent,
+                currency: quote.data.currency,
+                name: quote.data.longName || quote.data.shortName,
+                logo: quote.data.logourl,
+                marketCap: quote.data.marketCap ?? undefined,
+            }];
+        });
+    } catch (error) {
+        console.error('Error fetching B3 watchlist data', error);
+        return [];
+    }
 }
 
-
 export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> {
-    try {
-        const range = getDateRange(5);
-        const token = NEXT_PUBLIC_FINNHUB_API_KEY;
-        if (!token) {
-            throw new Error('FINNHUB API key is not configured');
-        }
-        const cleanSymbols = (symbols || [])
-            .map((s) => s?.trim().toUpperCase())
-            .filter((s): s is string => Boolean(s));
+    const cleanSymbols = (symbols || [])
+        .map(normalizeB3Symbol)
+        .filter(Boolean);
 
-        const maxArticles = 6;
+    if (!FINNHUB_API_KEY || cleanSymbols.length === 0) return [];
 
-        // If we have symbols, try to fetch company news per symbol and round-robin select
-        if (cleanSymbols.length > 0) {
-            const perSymbolArticles: Record<string, RawNewsArticle[]> = {};
-
-            await Promise.all(
-                cleanSymbols.map(async (sym) => {
-                    try {
-                        const url = `${FINNHUB_BASE_URL}/company-news?symbol=${encodeURIComponent(sym)}&from=${range.from}&to=${range.to}&token=${token}`;
-                        const articles = await fetchJSON<RawNewsArticle[]>(url, 300);
-                        perSymbolArticles[sym] = (articles || []).filter(validateArticle);
-                    } catch (e) {
-                        console.error('Error fetching company news for', sym, e);
-                        perSymbolArticles[sym] = [];
-                    }
-                })
-            );
-
-            const collected: MarketNewsArticle[] = [];
-            // Round-robin up to 6 picks
-            for (let round = 0; round < maxArticles; round++) {
-                for (let i = 0; i < cleanSymbols.length; i++) {
-                    const sym = cleanSymbols[i];
-                    const list = perSymbolArticles[sym] || [];
-                    if (list.length === 0) continue;
-                    const article = list.shift();
-                    if (!article || !validateArticle(article)) continue;
-                    collected.push(formatArticle(article, true, sym, round));
-                    if (collected.length >= maxArticles) break;
-                }
-                if (collected.length >= maxArticles) break;
+    const range = getDateRange(5);
+    const perSymbolArticles = await Promise.all(
+        cleanSymbols.map(async (symbol) => {
+            try {
+                const finnhubSymbol = `${symbol}.SA`;
+                const url = `${FINNHUB_BASE_URL}/company-news?symbol=${encodeURIComponent(finnhubSymbol)}&from=${range.from}&to=${range.to}&token=${FINNHUB_API_KEY}`;
+                const articles = await fetchJSON<RawNewsArticle[]>(url, 300);
+                return (articles || [])
+                    .filter(validateArticle)
+                    .map((article): MarketNewsArticle => ({
+                        id: article.id,
+                        headline: article.headline!.trim(),
+                        summary: article.summary!.trim().substring(0, 200),
+                        source: article.source || 'Finnhub',
+                        url: article.url!,
+                        datetime: article.datetime!,
+                        image: article.image || '',
+                        category: article.category || 'company',
+                        related: symbol,
+                    }));
+            } catch (error) {
+                console.error('Error fetching company news for', symbol, error);
+                return [];
             }
+        })
+    );
 
-            if (collected.length > 0) {
-                // Sort by datetime desc
-                collected.sort((a, b) => (b.datetime || 0) - (a.datetime || 0));
-                return collected.slice(0, maxArticles);
-            }
-            // If none collected, fall through to general news
-        }
-
-        // General market news fallback or when no symbols provided
-        const generalUrl = `${FINNHUB_BASE_URL}/news?category=general&token=${token}`;
-        const general = await fetchJSON<RawNewsArticle[]>(generalUrl, 300);
-
-        const seen = new Set<string>();
-        const unique: RawNewsArticle[] = [];
-        for (const art of general || []) {
-            if (!validateArticle(art)) continue;
-            const key = `${art.id}-${art.url}-${art.headline}`;
-            if (seen.has(key)) continue;
-            seen.add(key);
-            unique.push(art);
-            if (unique.length >= 20) break; // cap early before final slicing
-        }
-
-        const formatted = unique.slice(0, maxArticles).map((a, idx) => formatArticle(a, false, undefined, idx));
-        return formatted;
-    } catch (err) {
-        console.error('getNews error:', err);
-        throw new Error('Failed to fetch news');
-    }
+    return perSymbolArticles
+        .flat()
+        .sort((a, b) => b.datetime - a.datetime)
+        .slice(0, 6);
 }
 
 export const searchStocks = cache(async (query?: string): Promise<StockWithWatchlistStatus[]> => {
     try {
-        const token = NEXT_PUBLIC_FINNHUB_API_KEY;
-        if (!token) {
-            // If no token, log and return empty to avoid throwing per requirements
-            console.error('Error in stock search:', new Error('FINNHUB API key is not configured'));
-            return [];
-        }
-
+        const params = new URLSearchParams({
+            limit: '15',
+            sortBy: 'volume',
+            sortOrder: 'desc',
+        });
         const trimmed = typeof query === 'string' ? query.trim() : '';
+        if (trimmed) params.set('search', trimmed);
 
-        let results: SearchStockCandidate[] = [];
+        const url = `${BRAPI_BASE_URL}/api/v2/tickers?${params.toString()}`;
+        const data = await withBrapiRequest(() =>
+            fetchJSON<BrapiTickerResponse>(url, 900, brapiHeaders())
+        );
 
-        if (!trimmed) {
-            // Fetch top 10 popular symbols' profiles
-            const top = POPULAR_STOCK_SYMBOLS.slice(0, 10);
-            const profiles = await Promise.all(
-                top.map(async (sym) => {
-                    try {
-                        const url = `${FINNHUB_BASE_URL}/stock/profile2?symbol=${encodeURIComponent(sym)}&token=${token}`;
-                        // Revalidate every hour
-                        const profile = await fetchJSON<FinnhubCompanyProfile>(url, 3600);
-                        return { sym, profile } as { sym: string; profile: FinnhubCompanyProfile | null };
-                    } catch (e) {
-                        console.error('Error fetching profile2 for', sym, e);
-                        return { sym, profile: null } as { sym: string; profile: FinnhubCompanyProfile | null };
-                    }
-                })
-            );
-
-            results = profiles
-                .map(({ sym, profile }) => {
-                    const symbol = sym.toUpperCase();
-                    const name: string | undefined = profile?.name || profile?.ticker || undefined;
-                    const exchange: string | undefined = profile?.exchange || undefined;
-                    if (!name) return undefined;
-                    const r: SearchStockCandidate = {
-                        symbol,
-                        description: name,
-                        displaySymbol: symbol,
-                        type: 'Common Stock',
-                    };
-                    r.__exchange = exchange;
-                    return r;
-                })
-                .filter((x): x is SearchStockCandidate => Boolean(x));
-        } else {
-            const url = `${FINNHUB_BASE_URL}/search?q=${encodeURIComponent(trimmed)}&token=${token}`;
-            const data = await fetchJSON<FinnhubSearchResponse>(url, 1800);
-            results = Array.isArray(data?.result) ? data.result : [];
-        }
-
-        const mapped: StockWithWatchlistStatus[] = results
-            .map((r) => {
-                const upper = (r.symbol || '').toUpperCase();
-                const name = r.description || upper;
-                const exchangeFromProfile = r.__exchange;
-                const exchange = getExchangeLabel(upper, exchangeFromProfile);
-                const type = r.type || 'Stock';
-                const item: StockWithWatchlistStatus = {
-                    symbol: upper,
-                    name,
-                    exchange,
-                    type,
-                    isInWatchlist: false,
-                };
-                return item;
-            })
+        return (data.results || [])
+            .filter((stock) => stock.isActive)
+            .map((stock) => ({
+                symbol: stock.symbol.toUpperCase(),
+                name: stock.longName || stock.name,
+                exchange: stock.exchange,
+                type: stock.subType || stock.assetType || 'Ativo',
+                isInWatchlist: false,
+                price: stock.quote.lastPrice ?? undefined,
+                changePercent: stock.quote.changePercent ?? undefined,
+            }))
             .slice(0, 15);
-
-        return mapped;
-    } catch (err) {
-        console.error('Error in stock search:', err);
+    } catch (error) {
+        console.error('Error searching B3 stocks:', error);
         return [];
     }
 });

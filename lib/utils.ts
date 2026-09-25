@@ -109,27 +109,21 @@ export const getChangeColorClass = (changePercent?: number) => {
 };
 
 export const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
-        currency: 'USD',
+        currency: 'BRL',
         minimumFractionDigits: 2,
     }).format(price);
 };
 
-// Alias for consistency
 export const formatCurrency = formatPrice;
 
-export function formatNumber(num: number): string {
-    // If number is small (likely already in millions from Finnhub), multiply by 1M to get actual value
-    // Typical mega-cap is > 100B. 100B in millions is 100,000.
-    // If we assume typical market cap input IS millions:
-    const value = num * 1000000;
-
-    if (value >= 1e12) return (value / 1e12).toFixed(2) + 'T';
-    if (value >= 1e9) return (value / 1e9).toFixed(2) + 'B';
-    if (value >= 1e6) return (value / 1e6).toFixed(2) + 'M';
-    if (value >= 1e3) return (value / 1e3).toFixed(2) + 'K';
-    return value.toString();
+export function formatNumber(value: number): string {
+    if (!Number.isFinite(value)) return 'N/A';
+    return new Intl.NumberFormat('pt-BR', {
+        notation: 'compact',
+        maximumFractionDigits: 2,
+    }).format(value);
 }
 
 export const formatDateToday = new Date().toLocaleDateString('en-US', {
@@ -212,9 +206,10 @@ const FINNHUB_TO_TRADINGVIEW_EXCHANGE: Record<string, string> = {
     '.JO': 'JSE',    // Johannesburg Stock Exchange
 };
 
-export function formatSymbolForTradingView(symbol: string): string {
+export function formatSymbolForTradingView(symbol: string, defaultExchange?: string): string {
     if (!symbol) return '';
     const upperSymbol = symbol.toUpperCase();
+    if (upperSymbol.includes(':')) return upperSymbol;
 
     // Check for known exchange suffixes, trying longer suffixes first
     // to avoid ".TWO" matching ".TW" prematurely
@@ -229,5 +224,5 @@ export function formatSymbolForTradingView(symbol: string): string {
         }
     }
 
-    return upperSymbol;
+    return defaultExchange ? `${defaultExchange}:${upperSymbol}` : upperSymbol;
 }

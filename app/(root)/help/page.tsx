@@ -1,124 +1,82 @@
-import { Metadata } from 'next';
-import {
-  HelpCircle,
-  MessageCircle,
-  BookOpen,
-  Lightbulb,
-  Mail,
-  Github,
-  ChevronDown
-} from 'lucide-react';
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { BookOpen, HelpCircle, Search, ShieldCheck } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Help Center | OpenStock',
-  description: 'Community-driven support for OpenStock. No paywalls, just help.',
+    title: 'Ajuda | OpenStock B3',
+    description: 'Ajuda para o terminal local OpenStock B3.',
 };
 
+const faqs = [
+    {
+        question: 'Preciso criar uma conta?',
+        answer: 'Não. O dashboard e as páginas de ativos são públicos e locais. Não existe fluxo de login.',
+    },
+    {
+        question: 'De onde vêm as cotações?',
+        answer: 'A busca e a faixa de cotações usam brapi. Gráficos e demonstrações incorporadas usam TradingView. Os dados podem ter atraso.',
+    },
+    {
+        question: 'Por que o gráfico não responde a cliques?',
+        answer: 'Os embeds são deliberadamente não interativos para impedir que qualquer clique direcione o usuário para um site externo.',
+    },
+    {
+        question: 'Quais notícias aparecem?',
+        answer: 'Somente matérias do dia corrente no horário de Brasília que passam pelo filtro de relevância para B3, macro, empresas, commodities ou mercados globais.',
+    },
+    {
+        question: 'O impacto é produzido por IA?',
+        answer: 'Não. Alto, Médio e Baixo são calculados por regras determinísticas baseadas em tema, título, fonte, sinais secundários e atualidade.',
+    },
+    {
+        question: 'Posso usar os dados para negociar?',
+        answer: 'OpenStock é informativo, não é corretora e não garante dados em tempo real. Confirme qualquer informação em uma fonte licenciada antes de decidir.',
+    },
+];
+
 export default function HelpPage() {
-  const faqs = [
-    {
-      question: "Is OpenStock really free forever?",
-      answer: "Yes! We run on donations and community contribution. Core features (tracking, alerts, analysis) will remain free. We believe financial tools shouldn't be luxury items."
-    },
-    {
-      question: "How do I add stocks to my watchlist?",
-      answer: "Use the search bar at the top or in the header to find a company. On the stock's detail page, click the 'Heart' or 'Star' icon to instantly add it to your dashboard."
-    },
-    {
-      question: "Where does the market data come from?",
-      answer: "We partner with Finnhub and other providers to offer real-time and delayed data. While robust, please use it for analysis rather than high-frequency trading."
-    },
-    {
-      question: "Can I contribute code or designs?",
-      answer: "Absolutely! Check our GitHub repository. We label issues as 'good first issue' for beginners. We welcome designers, developers, and writers alike."
-    },
-    {
-      question: "My alerts aren't triggering.",
-      answer: "Alerts run every 5 minutes via our background jobs. Ensure you've confirmed your email address, as we send notifications primarily via email."
-    }
-  ];
+    return (
+        <div className="terminal-page max-w-4xl mx-auto px-4 pb-20">
+            <section className="text-center space-y-4 pt-10">
+                <div className="flex items-center gap-2">
+                    <HelpCircle className="h-5 w-5 text-sky-400" />
+                    <span className="finviz-eyebrow">OPENSTOCK / AJUDA</span>
+                </div>
+                <h1>Como usar o terminal</h1>
+                <p className="text-gray-400">Consulte ativos e notícias sem sair do OpenStock.</p>
+            </section>
 
-  return (
-    <div className="max-w-4xl mx-auto px-4 pb-20">
+            <section className="grid gap-3 md:grid-cols-2">
+                <article className="rounded-lg border border-gray-700 bg-gray-900 p-5">
+                    <Search className="mb-3 h-4 w-4 text-sky-400" />
+                    <h2 className="mb-2 font-semibold text-gray-100">Buscar um ativo</h2>
+                    <p className="mb-3 text-gray-400">Use “Buscar ticker” no cabeçalho ou Ctrl/Cmd + K.</p>
+                    <Link href="/" className="text-sky-400">Ir ao mercado</Link>
+                </article>
+                <article className="rounded-lg border border-gray-700 bg-gray-900 p-5">
+                    <BookOpen className="mb-3 h-4 w-4 text-sky-400" />
+                    <h2 className="mb-2 font-semibold text-gray-100">Dados e arquitetura</h2>
+                    <p className="mb-3 text-gray-400">Veja provedores, limites, filtros e comportamento de falha.</p>
+                    <Link href="/api-docs" className="text-sky-400">Abrir documentação</Link>
+                </article>
+            </section>
 
-      {/* Header */}
-      <div className="text-center pt-16 pb-12 space-y-4">
-        <div className="inline-flex p-3 bg-blue-500/10 rounded-2xl border border-blue-500/20 mb-4">
-          <HelpCircle className="text-blue-400 h-8 w-8" />
+            <section className="space-y-2">
+                <div className="mb-3 flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-sky-400" />
+                    <h2 className="font-semibold text-gray-100">Perguntas frequentes</h2>
+                </div>
+                {faqs.map((faq) => (
+                    <article key={faq.question} className="rounded-lg border border-gray-700 bg-gray-900 p-4">
+                        <h3 className="mb-1 font-semibold text-gray-200">{faq.question}</h3>
+                        <p className="text-gray-400">{faq.answer}</p>
+                    </article>
+                ))}
+            </section>
+
+            <p className="border-t border-gray-700 pt-4 text-gray-500">
+                Contato do projeto: opendevsociety@gmail.com
+            </p>
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold text-white">How can we help?</h1>
-        <p className="text-xl text-gray-400">Community-powered support for everyone.</p>
-      </div>
-
-      {/* Quick Action Grid */}
-      <div className="grid md:grid-cols-3 gap-4 mb-16">
-        <HelpCard
-          icon={<BookOpen className="text-teal-400" />}
-          title="Read Docs"
-          desc="Deep dive into features and API integration."
-          link="/api-docs"
-          linkText="View Documentation"
-        />
-        <HelpCard
-          icon={<MessageCircle className="text-purple-400" />}
-          title="Community Chat"
-          desc="Get real-time answers from other users."
-          link="https://discord.gg/JkJ8kfxgxB"
-          linkText="Join Discord"
-        />
-        <HelpCard
-          icon={<Github className="text-white" />}
-          title="Report Bugs"
-          desc="Found an issue? Let our developers know."
-          link="https://github.com/Open-Dev-Society/OpenStock/issues"
-          linkText="Open Issue"
-        />
-      </div>
-
-      {/* FAQs */}
-      <div className="space-y-8">
-        <h2 className="text-2xl font-bold text-white border-b border-gray-800 pb-4">Frequently Asked Questions</h2>
-        <div className="grid gap-4">
-          {faqs.map((faq, idx) => (
-            <div key={idx} className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 hover:bg-gray-800/50 transition-colors">
-              <h3 className="font-semibold text-lg text-gray-200 mb-2 flex items-start gap-3">
-                <Lightbulb size={20} className="text-yellow-500/50 mt-1 shrink-0" />
-                {faq.question}
-              </h3>
-              <p className="text-gray-400 leading-relaxed ml-8 pl-1 border-l-2 border-gray-800">
-                {faq.answer}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Direct Contact */}
-      <div className="mt-20 bg-gradient-to-br from-gray-900 to-black border border-gray-800 rounded-2xl p-8 text-center">
-        <h3 className="text-xl font-bold text-white mb-2">Still stuck?</h3>
-        <p className="text-gray-400 mb-6">Our team (and community) answers emails, usually entirely for free.</p>
-        <a
-          href="mailto:opendevsociety@gmail.com"
-          className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-        >
-          <Mail size={18} />
-          Contact Support
-        </a>
-      </div>
-
-    </div>
-  );
-}
-
-function HelpCard({ icon, title, desc, link, linkText }: any) {
-  return (
-    <div className="bg-gray-900 border border-gray-800 p-6 rounded-xl flex flex-col items-start hover:border-gray-700 transition-colors">
-      <div className="mb-4 bg-gray-800 p-2 rounded-lg">{icon}</div>
-      <h3 className="font-bold text-white text-lg mb-2">{title}</h3>
-      <p className="text-sm text-gray-400 mb-6 flex-grow">{desc}</p>
-      <a href={link} className="text-teal-400 text-sm font-medium hover:underline flex items-center gap-1">
-        {linkText} <ChevronDown size={14} className="-rotate-90" />
-      </a>
-    </div>
-  );
+    );
 }

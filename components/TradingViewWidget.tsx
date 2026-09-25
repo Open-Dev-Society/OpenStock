@@ -44,9 +44,14 @@ const TradingViewWidget = ({ title, scriptUrl, config, height = 600, className, 
     };
 
     return (
-        <div className={cn("w-full transition-all duration-300", isExpanded && "fixed inset-0 z-[9999] bg-background")}>
+        <section className={cn("finviz-panel w-full transition-all duration-300", isExpanded && "fixed inset-0 z-[9999] bg-background")}>
             <div className={cn("w-full relative group", isExpanded && "h-full w-full")}>
-                {title && !isExpanded && <h3 className="font-semibold text-2xl text-gray-100 mb-5">{title}</h3>}
+                {title && !isExpanded && (
+                    <div className="finviz-panel-title">
+                        <h2>{title}</h2>
+                        <span>● AO VIVO</span>
+                    </div>
+                )}
 
                 {allowExpand && (
                     <Button
@@ -63,11 +68,11 @@ const TradingViewWidget = ({ title, scriptUrl, config, height = 600, className, 
                     </Button>
                 )}
 
-                <div className={cn('tradingview-widget-container', className, isExpanded && "h-full")} ref={containerRef}>
+                <div className={cn('tradingview-widget-container pointer-events-none select-none', className, isExpanded && "h-full")} ref={containerRef}>
                     <div className="tradingview-widget-container__widget" style={{ height: currentHeight, width: "100%" }} />
                 </div>
             </div>
-        </div>
+        </section>
     );
 }
 

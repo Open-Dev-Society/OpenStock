@@ -104,6 +104,11 @@ describe('formatSymbolForTradingView', () => {
         expect(formatSymbolForTradingView('VALE3.SA')).toBe('BMFBOVESPA:VALE3');
     });
 
+    it('prefixes native B3 symbols when B3 is the default exchange', () => {
+        expect(formatSymbolForTradingView('PETR4', 'BMFBOVESPA')).toBe('BMFBOVESPA:PETR4');
+        expect(formatSymbolForTradingView('BMFBOVESPA:VALE3', 'BMFBOVESPA')).toBe('BMFBOVESPA:VALE3');
+    });
+
     // Middle East & Africa
     it('maps Tel Aviv (.TA) to TASE prefix', () => {
         expect(formatSymbolForTradingView('TEVA.TA')).toBe('TASE:TEVA');
