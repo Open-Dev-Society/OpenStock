@@ -41,3 +41,9 @@ This project is indexed by GitNexus as **OpenStock** (1114 symbols, 1768 relatio
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
 
 <!-- gitnexus:end -->
+
+## Git remote safety
+
+- This working copy belongs to the fork `https://github.com/burningza/OpenStockMarkets.git`.
+- Keep `origin` and all push targets pointed at that fork.
+- Never push changes to the original/upstream OpenStock repository.
