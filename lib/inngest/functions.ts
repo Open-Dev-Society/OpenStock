@@ -556,7 +556,7 @@ export const nightly4hResearchFunction = inngest.createFunction(
         const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
 
         const configsToTest: Array<{
-            type: "ema_crossover" | "rsi_oversold" | "breakout" | "liquidity_sweep" | "supertrend" | "fair_value_gap" | "order_block";
+            type: "ema_crossover" | "rsi_oversold" | "breakout" | "liquidity_sweep" | "supertrend" | "fair_value_gap" | "order_block" | "tensortrade_rl";
             params: Record<string, number>;
         }> = [];
 
@@ -624,6 +624,16 @@ export const nightly4hResearchFunction = inngest.createFunction(
                 configsToTest.push({
                     type: "order_block",
                     params: { lookback, holdBars },
+                });
+            }
+        }
+
+        // 8. TensorTrade Reinforcement Learning: Adaptive Q-Policy grid
+        for (const lookback of [14, 20, 30]) {
+            for (const riskTolerance of [1.5, 2.0, 3.0]) {
+                configsToTest.push({
+                    type: "tensortrade_rl",
+                    params: { lookback, riskTolerance },
                 });
             }
         }

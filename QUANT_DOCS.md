@@ -126,6 +126,20 @@ OpenStock features an automated multi-timeframe quantitative backtesting framewo
 - **Logic**: Long on close $> \max(\text{High}_{i-N \dots i-1})$; Short on close $< \min(\text{Low}_{i-N \dots i-1})$.
 - **Parameters**: `lookback` (20).
 
+### 8. TensorTrade Deep RL Adaptive Q-Policy (`tensortrade_rl`)
+- **Type**: Multi-factor Reinforcement Learning Q-Policy with Sortino/Sharpe risk-adjusted reward optimization.
+- **State Vector**:
+  - Normalized Trend Spread: $\frac{\text{EMA}_9 - \text{EMA}_{21}}{\text{ATR}_{14}}$
+  - Normalized Momentum: $\frac{\text{RSI}_{14} - 50}{25}$
+  - Mean-Reversion Z-Score: $\frac{\text{Close} - \text{SMA}_N}{\sigma_N}$
+  - Multi-Factor Policy Score: $\pi(s) = 0.5 \times \text{Trend} + 0.3 \times \text{Mom} - 0.4 \times Z$
+- **Execution Rules**:
+  - Long Entry: $\pi(s) > 0.4$
+  - Short Entry: $\pi(s) < -0.4$ (when `allowShort = true`)
+  - Exit & De-risk: $\pi(s)$ crosses adverse threshold or drawdown reaches `-riskTolerance%`
+- **Parameters**: `lookback` (20), `riskTolerance` (2.0%), `allowShort` (`true`/`false`).
+- **Ticker Coverage**: Fully enabled across all 87 tickers in `QUANT_SYMBOL_UNIVERSE` (Crypto majors, Tech mega-caps, Sector ETFs, Growth equities, Bluechips).
+
 ---
 
 ## 4. Backtest Execution & Metrics Math

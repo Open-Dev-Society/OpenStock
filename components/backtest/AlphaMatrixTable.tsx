@@ -36,10 +36,10 @@ export default function AlphaMatrixTable({ onSelectStrategy }: AlphaMatrixTableP
   const [sortAsc, setSortAsc] = useState<boolean>(false);
   const [showMethodology, setShowMethodology] = useState<boolean>(false);
 
-  const assets = useMemo(() => {
-    const syms = QUANT_SYMBOL_UNIVERSE.map(s => s.symbol.replace('BINANCE:', ''));
-    return ['ALL', ...Array.from(new Set(syms))];
-  }, []);
+  const featuredAssets = useMemo(
+    () => ['ALL', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'HYPEUSDT', 'NVDA', 'AAPL', 'MSFT', 'SPY', 'QQQ', 'TSLA', 'PLTR', 'MSTR'],
+    []
+  );
 
   const rawList = horizon === 'ytd' ? ALPHA_MATRIX_YTD : ALPHA_MATRIX_5YR;
 
@@ -224,13 +224,13 @@ export default function AlphaMatrixTable({ onSelectStrategy }: AlphaMatrixTableP
 
       {/* Asset Filter & Search Bar */}
       <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 bg-gray-950/80 p-3 rounded-xl border border-gray-800">
-        {/* Asset Buttons */}
+        {/* Asset Buttons & Full Universe Dropdown */}
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mr-1 flex items-center gap-1">
             <Filter className="h-3 w-3" />
             Asset:
           </span>
-          {assets.map((ast) => (
+          {featuredAssets.map((ast) => (
             <button
               key={ast}
               type="button"
@@ -244,6 +244,45 @@ export default function AlphaMatrixTable({ onSelectStrategy }: AlphaMatrixTableP
               {ast}
             </button>
           ))}
+
+          {/* Full Universe Selector (All 87 Assets) */}
+          <select
+            value={selectedAsset}
+            onChange={(e) => setSelectedAsset(e.target.value)}
+            className={`text-xs px-2.5 py-1 rounded-md font-mono transition-all bg-gray-900 border outline-none cursor-pointer ${
+              !featuredAssets.includes(selectedAsset)
+                ? 'bg-teal-500/20 text-teal-300 border-teal-500/40 font-bold'
+                : 'text-gray-400 border-gray-800 hover:text-gray-200'
+            }`}
+          >
+            <option value="ALL">All 87 Assets ▾</option>
+            <optgroup label="Crypto Majors (26)" className="bg-gray-950 text-gray-200">
+              {QUANT_SYMBOL_UNIVERSE.filter((s) => s.category === 'crypto').map((s) => {
+                const clean = s.symbol.replace('BINANCE:', '');
+                return <option key={clean} value={clean}>{clean} - {s.name}</option>;
+              })}
+            </optgroup>
+            <optgroup label="Tech Mega-Caps (18)" className="bg-gray-950 text-gray-200">
+              {QUANT_SYMBOL_UNIVERSE.filter((s) => s.category === 'tech').map((s) => (
+                <option key={s.symbol} value={s.symbol}>{s.symbol} - {s.name}</option>
+              ))}
+            </optgroup>
+            <optgroup label="Index & Sector ETFs (15)" className="bg-gray-950 text-gray-200">
+              {QUANT_SYMBOL_UNIVERSE.filter((s) => s.category === 'etf').map((s) => (
+                <option key={s.symbol} value={s.symbol}>{s.symbol} - {s.name}</option>
+              ))}
+            </optgroup>
+            <optgroup label="High-Beta & Growth (16)" className="bg-gray-950 text-gray-200">
+              {QUANT_SYMBOL_UNIVERSE.filter((s) => s.category === 'growth').map((s) => (
+                <option key={s.symbol} value={s.symbol}>{s.symbol} - {s.name}</option>
+              ))}
+            </optgroup>
+            <optgroup label="Blue-Chip & Defensive (12)" className="bg-gray-950 text-gray-200">
+              {QUANT_SYMBOL_UNIVERSE.filter((s) => s.category === 'bluechip').map((s) => (
+                <option key={s.symbol} value={s.symbol}>{s.symbol} - {s.name}</option>
+              ))}
+            </optgroup>
+          </select>
         </div>
 
         {/* Search & Methodology Toggle */}

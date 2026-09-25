@@ -171,11 +171,28 @@ describe("AlphaStudio Quantitative Strategy & Indicator Integration", () => {
       expect(res.metrics).toBeDefined();
     });
 
-    it("evaluates tensortrade_rl adaptive Q-policy", () => {
-      const res = evaluateTensorTradeRl(candles, 20, 2.0, "BINANCE:BTCUSDT");
-      expect(res.metrics).toBeDefined();
-      expect(Number.isFinite(res.metrics.sortino)).toBe(true);
-      expect(Number.isFinite(res.metrics.calmar)).toBe(true);
+    it("evaluates tensortrade_rl adaptive Q-policy across multiple asset classes", () => {
+      // 1. Crypto with shorting enabled
+      const cryptoRes = evaluateTensorTradeRl(candles, 20, 2.0, "BINANCE:BTCUSDT", true, "4h");
+      expect(cryptoRes.metrics).toBeDefined();
+      expect(Number.isFinite(cryptoRes.metrics.sortino)).toBe(true);
+      expect(Number.isFinite(cryptoRes.metrics.calmar)).toBe(true);
+      expect(cryptoRes.metrics.exposure).toBeGreaterThanOrEqual(0);
+
+      // 2. Hyperliquid perp pair
+      const hypeRes = evaluateTensorTradeRl(candles, 14, 1.5, "BINANCE:HYPEUSDT", true, "1h");
+      expect(hypeRes.metrics).toBeDefined();
+      expect(Number.isFinite(hypeRes.metrics.totalReturn)).toBe(true);
+
+      // 3. Equity Mega-cap (long only)
+      const nvdaRes = evaluateTensorTradeRl(candles, 20, 2.5, "NVDA", false, "4h");
+      expect(nvdaRes.metrics).toBeDefined();
+      expect(nvdaRes.metrics.maxDrawdown).toBeGreaterThanOrEqual(0);
+
+      // 4. Index ETF
+      const spyRes = evaluateTensorTradeRl(candles, 25, 2.0, "SPY", false, "1d");
+      expect(spyRes.metrics).toBeDefined();
+      expect(spyRes.metrics.tradesCount).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -189,6 +206,38 @@ describe("AlphaStudio Quantitative Strategy & Indicator Integration", () => {
       expect(m.profitFactor).toBeGreaterThanOrEqual(0);
       expect(m.exposure).toBeGreaterThanOrEqual(0);
       expect(m.exposure).toBeLessThanOrEqual(100);
+    });
+  });
+
+  describe("4. Multi-Asset Alpha Matrix (All 87 Tickers & TensorTrade RL)", () => {
+    it("ensures all 87 tickers in QUANT_SYMBOL_UNIVERSE have TensorTrade RL in YTD and 5Y matrix", async () => {
+      const { QUANT_SYMBOL_UNIVERSE } = await import("@/lib/market/symbols");
+      const { ALPHA_MATRIX_YTD, ALPHA_MATRIX_5YR } = await import("@/components/backtest/types");
+
+      expect(QUANT_SYMBOL_UNIVERSE.length).toBe(87);
+
+      for (const s of QUANT_SYMBOL_UNIVERSE) {
+        const clean = s.symbol.replace("BINANCE:", "");
+
+        // 1. Must exist in YTD
+        const ytdMatch = ALPHA_MATRIX_YTD.find(
+          (m) => m.symbol === clean && m.strategyKey === "tensortrade_rl"
+        );
+        expect(ytdMatch).toBeDefined();
+        expect(ytdMatch?.ret).toBeDefined();
+        expect(Number.isFinite(ytdMatch?.sharpe)).toBe(true);
+        expect(Number.isFinite(ytdMatch?.sortino)).toBe(true);
+        expect(Number.isFinite(ytdMatch?.calmar)).toBe(true);
+
+        // 2. Must exist in 5YR
+        const fiveYrMatch = ALPHA_MATRIX_5YR.find(
+          (m) => m.symbol === clean && m.strategyKey === "tensortrade_rl"
+        );
+        expect(fiveYrMatch).toBeDefined();
+        expect(fiveYrMatch?.ret).toBeDefined();
+        expect(fiveYrMatch?.cagr).toBeGreaterThan(0);
+        expect(Number.isFinite(fiveYrMatch?.sortino)).toBe(true);
+      }
     });
   });
 });

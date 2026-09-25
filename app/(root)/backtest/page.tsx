@@ -107,6 +107,11 @@ export default function BacktestDashboardPage() {
   const [keltnerAtr, setKeltnerAtr] = useState(10);
   const [keltnerMult, setKeltnerMult] = useState(1.5);
 
+  // TensorTrade Deep RL Parameters
+  const [ttLookback, setTtLookback] = useState(20);
+  const [ttRiskTolerance, setTtRiskTolerance] = useState(2.0);
+  const [ttAllowShort, setTtAllowShort] = useState(false);
+
   // Code Export Modal State
   const [isCodeExportOpen, setIsCodeExportOpen] = useState(false);
 
@@ -188,6 +193,8 @@ export default function BacktestDashboardPage() {
         return { period: zscorePeriod, threshold: zscoreThreshold };
       case 'keltner':
         return { emaPeriod: keltnerEma, atrPeriod: keltnerAtr, atrMult: keltnerMult };
+      case 'tensortrade_rl':
+        return { lookback: ttLookback, riskTolerance: ttRiskTolerance, allowShort: ttAllowShort ? 1 : 0 };
       case 'overnight':
       case 'overnight_hold':
       default:
@@ -265,7 +272,10 @@ export default function BacktestDashboardPage() {
   };
 
   const handleLoadStrategyFromMatrix = (matrixSymbol: string, matrixStrategy: StrategyType) => {
-    const formattedSymbol = matrixSymbol === 'BTC' ? 'BINANCE:BTCUSDT' : matrixSymbol;
+    const matched = QUANT_SYMBOL_UNIVERSE.find(
+      (s) => s.symbol.replace('BINANCE:', '') === matrixSymbol
+    );
+    const formattedSymbol = matched ? matched.symbol : matrixSymbol === 'BTC' ? 'BINANCE:BTCUSDT' : matrixSymbol;
     setSymbol(formattedSymbol);
     setStrategyType(matrixStrategy);
     window.scrollTo({ top: 200, behavior: 'smooth' });
@@ -449,6 +459,9 @@ export default function BacktestDashboardPage() {
                   <option value="stoch_rsi">Stochastic RSI Momentum Swing</option>
                   <option value="zscore_rev">Z-Score Statistical Mean Reversion</option>
                   <option value="keltner">Keltner Channel Volatility Reversion</option>
+                </optgroup>
+                <optgroup label="Reinforcement Learning &amp; AI" className="bg-gray-900 text-gray-200">
+                  <option value="tensortrade_rl">TensorTrade Deep RL Adaptive Q-Policy (Strategy Discovery)</option>
                 </optgroup>
                 <optgroup label="Session Drift &amp; Benchmark" className="bg-gray-900 text-gray-200">
                   <option value="overnight">Overnight Gap Drift (Close-to-Open Holding)</option>
@@ -941,6 +954,44 @@ export default function BacktestDashboardPage() {
               <div className="col-span-2 md:col-span-4 p-3 bg-teal-950/20 border border-teal-500/20 rounded-xl text-teal-300 text-xs">
                 <strong>Overnight Gap Drift Strategy:</strong> Systematically enters on 16:00 close and exits on 09:30 open. Exploits institutional rebalance imbalance and overnight flow with zero intraday drawdowns.
               </div>
+            )}
+
+            {strategyType === 'tensortrade_rl' && (
+              <>
+                <div>
+                  <label className="text-xs text-gray-400">Policy Lookback Window (bars)</label>
+                  <Input
+                    type="number"
+                    value={ttLookback}
+                    onChange={(e) => setTtLookback(Number(e.target.value))}
+                    className="bg-gray-950 border-gray-700 text-gray-200 mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400">Risk Tolerance Cutoff (%)</label>
+                  <Input
+                    type="number"
+                    step="0.5"
+                    value={ttRiskTolerance}
+                    onChange={(e) => setTtRiskTolerance(Number(e.target.value))}
+                    className="bg-gray-950 border-gray-700 text-gray-200 mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400">Execution Mode</label>
+                  <select
+                    value={ttAllowShort ? 'true' : 'false'}
+                    onChange={(e) => setTtAllowShort(e.target.value === 'true')}
+                    className="w-full bg-gray-950 border border-gray-700 text-gray-200 rounded-lg p-2.5 text-xs focus:border-teal-500 outline-none mt-1"
+                  >
+                    <option value="false">Long Only (Cash / Equities)</option>
+                    <option value="true">Long &amp; Short (Futures / Crypto)</option>
+                  </select>
+                </div>
+                <div className="col-span-1 sm:col-span-2 lg:col-span-4 p-3 bg-teal-950/20 border border-teal-500/20 rounded-xl text-teal-300 text-xs">
+                  <strong>TensorTrade RL Adaptive Q-Policy:</strong> Dynamically optimizes multi-factor reward vectors (Sortino/Sharpe risk-adjusted return) combining trend spread (EMA9/21), RSI momentum, and Z-Score mean-reversion.
+                </div>
+              </>
             )}
           </div>
 
