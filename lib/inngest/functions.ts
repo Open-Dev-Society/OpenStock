@@ -464,3 +464,41 @@ export const checkInactiveUsers = inngest.createFunction(
         return { processed: inactiveUsers.length, sent: results };
     }
 );
+
+export const checkAITrading = inngest.createFunction(
+    { id: 'check-ai-trading', triggers: [{ cron: '*/30 9-15 * * 1-5' }] }, // Mon-Fri 9:30-15:30 ET (every 30 min)
+    async ({ step }) => {
+        // Step 1: Fetch enabled AI trading accounts
+        const accounts = await step.run('fetch-enabled-accounts', async () => {
+            const { connectToDatabase } = await import("@/database/mongoose");
+            const { AITradingConfigModel } = await import("@/database/models/paper-trading.model");
+            await connectToDatabase();
+            return await AITradingConfigModel.find({ enabled: true, apiKey: { $ne: '' } }).lean();
+        });
+
+        if (!accounts || accounts.length === 0) {
+            return { message: 'No AI trading accounts enabled.' };
+        }
+
+        // Step 2: Run trade cycles for each account
+        const results = await step.run('execute-trade-cycles', async () => {
+            const { runAITradeCycle } = await import("@/lib/actions/ai-trading.actions");
+            const output: Array<{ accountId: string; summary?: string; error?: string }> = [];
+            for (const account of accounts as any[]) {
+                try {
+                    const result = await runAITradeCycle(account.accountId);
+                    output.push({
+                        accountId: account.accountId,
+                        summary: result.summary?.slice(0, 200) || (result.executed.length > 0 ? `Executed ${result.executed.length} trades` : 'No trades'),
+                    });
+                } catch (err: any) {
+                    console.error(`AI trading error for ${account.accountId}:`, err);
+                    output.push({ accountId: account.accountId, error: err.message });
+                }
+            }
+            return output;
+        });
+
+        return { processed: accounts.length, results };
+    }
+);

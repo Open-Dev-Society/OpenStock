@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# Hermes Agent helper scripts (cron/automation tools — not part of the app)
+/_scripts/
+
 # debug
 npm-debug.log*
 yarn-debug.log*
