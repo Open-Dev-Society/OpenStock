@@ -116,7 +116,7 @@ describe("codeExport - Multi-Platform Code Generation for all 16 strategies", ()
         expect(item.code).toContain("strategy(");
         expect(item.code).toContain("strategy.entry(");
         expect(item.code).toContain("strategy.close(");
-        expect(item.code).toContain("alertcondition(");
+        expect(item.code).not.toContain("alertcondition(");
         expect(item.code).toContain("alert(");
         expect(item.filename).toContain("AAPL");
         expect(item.filename.endsWith(".pine")).toBe(true);

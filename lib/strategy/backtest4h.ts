@@ -366,7 +366,8 @@ function computeMetricsFromSignals(
   warmupBars: number,
   symbol: string = "UNKNOWN",
   initialBalance: number = 10000,
-  isOvernight: boolean = false
+  isOvernight: boolean = false,
+  timeframe: string = "4h"
 ): StrategyEvaluationResult {
   const barsCount = candles.length;
   if (barsCount < warmupBars + 1) {
@@ -420,9 +421,9 @@ function computeMetricsFromSignals(
         id: `${symbol}-${tradeIndex++}`,
         symbol,
         type: "long",
-        entryTime: candles[i - 1].time,
+        entryTime: new Date(candles[i - 1].time),
         entryPrice: Math.round(prevClose * 100) / 100,
-        exitTime: candles[i].time,
+        exitTime: new Date(candles[i].time),
         exitPrice: Math.round(currOpen * 100) / 100,
         pnl: Math.round(tradePnl * 100) / 100,
         returnPct: Math.round(barReturn * 10000) / 10000,
@@ -463,9 +464,9 @@ function computeMetricsFromSignals(
           id: `${symbol}-${tradeIndex++}`,
           symbol,
           type: tradeType,
-          entryTime,
+          entryTime: new Date(entryTime),
           entryPrice: Math.round(entryPrice * 100) / 100,
-          exitTime: candles[i].time,
+          exitTime: new Date(candles[i].time),
           exitPrice: Math.round(exitPrice * 100) / 100,
           pnl: Math.round(tradePnl * 100) / 100,
           returnPct: Math.round(returnPct * 10000) / 10000,
@@ -524,7 +525,16 @@ function computeMetricsFromSignals(
     : new Date(candles[0].time).getTime();
   const lastTime = new Date(candles[barsCount - 1].time).getTime();
   const years = Math.max((lastTime - firstTime) / (365.25 * 24 * 3600 * 1000), 0.01);
-  const barsPerYear = years > 0 ? n / years : 252 * 6;
+  const isCrypto = /USDT$|USD$|BTC$|ETH$|^BINANCE:/i.test(symbol);
+  const TF_ANNUAL_BARS: Record<string, { crypto: number; tradfi: number }> = {
+    "15m": { crypto: 35040, tradfi: 6552 },
+    "1h":  { crypto: 8760,  tradfi: 1638 },
+    "4h":  { crypto: 2190,  tradfi: 504 },
+    "1d":  { crypto: 365,   tradfi: 252 },
+  };
+  const barsPerYear =
+    TF_ANNUAL_BARS[timeframe]?.[isCrypto ? "crypto" : "tradfi"] ??
+    (years > 0 ? n / years : isCrypto ? 2190 : 504);
 
   const meanReturn = returns.reduce((acc, v) => acc + v, 0) / n;
   const variance =

@@ -83,15 +83,15 @@ export function getFallbackProviderName(
   if (primary === "9router" || primary === "ninerouter") {
     if (process.env.GEMINI_API_KEY) return "gemini";
     if (process.env.MINIMAX_API_KEY) return "minimax";
-    return "9router";
+    return "gemini";
   }
   if (primary === "gemini") {
-    if (process.env.NINEROUTER_KEY || process.env.NINEROUTER_URL) return "9router";
     if (process.env.MINIMAX_API_KEY) return "minimax";
     if (process.env.SIRAY_API_KEY) return "siray";
+    if (process.env.NINEROUTER_KEY || process.env.NINEROUTER_URL) return "9router";
     return "minimax";
   }
-  return "9router";
+  return "gemini";
 }
 
 // ── Provider call implementations ──────────────────────────────────
