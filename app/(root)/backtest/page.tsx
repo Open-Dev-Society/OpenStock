@@ -24,6 +24,7 @@ import AlphaMatrixTable from '@/components/backtest/AlphaMatrixTable';
 import CodeExportModal from '@/components/backtest/CodeExportModal';
 import VibeTraderPanel from '@/components/backtest/VibeTraderPanel';
 import { StrategyType } from '@/components/backtest/types';
+import { getBestStrategyForSymbolAndTimeframe } from '@/lib/strategy/bestStrategy';
 
 interface Trade {
   id: string;
@@ -123,6 +124,7 @@ export default function BacktestDashboardPage() {
   const [historyList, setHistoryList] = useState<BacktestData[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [optimalNotice, setOptimalNotice] = useState<string | null>(null);
 
   // Fetch recent history on mount
   useEffect(() => {
@@ -282,6 +284,56 @@ export default function BacktestDashboardPage() {
     window.scrollTo({ top: 200, behavior: 'smooth' });
   };
 
+  const handleSelectBestStrategy = () => {
+    const optimal = getBestStrategyForSymbolAndTimeframe(symbol, timeframe);
+    setStrategyType(optimal.strategyType);
+
+    const p = optimal.params;
+    if (p.lookback) {
+      setTtLookback(p.lookback);
+      setSweepLookback(p.lookback);
+      setBreakoutLookback(p.lookback);
+      setObLookback(p.lookback);
+    }
+    if (p.riskTolerance) setTtRiskTolerance(p.riskTolerance);
+    if (p.allowShort !== undefined) setTtAllowShort(p.allowShort === 1);
+    if (p.fastPeriod) {
+      setFastPeriod(p.fastPeriod);
+      setMacdFast(p.fastPeriod);
+      setSmaFast(p.fastPeriod);
+      setHmaFast(p.fastPeriod);
+    }
+    if (p.slowPeriod) {
+      setSlowPeriod(p.slowPeriod);
+      setMacdSlow(p.slowPeriod);
+      setSmaSlow(p.slowPeriod);
+      setHmaSlow(p.slowPeriod);
+    }
+    if (p.signalPeriod) setMacdSignal(p.signalPeriod);
+    if (p.period) {
+      setRsiPeriod(p.period);
+      setBbPeriod(p.period);
+      setZscorePeriod(p.period);
+      setAdxPeriod(p.period);
+      setStochPeriod(p.period);
+    }
+    if (p.stdDevMult) setBbStdDev(p.stdDevMult);
+    if (p.multiplier) setMultiplier(p.multiplier);
+    if (p.atrPeriod) setAtrPeriod(p.atrPeriod);
+    if (p.minGapPct) setMinGapPct(p.minGapPct);
+    if (p.holdBars) setFvgHoldBars(p.holdBars);
+    if (p.volMultiplier) setVolMultiplier(p.volMultiplier);
+
+    const cleanDisplay = optimal.symbol.replace('BINANCE:', '');
+    setOptimalNotice(
+      `⚡ AlphaStudio Optimal Setup Applied: ${optimal.strategyName} for ${cleanDisplay} on ${optimal.timeframe} — Expected Return: +${optimal.metrics.expectedReturn.toFixed(1)}%, Sharpe: ${optimal.metrics.sharpe.toFixed(2)}, Sortino: ${optimal.metrics.sortino.toFixed(2)}, Max DD: ${optimal.metrics.maxDrawdown.toFixed(1)}%`
+    );
+
+    setTimeout(() => {
+      setOptimalNotice(null);
+    }, 12000);
+  };
+
   const metrics = activeBacktest?.metrics;
   const trades = activeBacktest?.trades || [];
   const initialCapital = 10000;
@@ -424,22 +476,48 @@ export default function BacktestDashboardPage() {
       {/* Control Panel / Strategy Configuration */}
       {(activeViewTab === 'all' || activeViewTab === 'backtest') && (
         <div className="bg-gray-900/60 border border-gray-800 rounded-2xl p-6 shadow-xl backdrop-blur-sm space-y-6">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <h2 className="text-lg font-semibold text-gray-200 flex items-center gap-2">
               <Activity className="h-5 w-5 text-teal-400" />
               Strategy Parameters &amp; Asset Configuration
             </h2>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsCodeExportOpen(true)}
-              className="text-xs text-teal-400 hover:text-teal-300 hover:bg-teal-500/10"
-            >
-              <Code className="h-3.5 w-3.5 mr-1" />
-              Generate Pine/Python
-            </Button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                type="button"
+                onClick={handleSelectBestStrategy}
+                className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-bold text-xs h-8 px-3.5 rounded-lg shadow-md flex items-center gap-1.5 transition-all"
+              >
+                <Sparkles className="h-3.5 w-3.5 fill-current" />
+                Select Best Strategy &amp; Config
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsCodeExportOpen(true)}
+                className="text-xs text-teal-400 hover:text-teal-300 hover:bg-teal-500/10"
+              >
+                <Code className="h-3.5 w-3.5 mr-1" />
+                Generate Pine/Python
+              </Button>
+            </div>
           </div>
+
+          {optimalNotice && (
+            <div className="p-3.5 bg-gradient-to-r from-teal-950/40 via-emerald-950/30 to-gray-900 border border-teal-500/30 rounded-xl text-teal-300 text-xs flex items-center justify-between gap-3 animate-in fade-in duration-200">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-teal-400 flex-shrink-0" />
+                <span>{optimalNotice}</span>
+              </div>
+              <Button
+                size="sm"
+                onClick={handleRunBacktest}
+                className="h-7 text-xs bg-teal-600 hover:bg-teal-500 text-white px-3 font-bold font-mono"
+              >
+                Run Now
+              </Button>
+            </div>
+          )}
 
           {/* Quick Ticker Chips */}
           <div className="flex flex-wrap items-center gap-2 pt-1 pb-1 border-b border-gray-800/80">
