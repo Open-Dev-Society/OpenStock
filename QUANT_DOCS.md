@@ -140,6 +140,18 @@ OpenStock features an automated multi-timeframe quantitative backtesting framewo
 - **Parameters**: `lookback` (20), `riskTolerance` (2.0%), `allowShort` (`true`/`false`).
 - **Ticker Coverage**: Fully enabled across all 87 tickers in `QUANT_SYMBOL_UNIVERSE` (Crypto majors, Tech mega-caps, Sector ETFs, Growth equities, Bluechips).
 
+### 9. Vibe Trader Studio & Multi-Agent Committee (`HKUDS/Vibe-Trading`)
+- **Origin & Architecture**: Inspired by `HKUDS/Vibe-Trading` (34,000+ GitHub stars) — natural language prompt-driven quantitative strategy discovery.
+- **Workflow**:
+  1. **Prompt Ingestion**: Parses natural language trader goals, asset classes, and risk tolerances.
+  2. **Rule Synthesis**: Heuristically resolves strategy type, parameters (lookbacks, stops, thresholds), and execution rules.
+  3. **The Vibe Committee (4 Autonomous Roles)**:
+     - 🚀 **Alpha Seeker (Bull)**: Analyzes order flow, displacement, momentum, and upside convexity.
+     - 🛡️ **Risk Auditor (Bear)**: Audits tail risk, maximum expected drawdown, and hard stop adherence.
+     - 🧠 **TensorTrade RL Specialist**: Tunes multi-factor state representations and Sortino reward optimization.
+     - ⚖️ **Chief Investment Officer (CIO)**: Delivers consensus verdict, confidence score, and deployment mandate.
+  4. **1-Click Execution**: Instantly deploys synthesized parameters to the OpenStock backtester or exports to TradingView, Python, NautilusTrader, Qlib, or TensorTrade.
+
 ---
 
 ## 4. Backtest Execution & Metrics Math

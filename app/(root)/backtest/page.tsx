@@ -22,6 +22,7 @@ import { QUANT_SYMBOL_UNIVERSE } from '@/lib/market/symbols';
 import KpiMetricsGrid from '@/components/backtest/KpiMetricsGrid';
 import AlphaMatrixTable from '@/components/backtest/AlphaMatrixTable';
 import CodeExportModal from '@/components/backtest/CodeExportModal';
+import VibeTraderPanel from '@/components/backtest/VibeTraderPanel';
 import { StrategyType } from '@/components/backtest/types';
 
 interface Trade {
@@ -64,7 +65,7 @@ export default function BacktestDashboardPage() {
   const [symbol, setSymbol] = useState('BINANCE:BTCUSDT');
   const [timeframe, setTimeframe] = useState<'15m' | '1h' | '4h' | '1d'>('4h');
   const [lookbackDays, setLookbackDays] = useState(365);
-  const [activeViewTab, setActiveViewTab] = useState<'all' | 'backtest' | 'matrix'>('all');
+  const [activeViewTab, setActiveViewTab] = useState<'all' | 'backtest' | 'matrix' | 'vibe'>('all');
 
   // Strategy Params - Classic
   const [fastPeriod, setFastPeriod] = useState(12);
@@ -345,6 +346,18 @@ export default function BacktestDashboardPage() {
               <TableProperties className="h-3.5 w-3.5" />
               Alpha Matrix
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveViewTab('vibe')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+                activeViewTab === 'vibe'
+                  ? 'bg-gradient-to-r from-teal-400 to-purple-500 text-black shadow-md shadow-purple-500/20'
+                  : 'text-purple-300 hover:text-purple-100 hover:bg-purple-950/20'
+              }`}
+            >
+              <Sparkles className="h-3.5 w-3.5 text-purple-400" />
+              Vibe Trader
+            </button>
           </div>
 
           <Button
@@ -375,6 +388,38 @@ export default function BacktestDashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Vibe Trader Studio (AI Autonomous Quant Agent inspired by HKUDS/Vibe-Trading) */}
+      {(activeViewTab === 'all' || activeViewTab === 'vibe') && (
+        <VibeTraderPanel
+          onDeployStrategy={(vibeSymbol, vibeType, vibeParams, vibeTf) => {
+            setSymbol(vibeSymbol);
+            setStrategyType(vibeType);
+            setTimeframe(vibeTf as any);
+            if (vibeParams.lookback) {
+              setTtLookback(vibeParams.lookback);
+              setSweepLookback(vibeParams.lookback);
+              setBreakoutLookback(vibeParams.lookback);
+            }
+            if (vibeParams.riskTolerance) setTtRiskTolerance(vibeParams.riskTolerance);
+            if (vibeParams.allowShort !== undefined) setTtAllowShort(vibeParams.allowShort === 1);
+            if (vibeParams.fastPeriod) setFastPeriod(vibeParams.fastPeriod);
+            if (vibeParams.slowPeriod) setSlowPeriod(vibeParams.slowPeriod);
+            if (vibeParams.period) setRsiPeriod(vibeParams.period);
+            if (vibeParams.multiplier) setMultiplier(vibeParams.multiplier);
+            if (vibeParams.minGapPct) setMinGapPct(vibeParams.minGapPct);
+
+            setActiveViewTab('backtest');
+            window.scrollTo({ top: 350, behavior: 'smooth' });
+          }}
+          onOpenCodeExport={(vibeType, vibeSymbol, vibeTf) => {
+            setStrategyType(vibeType);
+            setSymbol(vibeSymbol);
+            setTimeframe(vibeTf as any);
+            setIsCodeExportOpen(true);
+          }}
+        />
+      )}
 
       {/* Control Panel / Strategy Configuration */}
       {(activeViewTab === 'all' || activeViewTab === 'backtest') && (
