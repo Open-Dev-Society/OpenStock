@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { BookOpen, Code2, Heart, Info, LayoutDashboard, LifeBuoy, LogOut, Search, Star } from "lucide-react";
+import { BookOpen, Code2, FileText, Heart, Info, LayoutDashboard, LifeBuoy, LogOut, Search, Star } from "lucide-react";
 import { openSearch } from "@/components/SearchCommand";
 import { signOut } from "@/lib/actions/auth.actions";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,7 @@ const RESOURCES = [
 const Sidebar = ({ user, watchlist }: SidebarProps) => {
     const pathname = usePathname();
     const router = useRouter();
+    const isResearch = pathname === '/research' || pathname.startsWith('/research/');
     const partners = sidebarSponsors();
     const openSlots = SIDEBAR_SPONSOR_SLOTS - partners.length;
 
@@ -51,6 +52,9 @@ const Sidebar = ({ user, watchlist }: SidebarProps) => {
                 <Link href="/watchlist" className={cn('side-item', pathname === '/watchlist' && 'is-active')}>
                     <Star /> <span className="flex-1">Watchlist</span>
                     <span className="num text-xs text-faint">{watchlist.length}</span>
+                </Link>
+                <Link href="/research" aria-current={isResearch ? 'page' : undefined} className={cn('side-item', isResearch && 'is-active')}>
+                    <FileText /> Research
                 </Link>
             </nav>
 

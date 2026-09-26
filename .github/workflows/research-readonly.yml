@@ -1,0 +1,35 @@
+name: Research read-only checks
+
+on:
+  pull_request:
+    paths:
+      - "app/(root)/research/**"
+      - "components/research/**"
+      - "components/shell/**"
+      - "lib/quantagent/**"
+      - "app/globals.css"
+      - "vitest.config.ts"
+      - "__tests__/quantagent-*.test.ts"
+      - ".github/workflows/research-readonly.yml"
+      - "package.json"
+      - "package-lock.json"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npx tsc --noEmit
+      - run: npx eslint "app/(root)/research" components/research components/shell/Sidebar.tsx components/shell/TabBar.tsx lib/quantagent __tests__/quantagent-*.test.ts vitest.config.ts
