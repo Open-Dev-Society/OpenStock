@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 
 import { RunLocator } from "@/components/research/RunLocator"
+import "./research.css"
 
 export function ResearchFrame({
   runId,

@@ -108,10 +108,10 @@ export const getChangeColorClass = (changePercent?: number) => {
     return changePercent > 0 ? 'text-green-500' : 'text-red-500';
 };
 
-export const formatPrice = (price: number) => {
+export const formatPrice = (price: number, currency = 'USD') => {
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: 'USD',
+        currency,
         minimumFractionDigits: 2,
     }).format(price);
 };
@@ -119,7 +119,11 @@ export const formatPrice = (price: number) => {
 // Alias for consistency
 export const formatCurrency = formatPrice;
 
-export function formatNumber(num: number): string {
+export function formatNumber(num?: number | null): string {
+    // Guard against missing/invalid market caps (Finnhub omits this field for many
+    // symbols, e.g. ETFs). Without this, `num * 1e6` yields NaN and renders "NaN".
+    if (num === undefined || num === null || !Number.isFinite(num)) return 'N/A';
+
     // If number is small (likely already in millions from Finnhub), multiply by 1M to get actual value
     // Typical mega-cap is > 100B. 100B in millions is 100,000.
     // If we assume typical market cap input IS millions:
@@ -173,7 +177,7 @@ const FINNHUB_TO_TRADINGVIEW_EXCHANGE: Record<string, string> = {
     '.AX': 'ASX',    // Australian Securities Exchange
     '.NZ': 'NZX',    // New Zealand
     '.BO': 'BSE',    // Bombay Stock Exchange
-    '.NS': 'NSE',    // National Stock Exchange of India
+    '.NS': 'BSE',    // NSE listing: NSE is blocked in free TradingView embeds, the same ticker renders on BSE
     '.BK': 'SET',    // Stock Exchange of Thailand
     '.JK': 'IDX',    // Indonesia Stock Exchange
     '.KL': 'MYX',    // Bursa Malaysia
@@ -196,7 +200,7 @@ const FINNHUB_TO_TRADINGVIEW_EXCHANGE: Record<string, string> = {
     '.SW': 'SIX',    // SIX Swiss Exchange
     '.VI': 'VIE',    // Vienna Stock Exchange
     '.WA': 'GPW',    // Warsaw Stock Exchange
-    '.PR': 'PSE',    // Prague Stock Exchange
+    '.PR': 'PSECZ',  // Prague Stock Exchange (TradingView's PSE is the Philippines)
     '.AT': 'ATHEX',  // Athens Stock Exchange
     '.IS': 'BIST',   // Borsa Istanbul
 
@@ -212,6 +216,21 @@ const FINNHUB_TO_TRADINGVIEW_EXCHANGE: Record<string, string> = {
     '.JO': 'JSE',    // Johannesburg Stock Exchange
 };
 
+// Exchanges whose candle chart TradingView refuses in free embeds ("This symbol doesn't exist"), each confirmed
+// with two tickers. Financials, technicals and profile still work for them.
+// ponytail: static list, re-test with a real browser user agent if TradingView changes its licensing.
+const CHART_BLOCKED_EXCHANGES = new Set(['TSE', 'HKEX', 'LSE', 'KRX', 'TWSE', 'SGX', 'NZX', 'SET', 'MYX', 'BIST', 'TSXV', 'BMV', 'JSE']);
+
+export const isChartEmbeddable = (tvSymbol: string) => !CHART_BLOCKED_EXCHANGES.has(tvSymbol.split(':')[0]);
+
+export const tradingViewSymbolUrl = (tvSymbol: string) => `https://www.tradingview.com/symbols/${tvSymbol.replace(':', '-')}/`;
+
+// Listed outside the US (has a known exchange suffix like .L, .T, .NS). Class shares such as BRK.B are not.
+export function isInternationalSymbol(symbol: string): boolean {
+    const upper = symbol.toUpperCase();
+    return Object.keys(FINNHUB_TO_TRADINGVIEW_EXCHANGE).some((suffix) => upper.endsWith(suffix.toUpperCase()));
+}
+
 export function formatSymbolForTradingView(symbol: string): string {
     if (!symbol) return '';
     const upperSymbol = symbol.toUpperCase();
@@ -223,11 +242,21 @@ export function formatSymbolForTradingView(symbol: string): string {
 
     for (const suffix of suffixes) {
         if (upperSymbol.endsWith(suffix.toUpperCase())) {
-            const ticker = upperSymbol.slice(0, -suffix.length);
             const exchange = FINNHUB_TO_TRADINGVIEW_EXCHANGE[suffix];
+            // Finnhub pads Hong Kong codes (0700.HK); TradingView doesn't (HKEX:700)
+            const ticker = exchange === 'HKEX' ? upperSymbol.slice(0, -suffix.length).replace(/^0+(?=\d)/, '') : upperSymbol.slice(0, -suffix.length);
             return `${exchange}:${ticker}`;
         }
     }
 
     return upperSymbol;
 }
+
+// For values interpolated into email HTML
+export const escapeHtml = (value: string) =>
+    value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');

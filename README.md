@@ -1,5 +1,5 @@
 <p align="center">
-  Ca: B6F3rUqfPfPmHXeMJaVttkrP9tfy5Eq2MUAaubFxpump
+  
 </p>
 
 <p align="center">
@@ -46,11 +46,15 @@
 
 # OpenStock
 
-OpenStock is an open-source alternative to expensive market platforms. Track real-time prices, set personalized alerts, and explore detailed company insights — built openly, for everyone, forever free.
+OpenStock is an open-source alternative to expensive market platforms. Track real-time prices, watch the whole market, and explore detailed company insights — built openly, for everyone, forever free.
+
+> ❤️ **13,000+ people use OpenStock for free.** Help keep it that way: [sponsor from $5 a month](https://github.com/sponsors/ravixalgorithm/sponsorships?frequency=recurring&amount=5), or read [how OpenStock is funded](#sponsors).
 
 ## QuantAgent research results
 
 The authenticated `/research` page can read an existing QuantAgent run summary and integrity-checked Markdown report. It does not expose a task submission, cancellation, resume, rerun, or trading action.
+
+Open **Research** from the sidebar (or the mobile menu), then enter an existing run ID. Run detail pages share the Research tab; run IDs are not saved in the shell's browser-local tab history. The report layout adapts to the available workspace width, including when the desktop sidebar is visible.
 
 Configure these variables on the OpenStock server only:
 
@@ -65,6 +69,8 @@ Research access is disabled unless `QUANTAGENT_ALLOWED_USER_ID` exactly matches 
 The browser never receives the bearer token. For the allowed account, OpenStock sends two uncached, non-redirecting `GET` requests from the Next.js server to QuantAgent v1. Plain HTTP is accepted only for literal loopback IPs (`127.0.0.1` or `[::1]`); hostnames, including `localhost`, must use HTTPS.
 
 For an optional local contract check, start QuantAgent with a completed thesis run, set `QUANTAGENT_LIVE_RUN_ID` to that run ID alongside the two server variables above, then run `npm test -- __tests__/quantagent-live-contract.test.ts`. The test performs real authenticated reads and checks report integrity and public error mapping; it is skipped when the three variables are not set. Use test-only credentials and do not commit them.
+
+Run `npm ci`, `npm test`, and `npx tsc --noEmit` for the offline regression and type checks. The Research workflow runs those checks and scoped ESLint. A full production build also requires OpenStock's database configuration; offline tests do not validate a deployed database, authentication service, or QuantAgent instance.
 
 Note: OpenStock is community-built and not a brokerage. Market data may be delayed based on provider rules and your configuration. Nothing here is financial advice.
 
@@ -85,6 +91,7 @@ Note: OpenStock is community-built and not a brokerage. Market data may be delay
 13. 🛡️ [Security](#security)
 14. 📜 [License](#license)
 15. 🙏 [Acknowledgements](#acknowledgements)
+16. ❤️ [Sponsor OpenStock](#sponsors)
 
 ## ✨ Introduction <a name="introduction"></a>
 
@@ -163,7 +170,7 @@ Prerequisites
 - Node.js 20+ and pnpm or npm
 - MongoDB connection string (MongoDB Atlas or local via Docker Compose)
 - Finnhub API key (free tier supported; real-time may require paid)
-- Gmail account for email (or update Nodemailer transport)
+- Optional: Gmail account for email (or update Nodemailer transport) if you want welcome and news summary emails
 - Optional: Google Gemini API key (for AI-generated welcome intros)
 
 Clone and install
@@ -237,6 +244,7 @@ Notes
 - The app service depends_on the mongodb service.
 - Credentials are defined in Compose for the MongoDB root user; authSource=admin is required on the connection string for root.
 - Data persists across restarts via the docker volume.
+- `NODEMAILER_EMAIL` and `NODEMAILER_PASSWORD` are optional for local Docker runs. If they are omitted, the app still starts but email features stay disabled.
 
 Optional: Example MongoDB service definition used in this project:
 ```yaml
@@ -301,10 +309,27 @@ GEMINI_API_KEY=your_gemini_api_key
 # Inngest Signing Key (required for Vercel deployment)
 # Get this from your Inngest dashboard: https://app.inngest.com/env/settings/keys
 INNGEST_SIGNING_KEY=your_inngest_signing_key
+# Required in production so sign-up can send the welcome-email event
+INNGEST_EVENT_KEY=your_inngest_event_key
 
-# Email (Nodemailer via Gmail; consider App Passwords if 2FA)
-NODEMAILER_EMAIL=youraddress@gmail.com
-NODEMAILER_PASSWORD=your_gmail_app_password
+# Market data (optional)
+# Several free Finnhub keys, rotated per request: each adds 60 requests/min.
+# FINNHUB_API_KEYS=key_one,key_two
+# "cached" (default) refreshes quotes hourly for everyone; "realtime" refreshes every 15s
+# and turns on email price alerts (an OpenStock Cloud feature).
+# NEXT_PUBLIC_OPENSTOCK_DATA_MODE=cached
+
+# Social sign-in (optional; each provider is hidden server-side until set)
+# Callback URLs: <BETTER_AUTH_URL>/api/auth/callback/google and /api/auth/callback/github
+# Leave these commented out until you have real credentials: any value turns the provider on
+# GOOGLE_CLIENT_ID=your_google_client_id
+# GOOGLE_CLIENT_SECRET=your_google_client_secret
+# GITHUB_CLIENT_ID=your_github_client_id
+# GITHUB_CLIENT_SECRET=your_github_client_secret
+
+# Email (optional; Nodemailer via Gmail, consider App Passwords if 2FA)
+# NODEMAILER_EMAIL=youraddress@gmail.com
+# NODEMAILER_PASSWORD=your_gmail_app_password
 ```
 
 Local (Docker Compose) MongoDB:
@@ -342,16 +367,34 @@ GEMINI_API_KEY=your_gemini_api_key
 # Inngest Signing Key (required for Vercel deployment)
 # Get this from your Inngest dashboard: https://app.inngest.com/env/settings/keys
 INNGEST_SIGNING_KEY=your_inngest_signing_key
+# Required in production so sign-up can send the welcome-email event
+INNGEST_EVENT_KEY=your_inngest_event_key
 
-# Email (Nodemailer via Gmail; consider App Passwords if 2FA)
-NODEMAILER_EMAIL=youraddress@gmail.com
-NODEMAILER_PASSWORD=your_gmail_app_password
+# Market data (optional)
+# Several free Finnhub keys, rotated per request: each adds 60 requests/min.
+# FINNHUB_API_KEYS=key_one,key_two
+# "cached" (default) refreshes quotes hourly for everyone; "realtime" refreshes every 15s
+# and turns on email price alerts (an OpenStock Cloud feature).
+# NEXT_PUBLIC_OPENSTOCK_DATA_MODE=cached
+
+# Social sign-in (optional; each provider is hidden server-side until set)
+# Callback URLs: <BETTER_AUTH_URL>/api/auth/callback/google and /api/auth/callback/github
+# Leave these commented out until you have real credentials: any value turns the provider on
+# GOOGLE_CLIENT_ID=your_google_client_id
+# GOOGLE_CLIENT_SECRET=your_google_client_secret
+# GITHUB_CLIENT_ID=your_github_client_id
+# GITHUB_CLIENT_SECRET=your_github_client_secret
+
+# Email (optional; Nodemailer via Gmail, consider App Passwords if 2FA)
+# NODEMAILER_EMAIL=youraddress@gmail.com
+# NODEMAILER_PASSWORD=your_gmail_app_password
 ```
 
 Notes
 - Keep private keys server-side whenever possible.
 - If using `NEXT_PUBLIC_` variables, remember they are exposed to the browser.
 - In production, prefer a dedicated SMTP provider over a personal Gmail.
+- If the Nodemailer credentials are omitted, the app still runs but welcome and news summary emails are disabled.
 - Do not hardcode secrets in the Dockerfile; use `.env` and Compose.
 
 ## 🧱 Project Structure <a name="project-structure"></a>
@@ -500,13 +543,32 @@ OpenStock is and will remain free and open for everyone. This project is license
 
 
 
-## ❤️ Partners & Backers
+## ❤️ Sponsor OpenStock <a name="sponsors"></a>
 
-<a href="https://www.siray.ai/">
-  <img src="public/assets/icons/siray.svg" alt="Siray.ai Logo" width="100" />
-</a>
+OpenStock is free, open source and used by **13,000+ registered people**. Keeping it that way costs money every month: hosting, the database, market data keys, AI and email, and the hours that go into reviewing pull requests and shipping fixes.
 
-**[Siray.ai](https://www.siray.ai/)** — The robust AI infrastructure backing OpenStock. Siray.ai ensures our market insights never sleep.
+**How OpenStock is funded**
+
+- **OpenStock Cloud will pay for hosting.** Cloud ($5 a month, coming soon) adds live quotes and email price alerts. Its subscribers will cover the servers, database and market data the hosted app needs, so the free site stays online without depending on donations.
+- **Sponsors keep the community moving.** Sponsorships pay for the time behind OpenStock: reviewing community pull requests, fixing bugs and shipping features at the pace 13,000+ people expect, with the core free for everyone. Self-hosting stays free, with every feature.
+
+**Pick a tier.** Each link opens GitHub Sponsors with the amount already selected. Cancel any time.
+
+| Tier | Monthly | What you get |
+|---|---|---|
+| [Backer](https://github.com/sponsors/ravixalgorithm/sponsorships?frequency=recurring&amount=5) | $5 | Your name in this README |
+| [Supporter](https://github.com/sponsors/ravixalgorithm/sponsorships?frequency=recurring&amount=25) | $25 | Name and avatar on the sponsor wall and the sponsor page |
+| [Company](https://github.com/sponsors/ravixalgorithm/sponsorships?frequency=recurring&amount=100) | $100 | Your logo in the footer of every public page, in this README and on the sponsor page |
+| [Partner](https://github.com/sponsors/ravixalgorithm/sponsorships?frequency=recurring&amount=500) | $500 | One of three sponsor slots in the app sidebar, seen by 13,000+ registered users, plus your logo on the landing page |
+
+Rather give once? [Make a one-time gift](https://github.com/sponsors/ravixalgorithm/sponsorships?frequency=one-time). Want an invoice or a custom partnership? [Talk with us](mailto:opendevsociety@gmail.com?subject=Sponsoring%20OpenStock). Everything, including where the money goes, is on the [sponsor page](https://openstock-ods.vercel.app/sponsor).
+
+Sponsorships are paid through GitHub Sponsors to [@ravixalgorithm](https://github.com/ravixalgorithm) (Ravi Pratap Singh, founder of Open Dev Society).
+
+Can't sponsor right now? Pick a [good first issue](https://github.com/Open-Dev-Society/OpenStock/issues?q=is%3Aopen+label%3A%22good+first+issue%22), star the repo, or share OpenStock with someone who pays too much for a terminal.
+
+**Current sponsors:** your logo here.
+**Previously backed by:** [Siray.ai](https://www.siray.ai/) (2026)
 
 ## Special thanks
 Huge thanks to [Adrian Hajdin (JavaScript Mastery)](https://github.com/adrianhajdin) — his excellent Stock Market App tutorial was instrumental in building OpenStock for the open-source community under the Open Dev Society.

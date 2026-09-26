@@ -5,7 +5,10 @@ on:
     paths:
       - "app/(root)/research/**"
       - "components/research/**"
+      - "components/shell/**"
       - "lib/quantagent/**"
+      - "app/globals.css"
+      - "vitest.config.ts"
       - "__tests__/quantagent-*.test.ts"
       - ".github/workflows/research-readonly.yml"
       - "package.json"
@@ -28,4 +31,5 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - run: npx eslint "app/(root)/research" components/research lib/quantagent __tests__/quantagent-*.test.ts
+      - run: npx tsc --noEmit
+      - run: npx eslint "app/(root)/research" components/research components/shell/Sidebar.tsx components/shell/TabBar.tsx lib/quantagent __tests__/quantagent-*.test.ts vitest.config.ts

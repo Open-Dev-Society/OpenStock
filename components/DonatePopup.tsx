@@ -8,14 +8,12 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Heart, Github } from 'lucide-react';
+import Link from 'next/link';
+import { Heart } from 'lucide-react';
 
 const DONATE_POPUP_KEY = 'opendevsociety-donate-popup-dismissed';
 const DONATE_POPUP_DELAY = 3000; // Show after 3 seconds
 const DONATE_POPUP_COOLDOWN = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-
-const GITHUB_SPONSOR_URL = 'https://github.com/sponsors/ravixalgorithm';
 
 export default function DonatePopup() {
     const [open, setOpen] = useState(false);
@@ -54,52 +52,32 @@ export default function DonatePopup() {
         localStorage.setItem(DONATE_POPUP_KEY, Date.now().toString());
     };
 
-    const handleDonate = () => {
-        window.open(GITHUB_SPONSOR_URL, '_blank', 'noopener,noreferrer');
-        handleDismiss();
-    };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="!bg-gray-800 !border-teal-600/50 text-gray-100 max-w-md mx-4 sm:mx-auto sm:w-full sm:max-w-lg">
-                <DialogHeader>
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-teal-500/20 rounded-lg">
-                            <Heart className="h-6 w-6 text-teal-400 fill-teal-400" />
-                        </div>
-                        <DialogTitle className="text-2xl font-bold text-gray-100">
-                            Keep OpenStock Free
-                        </DialogTitle>
+        <Dialog open={open} onOpenChange={(next) => (next ? setOpen(true) : handleDismiss())}>
+            <DialogContent className="gap-5 sm:max-w-[440px]">
+                <DialogHeader className="gap-3 text-left">
+                    <span className="bento-ico size-11 bg-brand-soft text-brand-ink">
+                        <Heart className="size-5 fill-current" />
+                    </span>
+                    <div>
+                        <p className="kicker flex items-center gap-2 text-brand-ink"><span className="live-dot" /> Open for sponsors</p>
+                        <DialogTitle className="mt-1.5 text-2xl font-bold tracking-[-0.03em]">Keep OpenStock free</DialogTitle>
                     </div>
-                    <DialogDescription className="text-gray-400 text-base leading-relaxed pt-2">
-                        Your overwhelming love for OpenStock and Open Dev Society has helped us grow, 
-                        but we're hitting Vercel's free tier limits. 
-                        <br /><br />
-                        Help us keep OpenStock free and accessible for everyone by supporting us on GitHub Sponsors. 
-                        Every contribution, no matter how small, makes a difference! 💙
+                    <DialogDescription className="text-[15px] leading-relaxed text-muted-foreground">
+                        Your love for OpenStock and Open Dev Society has helped us grow, and we&apos;re now hitting
+                        Vercel&apos;s free tier limits. Sponsor from $5 a month, give once, or talk with us about a partnership.
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="flex flex-col sm:flex-row gap-3 mt-6">
-                    <Button
-                        onClick={handleDonate}
-                        className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-semibold h-11 transition-all duration-200 transform hover:scale-105"
-                    >
-                        <Github className="h-4 w-4 mr-2" />
-                        Sponsor on GitHub
-                    </Button>
-                    <Button
-                        onClick={handleDismiss}
-                        variant="outline"
-                        className="flex-1 border-teal-600/50 text-teal-400 hover:bg-teal-600/10 hover:text-teal-300 h-11 transition-all duration-200"
-                    >
-                        Maybe Later
-                    </Button>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                    <Link href="/sponsor" onClick={handleDismiss} className="btn btn-primary h-11 flex-1">
+                        <Heart className="fill-current" /> Become a sponsor
+                    </Link>
+                    <button type="button" onClick={handleDismiss} className="btn btn-ghost h-11 flex-1">
+                        Maybe later
+                    </button>
                 </div>
-
-                <p className="text-xs text-gray-500 text-center mt-4">
-                    This popup won't appear again for 24 hours after dismissing
-                </p>
             </DialogContent>
         </Dialog>
     );

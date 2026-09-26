@@ -6,7 +6,7 @@ import { headers } from "next/headers";
 
 export const signUpWithEmail = async ({ email, password, fullName, country, investmentGoals, riskTolerance, preferredIndustry }: SignUpFormData) => {
     try {
-        const response = await auth.api.signUpEmail({ body: { email, password, name: fullName } })
+        const response = await auth.api.signUpEmail({ body: { email, password, name: fullName, country, investmentGoals, riskTolerance, preferredIndustry } })
 
         if (response) {
             try {
@@ -58,7 +58,19 @@ export const signInWithEmail = async ({ email, password }: SignInFormData) => {
     }
 }
 
-export const requestPasswordResetEmail = async ({ email }: { email: string }) => {
+export const signInWithSocial = async (provider: 'google' | 'github') => {
+    try {
+        const { url } = await auth.api.signInSocial({
+            body: { provider, callbackURL: '/dashboard', errorCallbackURL: '/sign-in' },
+        });
+        return { success: true, url }
+    } catch (e) {
+        console.log('Social sign in failed', e)
+        return { success: false, error: `${provider === 'google' ? 'Google' : 'GitHub'} sign in is not available right now.` }
+    }
+}
+
+export const requestPasswordResetEmail =async ({ email }: { email: string }) => {
     if (!process.env.NODEMAILER_EMAIL || !process.env.NODEMAILER_PASSWORD) {
         return { success: false, error: 'Password reset email is not configured.' }
     }

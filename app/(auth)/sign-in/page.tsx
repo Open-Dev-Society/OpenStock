@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import OpenDevSocietyBranding from "@/components/OpenDevSocietyBranding";
+import SocialAuthButtons from "@/components/forms/SocialAuthButtons";
 import React from "react";
 
 const SignIn = () => {
@@ -29,7 +30,7 @@ const SignIn = () => {
         try {
             const result = await signInWithEmail(data);
             if (result.success) {
-                router.push('/');
+                router.push('/dashboard');
                 return;
             }
             toast.error('Sign in failed', {
@@ -45,7 +46,10 @@ const SignIn = () => {
 
     return (
         <>
-            <h1 className="form-title">Welcome back</h1>
+            <h1 className="form-title mb-2">Welcome back</h1>
+            <p className="mb-8 text-faint">Sign in to your watchlist and alerts.</p>
+
+            <SocialAuthButtons />
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <InputField
@@ -57,7 +61,7 @@ const SignIn = () => {
                     validation={{
                         required: 'Email is required',
                         pattern: {
-                            value: /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/,
+                            value: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
                             message: 'Please enter a valid email address'
                         }
                     }}
@@ -85,15 +89,6 @@ const SignIn = () => {
 
                 <FooterLink text="Don't have an account?" linkText="Create an account" href="/sign-up" />
                 <OpenDevSocietyBranding outerClassName="mt-10 flex justify-center" />
-                <div className="mt-5 flex justify-center">
-                    <a href="https://peerlist.io/ravixalgorithm/project/openstock" target="_blank" rel="noreferrer">
-                        <img
-                            src="https://peerlist.io/api/v1/projects/embed/PRJH8OED7MBL9MGB9HRMKAKLM66KNN?showUpvote=true&theme=light"
-                            alt="OpenStock"
-                            style={{ width: 'auto', height: '72px' }}
-                        />
-                    </a>
-                </div>
             </form>
         </>
     );

@@ -1,170 +1,136 @@
 "use client";
 
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Link from "next/link";
+import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { createAlert } from "@/lib/actions/alert.actions";
-import { toast } from "sonner"; // Assuming sonner is available or use existing toast
+import { alertsEnabled } from "@/lib/market-data";
+import { formatPrice } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface CreateAlertModalProps {
-    userId: string;
     symbol: string;
-    currentPrice: number;
-    companyName?: string; // Optional prop for better display
-    onAlertCreated?: () => void;
+    currentPrice?: number | null;
+    currency?: string;
     children?: React.ReactNode;
-    // Controlled props
-    open?: boolean;
-    onOpenChange?: (open: boolean) => void;
+    onAlertCreated?: () => void;
 }
 
-export default function CreateAlertModal({
-    userId,
-    symbol,
-    currentPrice,
-    companyName = "",
-    onAlertCreated,
-    children,
-    open: controlledOpen,
-    onOpenChange: setControlledOpen
-}: CreateAlertModalProps) {
-    const [internalOpen, setInternalOpen] = useState(false);
+const CONDITIONS = [
+    { value: 'ABOVE', label: 'Rises above' },
+    { value: 'BELOW', label: 'Falls below' },
+] as const;
 
-    const isControlled = controlledOpen !== undefined;
-    const open = isControlled ? controlledOpen : internalOpen;
-    const setOpen = isControlled ? setControlledOpen : setInternalOpen;
-
-    const [targetPrice, setTargetPrice] = useState<string>(currentPrice.toString());
-    const [condition, setCondition] = useState<"ABOVE" | "BELOW">("ABOVE");
-    const [alertName, setAlertName] = useState("");
+export default function CreateAlertModal({ symbol, currentPrice, currency = 'USD', children, onAlertCreated }: CreateAlertModalProps) {
+    const [open, setOpen] = useState(false);
+    const [condition, setCondition] = useState<'ABOVE' | 'BELOW'>('ABOVE');
+    const [targetPrice, setTargetPrice] = useState('');
     const [loading, setLoading] = useState(false);
 
-    // Update target price when currentPrice changes (e.g. freshly fetched)
-    React.useEffect(() => {
-        setTargetPrice(currentPrice.toString());
-    }, [currentPrice]);
+    const target = parseFloat(targetPrice);
+    const hasPrice = !!currentPrice && currentPrice > 0;
+    const distance = hasPrice && Number.isFinite(target) ? ((target - currentPrice!) / currentPrice!) * 100 : null;
+    const alreadyMet = distance !== null && (condition === 'ABOVE' ? distance <= 0 : distance >= 0);
+
+    const onOpenChange = (next: boolean) => {
+        setOpen(next);
+        if (next) setTargetPrice(hasPrice ? currentPrice!.toFixed(2) : '');
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
-            await createAlert({
-                userId,
-                symbol,
-                targetPrice: parseFloat(targetPrice),
-                condition,
-            });
-            toast.success("Alert created successfully");
-            setOpen?.(false);
-            if (onAlertCreated) onAlertCreated();
+            await createAlert({ symbol, targetPrice: target, condition });
+            toast.success(`Alert set: ${symbol} ${condition === 'ABOVE' ? 'above' : 'below'} ${formatPrice(target, currency)}`);
+            setOpen(false);
+            onAlertCreated?.();
         } catch (error) {
             console.error(error);
-            toast.error("Failed to create alert");
+            toast.error("Couldn’t create the alert");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            {children && (
-                <DialogTrigger asChild>
-                    {children}
-                </DialogTrigger>
-            )}
-            <DialogContent className="sm:max-w-[425px] bg-[#0A0A0A] border-gray-800 text-white shadow-2xl">
-                <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold tracking-tight text-white mb-2">Price Alert</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-5 py-2 relative z-10">
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            {children && <DialogTrigger asChild>{children}</DialogTrigger>}
+            <DialogContent className="sm:max-w-[420px] gap-5">
+                {alertsEnabled ? (
+                    <>
+                        <div>
+                            <p className="kicker text-brand-ink">Price alert</p>
+                            <DialogTitle className="mt-1 text-xl font-bold tracking-tight mono">{symbol}</DialogTitle>
+                            <DialogDescription className="mt-1 text-[13px] text-faint">
+                                We email you when the price crosses your target. Checked every 5 minutes, expires after 90 days.
+                            </DialogDescription>
+                        </div>
 
-                    {/* Alert Name */}
-                    <div className="grid gap-2">
-                        <Label className="text-gray-400 text-sm font-medium">Alert Name</Label>
-                        <Input
-                            value={alertName}
-                            onChange={(e) => setAlertName(e.target.value)}
-                            placeholder="e.g. Apple at Discount"
-                            className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 focus:border-yellow-500 focus:ring-yellow-500/20 transition-all rounded-md h-10"
-                        />
-                    </div>
+                        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                            <div className="grid grid-cols-2 gap-1 rounded-[12px] bg-page p-1" role="radiogroup" aria-label="Condition">
+                                {CONDITIONS.map(({ value, label }) => (
+                                    <button
+                                        key={value}
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={condition === value}
+                                        onClick={() => setCondition(value)}
+                                        className={cn(
+                                            'h-9 rounded-[9px] font-semibold transition-colors',
+                                            condition === value ? 'bg-hover text-foreground shadow-[inset_0_1px_0_oklch(1_0_0/0.06)]' : 'text-faint hover:text-foreground',
+                                        )}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
 
-                    {/* Stock Identifier */}
-                    <div className="grid gap-2">
-                        <Label className="text-gray-400 text-sm font-medium">Stock identifier</Label>
-                        <div className="relative">
-                            <Input
-                                disabled
-                                value={`${companyName || symbol} (${symbol})`}
-                                className="bg-[#1C1C1F] border-none text-gray-500 shadow-inner rounded-md h-10"
-                            />
+                            <label className="flex flex-col gap-2">
+                                <span className="form-label">Target price</span>
+                                <span className="flex h-12 items-center gap-2 rounded-[11px] border border-line bg-page px-3 focus-within:border-brand">
+                                    <span className="mono text-faint">{currency}</span>
+                                    <input
+                                        type="number"
+                                        inputMode="decimal"
+                                        step="0.01"
+                                        min="0.01"
+                                        required
+                                        autoFocus
+                                        value={targetPrice}
+                                        onChange={(e) => setTargetPrice(e.target.value)}
+                                        className="num w-full bg-transparent text-lg font-semibold text-foreground outline-none"
+                                    />
+                                </span>
+                                <span className={cn('num text-[12.5px]', alreadyMet ? 'text-warn' : 'text-faint')}>
+                                    {!hasPrice
+                                        ? 'Current price unavailable'
+                                        : alreadyMet
+                                            ? `Already ${condition === 'ABOVE' ? 'above' : 'below'} this — it will fire on the next check`
+                                            : `Now ${formatPrice(currentPrice!, currency)}${distance === null ? '' : ` · ${distance > 0 ? '+' : ''}${distance.toFixed(2)}% away`}`}
+                                </span>
+                            </label>
+
+                            <button type="submit" disabled={loading || !(target > 0)} className="btn btn-primary h-11">
+                                {loading ? 'Setting alert' : 'Set alert'}
+                            </button>
+                        </form>
+                    </>
+                ) : (
+                    // Alerts are an OpenStock Cloud feature; the free hourly site points people to it
+                    <div>
+                        <p className="kicker text-brand-ink">OpenStock Cloud</p>
+                        <DialogTitle className="mt-1 text-xl font-bold tracking-tight">Price alerts come with Cloud</DialogTitle>
+                        <DialogDescription className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">
+                            Cloud adds email price alerts and live quotes for $5 a month. It’s coming soon. Self-hosting includes both today.
+                        </DialogDescription>
+                        <div className="mt-5 flex gap-2">
+                            <Link href="/#data" className="btn btn-primary h-11 flex-1">See OpenStock Cloud</Link>
+                            <Link href="/#self-host" className="btn btn-ghost h-11">Self-host</Link>
                         </div>
                     </div>
-
-                    {/* Alert Type */}
-                    <div className="grid gap-2">
-                        <Label className="text-gray-400 text-sm font-medium">Alert type</Label>
-                        <Select disabled defaultValue="price">
-                            <SelectTrigger className="bg-[#1C1C1F] border-gray-800 text-gray-200">
-                                <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-[#1C1C1F] border-gray-800 text-gray-200">
-                                <SelectItem value="price">Price</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    {/* Condition */}
-                    <div className="grid gap-2">
-                        <Label className="text-gray-400 text-sm font-medium">Condition</Label>
-                        <Select value={condition} onValueChange={(val: any) => setCondition(val)}>
-                            <SelectTrigger className="bg-[#1C1C1F] border-gray-800 text-gray-200 hover:border-gray-700 transition-colors">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-[#1C1C1F] border-gray-800 text-gray-200">
-                                <SelectItem value="ABOVE">Greater than {">"}</SelectItem>
-                                <SelectItem value="BELOW">Less than {"<"}</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    {/* Threshold Value */}
-                    <div className="grid gap-2">
-                        <Label className="text-gray-400 text-sm font-medium">Threshold value</Label>
-                        <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-500 font-semibold">$</span>
-                            <Input
-                                type="number"
-                                step="0.01"
-                                value={targetPrice}
-                                onChange={(e) => setTargetPrice(e.target.value)}
-                                placeholder="eg: 140"
-                                className="pl-7 bg-[#1C1C1F] border-gray-800 text-white placeholder:text-gray-600 focus:border-yellow-500 focus:ring-yellow-500/20 transition-all rounded-md h-10 font-mono"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Expiry Note */}
-                    <div className="pt-1">
-                        <p className="text-xs text-gray-500 flex items-center">
-                            <span className="w-1.5 h-1.5 rounded-full bg-yellow-500/50 mr-2"></span>
-                            Alert expires automatically in 90 days
-                        </p>
-                    </div>
-
-                    <div className="pt-4">
-                        <Button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full bg-[#FACC15] hover:bg-[#EAB308] text-black font-bold h-11 text-base transition-all shadow-[0_0_15px_rgba(250,204,21,0.2)]"
-                        >
-                            {loading ? "Creating Alert..." : "Create Alert"}
-                        </Button>
-                    </div>
-                </form>
+                )}
             </DialogContent>
         </Dialog>
     );

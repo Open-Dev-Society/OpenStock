@@ -1,166 +1,108 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowUp, ArrowDown, Bell } from "lucide-react";
+import { Bell, Search, Star } from "lucide-react";
 import CreateAlertModal from "./CreateAlertModal";
 import WatchlistButton from "@/components/WatchlistButton";
-import { formatCurrency, formatNumber } from "@/lib/utils";
-import { removeFromWatchlist } from "@/lib/actions/watchlist.actions";
+import ChangePill from "@/components/ChangePill";
+import PriceFlash from "@/components/PriceFlash";
+import { useLiveQuotes } from "@/hooks/useLiveQuotes";
+import { SearchButton } from "@/components/SearchCommand";
+import { formatNumber, formatPrice } from "@/lib/utils";
+import { hasFinnhubQuotes } from "@/lib/markets";
+import type { getWatchlistData } from "@/lib/actions/finnhub.actions";
 
-interface WatchlistTableProps {
-    data: any[];
-    userId: string;
-    onRefresh?: () => void;
-}
+type Row = Awaited<ReturnType<typeof getWatchlistData>>[number];
+const SUGGESTIONS = ['AAPL', 'NVDA', 'MSFT', 'TSLA', 'AMZN'];
 
-export default function WatchlistTable({ data, userId, onRefresh }: WatchlistTableProps) {
-    const [stocks, setStocks] = useState(data);
+export default function WatchlistTable({ initialRows }: { initialRows: Row[] }) {
+    const [baseRows, setBaseRows] = useState(initialRows);
+    const live = useLiveQuotes(baseRows.map((r) => r.symbol));
 
-    useEffect(() => {
-        // Initial set if prop changes
-        setStocks(data);
-    }, [data]);
+    // Server re-renders (after add/remove) replace the local copy
+    useEffect(() => setBaseRows(initialRows), [initialRows]);
 
-    useEffect(() => {
-        if (!stocks || stocks.length === 0) return;
+    const rows = baseRows.map((r) => {
+        const q = live[r.symbol];
+        return q?.c ? { ...r, price: q.c, change: q.d ?? r.change, changePercent: q.dp ?? r.changePercent } : r;
+    });
 
-        // Poll for price updates every 15 seconds
-        const interval = setInterval(async () => {
-            try {
-                const symbols = stocks.map(s => s.symbol);
-                if (symbols.length === 0) return;
-
-                // Dynamic import to avoid server-action issues if directly imported in client component sometimes
-                const { getWatchlistData } = await import('@/lib/actions/finnhub.actions');
-                const updatedData = await getWatchlistData(symbols);
-
-                if (updatedData && updatedData.length > 0) {
-                    setStocks(current => {
-                        const map = new Map(updatedData.map(item => [item.symbol, item]));
-                        return current.map(existing => {
-                            const fresh = map.get(existing.symbol);
-                            if (fresh) {
-                                return {
-                                    ...existing,
-                                    price: fresh.price,
-                                    change: fresh.change,
-                                    changePercent: fresh.changePercent,
-                                };
-                            }
-                            return existing;
-                        });
-                    });
-                }
-            } catch (err) {
-                console.error("Failed to poll watchlist prices", err);
-            }
-        }, 5000);
-
-        return () => clearInterval(interval);
-    }, [stocks]); // Re-create interval if list size changes
-
-    if (!stocks || stocks.length === 0) {
+    if (rows.length === 0) {
         return (
-            <div className="text-center py-12 bg-gray-900/50 rounded-lg border border-gray-800">
-                <h3 className="text-xl font-medium text-gray-300 mb-2">Your watchlist is empty</h3>
-                <p className="text-gray-500 mb-6">Add stocks to track their performance and set alerts.</p>
+            <div className="empty-state">
+                <span className="empty-icon"><Star className="size-5" /></span>
+                <h3>Nothing on your watchlist yet</h3>
+                <p className="max-w-sm">Search for a company and star it to track its price here and set alerts.</p>
+                <SearchButton className="btn btn-primary mt-3"><Search /> Search stocks</SearchButton>
+                <div className="mt-4 flex flex-wrap justify-center gap-1.5">
+                    {SUGGESTIONS.map((s) => (
+                        <Link key={s} href={`/stocks/${s}`} className="pill mono h-7 px-3 hover:bg-hover hover:text-foreground">{s}</Link>
+                    ))}
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="overflow-hidden rounded-xl border border-white/10 bg-black/40 backdrop-blur-md shadow-xl">
-            <table className="w-full text-left text-sm border-collapse">
-                <thead className="bg-white/5 text-gray-400 font-medium border-b border-white/10">
+        <div className="overflow-x-auto rounded-[14px]">
+            <table className="data-table">
+                <thead>
                     <tr>
-                        <th className="px-6 py-4 font-semibold tracking-wide">Company</th>
-                        <th className="px-6 py-4 font-semibold tracking-wide">Symbol</th>
-                        <th className="px-6 py-4 font-semibold tracking-wide">Price</th>
-                        <th className="px-6 py-4 font-semibold tracking-wide">Change</th>
-                        <th className="px-6 py-4 font-semibold tracking-wide">Market Cap</th>
-                        <th className="px-6 py-4 text-right font-semibold tracking-wide">Actions</th>
+                        <th>Company</th>
+                        <th className="is-num">Price</th>
+                        <th className="is-num">Today</th>
+                        <th className="is-num">Change</th>
+                        <th className="is-num">Market cap</th>
+                        <th className="w-[88px]"><span className="sr-only">Actions</span></th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-white/10">
-                    {stocks.map((stock: any) => {
-                        const isPositive = stock.change >= 0;
-                        return (
-                            <tr key={stock.symbol} className="hover:bg-white/5 transition-colors group">
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center space-x-4">
-                                        {stock.logo ? (
-                                            <div className="w-10 h-10 relative rounded-full overflow-hidden bg-white/10 shadow-sm border border-white/5">
-                                                <Image
-                                                    src={stock.logo}
-                                                    alt={stock.symbol}
-                                                    fill
-                                                    className="object-contain p-1.5"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-xs font-bold text-white shadow-sm border border-white/5">
-                                                {stock.symbol[0]}
-                                            </div>
-                                        )}
-                                        <div className="flex flex-col">
-                                            <span className="font-semibold text-white text-base">{stock.name}</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 font-medium text-gray-300">
-                                    <span className="bg-white/5 px-2.5 py-1 rounded-md text-xs font-mono border border-white/10">
-                                        {stock.symbol}
+                <tbody>
+                    {rows.map((row) => (
+                        <tr key={row.symbol}>
+                            <td className="max-w-[320px]">
+                                <Link href={`/stocks/${row.symbol}`} className="group flex items-center gap-3">
+                                    {row.logo ? (
+                                        <span className="logo-well"><img src={row.logo} alt="" className="size-full object-contain p-1" /></span>
+                                    ) : (
+                                        <span className="logo-well is-empty">{row.symbol[0]}</span>
+                                    )}
+                                    <span className="min-w-0">
+                                        <span className="block truncate font-semibold text-foreground group-hover:text-brand-ink transition-colors" title={row.name}>{row.name}</span>
+                                        <span className="mono block text-[12px] text-faint">{row.symbol}</span>
                                     </span>
-                                </td>
-                                <td className="px-6 py-4 text-white font-medium text-base tracking-tight">
-                                    {formatCurrency(stock.price)}
-                                </td>
-                                <td className={`px-6 py-4 font-medium`}>
-                                    <div className={`flex items-center w-fit px-2 py-1 rounded-md ${isPositive ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}`}>
-                                        {isPositive ? <ArrowUp className="w-3.5 h-3.5 mr-1.5" /> : <ArrowDown className="w-3.5 h-3.5 mr-1.5" />}
-                                        {Math.abs(stock.changePercent).toFixed(2)}%
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 text-gray-400 font-medium">
-                                    {formatNumber(stock.marketCap)}
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end space-x-3 opacity-80 group-hover:opacity-100 transition-opacity">
-                                        <CreateAlertModal
-                                            userId={userId}
-                                            symbol={stock.symbol}
-                                            currentPrice={stock.price}
-                                            onAlertCreated={onRefresh}
-                                        >
-                                            <button className="p-2.5 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-all border border-transparent hover:border-white/10" title="Add Alert">
-                                                <Bell className="w-4.5 h-4.5" />
+                                </Link>
+                            </td>
+                            <td className="is-num font-semibold text-foreground">
+                                <PriceFlash value={row.price} className="px-1">{row.price ? formatPrice(row.price, row.currency) : '—'}</PriceFlash>
+                            </td>
+                            <td className="is-num"><ChangePill value={row.price ? row.changePercent : null} /></td>
+                            <td className="is-num text-muted-foreground">{row.price ? `${row.change > 0 ? '+' : ''}${row.change.toFixed(2)}` : '—'}</td>
+                            <td className="is-num text-muted-foreground">{row.marketCap ? formatNumber(row.marketCap) : '—'}</td>
+                            <td>
+                                <div className="flex items-center justify-end gap-1">
+                                    {hasFinnhubQuotes(row.symbol) ? (
+                                        <CreateAlertModal symbol={row.symbol} currentPrice={row.price} currency={row.currency}>
+                                            <button type="button" className="icon-btn" title={`Set a price alert for ${row.symbol}`} aria-label={`Set a price alert for ${row.symbol}`}>
+                                                <Bell />
                                             </button>
                                         </CreateAlertModal>
-
-                                        <div className="transform scale-95 hover:scale-100 transition-transform">
-                                            <WatchlistButton
-                                                symbol={stock.symbol}
-                                                company={stock.name}
-                                                isInWatchlist={true}
-                                                type="icon"
-                                                showTrashIcon={false}
-                                                onWatchlistChange={async (sym, added) => {
-                                                    if (!added) {
-                                                        await removeFromWatchlist(userId, sym);
-                                                        // Update local list faster than full page refresh if you want
-                                                        setStocks((curr: any[]) => curr.filter((s: any) => s.symbol !== sym));
-                                                        if (onRefresh) onRefresh();
-                                                    }
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        );
-                    })}
+                                    ) : (
+                                        <span className="icon-btn opacity-40" title="Alerts are available for US stocks and crypto"><Bell /></span>
+                                    )}
+                                    <WatchlistButton
+                                        symbol={row.symbol}
+                                        company={row.name}
+                                        isInWatchlist
+                                        variant="icon"
+                                        onWatchlistChange={(sym, added) => {
+                                            if (!added) setBaseRows((current) => current.filter((r) => r.symbol !== sym));
+                                        }}
+                                    />
+                                </div>
+                            </td>
+                        </tr>
+                    ))}
                 </tbody>
             </table>
         </div>

@@ -22,6 +22,15 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import countryList from 'react-select-country-list';
 
+const COUNTRY_LABEL_OVERRIDES: Record<string, string> = {
+    TW: 'Taiwan',
+};
+
+const COUNTRY_OPTIONS = countryList().getData().map((country) => ({
+    ...country,
+    label: COUNTRY_LABEL_OVERRIDES[country.value] ?? country.label,
+}));
+
 type CountrySelectProps = {
     name: string;
     label: string;
@@ -38,9 +47,6 @@ const CountrySelect = ({
     onChange: (value: string) => void;
 }) => {
     const [open, setOpen] = useState(false);
-
-    // Get country options with flags
-    const countries = countryList().getData();
 
     // Helper function to get flag emoji
     const getFlagEmoji = (countryCode: string) => {
@@ -63,7 +69,7 @@ const CountrySelect = ({
                     {value ? (
                         <span className='flex items-center gap-2'>
               <span>{getFlagEmoji(value)}</span>
-              <span>{countries.find((c) => c.value === value)?.label}</span>
+              <span>{COUNTRY_OPTIONS.find((c) => c.value === value)?.label}</span>
             </span>
                     ) : (
                         'Select your country...'
@@ -85,7 +91,7 @@ const CountrySelect = ({
                     </CommandEmpty>
                     <CommandList className='max-h-60 bg-gray-800 scrollbar-hide-default'>
                         <CommandGroup className='bg-gray-800'>
-                            {countries.map((country) => (
+                            {COUNTRY_OPTIONS.map((country) => (
                                 <CommandItem
                                     key={country.value}
                                     value={`${country.label} ${country.value}`}
@@ -137,8 +143,8 @@ export const CountrySelectField = ({
                     <CountrySelect value={field.value} onChange={field.onChange} />
                 )}
             />
-            {error && <p className='text-sm text-red-500'>{error.message}</p>}
-            <p className='text-xs text-gray-500'>
+            {error && <p className='text-[13px] text-down'>{error.message}</p>}
+            <p className='text-[12.5px] text-faint'>
                 Helps us show market data and news relevant to you.
             </p>
         </div>
