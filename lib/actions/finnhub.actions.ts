@@ -7,6 +7,10 @@ import { cache } from 'react';
 const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
 const NEXT_PUBLIC_FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY ?? '';
 
+function isFiniteNumber(value: unknown): value is number {
+    return typeof value === 'number' && Number.isFinite(value);
+}
+
 async function fetchJSON<T>(url: string, revalidateSeconds?: number): Promise<T> {
     const options: RequestInit & { next?: { revalidate?: number } } = revalidateSeconds
         ? { cache: 'force-cache', next: { revalidate: revalidateSeconds } }
@@ -96,6 +100,66 @@ export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> 
         console.error('getNews error:', err);
         throw new Error('Failed to fetch news');
     }
+}
+
+export async function getGoldActivityCandles(): Promise<
+    { time: number; open: number; high: number; low: number; close: number; tickVolume: number | null }[]
+> {
+    const token = process.env.FINNHUB_API_KEY ?? NEXT_PUBLIC_FINNHUB_API_KEY;
+    if (!token) {
+        throw new Error('FINNHUB API key is not configured');
+    }
+
+    const to = Math.floor(Date.now() / 1000);
+    const from = to - 4 * 60 * 60;
+    const params = new URLSearchParams({
+        symbol: 'OANDA:XAU_USD',
+        resolution: '5',
+        from: String(from),
+        to: String(to),
+        token,
+    });
+    const data = await fetchJSON<{
+        s: string;
+        t?: number[];
+        o?: number[];
+        h?: number[];
+        l?: number[];
+        c?: number[];
+        v?: number[];
+    }>(`${FINNHUB_BASE_URL}/forex/candle?${params}`);
+
+    if (data.s === 'no_data') return [];
+    const { t, o, h, l, c, v } = data;
+    if (data.s !== 'ok' || !t || !o || !h || !l || !c) {
+        throw new Error('Finnhub returned invalid gold candle data');
+    }
+
+    return t.flatMap((time, index) => {
+        const open = o[index];
+        const high = h[index];
+        const low = l[index];
+        const close = c[index];
+        if (
+            !isFiniteNumber(time) ||
+            !isFiniteNumber(open) ||
+            !isFiniteNumber(high) ||
+            !isFiniteNumber(low) ||
+            !isFiniteNumber(close)
+        ) {
+            return [];
+        }
+
+        const volume = v?.[index];
+        return [{
+            time,
+            open,
+            high,
+            low,
+            close,
+            tickVolume: isFiniteNumber(volume) && volume > 0 ? volume : null,
+        }];
+    });
 }
 
 export const searchStocks = cache(async (query?: string): Promise<StockWithWatchlistStatus[]> => {
