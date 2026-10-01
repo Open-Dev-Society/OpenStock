@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Menu, Plus, Star, X } from "lucide-react";
+import { FileText, LayoutDashboard, Menu, Plus, Star, X } from "lucide-react";
 import { openSearch } from "@/components/SearchCommand";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +15,7 @@ const PAGE_LABELS: Record<string, string> = {
     '/dashboard': 'Overview',
     '/watchlist': 'Watchlist',
     '/profile': 'Profile',
+    '/research': 'Research',
 };
 
 // Pages become browser-style tabs; stock pages are labelled by their symbol.
@@ -33,8 +34,10 @@ const withTab = (tabs: string[], path: string) => {
 
 const TabBar = ({ onMenu }: { onMenu: () => void }) => {
     const pathname = usePathname();
+    // Research runs share one tab; private run IDs do not enter persisted tab history.
+    const activePath = pathname.startsWith('/research/') ? '/research' : pathname;
     const router = useRouter();
-    const [tabs, setTabs] = useState(() => withTab(PINNED, pathname));
+    const [tabs, setTabs] = useState(() => withTab(PINNED, activePath));
     const tabRefs = useRef(new Map<string, HTMLDivElement>());
     const [glider, setGlider] = useState<{ x: number; w: number } | null>(null);
 
@@ -48,24 +51,24 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
         } catch { /* storage unavailable */ }
     }, []);
 
-    useEffect(() => setTabs((current) => withTab(current, pathname)), [pathname]);
+    useEffect(() => setTabs((current) => withTab(current, activePath)), [activePath]);
 
     useEffect(() => {
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tabs)); } catch { /* storage unavailable */ }
     }, [tabs]);
 
     useLayoutEffect(() => {
-        const el = tabRefs.current.get(pathname);
+        const el = tabRefs.current.get(activePath);
         if (!el) return setGlider(null);
         setGlider({ x: el.offsetLeft - 11, w: el.offsetWidth + 22 });
         el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    }, [pathname, tabs]);
+    }, [activePath, tabs]);
 
     const closeTab = (path: string) => {
         const index = tabs.indexOf(path);
         const next = tabs.filter((t) => t !== path);
         setTabs(next);
-        if (path === pathname) router.push(next[Math.max(0, index - 1)] ?? '/dashboard');
+        if (path === activePath) router.push(next[Math.max(0, index - 1)] ?? '/dashboard');
     };
 
     return (
@@ -88,7 +91,7 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
                 {tabs.map((path) => {
                     const pinned = PINNED.includes(path);
                     const isStock = path.startsWith('/stocks/');
-                    const active = path === pathname;
+                    const active = path === activePath;
                     return (
                         <div
                             key={path}
@@ -99,6 +102,7 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
                             <Link href={path} aria-current={active ? 'page' : undefined} className="flex min-w-0 flex-1 items-center gap-2 before:absolute before:inset-0 before:content-['']">
                                 {path === '/dashboard' && <LayoutDashboard />}
                                 {path === '/watchlist' && <Star />}
+                                {path === '/research' && <FileText />}
                                 <span className={cn('tab-label', isStock && 'mono text-[13px]')}>{tabLabel(path)}</span>
                             </Link>
                             {!pinned && (
