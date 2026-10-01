@@ -246,6 +246,10 @@ volumes:
   mongo-data:
 ```
 
+## ☁️ One-Click Deploy
+
+[![Deploy on RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/OpenStock/)
+
 ## 🔐 Environment Variables <a name="environment-variables"></a>
 
 Create `.env` at the project root. Choose either a hosted MongoDB (Atlas) URI or the local Docker URI.
