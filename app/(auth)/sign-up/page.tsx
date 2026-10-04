@@ -13,10 +13,13 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import OpenDevSocietyBranding from "@/components/OpenDevSocietyBranding";
 import SocialAuthButtons from "@/components/forms/SocialAuthButtons";
+import LangToggle, { useLang } from "@/components/LangToggle";
+import { tx } from "@/lib/i18n";
 import React from "react";
 
 const SignUp = () => {
     const router = useRouter()
+    const lang = useLang();
     const {
         register,
         handleSubmit,
@@ -28,7 +31,7 @@ const SignUp = () => {
             fullName: '',
             email: '',
             password: '',
-            country: 'IN',
+            country: 'SA',
             investmentGoals: 'Growth',
             riskTolerance: 'Medium',
             preferredIndustry: 'Technology'
@@ -58,8 +61,11 @@ const SignUp = () => {
 
     return (
         <>
-            <h1 className="form-title mb-2">Create your account</h1>
-            <p className="mb-8 text-faint">Free and open source. No card needed.</p>
+            <div className="mb-2 flex items-center justify-between">
+                <h1 className="form-title">{tx(lang, 'auth.create')}</h1>
+                <LangToggle initial={lang} />
+            </div>
+            <p className="mb-8 text-faint">{tx(lang, 'auth.createSub')}</p>
 
             <SocialAuthButtons />
 
@@ -67,15 +73,15 @@ const SignUp = () => {
                 <section className="flex flex-col gap-4" aria-label="Account">
                     <InputField
                         name="fullName"
-                        label="Full name"
-                        placeholder="Your name"
+                        label={tx(lang, 'auth.fullName')}
+                        placeholder={tx(lang, 'auth.fullName')}
                         register={register}
                         error={errors.fullName}
                         validation={{ required: 'Full name is required', minLength: 2 }}
                     />
                     <InputField
                         name="email"
-                        label="Email"
+                        label={tx(lang, 'auth.email')}
                         placeholder="you@example.com"
                         register={register}
                         error={errors.email}
@@ -90,8 +96,8 @@ const SignUp = () => {
                     <div className="flex flex-col gap-2">
                         <InputField
                             name="password"
-                            label="Password"
-                            placeholder="At least 8 characters"
+                            label={tx(lang, 'auth.password')}
+                            placeholder={tx(lang, 'auth.password')}
                             type="password"
                             register={register}
                             error={errors.password}
@@ -103,26 +109,26 @@ const SignUp = () => {
 
                 <section className="flex flex-col gap-5 border-t border-line pt-6" aria-labelledby="personalize">
                     <div>
-                        <p id="personalize" className="kicker text-brand-ink">Personalize</p>
-                        <p className="mt-1 text-[13px] text-faint">Used to tailor your welcome email.</p>
+                        <p id="personalize" className="kicker text-brand-ink">{tx(lang, 'auth.personalize')}</p>
+                        <p className="mt-1 text-[13px] text-faint">{tx(lang, 'auth.personalizeSub')}</p>
                     </div>
                     <CountrySelectField
                         name="country"
-                        label="Country"
+                        label={tx(lang, 'profile.country')}
                         control={control}
                         error={errors.country}
                         required
                     />
-                    <ChoiceChips name="investmentGoals" label="Investment goal" options={INVESTMENT_GOALS} control={control} />
-                    <ChoiceChips name="riskTolerance" label="Risk tolerance" options={RISK_TOLERANCE_OPTIONS} control={control} />
-                    <ChoiceChips name="preferredIndustry" label="Preferred industry" options={PREFERRED_INDUSTRIES} control={control} />
+                    <ChoiceChips name="investmentGoals" label={tx(lang, 'profile.goal')} options={INVESTMENT_GOALS} control={control} />
+                    <ChoiceChips name="riskTolerance" label={tx(lang, 'profile.risk')} options={RISK_TOLERANCE_OPTIONS} control={control} />
+                    <ChoiceChips name="preferredIndustry" label={tx(lang, 'profile.industry')} options={PREFERRED_INDUSTRIES} control={control} />
                 </section>
 
                 <div className="flex flex-col gap-4">
                     <Button type="submit" disabled={isSubmitting} className="yellow-btn w-full">
-                        {isSubmitting ? 'Creating account' : 'Create account'}
+                        {isSubmitting ? tx(lang, 'auth.submitting') : tx(lang, 'auth.submit')}
                     </Button>
-                    <FooterLink text="Already have an account?" linkText="Sign in" href="/sign-in" />
+                    <FooterLink text={tx(lang, 'auth.haveAccount')} linkText={tx(lang, 'auth.signInLink')} href="/sign-in" />
                 </div>
 
                 <OpenDevSocietyBranding outerClassName="flex justify-center" />

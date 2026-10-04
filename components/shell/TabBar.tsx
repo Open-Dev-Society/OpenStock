@@ -6,32 +6,41 @@ import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Menu, Plus, Star, X } from "lucide-react";
 import { openSearch } from "@/components/SearchCommand";
 import { cn } from "@/lib/utils";
+import { tx, type Lang, type StringKey } from "@/lib/i18n";
 
 const PINNED = ['/dashboard', '/watchlist'];
 const STORAGE_KEY = 'openstock-tabs';
-const MAX_TABS = 12;
+const MAX_TABS = 30;
 
-const PAGE_LABELS: Record<string, string> = {
-    '/dashboard': 'Overview',
-    '/watchlist': 'Watchlist',
-    '/profile': 'Profile',
+const PAGE_LABELS: Record<string, StringKey> = {
+    '/dashboard': 'nav.overview',
+    '/watchlist': 'nav.watchlist',
+    '/companies': 'nav.companies',
+    '/screener': 'nav.setups',
+    '/profile': 'nav.profile',
 };
 
 // Pages become browser-style tabs; stock pages are labelled by their symbol.
-const tabLabel = (path: string) => {
-    const stock = path.match(/^\/stocks\/([^/]+)$/);
-    if (stock) return decodeURIComponent(stock[1]).toUpperCase();
-    return PAGE_LABELS[path] ?? null;
+const tabKey = (path: string): StringKey | 'stock' | null => {
+    if (PAGE_LABELS[path]) return PAGE_LABELS[path];
+    if (/^\/stocks\/[^/]+$/.test(path)) return 'stock';
+    return null;
+};
+const tabLabel = (path: string, lang: Lang) => {
+    const key = tabKey(path);
+    if (!key) return null;
+    if (key === 'stock') return decodeURIComponent(path.split('/')[2]).toUpperCase();
+    return tx(lang, key);
 };
 
 const withTab = (tabs: string[], path: string) => {
-    if (!tabLabel(path) || tabs.includes(path)) return tabs;
+    if (!tabKey(path) || tabs.includes(path)) return tabs;
     const next = [...tabs, path];
     const extra = next.length - MAX_TABS;
     return extra > 0 ? next.filter((t, i) => PINNED.includes(t) || i >= extra + PINNED.length) : next;
 };
 
-const TabBar = ({ onMenu }: { onMenu: () => void }) => {
+const TabBar = ({ onMenu, lang }: { onMenu: () => void; lang: Lang }) => {
     const pathname = usePathname();
     const router = useRouter();
     const [tabs, setTabs] = useState(() => withTab(PINNED, pathname));
@@ -99,12 +108,12 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
                             <Link href={path} aria-current={active ? 'page' : undefined} className="flex min-w-0 flex-1 items-center gap-2 before:absolute before:inset-0 before:content-['']">
                                 {path === '/dashboard' && <LayoutDashboard />}
                                 {path === '/watchlist' && <Star />}
-                                <span className={cn('tab-label', isStock && 'mono text-[13px]')}>{tabLabel(path)}</span>
+                                <span className={cn('tab-label', isStock && 'mono text-[13px]')}>{tabLabel(path, lang)}</span>
                             </Link>
                             {!pinned && (
                                 <button
                                     type="button"
-                                    aria-label={`Close ${tabLabel(path)}`}
+                                    aria-label={`Close ${tabLabel(path, lang)}`}
                                     className="tab-close relative z-10"
                                     onClick={() => closeTab(path)}
                                 >
@@ -116,7 +125,7 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
                 })}
             </div>
 
-            <button type="button" onClick={openSearch} className="chrome-btn -ml-2" aria-label="Open a stock" title="Open a stock (⌘K)">
+            <button type="button" onClick={openSearch} className="chrome-btn -ms-2" aria-label="Open a stock" title="Open a stock (⌘K)">
                 <Plus />
             </button>
         </div>

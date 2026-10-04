@@ -34,21 +34,19 @@ describe('markets', () => {
         expect(hasFinnhubQuotes('AAPL')).toBe(true);
         expect(hasFinnhubQuotes('BRK.B')).toBe(true);
         expect(hasFinnhubQuotes('BINANCE:BTCUSDT')).toBe(true);
-        expect(hasFinnhubQuotes('RELIANCE.NS')).toBe(false);
-        expect(hasFinnhubQuotes('BARC.L')).toBe(false);
-        expect(hasFinnhubQuotes('7203.T')).toBe(false);
+        expect(hasFinnhubQuotes('2222.SR')).toBe(false);
+        expect(hasFinnhubQuotes('1120.SR')).toBe(false);
+        expect(hasFinnhubQuotes('TADAWUL:2222')).toBe(false);
         expect(hasFinnhubQuotes('FX:EURUSD')).toBe(false);
     });
 
-    it('opens each market in its own time zone', () => {
-        // Wed 2026-09-23 10:00 in Mumbai = 04:30 UTC
-        expect(isMarketOpen(getMarket('in'), new Date('2026-09-23T04:30:00Z'))).toBe(true);
-        expect(isMarketOpen(getMarket('us'), new Date('2026-09-23T04:30:00Z'))).toBe(false);
-        // Saturday: stocks and FX closed, crypto open
-        expect(isMarketOpen(getMarket('de'), new Date('2026-09-26T10:00:00Z'))).toBe(false);
-        expect(isMarketOpen(getMarket('fx'), new Date('2026-09-26T10:00:00Z'))).toBe(false);
-        expect(isMarketOpen(getMarket('crypto'), new Date('2026-09-26T10:00:00Z'))).toBe(true);
-        // FX reopens Sunday 17:00 New York (21:00 UTC in September)
-        expect(isMarketOpen(getMarket('fx'), new Date('2026-09-27T21:30:00Z'))).toBe(true);
+    it('opens Saudi market Sun-Thu in Riyadh time', () => {
+        // Sun 2026-09-27 11:00 Riyadh = 08:00 UTC -> open (10:00-15:00 Sun-Thu)
+        expect(isMarketOpen(getMarket('sa'), new Date('2026-09-27T08:00:00Z'))).toBe(true);
+        expect(isMarketOpen(getMarket('sa'), new Date('2026-09-23T04:30:00Z'))).toBe(false);
+        // Fri 2026-09-25: Tadawul closed (weekend Fri-Sat)
+        expect(isMarketOpen(getMarket('sa'), new Date('2026-09-25T08:00:00Z'))).toBe(false);
+        // Sat 2026-09-26: closed
+        expect(isMarketOpen(getMarket('sa'), new Date('2026-09-26T08:00:00Z'))).toBe(false);
     });
 });

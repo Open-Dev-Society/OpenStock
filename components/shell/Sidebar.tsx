@@ -3,29 +3,40 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { BookOpen, Code2, Heart, Info, LayoutDashboard, LifeBuoy, LogOut, Search, Star } from "lucide-react";
+import { BookOpen, Building2, Code2, Heart, Info, LayoutDashboard, LifeBuoy, LogOut, Radar, Search, Star } from "lucide-react";
 import { openSearch } from "@/components/SearchCommand";
+import LangToggle from "@/components/LangToggle";
+import { useWatchlistVisibility } from "@/components/useWatchlistVisibility";
 import { signOut } from "@/lib/actions/auth.actions";
 import { cn } from "@/lib/utils";
+import { tx, type Lang } from "@/lib/i18n";
+import { TADAWUL_COUNT } from "@/lib/tadawul-companies";
 import { SIDEBAR_SPONSOR_SLOTS, sidebarSponsors } from "@/lib/sponsors";
 
 type SidebarProps = {
     user: User;
     watchlist: { symbol: string; company: string }[];
+    lang: Lang;
 };
 
 const RESOURCES = [
-    { href: '/help', label: 'Help', icon: LifeBuoy },
-    { href: '/api-docs', label: 'API docs', icon: Code2 },
-    { href: '/about', label: 'About', icon: Info },
-    { href: '/terms', label: 'Terms', icon: BookOpen },
-];
+    { href: '/help', labelKey: 'nav.help', icon: LifeBuoy },
+    { href: '/api-docs', labelKey: 'nav.apiDocs', icon: Code2 },
+    { href: '/about', labelKey: 'nav.about', icon: Info },
+    { href: '/terms', labelKey: 'nav.terms', icon: BookOpen },
+] as const;
 
-const Sidebar = ({ user, watchlist }: SidebarProps) => {
+const Sidebar = ({ user, watchlist, lang }: SidebarProps) => {
     const pathname = usePathname();
     const router = useRouter();
     const partners = sidebarSponsors();
     const openSlots = SIDEBAR_SPONSOR_SLOTS - partners.length;
+    const { hidden } = useWatchlistVisibility();
+    const toTv = (s: string) => {
+        const u = s.toUpperCase();
+        return u.startsWith('TADAWUL:') ? u : /^\d+\.SR$/.test(u) ? `TADAWUL:${u.split('.')[0]}` : u;
+    };
+    const visibleWatchlist = watchlist.filter((w) => !hidden.includes(toTv(w.symbol)));
 
     const handleSignOut = async () => {
         await signOut();
@@ -40,27 +51,36 @@ const Sidebar = ({ user, watchlist }: SidebarProps) => {
 
             <button type="button" onClick={openSearch} className="side-cta">
                 <Search className="size-4" strokeWidth={2.5} />
-                <span className="flex-1 text-left">Search stocks</span>
+                <span className="flex-1 text-start">{tx(lang, 'nav.search')}</span>
                 <kbd className="kbd bg-on-brand/10">⌘K</kbd>
             </button>
 
             <nav className="flex flex-col gap-0.5">
                 <Link href="/dashboard" className={cn('side-item', pathname === '/dashboard' && 'is-active')}>
-                    <LayoutDashboard /> Overview
+                    <LayoutDashboard /> {tx(lang, 'nav.overview')}
                 </Link>
                 <Link href="/watchlist" className={cn('side-item', pathname === '/watchlist' && 'is-active')}>
-                    <Star /> <span className="flex-1">Watchlist</span>
+                    <Star /> <span className="flex-1">{tx(lang, 'nav.watchlist')}</span>
                     <span className="num text-xs text-faint">{watchlist.length}</span>
+                </Link>
+                <Link href="/screener" className={cn('side-item', pathname === '/screener' && 'is-active')}>
+                    <Radar /> <span className="flex-1">{tx(lang, 'nav.setups')}</span>
+                </Link>
+                <Link href="/companies" className={cn('side-item', pathname === '/companies' && 'is-active')}>
+                    <Building2 /> <span className="flex-1">{tx(lang, 'nav.companies')}</span>
+                    <span className="num text-xs text-faint">{TADAWUL_COUNT}</span>
                 </Link>
             </nav>
 
             <div className="flex flex-col gap-1 min-h-0">
-                <p className="side-label">Watching</p>
-                {watchlist.length === 0 ? (
-                    <p className="px-2.5 text-[12.5px] text-faint">Star a stock to pin it here.</p>
+                <p className="side-label">{tx(lang, 'nav.watching')}</p>
+                {visibleWatchlist.length === 0 ? (
+                    <p className="px-2.5 text-[12.5px] text-faint">
+                        {watchlist.length ? tx(lang, 'wl.hiddenN').replace('{n}', String(hidden.length)) : tx(lang, 'nav.watchingEmpty')}
+                    </p>
                 ) : (
                     <ul className="flex flex-col gap-0.5">
-                        {watchlist.map(({ symbol, company }) => (
+                        {visibleWatchlist.map(({ symbol, company }) => (
                             <li key={symbol}>
                                 <Link
                                     href={`/stocks/${symbol}`}
@@ -77,25 +97,26 @@ const Sidebar = ({ user, watchlist }: SidebarProps) => {
             </div>
 
             <div className="mt-auto flex flex-col gap-0.5">
-                {RESOURCES.map(({ href, label, icon: Icon }) => (
+                {RESOURCES.map(({ href, labelKey, icon: Icon }) => (
                     <Link key={href} href={href} className={cn('side-item h-8', pathname === href && 'is-active')}>
-                        <Icon /> {label}
+                        <Icon /> {tx(lang, labelKey)}
                     </Link>
                 ))}
                 <button
                     type="button"
                     onClick={() => window.dispatchEvent(new CustomEvent('open-donate-popup'))}
-                    className="side-item h-8 text-left"
+                    className="side-item h-8 text-start"
                 >
-                    <Heart /> Support OpenStock
+                    <Heart /> {tx(lang, 'nav.support')}
                 </button>
+                <div className="px-2 py-1"><LangToggle initial={lang} /></div>
             </div>
 
             <div className="flex flex-col gap-1.5">
                 {partners.map((sponsor) => (
                     <a key={sponsor.name} href={sponsor.url} target="_blank" rel="noreferrer" title={sponsor.name} className="flex h-11 items-center gap-2.5 rounded-[11px] px-3 shadow-[inset_0_0_0_1px_var(--line)] transition-colors hover:bg-white/5">
                         {sponsor.logo ? <img src={sponsor.logo} alt={sponsor.name} className="h-5 w-auto max-w-[120px]" /> : <span className="truncate text-[13px] font-semibold text-muted-foreground">{sponsor.name}</span>}
-                        <span className="kicker ml-auto">Sponsor</span>
+                        <span className="kicker ms-auto">Sponsor</span>
                     </a>
                 ))}
                 {openSlots > 0 && (
@@ -118,7 +139,7 @@ const Sidebar = ({ user, watchlist }: SidebarProps) => {
                         <span className="block truncate text-[12px] text-faint">{user.email}</span>
                     </span>
                 </Link>
-                <button type="button" onClick={handleSignOut} className="icon-btn" title="Sign out" aria-label="Sign out">
+                <button type="button" onClick={handleSignOut} className="icon-btn" title={tx(lang, 'nav.signOut')} aria-label={tx(lang, 'nav.signOut')}>
                     <LogOut />
                 </button>
             </div>

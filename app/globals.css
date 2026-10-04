@@ -60,7 +60,6 @@
 @theme inline {
     --font-sans: var(--font-jakarta);
     --font-mono: var(--font-plex-mono);
-
     --color-background: var(--background);
     --color-foreground: var(--foreground);
     --color-card: var(--card);
@@ -147,6 +146,10 @@
         line-height: 1.45;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+    }
+    html[lang="ar"] body {
+        font-family: var(--font-arabic), var(--font-jakarta), system-ui, sans-serif;
+        letter-spacing: 0;
     }
     h1, h2, h3 {
         text-wrap: balance;

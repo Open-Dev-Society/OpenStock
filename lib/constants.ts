@@ -107,13 +107,13 @@ export const CRYPTO_HEATMAP_CONFIG = {
     isTransparent: true,
 };
 
-export const timelineConfig = (market: 'stock' | 'crypto' | 'forex') => ({
+export const timelineConfig = (market: 'stock' | 'crypto' | 'forex', symbol?: string) => ({
     displayMode: 'regular',
-    feedMode: 'market',
+    feedMode: symbol ? 'symbol' : 'market',
+    ...(symbol ? { symbol } : { market }),
     colorTheme: 'dark',
     isTransparent: true,
     locale: 'en',
-    market,
 });
 
 export const symbolInfoConfig = (symbol: string) => ({
@@ -189,18 +189,18 @@ export const COMPANY_FINANCIALS_WIDGET_CONFIG = (symbol: string) => ({
     largeChartUrl: '',
 });
 
-// Default list in the search palette (static on purpose, see searchStocks)
+// Default list in the search palette (static on purpose, see searchStocks) - Saudi-only (Tadawul)
 export const POPULAR_STOCKS = [
-    { symbol: 'AAPL', name: 'Apple Inc', exchange: 'NASDAQ' },
-    { symbol: 'MSFT', name: 'Microsoft Corp', exchange: 'NASDAQ' },
-    { symbol: 'NVDA', name: 'NVIDIA Corp', exchange: 'NASDAQ' },
-    { symbol: 'GOOGL', name: 'Alphabet Inc', exchange: 'NASDAQ' },
-    { symbol: 'AMZN', name: 'Amazon.com Inc', exchange: 'NASDAQ' },
-    { symbol: 'META', name: 'Meta Platforms Inc', exchange: 'NASDAQ' },
-    { symbol: 'TSLA', name: 'Tesla Inc', exchange: 'NASDAQ' },
-    { symbol: 'NFLX', name: 'Netflix Inc', exchange: 'NASDAQ' },
-    { symbol: 'AMD', name: 'Advanced Micro Devices Inc', exchange: 'NASDAQ' },
-    { symbol: 'JPM', name: 'JPMorgan Chase & Co', exchange: 'NYSE' },
+    { symbol: '2222.SR', name: 'Saudi Aramco', exchange: 'SR' },
+    { symbol: '1120.SR', name: 'Al Rajhi Bank', exchange: 'SR' },
+    { symbol: '1180.SR', name: 'Saudi National Bank', exchange: 'SR' },
+    { symbol: '7010.SR', name: 'STC Group', exchange: 'SR' },
+    { symbol: '2010.SR', name: 'SABIC', exchange: 'SR' },
+    { symbol: '1150.SR', name: 'Alinma Bank', exchange: 'SR' },
+    { symbol: '2082.SR', name: 'ACWA Power', exchange: 'SR' },
+    { symbol: '2280.SR', name: 'Almarai', exchange: 'SR' },
+    { symbol: '1010.SR', name: 'Riyad Bank', exchange: 'SR' },
+    { symbol: '1111.SR', name: 'Saudi Tadawul Group', exchange: 'SR' },
 ];
 
 export const NO_MARKET_NEWS =

@@ -2,6 +2,9 @@
 
 import { getDateRange, validateArticle, formatArticle } from '@/lib/utils';
 import { POPULAR_STOCKS } from '@/lib/constants';
+import { matchTadawulCompanies, tadawulDisplayName } from '@/lib/tadawul-search';
+import { isTadawulSymbol, type YahooDailyQuote } from '@/lib/yahoo';
+import { getYahooDailyQuotes } from '@/lib/actions/yahoo.actions';
 import { cache } from 'react';
 import { QUOTE_TTL_SECONDS } from '@/lib/market-data';
 import { hasFinnhubQuotes } from '@/lib/markets';
@@ -54,7 +57,7 @@ type SearchStockCandidate = FinnhubSearchResult & {
 const FINNHUB_EXCHANGE_SUFFIXES = new Set([
     'AS', 'AT', 'AX', 'BA', 'BK', 'BO', 'BR', 'CO', 'DE', 'F', 'HE', 'HK',
     'IL', 'IS', 'JK', 'JO', 'KL', 'KQ', 'KS', 'L', 'LS', 'MC', 'MI', 'MX',
-    'NS', 'NZ', 'OL', 'PA', 'PR', 'SA', 'SI', 'SS', 'ST', 'SW', 'SZ', 'T',
+    'NS', 'NZ', 'OL', 'PA', 'PR', 'SA', 'SI', 'SR', 'SS', 'ST', 'SW', 'SZ', 'T',
     'TA', 'TO', 'TW', 'TWO', 'V', 'VI', 'WA',
 ]);
 
@@ -196,8 +199,28 @@ export async function getCompanyProfile(symbol: string) {
 export async function getWatchlistData(symbols: string[]) {
     if (!symbols || symbols.length === 0) return [];
 
+    // Tadawul symbols Finnhub free can't price: use Yahoo daily quotes instead.
+    const yahooSyms = symbols.filter((s) => !hasFinnhubQuotes(s) && isTadawulSymbol(s));
+    const yahooQuotes: Record<string, YahooDailyQuote> = yahooSyms.length
+        ? await getYahooDailyQuotes(yahooSyms).catch(() => ({}))
+        : {};
+
     // Fetch quotes and profiles in parallel
     const promises = symbols.map(async (sym) => {
+        if (yahooQuotes[sym]) {
+            const y = yahooQuotes[sym];
+            return {
+                symbol: sym,
+                price: y.price || 0,
+                change: y.change || 0,
+                changePercent: y.changePercent || 0,
+                currency: y.currency || 'SAR',
+                name: y.name || sym,
+                logo: undefined,
+                marketCap: undefined,
+                peRatio: 0,
+            };
+        }
         const covered = hasFinnhubQuotes(sym);
         const [quote, profile] = covered
             ? await Promise.all([getQuote(sym, LIVE_QUOTE_TTL), getCompanyProfile(sym)])
@@ -208,7 +231,7 @@ export async function getWatchlistData(symbols: string[]) {
             price: quote?.c || 0,
             change: quote?.d || 0,
             changePercent: quote?.dp || 0,
-            currency: profile?.currency || 'USD',
+            currency: profile?.currency || 'SAR',
             name: profile?.name || sym,
             logo: profile?.logo,
             marketCap: profile?.marketCapitalization,
@@ -309,6 +332,7 @@ export const searchStocks = cache(async (query?: string): Promise<StockWithWatch
 
         if (!trimmed) {
             // Shown in the palette on every page, so no API calls: Finnhub's free tier is 60 req/min
+            // Saudi-only build: static Tadawul list from constants
             results = POPULAR_STOCKS.map(({ symbol, name, exchange }) => ({
                 symbol,
                 description: name,
@@ -319,9 +343,25 @@ export const searchStocks = cache(async (query?: string): Promise<StockWithWatch
         } else {
             // A public server action: only signed-in users may spend Finnhub quota on searches
             if (!(await getSession())?.user) return [];
-            const url = `${FINNHUB_BASE_URL}/search?q=${encodeURIComponent(trimmed)}`;
-            const data = await fetchJSON<FinnhubSearchResponse>(url, 1800);
-            results = Array.isArray(data?.result) ? data.result : [];
+            // Saudi-only: search the full local Tadawul directory first (instant, no quota).
+            const local = matchTadawulCompanies(trimmed).map((c) => ({
+                symbol: c.symbol,
+                description: tadawulDisplayName(c),
+                displaySymbol: c.symbol,
+                type: 'Common Stock',
+                __exchange: 'SR',
+            }));
+            if (local.length > 0) {
+                results = local;
+            } else {
+                // Fallback for brand-new listings missing from the local directory
+                const url = `${FINNHUB_BASE_URL}/search?q=${encodeURIComponent(trimmed)}`;
+                const data = await fetchJSON<FinnhubSearchResponse>(url, 1800);
+                const all = Array.isArray(data?.result) ? data.result : [];
+                // Saudi-only: keep Tadawul (.SR) listings. Finnhub search returns worldwide,
+                // so drop everything else. Users can type "2222" or "2222.SR" or "Aramco".
+                results = all.filter((r) => (r.symbol || '').toUpperCase().endsWith('.SR'));
+            }
         }
 
         const mapped: StockWithWatchlistStatus[] = results

@@ -5,7 +5,9 @@ import { MARKETS, MARKET_COOKIE, type MarketId } from "@/lib/markets";
 import { cn } from "@/lib/utils";
 
 // Market chips for the dashboard. The choice is remembered in a cookie so the server renders it next time.
+// Saudi-only build: single market, so no switcher needed.
 export default function MarketSwitcher({ active, openIds }: { active: MarketId; openIds: MarketId[] }) {
+    if (MARKETS.length <= 1) return null;
     const remember = (id: MarketId) => {
         document.cookie = `${MARKET_COOKIE}=${id}; path=/; max-age=31536000; samesite=lax`;
     };

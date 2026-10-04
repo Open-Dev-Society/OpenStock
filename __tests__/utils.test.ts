@@ -116,6 +116,11 @@ describe('formatSymbolForTradingView', () => {
         expect(formatSymbolForTradingView('NPN.JO')).toBe('JSE:NPN');
     });
 
+    it('maps Saudi Exchange (.SR) to TADAWUL prefix', () => {
+        expect(formatSymbolForTradingView('2222.SR')).toBe('TADAWUL:2222');
+        expect(formatSymbolForTradingView('1120.sr')).toBe('TADAWUL:1120');
+    });
+
     // Case insensitivity
     it('handles lowercase input', () => {
         expect(formatSymbolForTradingView('2330.tw')).toBe('TWSE:2330');
@@ -231,7 +236,7 @@ describe('isChartEmbeddable', () => {
     });
 
     it('flags exchanges TradingView refuses in free embeds', () => {
-        for (const s of ['TSE:7203', 'HKEX:700', 'LSE:VOD', 'KRX:005930']) expect(isChartEmbeddable(s)).toBe(false);
+        for (const s of ['TSE:7203', 'HKEX:700', 'LSE:VOD', 'KRX:005930', 'TADAWUL:2222']) expect(isChartEmbeddable(s)).toBe(false);
     });
 
     it('maps Prague to PSECZ, not the Philippine PSE', () => {

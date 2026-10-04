@@ -74,7 +74,7 @@ const CountrySelect = ({
                     ) : (
                         'Select your country...'
                     )}
-                    <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                    <ChevronsUpDown className='ms-2 h-4 w-4 shrink-0 opacity-50' />
                 </Button>
             </PopoverTrigger>
             <PopoverContent
@@ -103,7 +103,7 @@ const CountrySelect = ({
                                 >
                                     <Check
                                         className={cn(
-                                            'mr-2 h-4 w-4 text-teal-500',
+                                            'me-2 h-4 w-4 text-teal-500',
                                             value === country.value ? 'opacity-100' : 'opacity-0'
                                         )}
                                     />
