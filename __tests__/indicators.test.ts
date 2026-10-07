@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { adx, bollinger, cci, elliottWaves, ema, macd, rsi, sma, stochastic, studyPoints, zigzag } from '@/lib/indicators';
+import { adx, bollinger, cci, donchian, elliottWaves, ema, macd, rsi, sma, stochastic, studyPoints, zigzag } from '@/lib/indicators';
 
 describe('sma', () => {
     it('averages the trailing window', () => {
@@ -108,6 +108,30 @@ describe('zigzag', () => {
         expect(elliottWaves([...bad])).toEqual([]);
     });
 
+    it('rejects a repeated pivot side (zigzag ratchet)', () => {
+        // Two consecutive highs must never count as an impulse
+        const bad = [
+            { index: 0, price: 100, type: 'low' },
+            { index: 1, price: 110, type: 'high' },
+            { index: 2, price: 112, type: 'high' },
+            { index: 3, price: 120, type: 'high' },
+            { index: 4, price: 113, type: 'low' },
+            { index: 5, price: 125, type: 'high' },
+        ] as const;
+        expect(elliottWaves([...bad])).toEqual([]);
+    });
+
+    it('rejects wave 3 that never exceeds wave 1', () => {
+        const bad = [
+            { index: 0, price: 100, type: 'low' },
+            { index: 1, price: 110, type: 'high' },
+            { index: 2, price: 105, type: 'low' },
+            { index: 3, price: 108, type: 'high' },
+            { index: 4, price: 106, type: 'low' },
+            { index: 5, price: 112, type: 'high' },
+        ] as const;
+        expect(elliottWaves([...bad])).toEqual([]);
+    });
     it('returns [] when no clean impulse exists', () => {
         expect(elliottWaves([])).toEqual([]);
         expect(elliottWaves([{ index: 0, price: 10, type: 'low' } as const])).toEqual([]);
@@ -167,5 +191,18 @@ describe('adx', () => {
     it('returns nulls when history is too short', () => {
         const a = adx([1, 2], [1, 2], [1, 2], 14);
         expect(a.adx.every((v) => v == null)).toBe(true);
+    });
+});
+
+describe('donchian', () => {
+    it('tracks the rolling highest high and lowest low', () => {
+        const highs = [10, 12, 11, 13, 12];
+        const lows = [9, 10, 10, 11, 11];
+        const { upper, lower } = donchian(highs, lows, 3);
+        expect(upper.slice(0, 2)).toEqual([null, null]);
+        expect(upper[2]).toBe(12);
+        expect(upper[4]).toBe(13);
+        expect(lower[2]).toBe(9);
+        expect(lower[4]).toBe(10);
     });
 });

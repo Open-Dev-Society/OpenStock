@@ -26,6 +26,23 @@ export function ema(values: number[], period: number): (number | null)[] {
 
 export type Bollinger = { basis: number | null; upper: number | null; lower: number | null };
 
+// Donchian support/resistance: rolling highest high / lowest low (null warmup).
+export function donchian(highs: number[], lows: number[], period = 100): { upper: (number | null)[]; lower: (number | null)[] } {
+    const upper: (number | null)[] = new Array(highs.length).fill(null);
+    const lower: (number | null)[] = new Array(highs.length).fill(null);
+    if (period < 1) return { upper, lower };
+    for (let i = period - 1; i < highs.length; i++) {
+        let hi = -Infinity;
+        let lo = Infinity;
+        for (let j = i - period + 1; j <= i; j++) {
+            if (highs[j] > hi) hi = highs[j];
+            if (lows[j] < lo) lo = lows[j];
+        }
+        upper[i] = hi;
+        lower[i] = lo;
+    }
+    return { upper, lower };
+}
 export function bollinger(values: number[], period = 20, mult = 2): Bollinger[] {
     const basis = sma(values, period);
     return values.map((_, i) => {
@@ -171,6 +188,9 @@ const atPivot = (p: ZigPivot, label: string): WaveLabel => ({
 function labelImpulse(pts: ZigPivot[]): WaveLabel[] | null {
     if (pts.length < 6) return null;
     const [p0, p1, p2, p3, p4, p5] = pts;
+    // Pivots must strictly alternate — zigzag ratchets can repeat a side
+    const tys = [p0, p1, p2, p3, p4, p5].map((p) => p.type);
+    if (!tys.every((t, i) => i === 0 || t !== tys[i - 1])) return null;
     const up = p1.price > p0.price;
     if (up && p0.type !== 'low') return null;
     if (!up && p0.type !== 'high') return null;
@@ -181,9 +201,11 @@ function labelImpulse(pts: ZigPivot[]): WaveLabel[] | null {
     if (up) {
         if (p2.price <= p0.price) return null; // wave 2 past wave 1 start
         if (p4.price <= p1.price) return null; // wave 4 overlaps wave 1
+        if (p3.price <= p1.price) return null; // wave 3 must exceed wave 1
     } else {
         if (p2.price >= p0.price) return null;
         if (p4.price >= p1.price) return null;
+        if (p3.price >= p1.price) return null;
     }
     if (!(l3 >= Math.min(l1, l5))) return null; // wave 3 never the shortest
     return [atPivot(p1, '1'), atPivot(p2, '2'), atPivot(p3, '3'), atPivot(p4, '4'), atPivot(p5, '5')];

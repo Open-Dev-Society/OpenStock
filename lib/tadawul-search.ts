@@ -1,6 +1,7 @@
-import { TADAWUL_COMPANIES, type TadawulCompany } from '@/lib/tadawul-companies';
+import { TADAWUL_MAIN_COMPANIES, type TadawulCompany } from '@/lib/tadawul-companies';
 
-// Local-first search over the full directory (no Finnhub quota spent).
+// Local-first search over the main-market directory (no Finnhub quota spent).
+// Nomu (9xxx) excluded — direct /stocks/[symbol] URLs still resolve via the full directory.
 // Digits match the symbol ("2222" -> 2222.SR), Latin or Arabic text matches the name.
 export function matchTadawulCompanies(query: string, limit = 15): TadawulCompany[] {
     const q = (query || '').trim().toUpperCase();
@@ -9,7 +10,7 @@ export function matchTadawulCompanies(query: string, limit = 15): TadawulCompany
     const startsSymbol: TadawulCompany[] = [];
     const startsName: TadawulCompany[] = [];
     const contains: TadawulCompany[] = [];
-    for (const c of TADAWUL_COMPANIES) {
+    for (const c of TADAWUL_MAIN_COMPANIES) {
         const sym = c.symbol.toUpperCase();
         const names = [c.name.toUpperCase(), (c.ar || '').toUpperCase()].filter(Boolean);
         if (digits && sym.replace(/[^0-9]/g, '').startsWith(digits)) {

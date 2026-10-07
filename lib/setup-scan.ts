@@ -10,6 +10,8 @@ export type SetupSignal =
     | 'uptrend' // Close > SMA20 > SMA50: aligned trend
     | 'stoch-cross' // %K crossed above %D: short-term turn
     | 'breakout' // Within 2% of the 52-week high
+    | 'rsi-rising' // RSI(14) higher than yesterday: building momentum
+    | 'rsi-burst' // RSI(14) jumped >= 6 in a day while <= 50: early ignition
     | 'volume-surge'; // Today > 2x the 20-day average volume
 
 export const SIGNAL_LABELS: Record<SetupSignal, { en: string; ar: string }> = {
@@ -18,6 +20,8 @@ export const SIGNAL_LABELS: Record<SetupSignal, { en: string; ar: string }> = {
     uptrend: { en: 'Uptrend', ar: 'ترند صاعد' },
     'stoch-cross': { en: 'Stoch cross', ar: 'تقاطع ستوكاستك' },
     breakout: { en: 'Near high', ar: 'قرب القمة' },
+    'rsi-rising': { en: 'RSI rising', ar: 'RSI صاعد' },
+    'rsi-burst': { en: 'RSI burst', ar: 'قفزة RSI' },
     'volume-surge': { en: 'Volume surge', ar: 'سيولة عالية' },
 };
 
@@ -28,7 +32,26 @@ export type SetupScore = {
     price: number;
     changePercent: number;
     volumeRatio: number | null;
+    rsiChange?: number | null; // today RSI(14) minus yesterday, when computed
 };
+
+// RSI(14) momentum: today's reading vs yesterday's. Null when history is short.
+export function rsiMomentum(closes: number[]): { rsi: number; prev: number; change: number } | null {
+    if (closes.length < 20) return null;
+    const arr = rsi(closes, 14);
+    const cur = arr[arr.length - 1];
+    const prev = arr[arr.length - 2];
+    if (cur == null || prev == null) return null;
+    return { rsi: cur, prev, change: cur - prev };
+}
+
+// RSI burst: one-day jump >= minJump while still <= maxRsi.
+// Catches early ignition out of low/neutral zones, not overbought chases.
+export function rsiBurst(closes: number[], minJump = 6, maxRsi = 50): { rsi: number; prev: number; change: number } | null {
+    const m = rsiMomentum(closes);
+    if (!m || m.change < minJump || m.rsi > maxRsi) return null;
+    return m;
+}
 
 // Validate an RSI band from URL params. Returns [lo, hi] or null when absent/invalid.
 // Lives here (not in screener.actions.ts) because Server Actions files may only

@@ -10,7 +10,7 @@ import { useWatchlistVisibility } from "@/components/useWatchlistVisibility";
 import { signOut } from "@/lib/actions/auth.actions";
 import { cn } from "@/lib/utils";
 import { tx, type Lang } from "@/lib/i18n";
-import { TADAWUL_COUNT } from "@/lib/tadawul-companies";
+import { TADAWUL_MAIN_COUNT } from "@/lib/tadawul-companies";
 import { SIDEBAR_SPONSOR_SLOTS, sidebarSponsors } from "@/lib/sponsors";
 
 type SidebarProps = {
@@ -68,7 +68,7 @@ const Sidebar = ({ user, watchlist, lang }: SidebarProps) => {
                 </Link>
                 <Link href="/companies" className={cn('side-item', pathname === '/companies' && 'is-active')}>
                     <Building2 /> <span className="flex-1">{tx(lang, 'nav.companies')}</span>
-                    <span className="num text-xs text-faint">{TADAWUL_COUNT}</span>
+                    <span className="num text-xs text-faint">{TADAWUL_MAIN_COUNT}</span>
                 </Link>
             </nav>
 

@@ -395,3 +395,14 @@ export const TADAWUL_COMPANIES: TadawulCompany[] = [
 ];
 
 export const TADAWUL_COUNT = TADAWUL_COMPANIES.length;
+
+// Nomu (parallel/growth market) codes are 9xxx; main-market TASI codes are < 9000.
+// The app lists/scans the main market only — Nomu symbols stay reachable by direct URL.
+export const isNomuSymbol = (symbol: string): boolean => {
+    const m = /^(\d+)\.SR$/i.exec((symbol || '').trim());
+    return m ? parseInt(m[1], 10) >= 9000 : false;
+};
+
+export const TADAWUL_MAIN_COMPANIES: TadawulCompany[] = TADAWUL_COMPANIES.filter((c) => !isNomuSymbol(c.symbol));
+
+export const TADAWUL_MAIN_COUNT = TADAWUL_MAIN_COMPANIES.length;

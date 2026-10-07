@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import Panel from '@/components/Panel';
 import SetupsLiveTable from '@/components/SetupsLiveTable';
-import { scanMarket, scanRsiBand } from '@/lib/actions/screener.actions';
+import { scanMarket, scanRsiBand, scanRsiBurst, scanRsiRising } from '@/lib/actions/screener.actions';
 import { parseBand } from '@/lib/setup-scan';
 import { getLang } from '@/lib/i18n-server';
 import { tx } from '@/lib/i18n';
@@ -20,8 +20,36 @@ const ScanSkeleton = () => (
     </div>
 );
 
-async function Results({ band }: { band: [number, number] | null }) {
+async function Results({ band, rising, burst }: { band: [number, number] | null; rising: boolean; burst: boolean }) {
     const lang = await getLang();
+    if (burst) {
+        const { rows, scanned } = await scanRsiBurst(25, 6, 50);
+        if (rows.length === 0) {
+            return <p className="search-list-indicator">{tx(lang, 'screen.empty')}</p>;
+        }
+        return (
+            <>
+                <SetupsLiveTable rows={rows} lang={lang} />
+                <p className="px-3 py-2 text-[11.5px] text-faint">
+                    {tx(lang, 'screen.foot').replace('{n}', String(scanned))}
+                </p>
+            </>
+        );
+    }
+    if (rising) {
+        const { rows, scanned } = await scanRsiRising(25);
+        if (rows.length === 0) {
+            return <p className="search-list-indicator">{tx(lang, 'screen.empty')}</p>;
+        }
+        return (
+            <>
+                <SetupsLiveTable rows={rows} lang={lang} />
+                <p className="px-3 py-2 text-[11.5px] text-faint">
+                    {tx(lang, 'screen.foot').replace('{n}', String(scanned))}
+                </p>
+            </>
+        );
+    }
     if (band) {
         const { rows, scanned } = await scanRsiBand(band[0], band[1]);
         if (rows.length === 0) {
@@ -53,10 +81,14 @@ async function Results({ band }: { band: [number, number] | null }) {
 // Ranks every Tadawul stock by setup strength (oversold, MACD cross, trend,
 // stochastic cross, near-high, volume). Cold scan takes ~30s, then cached hourly.
 // ?rsiMin=&rsiMax= switches to an up-day + RSI band filter instead.
-export default async function ScreenerPage({ searchParams }: { searchParams: Promise<{ rsiMin?: string; rsiMax?: string }> }) {
+// ?rising=1 switches to RSI(14) momentum (higher than yesterday) instead.
+// ?burst=1 switches to the RSI burst preset (one-day jump >= 6, RSI <= 50).
+export default async function ScreenerPage({ searchParams }: { searchParams: Promise<{ rsiMin?: string; rsiMax?: string; rising?: string; burst?: string }> }) {
     const lang = await getLang();
-    const { rsiMin, rsiMax } = await searchParams;
-    const band = parseBand(rsiMin, rsiMax);
+    const { rsiMin, rsiMax, rising: risingRaw, burst: burstRaw } = await searchParams;
+    const burst = burstRaw === '1';
+    const rising = !burst && risingRaw === '1';
+    const band = rising || burst ? null : parseBand(rsiMin, rsiMax);
     return (
         <>
             <header className="page-head">
@@ -66,10 +98,17 @@ export default async function ScreenerPage({ searchParams }: { searchParams: Pro
                 </div>
             </header>
             <Panel
-                title={band ? tx(lang, 'screen.bandTitle') : tx(lang, 'screen.top')}
-                sub={band ? tx(lang, 'screen.bandSub').replace('{lo}', String(band[0])).replace('{hi}', String(band[1])) : tx(lang, 'screen.tapRow')}
+                title={burst ? tx(lang, 'screen.burstTitle') : rising ? tx(lang, 'screen.risingTitle') : band ? tx(lang, 'screen.bandTitle') : tx(lang, 'screen.top')}
+                sub={burst ? tx(lang, 'screen.burstSub') : rising ? tx(lang, 'screen.risingSub') : band ? tx(lang, 'screen.bandSub').replace('{lo}', String(band[0])).replace('{hi}', String(band[1])) : tx(lang, 'screen.tapRow')}
                 action={
-                    <form action="/screener" method="GET" className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5">
+                        {!rising && !burst && (
+                            <a href="/screener?rising=1" className="pill h-8">{tx(lang, 'screen.rising')}</a>
+                        )}
+                        {!burst && (
+                            <a href="/screener?burst=1" className="pill h-8">{tx(lang, 'screen.burst')}</a>
+                        )}
+                        <form action="/screener" method="GET" className="flex items-center gap-1.5">
                         <label className="text-[11.5px] text-faint">
                             {tx(lang, 'screen.rsiFrom')}{' '}
                             <input
@@ -87,14 +126,15 @@ export default async function ScreenerPage({ searchParams }: { searchParams: Pro
                             />
                         </label>
                         <button type="submit" className="pill h-8">{tx(lang, 'screen.apply')}</button>
-                        {band && (
+                        {(band || rising || burst) && (
                             <a href="/screener" className="pill h-8">{tx(lang, 'screen.clear')}</a>
                         )}
                     </form>
+                    </div>
                 }
             >
                 <Suspense fallback={<ScanSkeleton />}>
-                    <Results band={band} />
+                    <Results band={band} rising={rising} burst={burst} />
                 </Suspense>
             </Panel>
         </>

@@ -10,6 +10,7 @@ import SaudiQuotesTable, { SaudiMovers } from "@/components/SaudiQuotes";
 import SaudiTerminalWatchlist from "@/components/SaudiTerminal";
 import TadawulChart from "@/components/stocks/TadawulChart";
 import { tradingViewSymbolUrl } from "@/lib/utils";
+import { isCandleRangeId } from "@/lib/yahoo";
 import {
     CRYPTO_HEATMAP_CONFIG,
     STOCK_HEATMAP_CONFIG,
@@ -25,8 +26,8 @@ import { tx } from "@/lib/i18n";
 const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
 
 // Widgets come from TradingView (live, no Finnhub quota) and render immediately; the tiles stream in.
-export default async function Dashboard({ searchParams }: { searchParams: Promise<{ market?: string; wide?: string }> }) {
-    const { market: requested, wide } = await searchParams;
+export default async function Dashboard({ searchParams }: { searchParams: Promise<{ market?: string; wide?: string; tf?: string }> }) {
+    const { market: requested, wide, tf } = await searchParams;
     // Explicit choice, then the remembered one, then the market of the user's country
     const saved = (await cookies()).get(MARKET_COOKIE)?.value;
     const market = getMarket(requested ?? saved ?? marketForCountry((await getSession())?.user.country));
@@ -45,6 +46,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         const params = new URLSearchParams();
         if (requested) params.set('market', requested);
         if (w) params.set('wide', '1');
+        if (tf) params.set('tf', tf);
         const qs = params.toString();
         return `/dashboard${qs ? `?${qs}` : ''}`;
     };
@@ -91,7 +93,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                                 </Link>
                             }
                         >
-                            <TadawulChart symbol="TADAWUL:TASI" tvUrl={tradingViewSymbolUrl('TADAWUL:TASI')} lang={lang} />
+                            <TadawulChart symbol="TADAWUL:TASI" tvUrl={tradingViewSymbolUrl('TADAWUL:TASI')} lang={lang} initialRange={isCandleRangeId(tf) ? tf : '1m'} />
                         </Panel>
                         <Panel title={tx(lang, 'dash.watchlist')} sub={tx(lang, 'dash.watchlistSub')}>
                             <SaudiTerminalWatchlist lang={lang} />

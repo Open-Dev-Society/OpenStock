@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseBand, scoreSetup } from '@/lib/setup-scan';
+import { parseBand, rsiBurst, rsiMomentum, scoreSetup } from '@/lib/setup-scan';
 
 describe('parseBand', () => {
     it('accepts valid bands', () => {
@@ -50,5 +50,53 @@ describe('scoreSetup', () => {
         const closes = Array.from({ length: 90 }, (_, i) => 20 + Math.sin(i / 4));
         const s = scoreSetup(closes, closes.map((v) => v + 0.3), closes.map((v) => v - 0.3), new Array(90).fill(1000));
         expect(s?.score).toBe(0);
+    });
+});
+
+describe('rsiMomentum', () => {
+    it('returns null when history is too short', () => {
+        expect(rsiMomentum([10, 11, 12])).toBeNull();
+    });
+
+    it('detects a rising RSI after a rally', () => {
+        // Flat, dip, then rally into the last bar: RSI mid-range and climbing
+        const closes = [...new Array(30).fill(20), ...Array.from({ length: 10 }, (_, i) => 20 - i * 0.2), ...Array.from({ length: 10 }, (_, i) => 18 + i * 0.6)];
+        const m = rsiMomentum(closes);
+        expect(m).not.toBeNull();
+        expect(m!.change).toBeGreaterThan(0);
+        expect(m!.rsi).toBeGreaterThan(m!.prev);
+    });
+
+    it('detects a falling RSI after a selloff', () => {
+        const closes = [...new Array(30).fill(20), ...Array.from({ length: 10 }, (_, i) => 20 + i * 0.4), ...Array.from({ length: 10 }, (_, i) => 24 - i * 0.6)];
+        const m = rsiMomentum(closes);
+        expect(m).not.toBeNull();
+        expect(m!.change).toBeLessThan(0);
+    });
+});
+
+describe('rsiBurst', () => {
+    it('fires on a one-day jump >= 6 while RSI stays <= 50', () => {
+        // Long bleed then a sharp last-day rally: big RSI jump from a low base
+        const closes = [...Array.from({ length: 50 }, (_, i) => 30 - i * 0.2), 19.5, 21.5];
+        const m = rsiBurst(closes, 6, 50);
+        expect(m).not.toBeNull();
+        expect(m!.change).toBeGreaterThanOrEqual(6);
+        expect(m!.rsi).toBeLessThanOrEqual(50);
+    });
+
+    it('rejects small jumps', () => {
+        const closes = [...new Array(40).fill(20), ...Array.from({ length: 10 }, (_, i) => 20 + i * 0.1)];
+        expect(rsiBurst(closes, 6, 50)).toBeNull();
+    });
+
+    it('rejects jumps that land overbought', () => {
+        // Oscillating base (RSI ~50) then a sharp last-day rally:
+        // one-day jump is big but lands above 50
+        const closes = [...Array.from({ length: 40 }, (_, i) => 20 + Math.sin(i) * 0.3), 21.8];
+        const m = rsiMomentum(closes);
+        expect(m!.change).toBeGreaterThanOrEqual(6);
+        expect(m!.rsi).toBeGreaterThan(50);
+        expect(rsiBurst(closes, 6, 50)).toBeNull();
     });
 });

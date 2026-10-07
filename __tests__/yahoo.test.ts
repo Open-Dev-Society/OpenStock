@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildYahooUrl, dailyQuoteFromCandles, isCandleRangeId, isTadawulSymbol, normalizeYahooSymbol, parseYahooChart, resampleDaily, resampleMonthly, resampleWeekly, riyadhDay, sessionMove, validCandles } from '@/lib/yahoo';
-import { TADAWUL_COMPANIES, TADAWUL_COUNT } from '@/lib/tadawul-companies';
+import { TADAWUL_COMPANIES, TADAWUL_COUNT, TADAWUL_MAIN_COMPANIES, TADAWUL_MAIN_COUNT, isNomuSymbol } from '@/lib/tadawul-companies';
 import { matchTadawulCompanies, tadawulDisplayName } from '@/lib/tadawul-search';
 
 describe('tadawul directory', () => {
@@ -8,6 +8,14 @@ describe('tadawul directory', () => {
         expect(TADAWUL_COUNT).toBe(TADAWUL_COMPANIES.length);
         expect(TADAWUL_COUNT).toBeGreaterThan(300);
         expect(TADAWUL_COMPANIES.find((c) => c.symbol === '2222.SR')?.name).toMatch(/Aramco|Arabian Oil/i);
+    });
+
+    it('excludes Nomu (9xxx) from the main-market list', () => {
+        expect(isNomuSymbol('9517.SR')).toBe(true);
+        expect(isNomuSymbol('2222.SR')).toBe(false);
+        expect(TADAWUL_MAIN_COUNT).toBe(TADAWUL_MAIN_COMPANIES.length);
+        expect(TADAWUL_MAIN_COUNT).toBeLessThan(TADAWUL_COUNT);
+        expect(TADAWUL_MAIN_COMPANIES.some((c) => isNomuSymbol(c.symbol))).toBe(false);
     });
 });
 
@@ -37,6 +45,10 @@ describe('matchTadawulCompanies', () => {
     it('returns empty for blank queries and caps results', () => {
         expect(matchTadawulCompanies('')).toEqual([]);
         expect(matchTadawulCompanies('2').length).toBeLessThanOrEqual(15);
+    });
+
+    it('excludes Nomu symbols from search', () => {
+        expect(matchTadawulCompanies('9517').some((c) => c.symbol === '9517.SR')).toBe(false);
     });
 });
 

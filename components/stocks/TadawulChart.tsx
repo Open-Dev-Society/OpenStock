@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRightToLine, FoldVertical, Maximize2, Minimize2, RotateCcw, UnfoldVertical, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowRightToLine, FoldVertical, Maximize2, Minimize2, RefreshCw, RotateCcw, UnfoldVertical, ZoomIn, ZoomOut } from 'lucide-react';
 import { CHART_BASE_HEIGHT, clampHeightDelta, zoomRange } from '@/lib/chart-view';
 import {
     createChart,
@@ -20,8 +20,8 @@ import {
 } from 'lightweight-charts';
 
 type PaneApi = ReturnType<IChartApi['addPane']>;
-import { CANDLE_RANGES, OhlcCandle, validCandles, type CandleRangeId } from '@/lib/yahoo';
-import { bollinger, cci, elliottWaves, ema, macd, rsi, sma, stochastic, adx, studyPoints, zigzag } from '@/lib/indicators';
+import { CANDLE_RANGES, isCandleRangeId, OhlcCandle, validCandles, type CandleRangeId } from '@/lib/yahoo';
+import { bollinger, cci, donchian, elliottWaves, ema, macd, rsi, sma, stochastic, adx, studyPoints, zigzag } from '@/lib/indicators';
 import { tx, type Lang } from '@/lib/i18n';
 import {
     fibLevelPrices,
@@ -47,14 +47,21 @@ import { getTadawulCandles } from '@/lib/actions/yahoo.actions';
 import { getTwelveIntraday } from '@/lib/actions/twelvedata.actions';
 
 const RANGE_IDS = Object.keys(CANDLE_RANGES) as CandleRangeId[];
-const REFRESH_MS = 30_000;
+// Refetch cadence follows the server cache TTLs: Twelve Data live = 15s,
+// Yahoo intraday = 60s. Polling faster only re-reads the same cached payload
+// and burns API quota (Twelve free quota dies in minutes at 1s).
+// A separate 1s UI tick keeps the "updated Ns ago" label feeling live.
+const POLL_MS = 15_000;
+const DELAYED_REFETCH_MS = 60_000;
+const AGE_TICK_MS = 1_000;
 
-type IndKey = 'ma20' | 'ema50' | 'bb' | 'rsi' | 'macd' | 'cci' | 'stoch' | 'adx' | 'elliott' | 'volume';
+type IndKey = 'ma20' | 'ema50' | 'bb' | 'sr' | 'rsi' | 'macd' | 'cci' | 'stoch' | 'adx' | 'elliott' | 'volume';
 type ParamDef = { key: string; label: string; labelKey?: 'param.length' | 'param.mult' | 'param.fast' | 'param.slow' | 'param.signal' | 'param.dev'; def: number; min: number; max: number; step?: number };
 const INDICATORS: { key: IndKey; label: string; labelAr?: string; params: ParamDef[]; defOn?: boolean; noColor?: boolean }[] = [
     { key: 'ma20', label: 'MA', params: [{ key: 'period', label: 'Length', labelKey: 'param.length', def: 20, min: 2, max: 200 }] },
     { key: 'ema50', label: 'EMA', params: [{ key: 'period', label: 'Length', labelKey: 'param.length', def: 50, min: 2, max: 200 }] },
     { key: 'bb', label: 'Bollinger', params: [{ key: 'period', label: 'Length', labelKey: 'param.length', def: 20, min: 2, max: 100 }, { key: 'mult', label: 'Mult', labelKey: 'param.mult', def: 2, min: 0.5, max: 5, step: 0.5 }] },
+    { key: 'sr', label: 'S/R zones', labelAr: 'دعم/مقاومة', params: [{ key: 'period', label: 'Length', labelKey: 'param.length', def: 100, min: 20, max: 500 }], noColor: true },
     { key: 'rsi', label: 'RSI', params: [{ key: 'period', label: 'Length', labelKey: 'param.length', def: 14, min: 2, max: 100 }] },
     { key: 'macd', label: 'MACD', params: [{ key: 'fast', label: 'Fast', labelKey: 'param.fast', def: 12, min: 1, max: 100 }, { key: 'slow', label: 'Slow', labelKey: 'param.slow', def: 26, min: 2, max: 200 }, { key: 'signal', label: 'Signal', labelKey: 'param.signal', def: 9, min: 1, max: 50 }] },
     { key: 'cci', label: 'CCI', params: [{ key: 'period', label: 'Length', labelKey: 'param.length', def: 20, min: 2, max: 100 }] },
@@ -67,13 +74,14 @@ const DEFAULT_PARAMS: Record<IndKey, Record<string, number>> = Object.fromEntrie
     INDICATORS.map(({ key, params }) => [key, Object.fromEntries(params.map((p) => [p.key, p.def]))]),
 ) as Record<IndKey, Record<string, number>>;
 const PALETTE = ['#2962FF', '#FF6D00', '#26A69A', '#EF5350', '#7E57C2', '#00BCD4', '#EAB308', '#F0F3FA'];
-const DEFAULT_COLORS: Record<IndKey, string> = {
-    ma20: '#2962FF', ema50: '#FF6D00', bb: '#787B86', rsi: '#7E57C2',
+const DEFAULT_COLORS: Record<string, string> = {
+    ma20: '#2962FF', ema50: '#FF6D00', bb: '#787B86', sr: '#787B86', srUpper: '#EF5350', srLower: '#26A69A', rsi: '#7E57C2',
     macd: '#2962FF', cci: '#00BCD4', stoch: '#2962FF', adx: '#AD8CFF', elliott: '#2962FF', volume: '#26A69A',
 };
 const isHex = (v: unknown): v is string => typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
 const IND_STORAGE = 'tadawul-indicators-v2';
-const loadState = (): { enabled: Record<IndKey, boolean>; params: Record<IndKey, Record<string, number>>; colors: Record<IndKey, string> } => {
+const SR_COLOR_KEYS = ['srUpper', 'srLower'] as const;
+const loadState = (): { enabled: Record<IndKey, boolean>; params: Record<IndKey, Record<string, number>>; colors: Record<string, string> } => {
     const enabled = Object.fromEntries(INDICATORS.map(({ key, defOn }) => [key, defOn ?? false])) as Record<IndKey, boolean>;
     const params = structuredClone(DEFAULT_PARAMS);
     const colors = { ...DEFAULT_COLORS };
@@ -81,7 +89,7 @@ const loadState = (): { enabled: Record<IndKey, boolean>; params: Record<IndKey,
         const saved = JSON.parse(localStorage.getItem(IND_STORAGE) ?? '{}') as {
             enabled?: Partial<Record<IndKey, boolean>>;
             params?: Partial<Record<IndKey, Record<string, number>>>;
-            colors?: Partial<Record<IndKey, string>>;
+            colors?: Partial<Record<string, string>>;
         };
         for (const { key } of INDICATORS) {
             if (typeof saved.enabled?.[key] === 'boolean') enabled[key] = saved.enabled[key] as boolean;
@@ -89,6 +97,9 @@ const loadState = (): { enabled: Record<IndKey, boolean>; params: Record<IndKey,
                 if (typeof pv === 'number' && Number.isFinite(pv) && pk in params[key]) params[key][pk] = pv;
             }
             if (isHex(saved.colors?.[key])) colors[key] = saved.colors[key] as string;
+        }
+        for (const ck of SR_COLOR_KEYS) {
+            if (isHex(saved.colors?.[ck])) colors[ck] = saved.colors[ck] as string;
         }
     } catch { /* fresh defaults */ }
     return { enabled, params, colors };
@@ -122,8 +133,9 @@ const formatTickTime = (t: string | number): string => {
 };
 
 // Own candlestick chart for Tadawul, since TradingView free embeds refuse TADAWUL
-// candle charts. Data: Yahoo Finance (delayed, SAR). "Today" shows 1-minute
-// candles and re-reads them every 30s while the market is open.
+// candle charts. Data: Yahoo Finance (delayed, SAR) + Twelve Data live trial.
+// Intraday refetches while the market is open (live 15s / delayed 60s — the
+// server cache TTLs), and a 1s ticker keeps the data-age label feeling live.
 export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' }: { symbol: string; tvUrl: string; lang: Lang; initialRange?: CandleRangeId }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
@@ -131,21 +143,40 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
     const volumeRef = useRef<ISeriesApi<'Histogram'> | null>(null);
     const [range, setRange] = useState<CandleRangeId>(initialRange);
 
-    // Timeframe survives refreshes/bookmarks via ?tf= (no server round-trip)
+    // Timeframe survives refreshes/bookmarks via ?tf= (no server round-trip),
+    // plus a per-symbol localStorage fallback for plain navigations.
     const changeRange = (id: CandleRangeId) => {
         setRange(id);
         try {
             const url = new URL(window.location.href);
             url.searchParams.set('tf', id);
             window.history.replaceState(null, '', url);
+            localStorage.setItem(`tadawul-tf:${symbolRef.current}`, id);
         } catch { /* ignore */ }
     };
+    // Restore the stored timeframe when the URL doesn't carry one
+    // (e.g. tab switches, watchlist links) so 15m never snaps back to 1m.
+    useEffect(() => {
+        try {
+            const url = new URL(window.location.href);
+            if (url.searchParams.get('tf')) return;
+            const saved = localStorage.getItem(`tadawul-tf:${symbol}`);
+            if (saved && isCandleRangeId(saved) && saved !== rangeRef.current) setRange(saved);
+        } catch { /* ignore */ }
+        // Run once per symbol; refs mirror the latest values.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [symbol]);
+    const manualRefresh = useRef<(() => void) | null>(null);
     const [candles, setCandles] = useState<OhlcCandle[]>([]);
     const [loading, setLoading] = useState(true);
     const [failed, setFailed] = useState(false);
     const [last, setLast] = useState<OhlcCandle | null>(null);
     const [live, setLive] = useState(false);
     const [source, setSource] = useState<'live' | 'delayed' | null>(null);
+    const [updatedAt, setUpdatedAt] = useState<number | null>(null);
+    const [nowSec, setNowSec] = useState(() => Date.now());
+    const sourceRef = useRef<'live' | 'delayed' | null>(null);
+    const lastFetchAt = useRef(0);
     const [indState, setIndState] = useState(() => ({
         enabled: Object.fromEntries(INDICATORS.map(({ key }) => [key, false])) as Record<IndKey, boolean>,
         params: structuredClone(DEFAULT_PARAMS),
@@ -216,7 +247,7 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
     patternDraftRef.current = patternDraft;
     symbolRef.current = symbol;
     rangeRef.current = range;
-    const overlayRef = useRef<Partial<Record<'ma20' | 'ema50' | 'bbBasis' | 'bbUpper' | 'bbLower', ISeriesApi<'Line'> | null>>>({});
+    const overlayRef = useRef<Partial<Record<'ma20' | 'ema50' | 'bbBasis' | 'bbUpper' | 'bbLower' | 'srUpper' | 'srLower', ISeriesApi<'Line'> | null>>>({});
     const rsiRef = useRef<{ pane: PaneApi; series: ISeriesApi<'Line'> } | null>(null);
     const macdRef = useRef<{ pane: PaneApi; line: ISeriesApi<'Line'>; signal: ISeriesApi<'Line'>; hist: ISeriesApi<'Histogram'> } | null>(null);
     const cciRef = useRef<{ pane: PaneApi; series: ISeriesApi<'Line'> } | null>(null);
@@ -232,13 +263,30 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         }[]) => void;
     } | null>(null);
 
-    const persist = (next: { enabled: Record<IndKey, boolean>; params: Record<IndKey, Record<string, number>>; colors: Record<IndKey, string> }) => {
+    const persist = (next: { enabled: Record<IndKey, boolean>; params: Record<IndKey, Record<string, number>>; colors: Record<string, string> }) => {
         try { localStorage.setItem(IND_STORAGE, JSON.stringify(next)); } catch { /* ignore */ }
     };
 
     const toggleInd = (key: IndKey) => {
         setIndState((prev) => {
             const next = { ...prev, enabled: { ...prev.enabled, [key]: !prev.enabled[key] } };
+            persist(next);
+            return next;
+        });
+    };
+
+    // One-click Pine "TASI Swing" setup: MA50 + EMA200 + RSI14 + MACD + Volume + S/R100
+    const applySwingPreset = () => {
+        setIndState((prev) => {
+            const enabled = { ...prev.enabled, ma20: true, ema50: true, sr: true, rsi: true, macd: true, volume: true,
+                bb: false, cci: false, stoch: false, adx: false, elliott: false };
+            const params = structuredClone(prev.params);
+            params.ma20.period = 50;
+            params.ema50.period = 200;
+            params.sr.period = 100;
+            params.rsi.period = 14;
+            params.macd.fast = 12; params.macd.slow = 26; params.macd.signal = 9;
+            const next = { ...prev, enabled, params };
             persist(next);
             return next;
         });
@@ -265,7 +313,7 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         return s;
     };
 
-    const cycleColor = (key: IndKey) => {
+    const cycleColor = (key: string) => {
         setIndState((prev) => {
             const idx = PALETTE.indexOf(prev.colors[key]);
             const nextColor = PALETTE[(idx + 1 + PALETTE.length) % PALETTE.length];
@@ -419,7 +467,8 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         };
     }, []);
 
-    // Load candles per range, and re-read intraday every 30s while Tadawul is open
+    // Load candles per range. Refetch follows the server cache TTLs
+    // (live 15s / delayed 60s) — faster polling returns the same payload.
     useEffect(() => {
         let cancelled = false;
         const intraday = CANDLE_RANGES[range]?.intraday ?? false;
@@ -437,6 +486,9 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                     setCandles(validCandles(twelve.candles));
                     setLast(twelve.candles[twelve.candles.length - 1] ?? null);
                     setSource('live');
+                    sourceRef.current = 'live';
+                    lastFetchAt.current = Date.now();
+                    setUpdatedAt(lastFetchAt.current);
                     if (!silent) setLoading(false);
                     return;
                 }
@@ -450,18 +502,27 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                 }
                 setLive(false);
                 setSource(null);
+                sourceRef.current = null;
                 return;
             }
             setCandles(validCandles(res.candles));
             setLast(res.candles[res.candles.length - 1] ?? null);
             setSource(intraday ? 'delayed' : null);
+            sourceRef.current = intraday ? 'delayed' : null;
+            lastFetchAt.current = Date.now();
+            setUpdatedAt(lastFetchAt.current);
             if (!silent) setLoading(false);
         };
         setLive(isMarketOpen(getMarket('sa')));
         load(false);
+        // Manual refresh button re-runs a full (non-silent) load.
+        manualRefresh.current = () => load(false);
 
         // Re-check the session on every tick: pages opened before 10:00 must
         // still go live at the open instead of staying frozen all session.
+        // Live source refetches every 15s tick; delayed Yahoo only every 60s
+        // (the server cache has nothing newer before that). Hidden tabs skip
+        // refetch to save API quota.
         let timer: ReturnType<typeof setInterval> | null = null;
         if (intraday) {
             timer = setInterval(() => {
@@ -470,14 +531,26 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                     return;
                 }
                 setLive(true);
-                load(true);
-            }, REFRESH_MS);
+                if (document.hidden) return;
+                if (sourceRef.current === 'live' || Date.now() - lastFetchAt.current >= DELAYED_REFETCH_MS) {
+                    load(true);
+                }
+            }, POLL_MS);
         }
         return () => {
             cancelled = true;
+            manualRefresh.current = null;
             if (timer) clearInterval(timer);
         };
     }, [symbol, range]);
+
+    // 1s age ticker (label only — no network): the "updated Ns ago" badge
+    // counts every second while the market is open on an intraday frame.
+    useEffect(() => {
+        if (!live || updatedAt == null || !(CANDLE_RANGES[range]?.intraday ?? false)) return;
+        const t = setInterval(() => setNowSec(Date.now()), AGE_TICK_MS);
+        return () => clearInterval(t);
+    }, [live, updatedAt, range]);
 
     // Push data into the series (fit only on range/symbol change or Reset,
     // never on silent auto-refresh, so the user's zoom never jumps)
@@ -535,7 +608,7 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
             volumeRef.current = null;
         }
 
-        const ensureLine = (key: 'ma20' | 'ema50' | 'bbBasis' | 'bbUpper' | 'bbLower', color: string, dashed = false) => {
+        const ensureLine = (key: 'ma20' | 'ema50' | 'bbBasis' | 'bbUpper' | 'bbLower' | 'srUpper' | 'srLower', color: string, dashed = false) => {
             let s = overlay[key];
             if (!s) {
                 s = trackLine(chart.addSeries(LineSeries, {
@@ -548,7 +621,7 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
             }
             return s;
         };
-        const dropLine = (key: 'ma20' | 'ema50' | 'bbBasis' | 'bbUpper' | 'bbLower') => {
+        const dropLine = (key: 'ma20' | 'ema50' | 'bbBasis' | 'bbUpper' | 'bbLower' | 'srUpper' | 'srLower') => {
             overlay[key]?.applyOptions({ visible: false });
         };
 
@@ -567,6 +640,12 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
             ensureLine('bbLower', indColors.bb, true).setData(studyPoints(times, bb.map((b) => b.lower)));
             (['bbBasis', 'bbUpper', 'bbLower'] as const).forEach((k) => overlay[k]?.applyOptions({ visible: true }));
         } else (['bbBasis', 'bbUpper', 'bbLower'] as const).forEach(dropLine);
+        if (inds.sr && closes.length >= indParams.sr.period) {
+            const dc = donchian(candles.map((c) => c.high), candles.map((c) => c.low), indParams.sr.period);
+            ensureLine('srUpper', indColors.srUpper).setData(studyPoints(times, dc.upper));
+            ensureLine('srLower', indColors.srLower, true).setData(studyPoints(times, dc.lower));
+            (['srUpper', 'srLower'] as const).forEach((k) => overlay[k]?.applyOptions({ visible: true }));
+        } else (['srUpper', 'srLower'] as const).forEach(dropLine);
 
         const dropPane = (ref: { pane: PaneApi } | null) => {
             if (!ref) return null;
@@ -840,6 +919,7 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
     const first = candles.length > 0 ? candles[0] : null;
     const change = last && first && typeof first.open === 'number' ? last.close - first.open : null;
     const changePct = change != null && first?.open ? (change / first.open) * 100 : null;
+    const ageSec = updatedAt != null ? Math.max(0, Math.round((nowSec - updatedAt) / 1000)) : null;
 
     // ---- Drawing overlay geometry (SVG over the price pane) ----
     const chart = chartRef.current;
@@ -1035,6 +1115,15 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                     </button>
                     {menuOpen && (
                         <div className="card absolute z-20 mt-1 flex max-h-80 min-w-60 flex-col gap-0.5 overflow-y-auto p-1.5">
+                            <button
+                                type="button"
+                                onClick={applySwingPreset}
+                                title={tx(lang, 'chart.swingSub')}
+                                className="search-item-link w-full"
+                            >
+                                <span className="flex-1 text-start text-[13px] font-semibold text-brand-ink">⚡ {tx(lang, 'chart.swing')}</span>
+                            </button>
+                            <div className="mx-1 my-1 border-t border-line" />
                             <div className="flex items-center gap-1 rounded-[10px] px-2 py-1">
                                 <span className="flex-1 text-[12.5px] font-semibold text-faint">{tx(lang, 'chart.lineWidth')}</span>
                                 <button type="button" aria-label={tx(lang, 'chart.lineWidth')} onClick={() => stepLineWidth(-1)} className="pill h-6 px-2">−</button>
@@ -1061,7 +1150,21 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                                     >
                                         <span className={`flex size-4 items-center justify-center rounded border ${inds[key] ? 'border-brand-ink bg-brand-soft text-brand-ink' : 'border-line-strong text-transparent'}`}>✓</span>
                                         <span className="flex-1 text-start text-[13px] font-semibold">{lang === 'ar' && labelAr ? labelAr : label}</span>
-                                        {!noColor && (
+                                        {key === 'sr' ? (
+                                        <>
+                                            {SR_COLOR_KEYS.map((ck) => (
+                                                <button
+                                                    key={ck}
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); cycleColor(ck); }}
+                                                    title={indColors[ck]}
+                                                    aria-label={`Change ${label} ${ck === 'srUpper' ? 'resistance' : 'support'} color`}
+                                                    className="size-5 shrink-0 rounded-full border border-line-strong"
+                                                    style={{ backgroundColor: indColors[ck] }}
+                                                />
+                                            ))}
+                                        </>
+                                        ) : !noColor && (
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); cycleColor(key); }}
@@ -1215,8 +1318,8 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                                 {changePct.toFixed(2)}%
                             </span>
                         )}
-                        {live && source === 'live' && <span className="ms-2 text-[11px] font-semibold text-up">● {tx(lang, 'chart.live')}</span>}
-                        {live && source === 'delayed' && <span className="ms-2 text-[11px] font-semibold text-down">● {tx(lang, 'chart.delayed')}</span>}
+                        {live && source === 'live' && <span className="ms-2 text-[11px] font-semibold text-up">● {tx(lang, 'chart.live')}{ageSec != null ? ` · ${tx(lang, 'chart.updatedAgo').replace('{n}', String(ageSec))}` : ''}</span>}
+                        {live && source === 'delayed' && <span className="ms-2 text-[11px] font-semibold text-down">● {tx(lang, 'chart.delayed')}{ageSec != null ? ` · ${tx(lang, 'chart.updatedAgo').replace('{n}', String(ageSec))}` : ''}</span>}
                     </p>
                 )}
                 <button
@@ -1243,16 +1346,15 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                     <button type="button" onClick={goLatest} title={tx(lang, 'chart.latest')} aria-label={tx(lang, 'chart.latest')} className="pill h-9 w-9 justify-center px-0">
                         <ArrowRightToLine className="size-3.5" />
                     </button>
-                    {!expanded && (
-                        <>
-                            <button type="button" onClick={() => bumpHeight(1)} title={tx(lang, 'chart.taller')} aria-label={tx(lang, 'chart.taller')} className="pill h-9 w-9 justify-center px-0">
-                                <UnfoldVertical className="size-3.5" />
-                            </button>
-                            <button type="button" onClick={() => bumpHeight(-1)} title={tx(lang, 'chart.shorter')} aria-label={tx(lang, 'chart.shorter')} className="pill h-9 w-9 justify-center px-0">
-                                <FoldVertical className="size-3.5" />
-                            </button>
-                        </>
-                    )}
+                    <button type="button" onClick={() => manualRefresh.current?.()} title={tx(lang, 'chart.refresh')} aria-label={tx(lang, 'chart.refresh')} className="pill h-9 w-9 justify-center px-0">
+                        <RefreshCw className="size-3.5" />
+                    </button>
+                    <button type="button" onClick={() => bumpHeight(1)} title={tx(lang, 'chart.taller')} aria-label={tx(lang, 'chart.taller')} className="pill h-9 w-9 justify-center px-0">
+                        <UnfoldVertical className="size-3.5" />
+                    </button>
+                    <button type="button" onClick={() => bumpHeight(-1)} title={tx(lang, 'chart.shorter')} aria-label={tx(lang, 'chart.shorter')} className="pill h-9 w-9 justify-center px-0">
+                        <FoldVertical className="size-3.5" />
+                    </button>
                 </div>
                 <a href={tvUrl} target="_blank" rel="noopener noreferrer" className="ms-auto text-[12.5px] text-brand-ink hover:underline">
                     {tx(lang, 'stock.openTV')}
@@ -1262,12 +1364,60 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                 <div
                     ref={containerRef}
                     className="w-full"
-                    style={{ height: expanded ? '78vh' : CHART_BASE_HEIGHT + heightDelta, cursor: tool || patternTool ? 'crosshair' : undefined }}
+                    style={{ height: expanded ? `calc(78vh + ${heightDelta}px)` : CHART_BASE_HEIGHT + heightDelta, cursor: tool || patternTool ? 'crosshair' : undefined }}
                     onDoubleClick={() => {
                         // Double-click restores the full view (disabled while placing drawings)
                         if (!toolRef.current && !patternToolRef.current) resetView();
                     }}
                 />
+                {/* Floating zoom + height: always visible over the chart (mobile-friendly), mirrors toolbar */}
+                <div className="absolute bottom-3 end-3 z-20 flex gap-2" role="group" aria-label="Chart zoom">
+                    <button
+                        type="button"
+                        onClick={() => zoomBy(0.7)}
+                        title={tx(lang, 'chart.zoomIn')}
+                        aria-label={tx(lang, 'chart.zoomIn')}
+                        className="grid h-11 w-11 place-items-center rounded-full border border-line-strong bg-card/90 shadow-lg backdrop-blur-sm hover:bg-hover active:scale-95"
+                    >
+                        <ZoomIn className="size-5" />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => zoomBy(1.43)}
+                        title={tx(lang, 'chart.zoomOut')}
+                        aria-label={tx(lang, 'chart.zoomOut')}
+                        className="grid h-11 w-11 place-items-center rounded-full border border-line-strong bg-card/90 shadow-lg backdrop-blur-sm hover:bg-hover active:scale-95"
+                    >
+                        <ZoomOut className="size-5" />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => bumpHeight(1)}
+                        title={tx(lang, 'chart.taller')}
+                        aria-label={tx(lang, 'chart.taller')}
+                        className="grid h-11 w-11 place-items-center rounded-full border border-line-strong bg-card/90 shadow-lg backdrop-blur-sm hover:bg-hover active:scale-95"
+                    >
+                        <UnfoldVertical className="size-5" />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => bumpHeight(-1)}
+                        title={tx(lang, 'chart.shorter')}
+                        aria-label={tx(lang, 'chart.shorter')}
+                        className="grid h-11 w-11 place-items-center rounded-full border border-line-strong bg-card/90 shadow-lg backdrop-blur-sm hover:bg-hover active:scale-95"
+                    >
+                        <FoldVertical className="size-5" />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => manualRefresh.current?.()}
+                        title={tx(lang, 'chart.refresh')}
+                        aria-label={tx(lang, 'chart.refresh')}
+                        className="grid h-11 w-11 place-items-center rounded-full border border-line-strong bg-card/90 shadow-lg backdrop-blur-sm hover:bg-hover active:scale-95"
+                    >
+                        <RefreshCw className="size-5" />
+                    </button>
+                </div>
                 {(() => {
                     const c = hover?.candle ?? last;
                     if (!c) return null;

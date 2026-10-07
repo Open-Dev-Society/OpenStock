@@ -99,7 +99,7 @@ export default function SetupsLiveTable({ rows, lang }: { rows: ScanRow[]; lang:
                                         {price.toFixed(2)}
                                     </PriceFlash>
                                     <span className="num block text-[11px] text-faint">
-                                        {setup.rsi != null ? `RSI ${setup.rsi.toFixed(0)}` : ''}
+                                        {setup.rsi != null ? `RSI ${setup.rsi.toFixed(0)}${setup.rsiChange != null ? ` (+${setup.rsiChange.toFixed(1)})` : ''}` : ''}
                                         {setup.volumeRatio != null ? ` · Vol ×${setup.volumeRatio.toFixed(1)}` : ''}
                                     </span>
                                 </span>
