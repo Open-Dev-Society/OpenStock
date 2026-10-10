@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bell, CandlestickChart, Command, GitPullRequest, Github, Grid3x3, HeartHandshake, MailOpen, MessagesSquare, Star } from "lucide-react";
+import { ArrowUpRight, Bell, CandlestickChart, Command, GitPullRequest, Github, Grid3x3, HeartHandshake, MailOpen, MessagesSquare, Star } from "lucide-react";
 import { MarketDial, MarketStatus } from "@/components/landing/MarketClock";
 import ProductPreview from "@/components/landing/ProductPreview";
 import SectionHead from "@/components/marketing/SectionHead";
@@ -7,6 +7,7 @@ import IconCard from "@/components/marketing/IconCard";
 import { getSession } from "@/lib/better-auth/auth";
 import { formatCount, getRepoStats } from "@/lib/github";
 import { cn } from "@/lib/utils";
+import { sidebarSponsors } from "@/lib/sponsors";
 import { DISCORD_URL, GOOD_FIRST_ISSUES_URL, REPO_URL } from "@/lib/constants";
 
 const FEATURES = [
@@ -67,12 +68,34 @@ const CadenceRail = ({ perHour }: { perHour: number }) => (
     />
 );
 
+// Floats in the empty gutter beside the 1200px column, so it only shows on screens wide enough to have one.
+const SponsorBanner = () => {
+    const [sponsor] = sidebarSponsors();
+    if (!sponsor) return null;
+    return (
+        <aside aria-label="Sponsor" className="fixed top-[130px] z-30 hidden w-[200px] right-[calc((100vw-1200px)/4-100px)] min-[1680px]:block">
+            <a href={sponsor.url} target="_blank" rel="noreferrer" className="hatch group">
+                <div className="card flex flex-col gap-4 p-5">
+                    <p className="kicker flex items-center gap-1.5 text-brand-ink"><span className="live-dot" /> Sponsor</p>
+                    {sponsor.logo && <img src={sponsor.logo} alt={sponsor.iconOnly ? '' : sponsor.name} className="h-14 w-auto self-start" />}
+                    <div>
+                        <p className="text-[17px] font-bold tracking-[-0.02em]">{sponsor.name}</p>
+                        {sponsor.blurb && <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{sponsor.blurb}</p>}
+                    </div>
+                    <span className="btn btn-ghost h-9 text-[13px] group-hover:bg-[var(--hover)] group-hover:text-foreground">Visit {sponsor.name} <ArrowUpRight /></span>
+                </div>
+            </a>
+        </aside>
+    );
+};
+
 export default async function LandingPage() {
     const [session, repo] = await Promise.all([getSession(), getRepoStats()]);
     const start = session?.user ? { href: '/dashboard', label: 'Open dashboard' } : { href: '/sign-up', label: 'Get started free' };
 
     return (
         <>
+            <SponsorBanner />
             <section className="mx-auto grid max-w-[1200px] items-center gap-12 px-5 pt-14 md:pt-20 lg:grid-cols-[minmax(0,1fr)_320px]">
                 <div>
                     <MarketStatus />

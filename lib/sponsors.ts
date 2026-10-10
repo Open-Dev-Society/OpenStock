@@ -6,6 +6,8 @@ export type Sponsor = {
     name: string;
     url: string;
     logo?: string;       // white/transparent logo in /public, shown on dark surfaces
+    iconOnly?: boolean;  // logo is a mark without the name, so the name is shown beside it
+    blurb?: string;      // one line for the floating banner on the landing page
     tier?: SponsorTierId;
     period?: string;     // e.g. "2026"
 };
@@ -49,7 +51,9 @@ export const SPONSOR_TIERS: {
     },
 ];
 
-export const ACTIVE_SPONSORS: Sponsor[] = [];
+export const ACTIVE_SPONSORS: Sponsor[] = [
+    { name: 'Orbit', url: 'https://github.com/diip3sh/orbit', logo: '/assets/icons/orbit.png', iconOnly: true, tier: 'partner', blurb: 'Free, open-source screen recorder and video editor for macOS.' },
+];
 
 export const PREVIOUS_SPONSORS: Sponsor[] = [
     { name: 'Siray.ai', url: 'https://www.siray.ai', logo: '/assets/icons/siray.svg', period: '2026' },

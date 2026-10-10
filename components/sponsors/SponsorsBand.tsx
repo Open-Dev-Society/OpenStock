@@ -13,7 +13,8 @@ const SponsorMark = ({ sponsor, muted }: { sponsor: Sponsor; muted?: boolean }) 
             muted ? 'opacity-55 grayscale hover:opacity-90' : 'hover:opacity-90',
         )}
     >
-        {sponsor.logo ? <img src={sponsor.logo} alt={sponsor.name} className="h-6 w-auto" /> : <span className="font-bold">{sponsor.name}</span>}
+        {sponsor.logo && <img src={sponsor.logo} alt={sponsor.iconOnly ? '' : sponsor.name} className="h-6 w-auto" />}
+        {(!sponsor.logo || sponsor.iconOnly) && <span className="font-bold">{sponsor.name}</span>}
         {muted && sponsor.period && <span className="num text-[11px] text-faint">{sponsor.period}</span>}
     </a>
 );

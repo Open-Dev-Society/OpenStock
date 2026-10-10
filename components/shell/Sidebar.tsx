@@ -94,7 +94,8 @@ const Sidebar = ({ user, watchlist }: SidebarProps) => {
             <div className="flex flex-col gap-1.5">
                 {partners.map((sponsor) => (
                     <a key={sponsor.name} href={sponsor.url} target="_blank" rel="noreferrer" title={sponsor.name} className="flex h-11 items-center gap-2.5 rounded-[11px] px-3 shadow-[inset_0_0_0_1px_var(--line)] transition-colors hover:bg-white/5">
-                        {sponsor.logo ? <img src={sponsor.logo} alt={sponsor.name} className="h-5 w-auto max-w-[120px]" /> : <span className="truncate text-[13px] font-semibold text-muted-foreground">{sponsor.name}</span>}
+                        {sponsor.logo && <img src={sponsor.logo} alt={sponsor.iconOnly ? '' : sponsor.name} className="h-5 w-auto max-w-[120px]" />}
+                        {(!sponsor.logo || sponsor.iconOnly) && <span className="truncate text-[13px] font-semibold text-muted-foreground">{sponsor.name}</span>}
                         <span className="kicker ml-auto">Sponsor</span>
                     </a>
                 ))}
