@@ -50,19 +50,19 @@ describe("Upstox scanner breakout rules", () => {
         expect(result.previousDayHigh).toBe(100);
     });
 
-    it("does not emit a breakout when previous-session levels are missing", () => {
+    it("does not emit a breakout without the required relative-volume confirmation", () => {
         const now = new Date("2026-10-12T03:54:00.000Z");
         const bars = [
             candle(iso(12,9,15),99,100,100,98),
             candle(iso(12,9,18),99,100,100,98),
-            candle(iso(12,9,21),101,400,102,99),
+            candle(iso(12,9,21),101,100,102,99),
         ];
-        const baseline = Array.from({ length: 20 }, (_,i) => candle(iso(8,10,0+i*3),99,100,100,98));
+        const baseline = Array.from({ length: 20 }, (_,i) => candle(iso(9,10,0+i*3),99,100,100,98));
         const result = evaluateBreakout({
             symbol:"DEMO", timeframe:3, intradayCandles:bars, historicalCandles:baseline,
             volumeMultiplier:2, allowSignal:true, now,
         });
         expect(result.direction).toBe("NONE");
-        expect(result.reasons[0]).toContain("PDH/PDL");
+        expect(result.reasons[0]).toContain("No first-cross");
     });
 });
