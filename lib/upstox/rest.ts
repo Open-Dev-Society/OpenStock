@@ -2,7 +2,7 @@ import "server-only";
 import { getUpstoxToken } from "@/lib/upstox/config";
 
 type UpstoxCandle = [string, number, number, number, number, number, number?];
-type Candle = { timestamp: string; open: number; high: number; low: number; close: number; volume: number; oi?: number };
+export type Candle = { timestamp: string; open: number; high: number; low: number; close: number; volume: number; oi?: number };
 
 function normalize(data: unknown): Candle[] {
     const root = data as { data?: { candles?: UpstoxCandle[] } };
@@ -15,10 +15,7 @@ function normalize(data: unknown): Candle[] {
 
 async function getCandles(path: string): Promise<Candle[]> {
     const res = await fetch(`https://api.upstox.com/v3/historical-candle/${path}`, {
-        headers: {
-            Authorization: `Bearer ${getUpstoxToken()}`,
-            Accept: "application/json",
-        },
+        headers: { Authorization: `Bearer ${getUpstoxToken()}`, Accept: "application/json" },
         cache: "no-store",
         signal: AbortSignal.timeout(8000),
     });
@@ -29,11 +26,6 @@ async function getCandles(path: string): Promise<Candle[]> {
     return normalize(await res.json());
 }
 
-/**
- * Symbols are NSE_EQ trading symbols, resolved using the official instrument master in the
- * production scanner. Until that resolver is configured, callers may pass an instrument key
- * explicitly via UPSTOX_SYMBOL_MAP_JSON (e.g. {"RELIANCE":"NSE_EQ|INE002A01018"}).
- */
 function instrumentKeyFor(symbol: string): string {
     let map: Record<string,string> = {};
     try { map = JSON.parse(process.env.UPSTOX_SYMBOL_MAP_JSON ?? "{}") as Record<string,string>; }
@@ -53,9 +45,9 @@ export async function getUpstoxIntradayCandles(symbol: string, interval: number)
 export async function getUpstoxHistoricalCandles(symbol: string, interval: number): Promise<Candle[]> {
     const key = encodeURIComponent(instrumentKeyFor(symbol));
     const now = new Date();
-    const to = new Date(now.getTime() - 24*60*60*1000).toISOString().slice(0,10);
-    const from = new Date(now.getTime() - 10*24*60*60*1000).toISOString().slice(0,10);
+    // Use today's date as the end boundary; the scanner itself selects the previous session.
+    const to = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year:"numeric", month:"2-digit", day:"2-digit" }).format(now);
+    const fromDate = new Date(now.getTime() - 14*24*60*60*1000);
+    const from = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year:"numeric", month:"2-digit", day:"2-digit" }).format(fromDate);
     return getCandles(`${key}/minutes/${interval}/${to}/${from}`);
 }
-
-export type { Candle };
