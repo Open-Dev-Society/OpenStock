@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, ArrowDownRight, ArrowUpRight, Clock3, Radio, ShieldCheck } from "lucide-react";
+import { Activity, Clock3, Radio, ShieldCheck } from "lucide-react";
 import Panel from "@/components/Panel";
 import { getScannerConfig, isUpstoxConfigured } from "@/lib/upstox/config";
 
@@ -14,7 +14,7 @@ const checks = [
 ];
 
 export default function IntradayScannerPage() {
-    const config = getScannerConfig();
+    getScannerConfig();
     const configured = isUpstoxConfigured();
     return (
         <>
