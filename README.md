@@ -276,7 +276,7 @@ ADANOS_API_KEY=your_adanos_api_key
 # ADANOS_API_BASE_URL=https://api.adanos.org
 
 # AI Provider (optional, default: "gemini")
-# Supported: "gemini", "minimax", "siray"
+# Supported: "gemini", "minimax", "siray", "orcarouter"
 # AI_PROVIDER=gemini
 
 # Gemini
@@ -285,6 +285,10 @@ GEMINI_API_KEY=your_gemini_api_key
 # MiniMax (optional, used when AI_PROVIDER=minimax or as fallback)
 # Get your key at https://platform.minimaxi.com
 # MINIMAX_API_KEY=your_minimax_api_key
+
+# OrcaRouter (optional, used when AI_PROVIDER=orcarouter)
+# Get your key at https://www.orcarouter.ai
+# ORCAROUTER_API_KEY=your_orcarouter_api_key
 
 # Inngest Signing Key (required for Vercel deployment)
 # Get this from your Inngest dashboard: https://app.inngest.com/env/settings/keys
@@ -334,7 +338,7 @@ ADANOS_API_KEY=your_adanos_api_key
 # ADANOS_API_BASE_URL=https://api.adanos.org
 
 # AI Provider (optional, default: "gemini")
-# Supported: "gemini", "minimax", "siray"
+# Supported: "gemini", "minimax", "siray", "orcarouter"
 # AI_PROVIDER=gemini
 
 # Gemini
@@ -343,6 +347,10 @@ GEMINI_API_KEY=your_gemini_api_key
 # MiniMax (optional, used when AI_PROVIDER=minimax or as fallback)
 # Get your key at https://platform.minimaxi.com
 # MINIMAX_API_KEY=your_minimax_api_key
+
+# OrcaRouter (optional, used when AI_PROVIDER=orcarouter)
+# Get your key at https://www.orcarouter.ai
+# ORCAROUTER_API_KEY=your_orcarouter_api_key
 
 # Inngest Signing Key (required for Vercel deployment)
 # Get this from your Inngest dashboard: https://app.inngest.com/env/settings/keys
