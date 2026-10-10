@@ -1,5 +1,6 @@
 import "server-only";
 import { getUpstoxToken } from "@/lib/upstox/config";
+import { getNseFnoEquityInstrument } from "@/lib/upstox/instruments";
 
 type UpstoxCandle = [string, number, number, number, number, number, number?];
 export type Candle = { timestamp: string; open: number; high: number; low: number; close: number; volume: number; oi?: number };
@@ -26,26 +27,20 @@ async function getCandles(path: string): Promise<Candle[]> {
     return normalize(await res.json());
 }
 
-function instrumentKeyFor(symbol: string): string {
-    let map: Record<string,string> = {};
-    try { map = JSON.parse(process.env.UPSTOX_SYMBOL_MAP_JSON ?? "{}") as Record<string,string>; }
-    catch { throw new Error("UPSTOX_SYMBOL_MAP_JSON must be valid JSON"); }
-    const key = map[symbol];
-    if (!key || !/^[A-Z_]+\|[A-Za-z0-9_-]+$/.test(key)) {
-        throw new Error(`No Upstox instrument key mapped for ${symbol}. Configure UPSTOX_SYMBOL_MAP_JSON.`);
-    }
-    return key;
+async function instrumentKeyFor(symbol: string): Promise<string> {
+    const instrument = await getNseFnoEquityInstrument(symbol);
+    if (!instrument) throw new Error(`${symbol} is not in the current NSE equity F&O universe.`);
+    return instrument.instrumentKey;
 }
 
 export async function getUpstoxIntradayCandles(symbol: string, interval: number): Promise<Candle[]> {
-    const key = encodeURIComponent(instrumentKeyFor(symbol));
+    const key = encodeURIComponent(await instrumentKeyFor(symbol));
     return getCandles(`intraday/${key}/minutes/${interval}`);
 }
 
 export async function getUpstoxHistoricalCandles(symbol: string, interval: number): Promise<Candle[]> {
-    const key = encodeURIComponent(instrumentKeyFor(symbol));
+    const key = encodeURIComponent(await instrumentKeyFor(symbol));
     const now = new Date();
-    // Use today's date as the end boundary; the scanner itself selects the previous session.
     const to = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year:"numeric", month:"2-digit", day:"2-digit" }).format(now);
     const fromDate = new Date(now.getTime() - 14*24*60*60*1000);
     const from = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year:"numeric", month:"2-digit", day:"2-digit" }).format(fromDate);
