@@ -82,7 +82,7 @@ export default function ScannerConsole() {
 
             <div className="flex items-start gap-2 rounded-lg border border-warn/30 bg-hover p-3 text-xs text-muted-foreground">
                 <ShieldAlert className="mt-0.5 size-4 shrink-0 text-warn"/>
-                <p>This first version is an on-demand candle snapshot for up to 20 manually entered symbols, not yet a continuous full-universe F&O WebSocket scanner. Configure the current instrument keys before using it.</p>
+                <p>This version validates each symbol against Upstox’s current NSE equity F&O universe and resolves its cash-equity instrument key automatically. It is still an on-demand snapshot—not a continuous full-universe WebSocket scanner.</p>
             </div>
 
             {error && <p role="alert" className="rounded-lg border border-down/30 bg-down-soft p-3 text-sm">{error}</p>}
@@ -109,7 +109,7 @@ export default function ScannerConsole() {
                                     <td className="px-3 py-3 tabular-nums">{row.volumeRatio?.toFixed(2) ?? "—"}×</td>
                                     <td className="px-3 py-3 tabular-nums">{row.previousDayHigh?.toFixed(2) ?? "—"}</td>
                                     <td className="px-3 py-3 tabular-nums">{row.previousDayLow?.toFixed(2) ?? "—"}</td>
-                                    <td className="max-w-[280px] px-3 py-3 text-xs text-muted-foreground">{row.error ? "Data unavailable — check symbol map/API quota" : row.reasons.join(" · ")}</td>
+                                    <td className="max-w-[280px] px-3 py-3 text-xs text-muted-foreground">{row.error ? "Data unavailable — check active symbol, token or API limits" : row.reasons.join(" · ")}</td>
                                 </tr>)}
                                 {(!data.signals || data.signals.length===0) && <tr><td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">No rows returned.</td></tr>}
                             </tbody>
