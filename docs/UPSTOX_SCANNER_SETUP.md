@@ -1,38 +1,49 @@
 # Upstox NSE Intraday Scanner Setup
 
-## Current implementation boundary
+## What is implemented in this branch
 
-- `/scanner` is the authenticated scanner setup page.
-- `GET /api/intraday-scanner` evaluates completed 1m, 3m or 5m candles for a requested list of symbols.
-- `UPSTOX_ACCESS_TOKEN` must be configured only in a server environment variable.
-- `UPSTOX_SYMBOL_MAP_JSON` maps symbol names to official Upstox instrument keys.
-- The endpoint is on-demand and is **not** a persistent WebSocket worker. Do not deploy a long-running scanner by keeping a serverless HTTP request open.
+- Authenticated UI page: `/scanner`, with timeframe, relative-volume and symbol controls.
+- Authenticated snapshot route: `GET /api/intraday-scanner`.
+- Authenticated universe route: `GET /api/intraday-scanner/universe`.
+- Server-only Upstox access token handling.
+- A six-hour in-memory cache of Upstox's official NSE instrument master; eligible underlyings are resolved from non-expired NSE stock futures and matched to NSE equity instruments.
+- Completed-candle PDH/PDL first-cross + relative-volume evaluator.
 
-## Environment variables
+## Environment setup
 
-Set only on the server (Vercel Project Settings → Environment Variables or local `.env.local`):
+Set `UPSTOX_ACCESS_TOKEN` only in Vercel Project Settings → Environment Variables or local `.env.local`.
 
 ```env
 UPSTOX_ACCESS_TOKEN=your_upstox_access_token
-UPSTOX_SYMBOL_MAP_JSON={"RELIANCE":"NSE_EQ|INE002A01018","HDFCBANK":"NSE_EQ|INE040A01034"}
 ```
 
-These instrument keys are examples for illustrating the format, not a complete/current F&O universe. Confirm them against the current Upstox instrument master before using. Never commit a real token or expose it via a `NEXT_PUBLIC_*` variable.
+Do not commit the real token or use a `NEXT_PUBLIC_*` name for it. Upstox access tokens can expire and may need to be renewed according to your Upstox developer-app setup.
 
-## Endpoint
+## Use
+
+1. Sign in to the app and open `/scanner`.
+2. Choose 1m, 3m or 5m; default volume threshold is 2× the preceding 20 completed candles.
+3. Enter up to 20 symbols separated by commas and press Scan now.
+4. Each symbol is validated against the current F&O equity-universe list. Non-F&O/invalid symbols cannot resolve.
+
+Scanner endpoint:
 
 ```text
 GET /api/intraday-scanner?timeframe=3&volumeMultiplier=2&symbols=RELIANCE,HDFCBANK
 ```
 
-Supported timeframes: 1, 3, and 5 minutes. Multiplier: 1–10. Requests are limited to 20 symbols. Only completed candles are considered; signal generation is restricted to 09:15–10:00 Asia/Kolkata time.
+Universe endpoint:
 
-## Known next steps before trading use
+```text
+GET /api/intraday-scanner/universe
+```
 
-1. Replace the manual symbol map with a daily-fetched official Upstox instrument master filtered to eligible NSE equity F&O contracts.
-2. Persist and aggregate V3 market-feed ticks in a long-running worker, emitting signals as candles close.
-3. Add a dedupe store keyed by trading date + symbol + timeframe + direction + PDH/PDL level.
-4. Add tests against market holidays, session-day boundaries, incomplete candles, stale feeds and duplicate events.
-5. Paper trade and compare with broker charts before relying on any signal.
+## Important limitations before trading use
 
-This is a screening tool, not a recommendation to enter any specific trade.
+- This is an **on-demand snapshot**, not a continuously running live scanner. For a true live full-universe scanner, run a persistent Node.js worker using Upstox Market Data Feed V3, maintain candles and emit signals when bars close. Keep that worker separate from Vercel serverless request handlers.
+- The snapshot endpoint calls intraday and historical REST candles per symbol. It currently supports up to 20 symbols per request and may be subject to Upstox API rate limits.
+- The previous session high/low are calculated from historical interval candles; verify the values against broker/chart data before relying on them.
+- The initial UI does not implement persistent signal deduplication, push alerts, backtesting or order placement.
+- The setup score is a transparent heuristic, not a probability of success or a recommendation.
+
+Paper-test on multiple sessions and verify data freshness, PDH/PDL, volume baselines and time-window behaviour before trading with real money.
