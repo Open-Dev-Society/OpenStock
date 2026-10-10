@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Activity, Clock3, Radio, ShieldCheck } from "lucide-react";
 import Panel from "@/components/Panel";
 import { isUpstoxConfigured } from "@/lib/upstox/config";
+import ScannerConsole from "@/components/scanner/ScannerConsole";
 
 export const dynamic = "force-dynamic";
 
@@ -46,8 +47,9 @@ export default function IntradayScannerPage() {
                 </div>
             </div>
 
-            <Panel title="Scanner setup" sub="Ready for Upstox credentials and the official F&O instrument map">
+            <Panel title="Scanner controls" sub="On-demand setup evaluation using Upstox candle APIs">
                 <div className="flex flex-col gap-4 p-1">
+                    <ScannerConsole />
                     <div className={configured ? "rounded-xl border border-up/30 bg-up-soft p-4" : "rounded-xl border border-line bg-hover p-4"}>
                         <div className="flex items-center gap-2 font-semibold">
                             <ShieldCheck className="size-5"/>
