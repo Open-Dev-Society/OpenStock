@@ -52,17 +52,28 @@ export function evaluateBreakout(input: {
 }): ScannerSignal {
     const {symbol,timeframe,intradayCandles,historicalCandles,volumeMultiplier,allowSignal,now} = input;
     const today = dayKey(now.toISOString());
-    const completed = intradayCandles
+    const currentDay = intradayCandles
         .filter(c => dayKey(c.timestamp) === today && isComplete(c,timeframe,now))
         .sort((a,b)=>Date.parse(a.timestamp)-Date.parse(b.timestamp));
-    if (completed.length < 2) return { symbol, direction:"NONE", score:0, reasons:["Not enough completed candles"] };
+    if (currentDay.length < 2) {
+        return { symbol, direction:"NONE", score:0, reasons:["Waiting for at least two completed candles today"] };
+    }
 
-    // Current completed candle's volume compares with the preceding 20 completed bars.
-    // With fewer bars available, wait rather than weakening the volume filter.
-    if (completed.length < 21) return { symbol, direction:"NONE", score:0, reasons:["Waiting for 21 completed candles"] };
-    const bar = completed.at(-1)!;
-    const previous = completed.slice(-21,-1);
-    const volumeAverage = average(previous.map(c=>c.volume));
+    const bar = currentDay.at(-1)!;
+    // Combine historical and current-session candles, de-duplicate by timestamp,
+    // and only use candles that had fully closed before the candidate breakout bar.
+    const byTimestamp = new Map<string,Candle>();
+    for (const candle of [...historicalCandles, ...intradayCandles]) {
+        if (!isComplete(candle,timeframe,now)) continue;
+        if (Date.parse(candle.timestamp) >= Date.parse(bar.timestamp)) continue;
+        byTimestamp.set(candle.timestamp,candle);
+    }
+    const baselineBars = [...byTimestamp.values()].sort((a,b)=>Date.parse(a.timestamp)-Date.parse(b.timestamp)).slice(-20);
+    if (baselineBars.length < 20) {
+        return { symbol, direction:"NONE", score:0, price:bar.close, reasons:["Waiting for 20 prior completed candles for volume baseline"], candleTime:bar.timestamp };
+    }
+
+    const volumeAverage = average(baselineBars.map(c=>c.volume));
     const volumeRatio = volumeAverage > 0 ? bar.volume/volumeAverage : 0;
     const levels = getPriorDayLevels(historicalCandles,today);
     if (!levels) return { symbol, direction:"NONE", score:0, price:bar.close, volumeRatio, reasons:["Previous-session PDH/PDL data unavailable"], candleTime:bar.timestamp };
@@ -72,9 +83,9 @@ export function evaluateBreakout(input: {
         reasons:["Outside 09:15–10:00 IST signal window"], candleTime:bar.timestamp,
     };
 
-    const priorClose = previous.at(-1)!.close;
-    const bullish = bar.close > levels.high && priorClose <= levels.high && volumeRatio >= volumeMultiplier;
-    const bearish = bar.close < levels.low && priorClose >= levels.low && volumeRatio >= volumeMultiplier;
+    const priorSameDay = currentDay.at(-2)!;
+    const bullish = bar.close > levels.high && priorSameDay.close <= levels.high && volumeRatio >= volumeMultiplier;
+    const bearish = bar.close < levels.low && priorSameDay.close >= levels.low && volumeRatio >= volumeMultiplier;
     if (!bullish && !bearish) return {
         symbol, direction:"NONE", score:0, price:bar.close, volumeRatio,
         previousDayHigh:levels.high, previousDayLow:levels.low,
@@ -83,7 +94,7 @@ export function evaluateBreakout(input: {
     const direction = bullish ? "BULLISH" : "BEARISH";
     const reasons = [
         bullish ? "Completed candle closed above PDH" : "Completed candle closed below PDL",
-        `Volume ${volumeRatio.toFixed(2)}× 20-candle average`,
+        `Volume ${volumeRatio.toFixed(2)}× 20-candle baseline`,
         `Previous session: ${levels.date}`,
     ];
     const score = Math.min(100, 70 + Math.min(30, Math.max(0, (volumeRatio-volumeMultiplier)*10)));
