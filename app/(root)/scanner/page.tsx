@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Activity, Clock3, Radio, ShieldCheck } from "lucide-react";
 import Panel from "@/components/Panel";
-import { getScannerConfig, isUpstoxConfigured } from "@/lib/upstox/config";
+import { isUpstoxConfigured } from "@/lib/upstox/config";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,6 @@ const checks = [
 ];
 
 export default function IntradayScannerPage() {
-    getScannerConfig();
     const configured = isUpstoxConfigured();
     return (
         <>
