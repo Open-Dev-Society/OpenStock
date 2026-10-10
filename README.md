@@ -547,7 +547,7 @@ Sponsorships are paid through GitHub Sponsors to [@ravixalgorithm](https://githu
 
 Can't sponsor right now? Pick a [good first issue](https://github.com/Open-Dev-Society/OpenStock/issues?q=is%3Aopen+label%3A%22good+first+issue%22), star the repo, or share OpenStock with someone who pays too much for a terminal.
 
-**Current sponsors:** your logo here.
+**Current sponsors:** <a href="https://github.com/diip3sh/orbit"><picture><source media="(prefers-color-scheme: dark)" srcset="public/assets/icons/orbit.png"><img src="public/assets/icons/orbit-black.png" alt="" height="20"></picture></a> [Orbit](https://github.com/diip3sh/orbit), a free, open-source screen recorder and video editor for macOS.
 **Previously backed by:** [Siray.ai](https://www.siray.ai/) (2026)
 
 ## Special thanks
