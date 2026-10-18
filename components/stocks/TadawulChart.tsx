@@ -1,8 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { ArrowRightToLine, FoldVertical, Maximize2, Minimize2, RefreshCw, RotateCcw, UnfoldVertical, ZoomIn, ZoomOut } from 'lucide-react';
-import { CHART_BASE_HEIGHT, clampHeightDelta, zoomRange } from '@/lib/chart-view';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { 
+    ArrowRightToLine, FoldVertical, Maximize2, Minimize2, RefreshCw, 
+    RotateCcw, UnfoldVertical, ZoomIn, ZoomOut, Camera, HelpCircle 
+} from 'lucide-react';
+import { CHART_BASE_HEIGHT, clampHeightDelta, GLOBAL_TF_KEY, resolveTimeframe, zoomRange } from '@/lib/chart-view';
 import {
     createChart,
     createSeriesMarkers,
@@ -14,14 +17,22 @@ import {
     type IChartApi,
     type IPaneApi,
     type ISeriesApi,
+    type ISeriesMarkersPluginApi,
     type UTCTimestamp,
     type BusinessDay,
     type LineWidth,
+    type SeriesMarker,
+    type Time,
 } from 'lightweight-charts';
 
 type PaneApi = ReturnType<IChartApi['addPane']>;
-import { CANDLE_RANGES, isCandleRangeId, OhlcCandle, validCandles, type CandleRangeId } from '@/lib/yahoo';
-import { bollinger, cci, donchian, elliottWaves, ema, macd, rsi, sma, stochastic, adx, studyPoints, zigzag } from '@/lib/indicators';
+declare global {
+    interface Window {
+        __ewdbg?: { sym: string; candles: number; labels: number; held: number };
+    }
+}
+import { CANDLE_RANGES, OhlcCandle, validCandles, type CandleRangeId } from '@/lib/yahoo';
+import { bollinger, cci, donchian, elliottMarkers, elliottWaveLabels, ema, macd, rsi, sma, stochastic, adx, studyPoints, autoDevPct, ELLIOTT_ENGINE_VERSION } from '@/lib/indicators';
 import { tx, type Lang } from '@/lib/i18n';
 import {
     fibLevelPrices,
@@ -36,6 +47,17 @@ import {
     loadPatterns,
     savePatterns,
     patternById,
+    COUNT_GLYPHS,
+    COUNT_CLICKS,
+    buildTransferPayload,
+    parseTransferPayload,
+    TEXT_MAX,
+    loadTexts,
+    makeTextNote,
+    saveTexts,
+    type TextNote,
+    type CountDegree,
+    type CountKind,
     type Drawing,
     type DrawingTool,
     type DrawPoint,
@@ -43,6 +65,7 @@ import {
     type PatternTool,
 } from '@/lib/drawings';
 import { getMarket, isMarketOpen } from '@/lib/markets';
+import { detectPatterns, patternBarTime, projectToEdge, type DetectedPattern, type PatternPivot } from '@/lib/patterns';
 import { getTadawulCandles } from '@/lib/actions/yahoo.actions';
 import { getTwelveIntraday } from '@/lib/actions/twelvedata.actions';
 
@@ -67,19 +90,29 @@ const INDICATORS: { key: IndKey; label: string; labelAr?: string; params: ParamD
     { key: 'cci', label: 'CCI', params: [{ key: 'period', label: 'Length', labelKey: 'param.length', def: 20, min: 2, max: 100 }] },
     { key: 'stoch', label: 'Stochastic', params: [{ key: 'k', label: '%K', def: 14, min: 1, max: 100 }, { key: 'd', label: '%D', def: 3, min: 1, max: 50 }] },
     { key: 'adx', label: 'ADX', params: [{ key: 'period', label: 'Length', labelKey: 'param.length', def: 14, min: 2, max: 100 }] },
-    { key: 'elliott', label: 'Elliott', params: [{ key: 'dev', label: 'Deviation', labelKey: 'param.dev', def: 5, min: 1, max: 20, step: 0.5 }] },
+    { key: 'elliott', label: 'Elliott waves', labelAr: 'موجات اليوت', params: [{ key: 'dev', label: 'Deviation', labelKey: 'param.dev', def: 5, min: 1, max: 20, step: 0.5 }], defOn: true },
     { key: 'volume', label: 'Volume', labelAr: 'الحجم', params: [], defOn: true, noColor: true },
 ];
 const DEFAULT_PARAMS: Record<IndKey, Record<string, number>> = Object.fromEntries(
     INDICATORS.map(({ key, params }) => [key, Object.fromEntries(params.map((p) => [p.key, p.def]))]),
 ) as Record<IndKey, Record<string, number>>;
-const PALETTE = ['#2962FF', '#FF6D00', '#26A69A', '#EF5350', '#7E57C2', '#00BCD4', '#EAB308', '#F0F3FA'];
+const PALETTE = ['#2962FF', '#FF6D00', '#26A69A', '#EF5350', '#7E57C2', '#00BCD4', '#EAB308', '#F0F3FA', '#0B6B3A', '#B71C1C'];
 const DEFAULT_COLORS: Record<string, string> = {
     ma20: '#2962FF', ema50: '#FF6D00', bb: '#787B86', sr: '#787B86', srUpper: '#EF5350', srLower: '#26A69A', rsi: '#7E57C2',
     macd: '#2962FF', cci: '#00BCD4', stoch: '#2962FF', adx: '#AD8CFF', elliott: '#2962FF', volume: '#26A69A',
 };
 const isHex = (v: unknown): v is string => typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
+const CANDLE_UP_DEFAULT = '#26A69A';
+const CANDLE_DOWN_DEFAULT = '#EF5350';
+const CHART_BG_DEFAULT = 'transparent';
+const CHART_BG_OPTIONS = ['transparent', '#0B0E11', '#131722', '#1E222D', '#FFFFFF', '#F0F3FA'];
+const isBg = (v: unknown): v is string => v === 'transparent' || isHex(v);
 const IND_STORAGE = 'tadawul-indicators-v2';
+// Bumped when a new default must reach existing users: payloads saved before
+// version 3 predate auto Elliott numbering (it defaulted off), so the
+// migration switches it on once. Anything the user saves afterwards carries
+// version 3, and from then on an explicit off is respected.
+const IND_STORAGE_VERSION = 3;
 const SR_COLOR_KEYS = ['srUpper', 'srLower'] as const;
 const loadState = (): { enabled: Record<IndKey, boolean>; params: Record<IndKey, Record<string, number>>; colors: Record<string, string> } => {
     const enabled = Object.fromEntries(INDICATORS.map(({ key, defOn }) => [key, defOn ?? false])) as Record<IndKey, boolean>;
@@ -87,6 +120,7 @@ const loadState = (): { enabled: Record<IndKey, boolean>; params: Record<IndKey,
     const colors = { ...DEFAULT_COLORS };
     try {
         const saved = JSON.parse(localStorage.getItem(IND_STORAGE) ?? '{}') as {
+            version?: number;
             enabled?: Partial<Record<IndKey, boolean>>;
             params?: Partial<Record<IndKey, Record<string, number>>>;
             colors?: Partial<Record<string, string>>;
@@ -101,6 +135,7 @@ const loadState = (): { enabled: Record<IndKey, boolean>; params: Record<IndKey,
         for (const ck of SR_COLOR_KEYS) {
             if (isHex(saved.colors?.[ck])) colors[ck] = saved.colors[ck] as string;
         }
+        if ((saved.version ?? 0) < IND_STORAGE_VERSION) enabled.elliott = true;
     } catch { /* fresh defaults */ }
     return { enabled, params, colors };
 };
@@ -143,25 +178,31 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
     const volumeRef = useRef<ISeriesApi<'Histogram'> | null>(null);
     const [range, setRange] = useState<CandleRangeId>(initialRange);
 
-    // Timeframe survives refreshes/bookmarks via ?tf= (no server round-trip),
-    // plus a per-symbol localStorage fallback for plain navigations.
+    // Timeframe survives refreshes/bookmarks via ?tf= (no server round-trip).
+    // The explicitly picked frame is also remembered globally, so switching
+    // symbols (whose links carry no ?tf=) never snaps the frame — numbering
+    // and studies stay on the frame the user chose.
     const changeRange = (id: CandleRangeId) => {
         setRange(id);
         try {
             const url = new URL(window.location.href);
             url.searchParams.set('tf', id);
             window.history.replaceState(null, '', url);
-            localStorage.setItem(`tadawul-tf:${symbolRef.current}`, id);
+            localStorage.setItem(GLOBAL_TF_KEY, id);
         } catch { /* ignore */ }
     };
-    // Restore the stored timeframe when the URL doesn't carry one
-    // (e.g. tab switches, watchlist links) so 15m never snaps back to 1m.
+    // On symbol switch only an explicit ?tf= may change the frame; otherwise
+    // the current frame is kept as-is, so 15m never snaps back to 1m and the
+    // Elliott count continues on the same frame for the new company.
     useEffect(() => {
         try {
             const url = new URL(window.location.href);
-            if (url.searchParams.get('tf')) return;
-            const saved = localStorage.getItem(`tadawul-tf:${symbol}`);
-            if (saved && isCandleRangeId(saved) && saved !== rangeRef.current) setRange(saved);
+            const next = resolveTimeframe({
+                urlTf: url.searchParams.get('tf'),
+                globalTf: localStorage.getItem(GLOBAL_TF_KEY),
+                current: rangeRef.current,
+            });
+            if (next) setRange(next);
         } catch { /* ignore */ }
         // Run once per symbol; refs mirror the latest values.
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -174,6 +215,9 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
     const [live, setLive] = useState(false);
     const [source, setSource] = useState<'live' | 'delayed' | null>(null);
     const [updatedAt, setUpdatedAt] = useState<number | null>(null);
+    // Set when the older part of an index chart was reconstructed rather than
+    // fetched (see backfillIndexHistory). Shown on the chart, never hidden.
+    const [estimateFrom, setEstimateFrom] = useState<string | null>(null);
     const [nowSec, setNowSec] = useState(() => Date.now());
     const sourceRef = useRef<'live' | 'delayed' | null>(null);
     const lastFetchAt = useRef(0);
@@ -185,9 +229,58 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
     const inds = indState.enabled;
     const indParams = indState.params;
     const indColors = indState.colors;
+    const [priceLine, setPriceLine] = useState(true);
+    const [elliottAuto, setElliottAuto] = useState(true);
     const [menuOpen, setMenuOpen] = useState(false);
     const [expanded, setExpanded] = useState(false);
-    const [priceLine, setPriceLine] = useState(true);
+    const [helpOpen, setHelpOpen] = useState(false);
+    const [exporting, setExporting] = useState(false);
+    const [autoRefresh, setAutoRefresh] = useState(false);
+
+    // Shortcut keys listener
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === '?') {
+                e.preventDefault();
+                setHelpOpen(true);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
+    const takeScreenshot = useCallback(async () => {
+        if (!containerRef.current) return;
+        setExporting(true);
+        try {
+            // Finding the canvas element inside the lightweight-charts container
+            const canvas = containerRef.current.querySelector('canvas');
+            if (canvas) {
+                const link = document.createElement('a');
+                link.download = `chart-${symbol}-${range}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }
+        } catch (err) {
+            console.error('Export failed', err);
+        } finally {
+            setExporting(false);
+        }
+    }, [symbol, range]);
+    const [elliottDev, setElliottDev] = useState(5);
+    const [elliottCount, setElliottCount] = useState(0);
+    // Alternate counts the engine found for the same swings (shown next to the
+    // primary count so the badge matches what the chart draws).
+    const [elliottAltCount, setElliottAltCount] = useState(0);
+    // Automatic classical patterns: on by default, remembered globally, and
+    // re-detected per symbol + frame (same auto sensitivity as Elliott).
+    const [patternsAuto, setPatternsAuto] = useState(true);
+    const [detected, setDetected] = useState<DetectedPattern[]>([]);
+    const [candleUp, setCandleUp] = useState(CANDLE_UP_DEFAULT);
+    const [candleDown, setCandleDown] = useState(CANDLE_DOWN_DEFAULT);
+    const [chartBg, setChartBg] = useState(CHART_BG_DEFAULT);
+    const [gridV, setGridV] = useState(true);
+    const [gridH, setGridH] = useState(true);
     // SSR-safe defaults; persisted prefs load after mount (below) so the
     // first render always matches the server and hydration never mismatches.
     const [lineWidth, setLineWidth] = useState<LineWidth>(1);
@@ -204,6 +297,16 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
             const h = Number(localStorage.getItem('tadawul-chart-height') ?? 0);
             if (Number.isFinite(h)) setHeightDelta(clampHeightDelta(h));
             if (localStorage.getItem('tadawul-price-line') === '0') setPriceLine(false);
+            if (localStorage.getItem('tadawul-elliott-auto') === '0') setElliottAuto(false);
+            if (localStorage.getItem('tadawul-patterns-auto') === '0') setPatternsAuto(false);
+            const cu = localStorage.getItem('tadawul-candle-up');
+            if (isHex(cu)) setCandleUp(cu as string);
+            const cd = localStorage.getItem('tadawul-candle-down');
+            if (isHex(cd)) setCandleDown(cd as string);
+            const bg = localStorage.getItem('tadawul-chart-bg');
+            if (isBg(bg)) setChartBg(bg as string);
+            if (localStorage.getItem('tadawul-grid-v') === '0') setGridV(false);
+            if (localStorage.getItem('tadawul-grid-h') === '0') setGridH(false);
         } catch { /* fresh defaults */ }
     }, []);
 
@@ -221,6 +324,85 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
             return next;
         });
     };
+
+    // Candle / background / grid style -> chart + candle series
+    useEffect(() => {
+        try {
+            candleRef.current?.applyOptions({
+                upColor: candleUp,
+                downColor: candleDown,
+                wickUpColor: candleUp,
+                wickDownColor: candleDown,
+            });
+        } catch { /* ignore */ }
+    }, [candleUp, candleDown]);
+
+    useEffect(() => {
+        try {
+            chartRef.current?.applyOptions({
+                layout: { background: { type: ColorType.Solid, color: chartBg } },
+                grid: {
+                    vertLines: { visible: gridV, color: 'rgba(255, 255, 255, 0.04)' },
+                    horzLines: { visible: gridH, color: 'rgba(255, 255, 255, 0.04)' },
+                },
+            });
+        } catch { /* ignore */ }
+    }, [chartBg, gridV, gridH]);
+
+    const cycleCandleUp = () => {
+        setCandleUp((prev) => {
+            const idx = PALETTE.indexOf(prev);
+            const next = PALETTE[(idx + 1 + PALETTE.length) % PALETTE.length];
+            try { localStorage.setItem('tadawul-candle-up', next); } catch { /* ignore */ }
+            return next;
+        });
+    };
+    const cycleCandleDown = () => {
+        setCandleDown((prev) => {
+            const idx = PALETTE.indexOf(prev);
+            const next = PALETTE[(idx + 1 + PALETTE.length) % PALETTE.length];
+            try { localStorage.setItem('tadawul-candle-down', next); } catch { /* ignore */ }
+            return next;
+        });
+    };
+    const cycleChartBg = () => {
+        setChartBg((prev) => {
+            const idx = CHART_BG_OPTIONS.indexOf(prev);
+            const next = CHART_BG_OPTIONS[(idx + 1 + CHART_BG_OPTIONS.length) % CHART_BG_OPTIONS.length];
+            try { localStorage.setItem('tadawul-chart-bg', next); } catch { /* ignore */ }
+            return next;
+        });
+    };
+    const toggleGridV = () => {
+        setGridV((prev) => {
+            const next = !prev;
+            try { localStorage.setItem('tadawul-grid-v', next ? '1' : '0'); } catch { /* ignore */ }
+            return next;
+        });
+    };
+    const toggleGridH = () => {
+        setGridH((prev) => {
+            const next = !prev;
+            try { localStorage.setItem('tadawul-grid-h', next ? '1' : '0'); } catch { /* ignore */ }
+            return next;
+        });
+    };
+
+    const toggleElliottAuto = () => {
+        setElliottAuto((prev) => {
+            const next = !prev;
+            try { localStorage.setItem('tadawul-elliott-auto', next ? '1' : '0'); } catch { /* ignore */ }
+            return next;
+        });
+    };
+
+    const togglePatternsAuto = () => {
+        setPatternsAuto((prev) => {
+            const next = !prev;
+            try { localStorage.setItem('tadawul-patterns-auto', next ? '1' : '0'); } catch { /* ignore */ }
+            return next;
+        });
+    };
     const [tool, setTool] = useState<DrawingTool | null>(null);
     const [draftA, setDraftA] = useState<DrawPoint | null>(null);
     const [previewB, setPreviewB] = useState<DrawPoint | null>(null);
@@ -230,6 +412,33 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
     const [patternPreview, setPatternPreview] = useState<DrawPoint | null>(null);
     const [patterns, setPatterns] = useState<PatternDrawing[]>([]);
     const [patternsOpen, setPatternsOpen] = useState(false);
+    // ---- Manual Elliott count (زر "مانوال كاونت") ----
+    const [countOpen, setCountOpen] = useState(false);
+    const [countKind, setCountKind] = useState<CountKind | null>(null);
+    const [countDegree, setCountDegree] = useState<CountDegree>('minor');
+    const [countDraft, setCountDraft] = useState<DrawPoint[]>([]);
+    // ---- Chart transfer (زرّا نسخ/استيراد الإعدادات) ----
+    const [transferOpen, setTransferOpen] = useState(false);
+    const [transferText, setTransferText] = useState('');
+    const [transferMsg, setTransferMsg] = useState<string | null>(null);
+    // Set right after Copy so the effect below can select the fresh text once
+    // the textarea actually holds it (selecting in the same tick grabs the old value).
+    const [selectAllNext, setSelectAllNext] = useState(false);
+    const transferBoxRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        if (!selectAllNext) return;
+        const ta = transferBoxRef.current;
+        if (!ta || !transferText) return;
+        ta.focus();
+        ta.setSelectionRange(0, transferText.length);
+        setSelectAllNext(false);
+    }, [selectAllNext, transferText]);
+    // ---- Free-text notes ----
+    const [textMode, setTextMode] = useState(false);
+    const [textDraft, setTextDraft] = useState<DrawPoint | null>(null);
+    const [textValue, setTextValue] = useState('');
+    const [texts, setTexts] = useState<TextNote[]>([]);
     const [hover, setHover] = useState<{ x: number; y: number; candle: OhlcCandle } | null>(null);
     const candlesRef = useRef<OhlcCandle[]>([]);
     candlesRef.current = candles;
@@ -239,12 +448,23 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
     const draftRef = useRef<DrawPoint | null>(null);
     const patternToolRef = useRef<PatternTool | null>(null);
     const patternDraftRef = useRef<DrawPoint[]>([]);
+    // Count mirrors — same reason: the chart click handler subscribes once.
+    const countKindRef = useRef<CountKind | null>(null);
+    const countDegreeRef = useRef<CountDegree>('minor');
+    const countDraftRef = useRef<DrawPoint[]>([]);
+    const textModeRef = useRef(false);
+    const textDraftRef = useRef<DrawPoint | null>(null);
     const symbolRef = useRef(symbol);
     const rangeRef = useRef(range);
     toolRef.current = tool;
     draftRef.current = draftA;
     patternToolRef.current = patternTool;
     patternDraftRef.current = patternDraft;
+    countKindRef.current = countKind;
+    countDegreeRef.current = countDegree;
+    countDraftRef.current = countDraft;
+    textModeRef.current = textMode;
+    textDraftRef.current = textDraft;
     symbolRef.current = symbol;
     rangeRef.current = range;
     const overlayRef = useRef<Partial<Record<'ma20' | 'ema50' | 'bbBasis' | 'bbUpper' | 'bbLower' | 'srUpper' | 'srLower', ISeriesApi<'Line'> | null>>>({});
@@ -253,18 +473,68 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
     const cciRef = useRef<{ pane: PaneApi; series: ISeriesApi<'Line'> } | null>(null);
     const stochRef = useRef<{ pane: PaneApi; k: ISeriesApi<'Line'>; d: ISeriesApi<'Line'> } | null>(null);
     const adxRef = useRef<{ pane: PaneApi; adx: ISeriesApi<'Line'>; plus: ISeriesApi<'Line'>; minus: ISeriesApi<'Line'> } | null>(null);
-    const waveMarkersRef = useRef<{
-        setMarkers: (m: {
-            time: UTCTimestamp | string;
-            position: 'aboveBar' | 'belowBar';
-            color: string;
-            shape: 'circle';
-            text: string;
-        }[]) => void;
-    } | null>(null);
+    const waveMarkersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
+    // The zoom-floor listener is parked here so data passes can mute it
+    // (see feedSeries below).
+    const rangeCbRef = useRef<(() => void) | null>(null);
+
+    // Diagnostic tally for study feeds (see feedStudy). Deliberately tiny
+    // and side-effect free apart from the window slot.
+    const recordFeed = useCallback((name: string, ok: boolean, error?: unknown) => {
+        try {
+            const w = window as unknown as {
+                __chartFeeds?: { ok: Record<string, number>; fail: Record<string, string> };
+            };
+            w.__chartFeeds ??= { ok: {}, fail: {} };
+            if (ok) w.__chartFeeds.ok[name] = (w.__chartFeeds.ok[name] ?? 0) + 1;
+            else w.__chartFeeds.fail[name] = String(error).slice(0, 120);
+        } catch { /* diagnostics must never break the chart */ }
+    }, []);
+
+    // The library evaluates getVisibleRange() eagerly whenever time-range
+    // listeners exist — including mid-setData while points are being swapped,
+    // when the scale is transiently empty and the call throws "Value is null"
+    // (lightweight-charts: visibleBarsChanged -> getVisibleRange ->
+    // timeRangeForLogicalRange -> ensureNotNull). Our zoom-floor listener is
+    // the only subscriber, so parking it across our own data passes removes
+    // the throw path without touching user-zoom behaviour: wheel, pinch and
+    // the zoom buttons still trip the floor, setData never can.
+    const feedSeries = useCallback((fn: () => void) => {
+        const chart = chartRef.current;
+        const cb = rangeCbRef.current;
+        if (!chart || !cb) {
+            fn();
+            return;
+        }
+        try {
+            chart.timeScale().unsubscribeVisibleTimeRangeChange(cb);
+        } catch { /* chart gone mid-pass */ }
+        try {
+            fn();
+        } finally {
+            try {
+                chart.timeScale().subscribeVisibleTimeRangeChange(cb);
+            } catch { /* chart gone mid-pass */ }
+        }
+    }, []);
+
+    // A single failing study must never blank the whole chart: each feed
+    // is isolated and logs its own name, so a library hiccup degrades to
+    // one missing study (visible in the console) instead of empty panes.
+    // Results are also tallied on window.__chartFeeds so a failing study
+    // can be identified from the console with one line, without guessing.
+    const feedStudy = useCallback((name: string, fn: () => void) => {
+        try {
+            fn();
+            recordFeed(name, true);
+        } catch (e) {
+            recordFeed(name, false, e);
+            console.warn(`[chart] study feed failed (${name}):`, e);
+        }
+    }, [recordFeed]);
 
     const persist = (next: { enabled: Record<IndKey, boolean>; params: Record<IndKey, Record<string, number>>; colors: Record<string, string> }) => {
-        try { localStorage.setItem(IND_STORAGE, JSON.stringify(next)); } catch { /* ignore */ }
+        try { localStorage.setItem(IND_STORAGE, JSON.stringify({ ...next, version: IND_STORAGE_VERSION })); } catch { /* ignore */ }
     };
 
     const toggleInd = (key: IndKey) => {
@@ -390,6 +660,39 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
             }
             const pt = toPoint(param.point.x, param.point.y);
             if (!pt) return;
+            // Free-text note: one click plants the anchor; the text is
+            // typed in the panel and committed with Enter.
+            if (textModeRef.current) {
+                textDraftRef.current = pt;
+                setTextDraft(pt);
+                return;
+            }
+            // Manual Elliott count: place one pivot per click, glyphs advance
+            // in the chosen degree, and the set commits on the final pivot.
+            const ck = countKindRef.current;
+            if (ck) {
+                const glyphs = COUNT_GLYPHS[countDegreeRef.current][ck];
+                const countTool: PatternTool = ck === 'impulse' ? 'ew-count' : 'ew-count-abc';
+                const next = [...countDraftRef.current, pt];
+                if (next.length >= COUNT_CLICKS[ck]) {
+                    const done = next.slice(0, COUNT_CLICKS[ck]);
+                    setPatterns((prev) => {
+                        const upd = [...prev, {
+                            id: newDrawingId(),
+                            pattern: countTool,
+                            pts: done,
+                            labels: glyphs,
+                        }].slice(-50);
+                        savePatterns(symbolRef.current, rangeRef.current, upd);
+                        return upd;
+                    });
+                    setCountDraft([]);
+                    setPatternPreview(null);
+                } else {
+                    setCountDraft(next);
+                }
+                return;
+            }
             // Multi-click pattern tools (XABCD, Elliott sets, cycles...)
             const pt2 = patternToolRef.current;
             if (pt2) {
@@ -425,7 +728,9 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
             }
         };
         const onCrosshair = (param: { point?: { x: number; y: number }; time?: unknown }) => {
-            if (patternToolRef.current && patternDraftRef.current.length > 0 && param.point) {
+            if (countKindRef.current && countDraftRef.current.length > 0 && param.point) {
+                setPatternPreview(toPoint(param.point.x, param.point.y));
+            } else if (patternToolRef.current && patternDraftRef.current.length > 0 && param.point) {
                 setPatternPreview(toPoint(param.point.x, param.point.y));
             } else {
                 setPatternPreview(null);
@@ -457,13 +762,19 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         chart.subscribeClick(onClick);
         chart.subscribeCrosshairMove(onCrosshair);
         chart.timeScale().subscribeVisibleTimeRangeChange(onRange);
+        rangeCbRef.current = onRange;
 
         return () => {
             chart.unsubscribeClick(onClick);
             chart.unsubscribeCrosshairMove(onCrosshair);
             chart.timeScale().unsubscribeVisibleTimeRangeChange(onRange);
+            rangeCbRef.current = null;
             chart.remove();
             chartRef.current = null;
+            // Drop per-chart handles: a later mount must create a fresh
+            // markers plugin, never reuse one bound to a removed chart.
+            candleRef.current = null;
+            waveMarkersRef.current = null;
         };
     }, []);
 
@@ -485,6 +796,9 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                 if (twelve) {
                     setCandles(validCandles(twelve.candles));
                     setLast(twelve.candles[twelve.candles.length - 1] ?? null);
+                    // Intraday frames never carry the index backfill; clear the
+                    // notice so it cannot linger from a previous frame.
+                    setEstimateFrom(null);
                     setSource('live');
                     sourceRef.current = 'live';
                     lastFetchAt.current = Date.now();
@@ -503,10 +817,12 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                 setLive(false);
                 setSource(null);
                 sourceRef.current = null;
+                setEstimateFrom(null);
                 return;
             }
             setCandles(validCandles(res.candles));
             setLast(res.candles[res.candles.length - 1] ?? null);
+            setEstimateFrom((res as { estimatedFrom?: string }).estimatedFrom ?? null);
             setSource(intraday ? 'delayed' : null);
             sourceRef.current = intraday ? 'delayed' : null;
             lastFetchAt.current = Date.now();
@@ -552,19 +868,57 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         return () => clearInterval(t);
     }, [live, updatedAt, range]);
 
+    // Elliott wave numbering as native chart markers (1-5 blue, A-B-C orange):
+    // the whole chart is numbered (every accepted impulse plus its A-B-C), and
+    // sensitivity is derived from the loaded candles unless the user pins a
+    // manual deviation — so 1m and daily frames both produce a real count out
+    // of the box. Kept as a stable callback so the data effect can apply it
+    // in the same pass as setData.
+    const applyElliott = useCallback((sec: OhlcCandle[]) => {
+        const series = candleRef.current;
+        if (!series) return;
+        if (!waveMarkersRef.current) waveMarkersRef.current = createSeriesMarkers(series, []);
+        const markers = waveMarkersRef.current;
+        // Young listings can have fewer than 30 bars on high timeframes;
+        // 12 is twice the 6-pivot minimum for one impulse, so numbering is
+        // still attempted instead of staying blank on every frame.
+        if (!inds.elliott || sec.length < 12) {
+            markers.setMarkers([]);
+            return;
+        }
+        const highs = sec.map((c) => c.high);
+        const lows = sec.map((c) => c.low);
+        const closes = sec.map((c) => c.close);
+        const dev = elliottAuto ? undefined : indParams.elliott.dev;
+        const labels = elliottWaveLabels(highs, lows, closes, dev);
+        setElliottDev(elliottAuto ? autoDevPct(highs, lows, closes) : indParams.elliott.dev);
+        // Alternates are part of the count the UI reports: they are what the
+        // engine draws (merged as "1 or A"), so the badge must match the chart.
+        setElliottCount(labels.filter((l) => !l.alternate).length);
+        setElliottAltCount(labels.filter((l) => l.alternate).length);
+        markers.setMarkers(elliottMarkers(labels, sec.map((c) => c.time), indColors.elliott, '#FF6D00') as SeriesMarker<Time>[]);
+        if (!window.__ewdbg) window.__ewdbg = { sym: symbolRef.current, candles: sec.length, labels: labels.length, held: markers.markers().length };
+    }, [inds.elliott, indParams.elliott.dev, indColors.elliott, elliottAuto]);
+
     // Push data into the series (fit only on range/symbol change or Reset,
-    // never on silent auto-refresh, so the user's zoom never jumps)
+    // never on silent auto-refresh, so the user's zoom never jumps).
+    // Elliott numbering is applied here, in the same pass as setData, so
+    // markers are always attached after the new symbol's bars exist.
     const fitRef = useRef(true);
     useEffect(() => {
         fitRef.current = true;
+        // Drop stale auto shapes immediately: the new snapshot is shorter on
+        // frame switches and the render guard below is the backstop, not the plan.
+        setDetected([]);
     }, [symbol, range]);
     useEffect(() => {
         if (!candleRef.current || !chartRef.current || candles.length === 0) return;
+        feedSeries(() => {
         const intraday = typeof candles[0].time === 'number';
-        chartRef.current.applyOptions({
+        chartRef.current!.applyOptions({
             timeScale: { timeVisible: intraday, secondsVisible: false },
         });
-        candleRef.current.setData(
+        feedStudy('candles', () => candleRef.current!.setData(
             candles.map(({ time, open, high, low, close }) => ({
                 time: time as UTCTimestamp | string,
                 open,
@@ -572,17 +926,27 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                 low,
                 close,
             })),
-        );
+        ));
         if (fitRef.current) {
-            chartRef.current.timeScale().fitContent();
+            chartRef.current!.timeScale().fitContent();
             fitRef.current = false;
         }
-    }, [candles]);
+        feedStudy('elliott-markers', () => applyElliott(candles));
+        // Pattern detection rides along with the same data pass, so switching
+        // symbols or frames both redraw shapes on the new bars.
+        if (patternsAuto) {
+            setDetected(candles.length < 30 ? [] : detectPatterns(candles.map((c) => c.high), candles.map((c) => c.low), candles.map((c) => c.close)));
+        } else {
+            setDetected([]);
+        }
+        });
+    }, [candles, applyElliott, patternsAuto, feedSeries, feedStudy]);
 
     // Studies: overlays live on the price chart, oscillators get their own panes
     useEffect(() => {
         const chart = chartRef.current;
         if (!chart || candles.length === 0) return;
+        feedSeries(() => {
         const closes = candles.map((c) => c.close);
         const times = candles.map((c) => c.time as UTCTimestamp | string);
         const overlay = overlayRef.current;
@@ -596,13 +960,13 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                 });
                 chart.priceScale('').applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
             }
-            volumeRef.current.setData(
+            feedStudy('volume', () => volumeRef.current!.setData(
                 candles.map(({ time, close, open, volume }) => ({
                     time: time as UTCTimestamp | string,
                     value: volume,
                     color: close >= open ? 'rgba(38, 166, 154, 0.4)' : 'rgba(239, 83, 80, 0.4)',
                 })),
-            );
+            ));
         } else if (volumeRef.current) {
             chart.removeSeries(volumeRef.current);
             volumeRef.current = null;
@@ -626,24 +990,28 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         };
 
         if (inds.ma20 && closes.length >= indParams.ma20.period) {
-            ensureLine('ma20', indColors.ma20).setData(studyPoints(times, sma(closes, indParams.ma20.period)));
+            feedStudy('ma20', () => ensureLine('ma20', indColors.ma20).setData(studyPoints(times, sma(closes, indParams.ma20.period))));
             overlay.ma20?.applyOptions({ visible: true });
         } else dropLine('ma20');
         if (inds.ema50 && closes.length >= indParams.ema50.period) {
-            ensureLine('ema50', indColors.ema50).setData(studyPoints(times, ema(closes, indParams.ema50.period)));
+            feedStudy('ema50', () => ensureLine('ema50', indColors.ema50).setData(studyPoints(times, ema(closes, indParams.ema50.period))));
             overlay.ema50?.applyOptions({ visible: true });
         } else dropLine('ema50');
         if (inds.bb && closes.length >= indParams.bb.period) {
+            feedStudy('bollinger', () => {
             const bb = bollinger(closes, indParams.bb.period, indParams.bb.mult);
             ensureLine('bbBasis', indColors.bb).setData(studyPoints(times, bb.map((b) => b.basis)));
             ensureLine('bbUpper', indColors.bb, true).setData(studyPoints(times, bb.map((b) => b.upper)));
             ensureLine('bbLower', indColors.bb, true).setData(studyPoints(times, bb.map((b) => b.lower)));
+            });
             (['bbBasis', 'bbUpper', 'bbLower'] as const).forEach((k) => overlay[k]?.applyOptions({ visible: true }));
         } else (['bbBasis', 'bbUpper', 'bbLower'] as const).forEach(dropLine);
         if (inds.sr && closes.length >= indParams.sr.period) {
+            feedStudy('support-resistance', () => {
             const dc = donchian(candles.map((c) => c.high), candles.map((c) => c.low), indParams.sr.period);
             ensureLine('srUpper', indColors.srUpper).setData(studyPoints(times, dc.upper));
             ensureLine('srLower', indColors.srLower, true).setData(studyPoints(times, dc.lower));
+            });
             (['srUpper', 'srLower'] as const).forEach((k) => overlay[k]?.applyOptions({ visible: true }));
         } else (['srUpper', 'srLower'] as const).forEach(dropLine);
 
@@ -664,7 +1032,7 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                 rsiRef.current = { pane, series };
             }
             rsiRef.current.series.applyOptions({ color: indColors.rsi });
-            rsiRef.current.series.setData(studyPoints(times, rsi(closes, indParams.rsi.period)));
+            feedStudy('rsi', () => rsiRef.current!.series.setData(studyPoints(times, rsi(closes, indParams.rsi.period))));
         } else rsiRef.current = dropPane(rsiRef.current);
 
         if (inds.macd && closes.length >= indParams.macd.slow + indParams.macd.signal) {
@@ -677,22 +1045,26 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                 macdRef.current = { pane, line, signal, hist };
             }
             const m = macd(closes, indParams.macd.fast, indParams.macd.slow, indParams.macd.signal);
-            macdRef.current.line.applyOptions({ color: indColors.macd });
-            macdRef.current.line.setData(studyPoints(times, m.map((p) => p.line)));
-            macdRef.current.signal.setData(studyPoints(times, m.map((p) => p.signal)));
-            macdRef.current.hist.setData(
+            feedStudy('macd', () => {
+            macdRef.current!.line.applyOptions({ color: indColors.macd });
+            macdRef.current!.line.setData(studyPoints(times, m.map((p) => p.line)));
+            macdRef.current!.signal.setData(studyPoints(times, m.map((p) => p.signal)));
+            macdRef.current!.hist.setData(
                 times.flatMap((time, i) => {
                     const h = m[i].hist;
                     return h == null ? [] : [{ time, value: h, color: h >= 0 ? 'rgba(38, 166, 154, 0.6)' : 'rgba(239, 83, 80, 0.6)' }];
                 }),
             );
+            });
         } else macdRef.current = dropPane(macdRef.current);
-    }, [candles, inds, indParams, indColors]);
+        });
+    }, [candles, inds, indParams, indColors, feedSeries, feedStudy]);
 
     // Oscillator panes for CCI / Stochastic / ADX (same create-feed-remove pattern)
     useEffect(() => {
         const chart = chartRef.current;
         if (!chart || candles.length === 0) return;
+        feedSeries(() => {
         const closes = candles.map((c) => c.close);
         const highs = candles.map((c) => c.high);
         const lows = candles.map((c) => c.low);
@@ -718,7 +1090,7 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                 cciRef.current = { pane, series };
             }
             cciRef.current.series.applyOptions({ color: indColors.cci });
-            cciRef.current.series.setData(studyPoints(times, cci(highs, lows, closes, indParams.cci.period)));
+            feedStudy('cci', () => cciRef.current!.series.setData(studyPoints(times, cci(highs, lows, closes, indParams.cci.period))));
         } else cciRef.current = dropPane(cciRef.current);
 
         if (inds.stoch && closes.length >= indParams.stoch.k + indParams.stoch.d) {
@@ -733,8 +1105,10 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
             }
             const s = stochastic(highs, lows, closes, indParams.stoch.k, indParams.stoch.d);
             stochRef.current.k.applyOptions({ color: indColors.stoch });
-            stochRef.current.k.setData(studyPoints(times, s.k));
-            stochRef.current.d.setData(studyPoints(times, s.d));
+            feedStudy('stochastic', () => {
+            stochRef.current!.k.setData(studyPoints(times, s.k));
+            stochRef.current!.d.setData(studyPoints(times, s.d));
+            });
         } else stochRef.current = dropPane(stochRef.current);
 
         if (inds.adx && closes.length > 2 * indParams.adx.period) {
@@ -749,47 +1123,14 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
             }
             const a = adx(highs, lows, closes, indParams.adx.period);
             adxRef.current.adx.applyOptions({ color: indColors.adx });
-            adxRef.current.adx.setData(studyPoints(times, a.adx));
-            adxRef.current.plus.setData(studyPoints(times, a.plusDI));
-            adxRef.current.minus.setData(studyPoints(times, a.minusDI));
+            feedStudy('adx', () => {
+            adxRef.current!.adx.setData(studyPoints(times, a.adx));
+            adxRef.current!.plus.setData(studyPoints(times, a.plusDI));
+            adxRef.current!.minus.setData(studyPoints(times, a.minusDI));
+            });
         } else adxRef.current = dropPane(adxRef.current);
-    }, [candles, inds, indParams, indColors]);
-
-    // Elliott wave labels as native chart markers (1-5 blue, A-B-C orange).
-    // No clean impulse fit -> markers cleared instead of showing a wrong count.
-    useEffect(() => {
-        const series = candleRef.current;
-        if (!series) return;
-        if (!waveMarkersRef.current) waveMarkersRef.current = createSeriesMarkers(series, []);
-        const markers = waveMarkersRef.current;
-        if (!inds.elliott || candles.length < 30) {
-            markers.setMarkers([]);
-            return;
-        }
-        const labels = elliottWaves(
-            zigzag(
-                candles.map((c) => c.high),
-                candles.map((c) => c.low),
-                candles.map((c) => c.close),
-                indParams.elliott.dev,
-            ),
-        );
-        const times = candles.map((c) => c.time as UTCTimestamp | string);
-        markers.setMarkers(
-            labels.flatMap((l) => {
-                const time = times[l.index];
-                if (time == null) return [];
-                const corrective = l.label === 'A' || l.label === 'B' || l.label === 'C';
-                return [{
-                    time,
-                    position: l.position,
-                    color: corrective ? '#FF6D00' : indColors.elliott,
-                    shape: 'circle' as const,
-                    text: l.label,
-                }];
-            }),
-        );
-    }, [candles, inds, indParams, indColors]);
+        });
+    }, [candles, inds, indParams, indColors, feedSeries, feedStudy]);
 
     // Full-screen chart mode: the container grows via CSS and autoSize follows it.
     // Refit after layout settles so data is always in view. Close with Exit or Esc.
@@ -810,12 +1151,15 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
     useEffect(() => {
         setDrawings(loadDrawings(symbol, range));
         setPatterns(loadPatterns(symbol, range));
+        setTexts(loadTexts(symbol, range));
         setDraftA(null);
         setPreviewB(null);
         setTool(null);
         setPatternDraft([]);
         setPatternPreview(null);
         setPatternTool(null);
+        setTextDraft(null);
+        setTextValue('');
     }, [symbol, range]);
 
     const deleteDrawing = (id: string) => {
@@ -853,6 +1197,11 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         setPatternTool(null);
         setPatternDraft([]);
         setPatternPreview(null);
+        setCountKind(null);
+        setCountDraft([]);
+        setCountOpen(false);
+        setTextMode(false);
+        setTextDraft(null);
     };
 
     const pickPattern = (t: PatternTool) => {
@@ -862,7 +1211,233 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         setTool(null);
         setDraftA(null);
         setPreviewB(null);
+        setCountKind(null);
+        setCountDraft([]);
+        setCountOpen(false);
+        setTextMode(false);
+        setTextDraft(null);
     };
+
+    // ---- Manual count controls ----
+    // Starting a count cancels any other drawing tool so one interaction never
+    // feeds two modes at once (both read the same chart click).
+    const startCount = (kind: CountKind) => {
+        setCountKind((prev) => (prev === kind ? null : kind));
+        setCountDraft([]);
+        setPatternPreview(null);
+        setPatternTool(null);
+        setPatternDraft([]);
+        setPatternsOpen(false);
+        setTool(null);
+        setDraftA(null);
+        setPreviewB(null);
+        setCountOpen(true);
+        setTextMode(false);
+        setTextDraft(null);
+    };
+
+    const cancelCount = () => {
+        setCountKind(null);
+        setCountDraft([]);
+        setPatternPreview(null);
+        setCountOpen(false);
+    };
+
+    // ---- Free-text notes ----
+    // Text mode cancels every other tool (all read the same chart click),
+    // and every other tool cancels text mode for the same reason.
+    const pickText = () => {
+        setTextMode((prev) => !prev);
+        setTextDraft(null);
+        setPatternTool(null);
+        setPatternDraft([]);
+        setPatternsOpen(false);
+        setTool(null);
+        setDraftA(null);
+        setPreviewB(null);
+        setCountKind(null);
+        setCountDraft([]);
+        setCountOpen(false);
+        setTransferOpen(false);
+    };
+
+    const commitText = () => {
+        const draft = textDraftRef.current;
+        if (!draft) return;
+        const note = makeTextNote(draft.time, draft.price, textValue);
+        if (!note) return;
+        setTexts((prev) => {
+            const upd = [...prev, note].slice(-50);
+            saveTexts(symbolRef.current, rangeRef.current, upd);
+            return upd;
+        });
+        setTextDraft(null);
+        textDraftRef.current = null;
+        setTextValue('');
+    };
+
+    const deleteText = (id: string) => {
+        setTexts((prev) => {
+            const next = prev.filter((t) => t.id !== id);
+            saveTexts(symbolRef.current, rangeRef.current, next);
+            return next;
+        });
+    };
+
+    const clearTexts = () => {
+        setTexts([]);
+        saveTexts(symbolRef.current, rangeRef.current, []);
+    };
+
+    // ---- Chart transfer handlers ----
+    // Export carries this chart's indicators + drawings + patterns
+    // (manual counts included) as one JSON string the user pastes
+    // into another browser. Import validates with the same gates
+    // the loaders use, so a foreign payload can't crash the chart.
+    const copySetup = async () => {
+        const payload = buildTransferPayload({
+            symbol: symbolRef.current,
+            range: rangeRef.current,
+            indicators: {
+                enabled: { ...indState.enabled },
+                params: JSON.parse(JSON.stringify(indState.params)) as Record<IndKey, Record<string, number>>,
+                colors: { ...indState.colors },
+            },
+            drawings,
+            patterns,
+        });
+        const text = JSON.stringify(payload);
+        let copied = false;
+        try {
+            await navigator.clipboard.writeText(text);
+            copied = true;
+        } catch {
+            // Clipboard API needs a secure context; fall back to a
+            // temporary textarea so HTTP LAN testing still works.
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            try { copied = document.execCommand('copy'); } catch { copied = false; }
+            ta.remove();
+        }
+        setTransferText(text);
+        // Select the payload so a manual Ctrl+C copies ALL of it. A partial copy
+        // is what produces the "not-transfer" rejection on the other side.
+        setSelectAllNext(true);
+        setTransferMsg(copied ? tx(lang, 'draw.copied') : tx(lang, 'draw.copySelectAll'));
+    };
+
+    // ---- File transfer (بديل النسخ/اللصق) ----
+    // Same payload as the clipboard route, but through a .json file. Copy/paste
+    // is where this feature kept breaking: long payloads get cut, the wrong
+    // text gets pasted, and nothing tells the user which. A file cannot be
+    // truncated by accident.
+    const exportSetupFile = () => {
+        const payload = buildTransferPayload({
+            symbol: symbolRef.current,
+            range: rangeRef.current,
+            indicators: {
+                enabled: { ...indState.enabled },
+                params: JSON.parse(JSON.stringify(indState.params)) as Record<IndKey, Record<string, number>>,
+                colors: { ...indState.colors },
+            },
+            drawings,
+            patterns,
+        });
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const safe = symbolRef.current.replace(/[^\w.-]+/g, '_');
+        a.href = url;
+        a.download = `openstock-${safe}-${rangeRef.current}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        // Revoke on the next tick so the download has started.
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        setTransferMsg(tx(lang, 'draw.exported'));
+    };
+
+    const importSetupFile = (file: File) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const text = String(reader.result ?? '');
+            setTransferText(text);
+            // Reuse the same validation path as the paste route. The text is
+            // passed in explicitly: applyImport reads the `transferText` state,
+            // which React has not published yet at this point, so it would
+            // parse the PREVIOUS (empty) value and import nothing.
+            window.setTimeout(() => applyImport(text), 0);
+        };
+        reader.onerror = () => setTransferMsg(tx(lang, 'draw.importErrNoJson'));
+        reader.readAsText(file);
+    };
+
+    const applyImport = (overrideText?: string) => {
+        const source = overrideText ?? transferText;
+        let raw: unknown;
+        try {
+            raw = JSON.parse(source);
+        } catch {
+            // Not parseable at all — the paste is mid-string or cut in half.
+            setTransferMsg(tx(lang, 'draw.importErrNoJson'));
+            return;
+        }
+        const parsed = parseTransferPayload(raw);
+        if (!parsed.ok) {
+            const key = ({
+                'truncated': 'draw.importErrTruncated',
+                'not-transfer': 'draw.importErrNotTransfer',
+                'not-object': 'draw.importErrNoJson',
+                'version': 'draw.importErrVersion',
+                'no-source': 'draw.importErrNoSource',
+            } as const)[parsed.error as 'truncated' | 'not-transfer' | 'not-object' | 'version' | 'no-source'];
+            setTransferMsg(key ? tx(lang, key) : tx(lang, 'draw.importBad'));
+            return;
+        }
+        // Keep the textarea in step with what was just applied, so the user
+        // can see (and re-copy) the payload that is now live on the chart.
+        setTransferText(source);
+        // Indicators: accept only known keys, current chart keeps the rest.
+        if (parsed.payload.indicators) {
+            const src = parsed.payload.indicators;
+            setIndState((prev) => {
+                const enabled = { ...prev.enabled };
+                if (src.enabled) for (const { key } of INDICATORS) {
+                    if (typeof src.enabled[key] === 'boolean') enabled[key] = src.enabled[key];
+                }
+                const params = JSON.parse(JSON.stringify(prev.params)) as Record<IndKey, Record<string, number>>;
+                if (src.params) for (const { key, params: defs } of INDICATORS) {
+                    for (const d of defs) {
+                        const v = src.params[key]?.[d.key];
+                        if (typeof v === 'number' && Number.isFinite(v)) params[key][d.key] = v;
+                    }
+                }
+                const colors = { ...prev.colors };
+                if (src.colors) for (const k of Object.keys(prev.colors)) {
+                    if (typeof src.colors[k] === 'string') colors[k] = src.colors[k];
+                }
+                const next = { enabled, params, colors };
+                persist(next);
+                return next;
+            });
+        }
+        // Drawings + patterns land on the OPEN chart (whatever symbol/range
+        // the user opened before importing) and persist under its key.
+        const nextDrawings = [...parsed.drawings].slice(-50);
+        setDrawings(nextDrawings);
+        saveDrawings(symbolRef.current, rangeRef.current, nextDrawings);
+        const nextPatterns = [...parsed.patterns].slice(-50);
+        setPatterns(nextPatterns);
+        savePatterns(symbolRef.current, rangeRef.current, nextPatterns);
+        const from = `${parsed.payload.symbol}/${parsed.payload.range}`;
+        setTransferMsg(`${tx(lang, 'draw.importOk')} · ${from} → ${parsed.drawings.length + parsed.patterns.length}✦`);
+    };
+
+    // Counts are stored as patterns, so they inherit persistence and the
+    // delete/clear affordances — no second list to maintain.
+    const countDrawings = patterns.filter((d) => d.pattern === 'ew-count' || d.pattern === 'ew-count-abc');
 
     const cancelDrawing = () => {
         setTool(null);
@@ -871,6 +1446,14 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         setPatternTool(null);
         setPatternDraft([]);
         setPatternPreview(null);
+        setCountKind(null);
+        setCountDraft([]);
+        setCountOpen(false);
+        setTransferOpen(false);
+        setTransferMsg(null);
+        setTextMode(false);
+        setTextDraft(null);
+        setTextValue('');
     };
 
     const zoomBy = (factor: number) => {
@@ -933,6 +1516,82 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
     const X = (t: string | number): number | null =>
         chart ? chart.timeScale().timeToCoordinate(t as UTCTimestamp) : null;
     const Y = (p: number): number | null => candleRef.current?.priceToCoordinate(p) ?? null;
+
+    // ---- Auto-detected classical patterns (SVG over the price pane) ----
+    // Pattern pivots are bar indices into the snapshot they were detected on.
+    // During a symbol/frame switch React first renders the new (possibly
+    // shorter) candles with the previous snapshot's shapes, so every lookup
+    // goes through patternBarTime: out-of-range renders nothing instead of
+    // throwing inside timeToCoordinate and unmounting the chart.
+    const PATTERN_COLOR = { bullish: '#26A69A', bearish: '#EF5350' } as const;
+    const patternOverlay = (p: DetectedPattern, keyPrefix: string) => {
+        const els: React.ReactNode[] = [];
+        const color = PATTERN_COLOR[p.direction];
+        const op = 0.55 + p.confidence * 0.45;
+        const times = candles.map((c) => c.time);
+        const lines = p.lines.map((ln, i) => {
+            const t1 = patternBarTime(times, ln.from.index);
+            const t2 = patternBarTime(times, ln.to.index);
+            if (t1 == null || t2 == null) return null;
+            const x1 = X(t1);
+            const y1 = Y(ln.from.price);
+            let x2 = X(t2);
+            let y2 = Y(ln.to.price);
+            if (x1 == null || y1 == null || x2 == null || y2 == null) return null;
+            // Necklines / channel bounds project to the right edge: the pattern
+            // reads as a level price is expected to react at, not just a chord.
+            // Clamped to the visible price range so a steep line cannot shoot
+            // off-scale (projectToEdge).
+            if (ln.extend) {
+                const lo = Math.min(...candles.map((c) => c.low));
+                const hi = Math.max(...candles.map((c) => c.high));
+                const pad = (hi - lo) * 0.08;
+                const e = projectToEdge(x1, y1, x2, y2, rightEdge, lo - pad, hi + pad);
+                x2 = e.x;
+                y2 = e.y;
+            }
+            return (
+                <line
+                    key={`${keyPrefix}-l${i}`}
+                    x1={x1} y1={y1} x2={x2} y2={y2}
+                    stroke={color} strokeWidth={1.5} opacity={op}
+                    {...(ln.dashed ? { strokeDasharray: '5 4' } : {})}
+                />
+            );
+        });
+        lines.forEach((l) => els.push(l));
+        const dots = p.pivots.map((pt, i) => {
+            const t = patternBarTime(times, pt.index);
+            if (t == null) return null;
+            const x = X(t);
+            const y = Y(pt.price);
+            if (x == null || y == null) return null;
+            return (
+                <g key={`${keyPrefix}-p${i}`}>
+                    <circle cx={x} cy={y} r={3.5} fill={color} opacity={op} />
+                    {pt.role && (
+                        <text x={x} y={pt.type === 'high' ? y - 8 : y + 15} textAnchor="middle" fontSize={10} fill={color} opacity={op}>
+                            {pt.role}
+                        </text>
+                    )}
+                </g>
+            );
+        });
+        dots.forEach((d) => els.push(d));
+        // Badge at the first pivot so the shape is identifiable on the chart
+        const bt = patternBarTime(times, p.pivots[0].index);
+        const bx = bt == null ? null : X(bt);
+        const by = Y(p.pivots[0].price);
+        if (bx != null && by != null) {
+            const text = lang === 'ar' ? p.labelAr : p.label;
+            els.push(
+                <text key={`${keyPrefix}-t`} x={bx + 6} y={p.direction === 'bullish' ? by + 18 : by - 8} fontSize={11} fontWeight={700} fill={color} opacity={op}>
+                    {text}
+                </text>,
+            );
+        }
+        return els;
+    };
 
     const drawingElements = (d: Drawing, keyPrefix: string, preview = false) => {
         const els: React.ReactNode[] = [];
@@ -999,6 +1658,18 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
             : null;
     const patternDraftDots: DrawPoint[] = patternTool && patternDraft.length > 0 && !patternPreview ? patternDraft : [];
 
+    // In-progress manual count: same preview shape, labels taken from the
+    // degree glyph set so the user sees the number landing before committing.
+    const countDraftPair: PatternDrawing | null =
+        countKind && countDraft.length > 0
+            ? {
+                id: 'countdraft',
+                pattern: countKind === 'impulse' ? 'ew-count' : 'ew-count-abc',
+                pts: [...countDraft, ...(patternPreview ? [patternPreview] : [])],
+                labels: COUNT_GLYPHS[countDegree][countKind],
+            }
+            : null;
+
     // ---- Manual pattern geometry (TradingView-style patterns panel) ----
     const timeIndex = new Map<string, number>();
     candles.forEach((c, i) => timeIndex.set(String(c.time), i));
@@ -1006,14 +1677,23 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
 
     const patternElements = (d: PatternDrawing, keyPrefix: string, preview = false) => {
         const def = patternById(d.pattern);
-        const color = def.group === 'elliott' ? PATTERN_COLORS.elliott : def.group === 'cycles' ? PATTERN_COLORS.cycles : PATTERN_COLORS.patterns;
+        const color = def.group === 'elliott' || def.group === 'count' ? PATTERN_COLORS.elliott : def.group === 'cycles' ? PATTERN_COLORS.cycles : PATTERN_COLORS.patterns;
+        // Manual counts read like the engine's own output: motive glyphs and
+        // connectors in green, corrective in orange (matches the Pine port).
+        const labelSet = d.labels ?? def.pointLabels;
+        const isCorr = d.pattern === 'ew-count-abc';
+        const glyphColor = isCorr ? '#FF6D00' : '#089981';
+        // Manual counts use the glyph color for everything (green impulse /
+        // orange correction, like the engine and the Pine port) so a hand
+        // count reads as one object, not a blue line with green words.
+        const countColor = def.group === 'count' ? glyphColor : color;
         const els: React.ReactNode[] = [];
         const op = preview ? 0.6 : 1;
         const dot = (x: number, y: number, k: string, c: string = color) => (
             <circle key={k} cx={x} cy={y} r={4} fill={c} opacity={op} />
         );
         const tag = (x: number, y: number, k: string, text: string) => (
-            <text key={k} x={x} y={y - 8} textAnchor="middle" fontSize={12} fontWeight={700} fill={color} opacity={op}>
+            <text key={k} x={x} y={y - 8} textAnchor="middle" fontSize={12} fontWeight={700} fill={countColor} opacity={op}>
                 {text}
             </text>
         );
@@ -1052,11 +1732,11 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         // Point-based tools: dots + labels always, connectors when available
         pts.forEach((q, i) => {
             if (q.x == null || q.y == null) return;
-            els.push(dot(q.x, q.y, `${keyPrefix}-d${i}`, color));
-            const label = def.pointLabels[i];
+            els.push(dot(q.x, q.y, `${keyPrefix}-d${i}`, countColor));
+            const label = labelSet[i];
             if (label) els.push(tag(q.x, q.y, `${keyPrefix}-t${i}`, label));
         });
-        const seg = (i: number, j: number, k: string, dashed = false, c = color) => {
+        const seg = (i: number, j: number, k: string, dashed = false, c = countColor) => {
             const a = pts[i];
             const b = pts[j];
             if (!a || !b || a.x == null || a.y == null || b.x == null || b.y == null) return;
@@ -1113,6 +1793,15 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                     >
                         {tx(lang, 'chart.indicators')}{activeIndCount ? ` · ${activeIndCount}` : ''}
                     </button>
+                    <button
+                        type="button"
+                        onClick={() => toggleInd('elliott')}
+                        aria-pressed={inds.elliott}
+                        title={tx(lang, 'chart.elliottBadge')}
+                        className={inds.elliott ? 'pill is-up' : 'pill'}
+                    >
+                        {tx(lang, 'chart.elliottBadge')} v{ELLIOTT_ENGINE_VERSION}{elliottCount + elliottAltCount ? ` · ${elliottCount + elliottAltCount}` : ''}
+                    </button>
                     {menuOpen && (
                         <div className="card absolute z-20 mt-1 flex max-h-80 min-w-60 flex-col gap-0.5 overflow-y-auto p-1.5">
                             <button
@@ -1138,6 +1827,69 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                             >
                                 <span className={`flex size-4 items-center justify-center rounded border ${priceLine ? 'border-brand-ink bg-brand-soft text-brand-ink' : 'border-line-strong text-transparent'}`}>✓</span>
                                 <span className="flex-1 text-start text-[13px] font-semibold">{tx(lang, 'chart.priceLine')}</span>
+                            </button>
+                            <div className="mx-1 my-1 border-t border-line" />
+                            <p className="px-2 pt-0.5 text-[11px] font-semibold text-faint">{tx(lang, 'chart.style')}</p>
+                            <div className="search-item-link w-full">
+                                <span className="flex-1 text-start text-[13px] font-semibold">{tx(lang, 'chart.candleUp')}</span>
+                                <button
+                                    type="button"
+                                    onClick={cycleCandleUp}
+                                    title={candleUp}
+                                    aria-label={tx(lang, 'chart.candleUp')}
+                                    className="size-5 shrink-0 rounded-full border border-line-strong"
+                                    style={{ backgroundColor: candleUp }}
+                                />
+                            </div>
+                            <div className="search-item-link w-full">
+                                <span className="flex-1 text-start text-[13px] font-semibold">{tx(lang, 'chart.candleDown')}</span>
+                                <button
+                                    type="button"
+                                    onClick={cycleCandleDown}
+                                    title={candleDown}
+                                    aria-label={tx(lang, 'chart.candleDown')}
+                                    className="size-5 shrink-0 rounded-full border border-line-strong"
+                                    style={{ backgroundColor: candleDown }}
+                                />
+                            </div>
+                            <div className="search-item-link w-full">
+                                <span className="flex-1 text-start text-[13px] font-semibold">{tx(lang, 'chart.chartBg')}</span>
+                                <button
+                                    type="button"
+                                    onClick={cycleChartBg}
+                                    title={chartBg}
+                                    aria-label={tx(lang, 'chart.chartBg')}
+                                    className="size-5 shrink-0 rounded-full border border-line-strong"
+                                    style={{ backgroundColor: chartBg === 'transparent' ? 'transparent' : chartBg }}
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                onClick={toggleGridV}
+                                aria-pressed={gridV}
+                                className="search-item-link w-full"
+                            >
+                                <span className={`flex size-4 items-center justify-center rounded border ${gridV ? 'border-brand-ink bg-brand-soft text-brand-ink' : 'border-line-strong text-transparent'}`}>✓</span>
+                                <span className="flex-1 text-start text-[13px] font-semibold">{tx(lang, 'chart.gridV')}</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={toggleGridH}
+                                aria-pressed={gridH}
+                                className="search-item-link w-full"
+                            >
+                                <span className={`flex size-4 items-center justify-center rounded border ${gridH ? 'border-brand-ink bg-brand-soft text-brand-ink' : 'border-line-strong text-transparent'}`}>✓</span>
+                                <span className="flex-1 text-start text-[13px] font-semibold">{tx(lang, 'chart.gridH')}</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={togglePatternsAuto}
+                                aria-pressed={patternsAuto}
+                                className="search-item-link w-full"
+                            >
+                                <span className={`flex size-4 items-center justify-center rounded border ${patternsAuto ? 'border-brand-ink bg-brand-soft text-brand-ink' : 'border-line-strong text-transparent'}`}>✓</span>
+                                <span className="flex-1 text-start text-[13px] font-semibold">{tx(lang, 'chart.patternsAuto')}</span>
+                                <span className="mono num text-[11px] text-faint">{detected.length ? `${detected.length}◆` : ''}</span>
                             </button>
                             <div className="mx-1 my-1 border-t border-line" />
                             {INDICATORS.map(({ key, label, labelAr, params, noColor }) => (
@@ -1178,15 +1930,48 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                                     </button>
                                     {inds[key] && (
                                         <div className="flex flex-wrap gap-x-3 gap-y-1 px-6 pb-1.5 pt-0.5">
+                                            {key === 'elliott' && (
+                                                <span className="flex items-center gap-1">
+                                                    <span className="text-[11px] text-faint">{tx(lang, 'chart.elliottAuto')}</span>
+                                                    <button
+                                                        type="button"
+                                                        aria-pressed={elliottAuto}
+                                                        onClick={toggleElliottAuto}
+                                                        className="pill h-6 px-2"
+                                                        title={tx(lang, 'chart.elliottAuto')}
+                                                    >
+                                                        {elliottAuto ? '✓' : '—'}
+                                                    </button>
+                                                    <span className="mono num text-[11px] text-faint" title={tx(lang, 'chart.elliottNoWave')}>
+                                                        {elliottCount ? `${elliottCount}✦` : `0 · ${tx(lang, 'chart.elliottNoWaveShort')}`}
+                                                        {elliottAltCount > 0 && <span className="ml-1 text-[11px] text-faint">(+{elliottAltCount} alt)</span>}
+                                                    </span>
+                                                </span>
+                                            )}
                                             {params.map((p) => (
                                                 <span key={p.key} className="flex items-center gap-1">
                                                     <span className="text-[11px] text-faint">{p.labelKey ? tx(lang, p.labelKey) : p.label}</span>
                                                     <button type="button" aria-label={`Decrease ${label} ${p.label}`} onClick={() => stepParam(key, p, -1)} className="pill h-6 px-2">−</button>
-                                                    <span className="mono num min-w-8 text-center text-[12px] font-semibold">{indParams[key][p.key]}</span>
+                                                    <span className="mono num min-w-8 text-center text-[12px] font-semibold">
+                                                        {key === 'elliott' ? elliottDev.toFixed(2) : indParams[key][p.key]}
+                                                    </span>
                                                     <button type="button" aria-label={`Increase ${label} ${p.label}`} onClick={() => stepParam(key, p, 1)} className="pill h-6 px-2">+</button>
                                                 </span>
                                             ))}
                                         </div>
+                                    )}
+                                    {key === 'elliott' && (
+                                        <button
+                                            type="button"
+                                            onClick={() => startCount(countKind ?? 'impulse')}
+                                            aria-pressed={countKind != null}
+                                            title={tx(lang, 'draw.count')}
+                                            className="search-item-link w-full"
+                                        >
+                                            <span className={`flex size-4 items-center justify-center rounded border ${countKind != null ? 'border-brand-ink bg-brand-soft text-brand-ink' : 'border-line-strong text-transparent'}`}>✓</span>
+                                            <span className="flex-1 text-start text-[13px] font-semibold">{tx(lang, 'draw.count')}</span>
+                                            <span className="mono text-[11.5px] text-faint">{countDrawings.length ? `${countDrawings.length}✦` : ''}</span>
+                                        </button>
                                     )}
                                 </div>
                             ))}
@@ -1238,10 +2023,219 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                             {tx(lang, t === 'trend' ? 'draw.trend' : t === 'fibo' ? 'draw.fibo' : 'draw.gann')}
                         </button>
                     ))}
-                    {(tool || draftA || patternTool || patternDraft.length > 0) && (
+                    <button
+                        type="button"
+                        onClick={pickText}
+                        aria-pressed={textMode}
+                        title={tx(lang, 'draw.textHint')}
+                        className={textMode ? 'pill is-up' : 'pill'}
+                    >
+                        {tx(lang, 'draw.text')}
+                        {texts.length ? ` · ${texts.length}` : ''}
+                    </button>
+                    {(tool || draftA || patternTool || patternDraft.length > 0 || countKind || textMode) && (
                         <button type="button" onClick={cancelDrawing} className="pill">
                             {tx(lang, 'draw.cancel')}
                         </button>
+                    )}
+                    <div className="relative">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                // Opening the panel arms impulse mode at once so
+                                // chart clicks work immediately — no second step
+                                // needed. Re-clicking the button closes it.
+                                if (!countOpen) setCountKind((prev) => prev ?? 'impulse');
+                                setCountOpen((v) => !v);
+                                setPatternsOpen(false);
+                            }}
+                            aria-expanded={countOpen}
+                            title={tx(lang, 'draw.count')}
+                            className={countKind ? 'pill is-up' : 'pill'}
+                        >
+                            {tx(lang, 'draw.count')}
+                            {countKind && countDraft.length > 0 ? ` · ${countDraft.length}/${COUNT_CLICKS[countKind]}` : countDrawings.length ? ` · ${countDrawings.length}` : ''}
+                        </button>
+                        {countOpen && (
+                            <div className="card absolute end-0 z-20 mt-1 flex w-60 flex-col gap-2 p-2.5">
+                                {/* الدرجات الثلاث نفس درجات المحرك، فالعدّ اليدوي
+                                    والترقيم التلقائي يُقرآن بنفس الطريقة */}
+                                <div>
+                                    <p className="px-0.5 pb-1 text-[11px] font-semibold text-faint">{tx(lang, 'draw.countDegree')}</p>
+                                    <div className="flex gap-1">
+                                        {(['minor', 'major', 'minute'] as CountDegree[]).map((dg) => (
+                                            <button
+                                                key={dg}
+                                                type="button"
+                                                onClick={() => setCountDegree(dg)}
+                                                aria-pressed={countDegree === dg}
+                                                title={COUNT_GLYPHS[dg].impulse.join(' · ')}
+                                                className={`pill h-7 flex-1 px-1 ${countDegree === dg ? 'is-up' : ''}`}
+                                            >
+                                                <span className="mono text-[11.5px]">
+                                                    {dg === 'major' ? 'I·V' : dg === 'minute' ? 'i·v' : '1·5'}
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="px-0.5 pb-1 text-[11px] font-semibold text-faint">{tx(lang, 'draw.countKind')}</p>
+                                    <div className="flex gap-1">
+                                        {(['impulse', 'correction'] as CountKind[]).map((kd) => (
+                                            <button
+                                                key={kd}
+                                                type="button"
+                                                onClick={() => startCount(kd)}
+                                                aria-pressed={countKind === kd}
+                                                className={`pill h-7 flex-1 px-1.5 ${countKind === kd ? 'is-up' : ''}`}
+                                            >
+                                                {tx(lang, kd === 'impulse' ? 'draw.countImpulse' : 'draw.countCorrection')}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                {countKind && (
+                                    <p className="px-0.5 text-[11.5px] leading-snug text-faint">
+                                        {countDraft.length}/{COUNT_CLICKS[countKind]} · {tx(lang, 'draw.hint1')}
+                                        <span className="mono block pt-0.5 text-brand-ink">
+                                            {COUNT_GLYPHS[countDegree][countKind].join(' · ')}
+                                        </span>
+                                    </p>
+                                )}
+                                {countDrawings.length > 0 && (
+                                    <>
+                                        <div className="border-t border-line" />
+                                        {countDrawings.map((d) => (
+                                            <div key={d.id} className="search-item-link w-full">
+                                                <span className="flex-1 truncate text-start text-[12.5px]">
+                                                    {(d.labels ?? []).join(' · ')} · {d.pts.length}✦
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => deletePattern(d.id)}
+                                                    aria-label="Delete count"
+                                                    className="rounded px-1.5 text-faint hover:bg-hover hover:text-foreground"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <button type="button" onClick={clearPatterns} className="search-item-link w-full">
+                                            <span className="flex-1 text-start text-[12.5px] text-down">{tx(lang, 'draw.clear')}</span>
+                                        </button>
+                                    </>
+                                )}
+                                {countKind && (
+                                    <button type="button" onClick={cancelCount} className="pill w-full">
+                                        {tx(lang, 'draw.cancel')}
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    <div className="relative">
+                        <button
+                            type="button"
+                            onClick={() => { setTransferOpen((v) => !v); setTransferMsg(null); setPatternsOpen(false); }}
+                            aria-expanded={transferOpen}
+                            title={tx(lang, 'draw.transfer')}
+                            className={transferOpen ? 'pill is-up' : 'pill'}
+                        >
+                            {tx(lang, 'draw.transfer')}
+                        </button>
+                        {transferOpen && (
+                            <div className="card absolute end-0 z-20 mt-1 flex w-72 flex-col gap-2 p-2.5">
+                                <p className="px-0.5 text-[11.5px] leading-snug text-faint">
+                                    {tx(lang, 'draw.transferHint')}
+                                </p>
+                                <div className="flex gap-1.5">
+                                    <button type="button" onClick={() => void copySetup()} className="pill flex-1">
+                                        {tx(lang, 'draw.copySetup')}
+                                    </button>
+                                    <button type="button" onClick={exportSetupFile} className="pill flex-1">
+                                        {tx(lang, 'draw.exportFile')}
+                                    </button>
+                                </div>
+                                <label className="pill w-full cursor-pointer text-center">
+                                    {tx(lang, 'draw.importFile')}
+                                    <input
+                                        type="file"
+                                        accept="application/json,.json"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                            const f = e.target.files?.[0];
+                                            if (f) importSetupFile(f);
+                                            e.target.value = '';
+                                        }}
+                                    />
+                                </label>
+                                <textarea
+                                    ref={transferBoxRef}
+                                    value={transferText}
+                                    onChange={(e) => { setTransferText(e.target.value); setTransferMsg(null); }}
+                                    placeholder={tx(lang, 'draw.pastePayload')}
+                                    rows={3}
+                                    spellCheck={false}
+                                    className="mono w-full resize-y rounded border border-line bg-transparent p-1.5 text-[11px] text-foreground"
+                                />
+                                <button type="button" onClick={() => applyImport()} className="pill w-full">
+                                    {tx(lang, 'draw.applyImport')}
+                                </button>
+                                {transferMsg && (
+                                    <p className="px-0.5 text-[11.5px] leading-snug text-brand-ink">{transferMsg}</p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    {textMode && (
+                    <div className="relative">
+                        <div className="card absolute end-0 z-20 mt-1 flex w-72 flex-col gap-2 p-2.5">
+                            <p className="px-0.5 text-[11.5px] leading-snug text-faint">
+                                {textDraft ? tx(lang, 'draw.textType') : tx(lang, 'draw.textHint')}
+                            </p>
+                            <input
+                                // key remounts per anchor so typing always starts fresh
+                                key={textDraft ? `${textDraft.time}` : 'empty'}
+                                autoFocus
+                                value={textValue}
+                                onChange={(e) => setTextValue(e.target.value.slice(0, TEXT_MAX))}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') commitText();
+                                    else if (e.key === 'Escape') cancelDrawing();
+                                }}
+                                placeholder={tx(lang, 'draw.textPh')}
+                                maxLength={TEXT_MAX}
+                                className="w-full rounded border border-line bg-transparent p-1.5 text-[13px] text-foreground"
+                            />
+                            <button type="button" onClick={commitText} disabled={!textDraft || !textValue.trim()} className="pill w-full">
+                                {tx(lang, 'draw.textSave')}
+                            </button>
+                            {texts.length > 0 && (
+                                <>
+                                    <div className="border-t border-line" />
+                                    {texts.map((t) => (
+                                        <div key={t.id} className="search-item-link w-full">
+                                            <span className="flex-1 truncate text-start text-[12.5px]">
+                                                {t.text}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => deleteText(t.id)}
+                                                aria-label="Delete note"
+                                                className="rounded px-1.5 text-faint hover:bg-hover hover:text-foreground"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <button type="button" onClick={clearTexts} className="search-item-link w-full">
+                                        <span className="flex-1 text-start text-[12.5px] text-down">{tx(lang, 'draw.clear')}</span>
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
                     )}
                 </div>
                 <div className="relative">
@@ -1309,9 +2303,14 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                         {patternDraft.length}/{patternById(patternTool).clicks} · {tx(lang, 'draw.hint1')}
                     </span>
                 )}
+                {estimateFrom && (
+                    <span className="pill h-6 px-2 text-[11px] text-brand-ink" title={tx(lang, 'chart.estimatedSub')}>
+                        ⚠ {tx(lang, 'chart.estimatedFrom').replace('{d}', estimateFrom)}
+                    </span>
+                )}
                 {last && (
                     <p className="num text-[15px] font-bold">
-                        {last.close.toFixed(2)} <span className="text-[12px font-normal] text-faint">SAR</span>{' '}
+                        {last.close.toFixed(2)} <span className="text-[12px font-normal] text-faint]">SAR</span>{' '}
                         {changePct != null && (
                             <span className={changePct >= 0 ? 'text-up' : 'text-down'}>
                                 {changePct >= 0 ? '+' : ''}
@@ -1340,6 +2339,12 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                     <button type="button" onClick={() => zoomBy(1.43)} title={tx(lang, 'chart.zoomOut')} aria-label={tx(lang, 'chart.zoomOut')} className="pill h-9 w-9 justify-center px-0">
                         <ZoomOut className="size-3.5" />
                     </button>
+                    <button type="button" onClick={takeScreenshot} title={tx(lang, 'chart.export')} aria-label={tx(lang, 'chart.export')} className="pill h-9 w-9 justify-center px-0">
+                        <Camera className="size-3.5" />
+                    </button>
+                    <button type="button" onClick={() => setHelpOpen(true)} title={tx(lang, 'chart.help')} aria-label={tx(lang, 'chart.help')} className="pill h-9 w-9 justify-center px-0">
+                        <HelpCircle className="size-3.5" />
+                    </button>
                     <button type="button" onClick={resetView} title={tx(lang, 'chart.reset')} aria-label={tx(lang, 'chart.reset')} className="pill h-9 w-9 justify-center px-0">
                         <RotateCcw className="size-3.5" />
                     </button>
@@ -1364,7 +2369,7 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                 <div
                     ref={containerRef}
                     className="w-full"
-                    style={{ height: expanded ? `calc(78vh + ${heightDelta}px)` : CHART_BASE_HEIGHT + heightDelta, cursor: tool || patternTool ? 'crosshair' : undefined }}
+                    style={{ height: expanded ? `calc(78vh + ${heightDelta}px)` : CHART_BASE_HEIGHT + heightDelta, cursor: tool || patternTool || countKind || textMode ? 'crosshair' : undefined }}
                     onDoubleClick={() => {
                         // Double-click restores the full view (disabled while placing drawings)
                         if (!toolRef.current && !patternToolRef.current) resetView();
@@ -1457,7 +2462,31 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                                     ? <circle cx={x} cy={y} r={5} fill="none" stroke="#fff" strokeWidth={1.5} /> : null;
                             })()}
                             {patterns.map((d) => patternElements({ ...d, pts: d.pts }, d.id))}
+                            {texts.map((t) => {
+                                const x = X(t.time);
+                                const y = Y(t.price);
+                                if (x == null || y == null) return null;
+                                return (
+                                    <g key={t.id}>
+                                        <circle cx={x} cy={y} r={3.5} fill="#EAB308" />
+                                        <text
+                                            x={x} y={y - 8} textAnchor="middle" fontSize={13} fontWeight={600}
+                                            fill="#F5F5F5" style={{ paintOrder: 'stroke', stroke: 'rgba(0,0,0,0.85)', strokeWidth: 3 }}
+                                        >
+                                            {t.text}
+                                        </text>
+                                    </g>
+                                );
+                            })}
+                            {textDraft && (() => {
+                                const x = X(textDraft.time);
+                                const y = Y(textDraft.price);
+                                return x != null && y != null
+                                    ? <circle cx={x} cy={y} r={5} fill="none" stroke="#EAB308" strokeWidth={1.5} strokeDasharray="3 2" /> : null;
+                            })()}
+                            {detected.map((p) => patternOverlay(p, `auto-${p.id}`))}
                             {patternDraftPair && patternElements(patternDraftPair, 'patterndraft', true)}
+                            {countDraftPair && patternElements(countDraftPair, 'countdraft', true)}
                             {patternDraftDots.map((p, i) => {
                                 const x = X(p.time);
                                 const y = Y(p.price);
@@ -1504,6 +2533,32 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                     <div className="empty-state py-14">
                         <h3>{tx(lang, 'chart.unavailable')}</h3>
                         <p className="max-w-80 text-[13px]">{tx(lang, 'chart.unavailableSub')}</p>
+                    </div>
+                )}
+                {helpOpen && (
+                    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 backdrop-blur-sm" onClick={() => setHelpOpen(false)}>
+                        <div className="card w-full max-w-md p-5" onClick={(e) => e.stopPropagation()}>
+                            <div className="mb-3 flex items-center justify-between">
+                                <h2 className="text-[16px] font-bold">{tx(lang, 'chart.help')}</h2>
+                                <button type="button" onClick={() => setHelpOpen(false)} className="rounded-full p-1 hover:bg-hover" aria-label="Close">✕</button>
+                            </div>
+                            <div className="flex flex-col gap-2 text-[13px]">
+                                {[
+                                    ['?', tx(lang, 'chart.help')],
+                                    ['Esc', 'Cancel drawing / Close panels'],
+                                    ['Click', 'Place drawings & text notes'],
+                                    ['Text btn', 'Type notes on the chart'],
+                                    ['Export btn', 'Save chart as PNG'],
+                                    ['Scroll / Pinch', 'Zoom in & out'],
+                                    ['Drag', 'Pan the chart'],
+                                ].map(([key, desc]) => (
+                                    <div key={key} className="flex items-center gap-3">
+                                        <kbd className="rounded border border-line bg-hover px-2 py-0.5 text-[11px] font-semibold">{key}</kbd>
+                                        <span className="text-faint">{desc}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

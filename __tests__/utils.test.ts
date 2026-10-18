@@ -19,6 +19,11 @@ describe('formatSymbolForTradingView', () => {
         expect(formatSymbolForTradingView('aapl')).toBe('AAPL');
     });
 
+    it('maps bare 4-digit codes to TADAWUL', () => {
+        expect(formatSymbolForTradingView('2222')).toBe('TADAWUL:2222');
+        expect(formatSymbolForTradingView('1120')).toBe('TADAWUL:1120');
+    });
+
     // Asia-Pacific exchanges
     it('maps Taiwan (.TW) to TWSE prefix', () => {
         expect(formatSymbolForTradingView('2330.TW')).toBe('TWSE:2330');

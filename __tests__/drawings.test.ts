@@ -59,9 +59,15 @@ describe('PATTERNS', () => {
         }
     });
 
-    it('covers patterns, Elliott waves and cycles', () => {
+    it('covers patterns, Elliott waves, cycles and manual counts', () => {
         const groups = new Set(PATTERNS.map((p) => p.group));
-        expect(groups).toEqual(new Set(['patterns', 'elliott', 'cycles']));
+        expect(groups).toEqual(new Set(['patterns', 'elliott', 'cycles', 'count']));
+        // The patterns dropdown renders only these three groups, so the count
+        // tools must stay out of it or the manual button gets duplicated.
+        const dropdownGroups = new Set(['patterns', 'elliott', 'cycles']);
+        const counts = PATTERNS.filter((p) => p.group === 'count');
+        expect(counts).toHaveLength(2);
+        for (const c of counts) expect(dropdownGroups.has(c.group)).toBe(false);
     });
 });
 

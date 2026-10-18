@@ -10,7 +10,7 @@ import type { ScanRow } from '@/lib/actions/screener.actions';
 import { SIGNAL_LABELS } from '@/lib/setup-scan';
 import { tx, type Lang } from '@/lib/i18n';
 
-const POLL_MS = 60_000;
+const POLL_MS = 10_000;
 
 // Live screener rows: daily signals stay fixed, session prices refresh every
 // minute while Tadawul is open (shared server cache, no page reload needed).

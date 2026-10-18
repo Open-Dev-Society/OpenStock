@@ -1,12 +1,11 @@
 import { Suspense } from 'react';
 import Panel from '@/components/Panel';
+import ScreenerHeader from '@/components/ScreenerHeader';
 import SetupsLiveTable from '@/components/SetupsLiveTable';
 import { scanMarket, scanRsiBand, scanRsiBurst, scanRsiRising } from '@/lib/actions/screener.actions';
 import { parseBand } from '@/lib/setup-scan';
 import { getLang } from '@/lib/i18n-server';
 import { tx } from '@/lib/i18n';
-
-export const metadata = { title: 'Sunday setups | OpenStock' };
 
 const ScanSkeleton = () => (
     <div className="row-list" aria-busy="true">
@@ -100,38 +99,7 @@ export default async function ScreenerPage({ searchParams }: { searchParams: Pro
             <Panel
                 title={burst ? tx(lang, 'screen.burstTitle') : rising ? tx(lang, 'screen.risingTitle') : band ? tx(lang, 'screen.bandTitle') : tx(lang, 'screen.top')}
                 sub={burst ? tx(lang, 'screen.burstSub') : rising ? tx(lang, 'screen.risingSub') : band ? tx(lang, 'screen.bandSub').replace('{lo}', String(band[0])).replace('{hi}', String(band[1])) : tx(lang, 'screen.tapRow')}
-                action={
-                    <div className="flex items-center gap-1.5">
-                        {!rising && !burst && (
-                            <a href="/screener?rising=1" className="pill h-8">{tx(lang, 'screen.rising')}</a>
-                        )}
-                        {!burst && (
-                            <a href="/screener?burst=1" className="pill h-8">{tx(lang, 'screen.burst')}</a>
-                        )}
-                        <form action="/screener" method="GET" className="flex items-center gap-1.5">
-                        <label className="text-[11.5px] text-faint">
-                            {tx(lang, 'screen.rsiFrom')}{' '}
-                            <input
-                                type="number" name="rsiMin" min={0} max={100}
-                                defaultValue={band ? band[0] : 25}
-                                className="num h-8 w-14 rounded-[9px] border border-line bg-page px-2 text-[12.5px] text-foreground outline-none"
-                            />
-                        </label>
-                        <label className="text-[11.5px] text-faint">
-                            {tx(lang, 'screen.rsiTo')}{' '}
-                            <input
-                                type="number" name="rsiMax" min={0} max={100}
-                                defaultValue={band ? band[1] : 70}
-                                className="num h-8 w-14 rounded-[9px] border border-line bg-page px-2 text-[12.5px] text-foreground outline-none"
-                            />
-                        </label>
-                        <button type="submit" className="pill h-8">{tx(lang, 'screen.apply')}</button>
-                        {(band || rising || burst) && (
-                            <a href="/screener" className="pill h-8">{tx(lang, 'screen.clear')}</a>
-                        )}
-                    </form>
-                    </div>
-                }
+                action={<ScreenerHeader lang={lang} rising={rising} burst={burst} band={band} />}
             >
                 <Suspense fallback={<ScanSkeleton />}>
                     <Results band={band} rising={rising} burst={burst} />

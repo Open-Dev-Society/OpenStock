@@ -1,0 +1,773 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  مركاز — ترقيم موجات إليوت + الأشكال الكلاسيكية  (v2.4)
+//  يعمل على أي سهم وأي فريم في تريدنق فيو
+//
+//  التركيب: Pine Editor → لصق كامل الملف → Add to chart
+//  الكشف التلقائي للحساسية مشتق من ATR فيعمل على 1 دقيقة ويومي وشهري معاً
+// ═══════════════════════════════════════════════════════════════════════════
+//@version=5
+indicator("مركاز v2.4 — اليوت + الأشكال", shorttitle = "مركاز v2.4",
+     overlay = true, max_lines_count = 500, max_labels_count = 500, max_bars_back = 5000)
+
+// ═══════════════════════════ الإدخالات ═══════════════════════════
+i_auto   = input.bool(true, "كشف تلقائي للحساسية",
+     tooltip = "يشتق الحساسية من ATR — يعمل على كل الفريمات بدون تعديل")
+i_dev    = input.float(5.0, "نسبة الانحراف اليدوية %", minval = 0.1, maxval = 20, step = 0.1)
+
+i_showEW   = input.bool(true, "ترقيم موجات إليوت")
+i_showCorr = input.bool(true, "تصحيحات A·B·C")
+
+i_showPat  = input.bool(true, "الأشكال الكلاسيكية")
+i_maxPat   = input.int(6, "أقصى عدد أشكال", minval = 1, maxval = 12)
+i_bullCol  = input.color(#26A69A, "لون الصاعد")
+i_bearCol  = input.color(#EF5350, "لون الهابط")
+i_minConf  = input.float(0.5, "أقل درجة ثقة للرسم", minval = 0, maxval = 1, step = 0.05)
+i_debug    = input.bool(true, "سطر حالة التشخيص", group = "تشخيص",
+     tooltip = "يعرض عدد المحاور والحساسية وعدد الأشكال على آخر شمعة")
+
+// ═══════════════════════════ تخزين المحاور ═══════════════════════════
+var array<int>   pIdx = array.new_int(0)
+var array<float> pPr  = array.new_float(0)
+var array<bool>  pHi  = array.new_bool(0)
+
+idxAt(int p) => array.get(pIdx, p)
+prAt(int p)  => array.get(pPr, p)
+hiAt(int p)  => array.get(pHi, p)
+
+// ═══════════════════════════ محرك الزجزاج ═══════════════════════════
+float atrPct = ta.atr(14) / close * 100
+float dev    = i_auto ? math.max(0.2, atrPct * 2.5) : i_dev
+
+var int   trend  = 0
+var int   extIdx = 0
+var float extPr  = na
+
+// فترة إحماء: أول 30 شمعة للـ ATR والمحاور فقط — لا شيء يتنفذ قبلها،
+// فيستحيل أي خطأ فهرسة في البداية مهما كان الرمز أو الفريم
+WARMUP = 30
+if bar_index == WARMUP
+    extPr  := high
+    extIdx := bar_index
+if bar_index > WARMUP
+    bool newHigh = high > extPr
+    bool newLow  = low < extPr
+
+    if trend >= 0 and newHigh
+        extPr  := high
+        extIdx := bar_index
+
+    if trend <= 0 and newLow
+        extPr  := low
+        extIdx := bar_index
+
+    // انعكاس كافٍ لتأكيد المحور الحالي ثم بدء الرجل المعاكسة
+    // ملاحظة: لا نعتمد على short-circuit في and/or — كل get محمي بـ if مستقل
+    bool pushedThisBar = false
+    if trend >= 0 and (extPr - low) / extPr * 100 >= dev
+        int n = array.size(pIdx)
+        bool replace = false
+        if n > 0
+            if array.get(pHi, n - 1)
+                if array.get(pPr, n - 1) < extPr
+                    replace := true
+        if n == 0
+            array.push(pIdx, extIdx)
+            array.push(pPr, extPr)
+            array.push(pHi, true)
+        else
+            if not array.get(pHi, n - 1)
+                array.push(pIdx, extIdx)
+                array.push(pPr, extPr)
+                array.push(pHi, true)
+            else if replace
+                array.set(pIdx, n - 1, extIdx)
+                array.set(pPr, n - 1, extPr)
+            // else: قمة أدنى من السابقة تُتجاهل، والترند ينعكس على أي حال
+        trend  := -1
+        extPr  := low
+        extIdx := bar_index
+        pushedThisBar := true
+
+    // شمعة واحدة = محور واحد فقط (نفس حماية النسخة الأصلية في lib/indicators.ts):
+    // لو سُجّلت قمة وقاع في نفس الشمعة فالمسافة الزمنية بينهما صفر، فيرجع
+    // balancedLegs خطأ ويختفي ترقيم الموجات الدافعة تماماً من الشارت
+    if not pushedThisBar and trend <= 0 and (high - extPr) / extPr * 100 >= dev
+        int n = array.size(pIdx)
+        bool replace = false
+        if n > 0
+            if not array.get(pHi, n - 1)
+                if array.get(pPr, n - 1) > extPr
+                    replace := true
+        if n == 0
+            array.push(pIdx, extIdx)
+            array.push(pPr, extPr)
+            array.push(pHi, false)
+        else
+            if array.get(pHi, n - 1)
+                array.push(pIdx, extIdx)
+                array.push(pPr, extPr)
+                array.push(pHi, false)
+            else if replace
+                array.set(pIdx, n - 1, extIdx)
+                array.set(pPr, n - 1, extPr)
+        trend  := 1
+        extPr  := high
+        extIdx := bar_index
+
+    // محور الانحراف الافتتاحي قد يُطبع معكوساً زمنياً (قاع بعد قمة سابقة له)؛
+    // يُحذف مرة واحدة كما في النسخة الأصلية ليبقى التسلسل مرتباً ومتناوباً.
+    // ملاحظة: كل get هنا داخل if مستقل لأن Pine قد يقيّم طرفي and معاً.
+    if array.size(pIdx) == 2
+        if array.get(pIdx, 0) > array.get(pIdx, 1)
+            array.remove(pIdx, 0)
+            array.remove(pPr, 0)
+            array.remove(pHi, 0)
+
+// ═══════════════════════════ مساعدات تحقق ═══════════════════════════
+alternating(int s, int k) =>
+    bool ok = s + k <= array.size(pIdx)
+    if ok
+        for j = s + 1 to s + k - 1
+            if array.get(pHi, j) == array.get(pHi, j - 1)
+                ok := false
+    ok
+
+// أرجل الموجة يجب أن تكون في شموع مختلفة فقط. قياس على بيانات تداول حقيقية
+// (TASI 30m و 1H): بوابة نسب زمنية صارمة كانت ترفض عدّات إليوت صحيحة — موجة 2
+// تطبع بشمعة واحدة مقابل موجة 1 بـ64 شمعة سلوك طبيعي لا ضوضاء. وقواعد التحقق
+// في إليوت كلها سعرية (2 تحفظ البداية، 3 ليست الأقصر، 4 لا تتقاطع مع 1).
+balancedLegs(int s, int k) =>
+    bool ok = s + k <= array.size(pIdx)
+    if ok
+        for j = s + 1 to s + k - 1
+            if array.get(pIdx, j) - array.get(pIdx, j - 1) <= 0
+                ok := false
+    ok
+
+// انحراف النسبة عن منتصف نطاقها (0 مثالي، 1 على الحافة) — لدرجة الثقة
+bandDev(float v, float lo, float hi) =>
+    math.abs(v - (lo + hi) / 2) / ((hi - lo) / 2)
+
+// ═══════════════════════════ شكل مكتشف ═══════════════════════════
+type Match
+    bool  valid
+    int   kind
+    int   s
+    int   e
+    float conf
+    int   dir
+    array<int>    fromP
+    array<int>    toP
+    array<int>    role
+    array<bool>   ext
+    array<bool>   dash
+    array<string> lab
+    array<int>    labP
+
+newMatch(int kind, int s, int e, float conf, int dir) =>
+    Match.new(true, kind, s, e, conf, dir, array.new_int(0), array.new_int(0),
+         array.new_int(0), array.new_bool(0), array.new_bool(0),
+         array.new_string(0), array.new_int(0))
+
+// شكل فارغ يمثل "لا يوجد تطابق" — كائنات Pine لا تكون na أبداً
+blankMatch() =>
+    Match.new(false, 0, 0, 0, 0.0, 0, array.new_int(0), array.new_int(0),
+         array.new_int(0), array.new_bool(0), array.new_bool(0),
+         array.new_string(0), array.new_int(0))
+
+addLine(Match m, int fromP, int toP, int role, bool ext, bool dash) =>
+    array.push(m.fromP, fromP)
+    array.push(m.toP, toP)
+    array.push(m.role, role)
+    array.push(m.ext, ext)
+    array.push(m.dash, dash)
+    m
+
+addLab(Match m, string txt, int posP) =>
+    array.push(m.lab, txt)
+    array.push(m.labP, posP)
+    m
+
+kindName(int k, bool ar) =>
+    string n = "؟"
+    if k == 1
+        n := ar ? "رأس وكتفان" : "Head & Shoulders"
+    else if k == 2
+        n := ar ? "رأس وكتفان معكوس" : "Inverse H&S"
+    else if k == 3
+        n := ar ? "قمم مزدوجة" : "Double Top"
+    else if k == 4
+        n := ar ? "قيعان مزدوجة" : "Double Bottom"
+    else if k == 5
+        n := ar ? "آدم وحواء" : "Adam & Eve"
+    else if k == 6
+        n := ar ? "حواء وآدم" : "Eve & Adam"
+    else if k == 7
+        n := ar ? "مثلث صاعد" : "Ascending Triangle"
+    else if k == 8
+        n := ar ? "مثلث هابط" : "Descending Triangle"
+    else if k == 9
+        n := ar ? "مثلث متماثل" : "Symmetric Triangle"
+    else if k == 10
+        n := ar ? "إسفين صاعد" : "Rising Wedge"
+    else if k == 11
+        n := ar ? "إسفين هابط" : "Falling Wedge"
+    else if k == 12
+        n := ar ? "مستطيل" : "Rectangle"
+    else if k == 13
+        n := ar ? "رايت" : "Flag"
+    else if k == 14
+        n := ar ? "علم" : "Pennant"
+    else if k == 15
+        n := ar ? "كوب ومقبض" : "Cup & Handle"
+    else if k == 16
+        n := ar ? "هارمونيك جارتلي" : "Gartley"
+    else if k == 17
+        n := ar ? "هارمونيك بات" : "Bat"
+    else if k == 18
+        n := ar ? "هارمونيك باترفلاي" : "Butterfly"
+    else if k == 19
+        n := ar ? "هارمونيك كراب" : "Crab"
+    else
+        n := ar ? "هارمونيك سايبر" : "Cypher"
+    n
+
+// ═══════════════════════════ المطابقات ═══════════════════════════
+matchHS(int s) =>
+    Match m = blankMatch()
+    if s + 5 <= array.size(pIdx) and alternating(s, 5) and balancedLegs(s, 5)
+        float ls  = prAt(s)
+        float n1  = prAt(s + 1)
+        float hd  = prAt(s + 2)
+        float n2  = prAt(s + 3)
+        float rs  = prAt(s + 4)
+        bool  up  = hiAt(s)
+        float hh  = up ? hd - ls : ls - hd
+        bool  ext = up ? hd > rs and hd > ls : hd < rs and hd < ls
+        if hh > 0 and ext and math.abs(n1 - n2) <= hh * 0.55
+            bool sh = false
+            if up
+                sh := rs < ls + hh * 0.45 and n1 > rs and n1 < hd and n2 < hd
+            else
+                sh := rs > ls - hh * 0.45 and n1 < rs and n1 > hd and n2 > hd
+            int span = idxAt(s + 2) - idxAt(s + 1)
+            int gap  = idxAt(s + 3) - idxAt(s + 1)
+            if sh and gap >= span * 0.4 and gap <= span * 2.5
+                float conf = math.min(1.0, 0.5 + 0.5 * (1 - math.abs(n1 - n2) / hh))
+                m := newMatch(up ? 1 : 2, s, s + 4, conf, up ? -1 : 1)
+                addLine(m, s, s + 2, 0, false, false)
+                addLine(m, s + 2, s + 4, 0, false, false)
+                addLine(m, s + 1, s + 3, 1, true, true)
+                addLab(m, up ? "كتف" : "كتف", s)
+                addLab(m, "رأس", s + 2)
+                addLab(m, up ? "كتف" : "كتف", s + 4)
+    m
+
+matchDouble(int s) =>
+    Match m = blankMatch()
+    if s + 3 <= array.size(pIdx) and alternating(s, 3)
+        float p1  = prAt(s)
+        float mm  = prAt(s + 1)
+        float p2  = prAt(s + 2)
+        bool  up  = hiAt(s)
+        float dep = math.abs(p1 - mm)
+        bool  ok  = up ? p1 > p2 : p1 < p2
+        if dep > 0 and ok and math.abs(p1 - p2) <= dep * 0.22
+            float conf = math.min(1.0, 0.55 + (1 - math.abs(p1 - p2) / dep) * 0.45)
+            m := newMatch(up ? 3 : 4, s, s + 2, conf, up ? -1 : 1)
+            addLine(m, s, s + 1, 0, false, false)
+            addLine(m, s + 1, s + 2, 0, false, false)
+            addLine(m, s, s + 2, 1, true, true)
+            addLab(m, "1", s)
+            addLab(m, "2", s + 2)
+    m
+
+matchAdamEve(int s) =>
+    Match m = blankMatch()
+    if s + 4 <= array.size(pIdx) and alternating(s, 4) and balancedLegs(s, 4)
+        float p1  = prAt(s)
+        float m1  = prAt(s + 1)
+        float p2  = prAt(s + 2)
+        float m2  = prAt(s + 3)
+        bool  up  = hiAt(s)
+        int   f   = math.max(1, idxAt(s + 1) - idxAt(s))
+        int   sc  = math.max(1, idxAt(s + 3) - idxAt(s + 2))
+        float d1  = math.abs(p1 - m1)
+        float d2  = math.abs(p2 - m2)
+        if d1 > 0
+            float retest   = math.abs(p1 - p2) / d1
+            float tr       = float(sc) / float(f)
+            bool  opposite = up ? m2 > m1 : m2 < m1
+            if retest < 0.3 and opposite and tr >= 1.8 and d2 < d1 * 0.9
+                bool  firstSharp = f < sc
+                int   k   = firstSharp ? 5 : 6
+                float conf = math.min(1.0, 0.6 + math.min(0.3, tr / 6))
+                m := newMatch(k, s, s + 3, conf, up ? -1 : 1)
+                addLine(m, s, s + 1, 0, false, false)
+                addLine(m, s + 1, s + 2, 0, false, false)
+                addLine(m, s + 2, s + 3, 0, false, false)
+                addLine(m, s, s + 2, 1, true, true)
+                addLab(m, firstSharp ? "آدم" : "حواء", s + 1)
+                addLab(m, firstSharp ? "حواء" : "آدم", s + 3)
+    m
+
+matchCup(int s) =>
+    Match m = blankMatch()
+    if s + 5 <= array.size(pIdx) and alternating(s, 5) and balancedLegs(s, 5)
+        float r1   = prAt(s)
+        float cu   = prAt(s + 1)
+        float r2   = prAt(s + 2)
+        float hd   = prAt(s + 3)
+        float tp   = prAt(s + 4)
+        bool  bull = hiAt(s)
+        float dep  = math.abs(math.min(r1, r2) - cu)
+        int   span = idxAt(s + 2) - idxAt(s)
+        if dep > 0 and math.abs(r1 - r2) / dep < 0.12 and span >= 12 and dep / math.max(r1, r2) > 0.06
+            int  mid = idxAt(s) + span / 2
+            bool centered = math.abs(idxAt(s + 1) - mid) <= span * 0.35
+            float hdep = math.abs(hd - tp)
+            if centered and hdep / dep < 0.55 and idxAt(s + 4) - idxAt(s + 3) >= 3
+                bool cupOk = false
+                if bull
+                    cupOk := hd > cu + dep * 0.25 and tp < math.max(r1, r2)
+                else
+                    cupOk := hd < cu - dep * 0.25 and tp > math.min(r1, r2)
+                if cupOk
+                    float conf = math.min(1.0, 0.62 + 0.38 * (1 - math.abs(r1 - r2) / dep))
+                    m := newMatch(15, s, s + 4, conf, 1)
+                    addLine(m, s, s + 1, 0, false, false)
+                    addLine(m, s + 1, s + 2, 0, false, false)
+                    addLine(m, s + 2, s + 3, 0, false, false)
+                    addLine(m, s + 3, s + 4, 0, false, false)
+                    addLine(m, s + 2, s + 4, 1, true, true)
+                    addLab(m, "حافة", s)
+                    addLab(m, "قاع", s + 1)
+                    addLab(m, "مقبض", s + 3)
+    m
+
+matchConsolidation(int s) =>
+    Match m = blankMatch()
+    if s + 6 <= array.size(pIdx) and alternating(s, 6)
+        float base  = prAt(s)
+        float pull  = prAt(s + 1)
+        int   poleBars = math.max(1, idxAt(s + 1) - idxAt(s))
+        float poleDrop = math.abs(pull - base) / base
+        bool  poleFast = poleDrop / poleBars > 0.00012 and poleDrop > 0.03
+
+        // قناة من القمم فقط ثم القيعان فقط (3 نقاط للضلفة)
+        float h0 = na
+        float h1 = na
+        float h2 = na
+        float l0 = na
+        float l1 = na
+        float l2 = na
+        for j = s to s + 5
+            if hiAt(j)
+                if na(h0)
+                    h0 := prAt(j)
+                else if na(h1)
+                    h1 := prAt(j)
+                else
+                    h2 := prAt(j)
+            else
+                if na(l0)
+                    l0 := prAt(j)
+                else if na(l1)
+                    l1 := prAt(j)
+                else
+                    l2 := prAt(j)
+
+        bool  up   = hiAt(s)
+        float uh0 = up ? h0 : l0
+        float uh1 = up ? h1 : l1
+        float uh2 = up ? h2 : l2
+        float lh0 = up ? l0 : h0
+        float lh1 = up ? l1 : h1
+        float lh2 = up ? l2 : h2
+
+        // الانحدار لكل ضلفة عبر أول وآخر نقطة
+        int   uSpan = idxAt(s + 5) - idxAt(s)
+        float us = math.abs(uh2 - uh0) / math.max(uh0, 0.0001) / math.max(uSpan, 1)
+        float ls = math.abs(lh2 - lh0) / math.max(lh0, 0.0001) / math.max(uSpan, 1)
+        bool  uFlat = us < 0.00006
+        bool  lFlat = ls < 0.00006
+
+        bool  uDown = up ? uh2 < uh0 : uh2 > uh0
+        bool  lUp   = up ? lh2 > lh0 : lh2 < lh0
+
+        int   k = 0
+        if poleFast
+            k := math.abs(us - ls) > us * 0.2 ? 14 : 13
+        else if uFlat and lUp
+            k := up ? 7 : 8
+        else if lFlat and uDown
+            k := up ? 8 : 7
+        else if uFlat and lFlat
+            k := 12
+        else if uDown and lUp
+            k := 9
+        else if uDown and ls > 0 and ls < us
+            k := up ? 10 : 11
+        else if lUp and us > 0 and us < ls
+            k := up ? 11 : 10
+
+        if k > 0
+            float w0 = math.abs(uh0 - lh0)
+            float w1 = math.abs(uh2 - lh2)
+            if k == 12 or w1 <= w0 * 1.15
+                int bb = 1
+                if k == 10
+                    bb := -1
+                else if k == 11
+                    bb := 1
+                else if k == 7
+                    bb := 1
+                else if k == 8
+                    bb := -1
+                else if k == 14
+                    bb := not up ? 1 : -1
+                else if k == 13
+                    bb := up ? -1 : 1
+                float conf = math.min(1.0, (k == 13 ? 0.75 : 0.7) + (uSpan > 40 ? 0.1 : 0.0))
+                m := newMatch(k, s, s + 5, conf, bb)
+                addLine(m, s, s + 4, 2, true, false)
+                addLine(m, s + 1, s + 5, 3, true, false)
+                addLab(m, kindName(k, true), s)
+    m
+
+matchHarmonic(int s) =>
+    Match m = blankMatch()
+    if s + 5 <= array.size(pIdx) and alternating(s, 5) and balancedLegs(s, 5)
+        float x = prAt(s)
+        float a = prAt(s + 1)
+        float b = prAt(s + 2)
+        float c = prAt(s + 3)
+        float d = prAt(s + 4)
+        float xa = math.abs(a - x)
+        float ab = math.abs(b - a)
+        float bc = math.abs(c - b)
+        float cd = math.abs(d - c)
+        float ad = math.abs(d - x)
+        if xa > 0 and ab > 0 and bc > 0
+            bool dBeyondB = true
+            if hiAt(s + 4) == hiAt(s + 2)
+                dBeyondB := math.sign(d - x) != math.sign(b - x)
+            if dBeyondB
+                float rAB = ab / xa
+                float rBC = bc / ab
+                float rCD = cd / bc
+                float rAD = ad / xa
+                // توافق كل نمط مع نطاقه (±0.02 تسامح كما في النسخة الأصلية)
+                // والثقة من توسط الانحرافات الأربعة
+                int   k = 0
+                float conf = 0
+                if rAD >= 0.76 and rAD <= 0.82 and rAB >= 0.362 and rAB <= 0.906 and rBC >= 0.362 and rBC <= 0.906 and rCD >= 1.25 and rCD <= 1.64
+                    k := 16
+                    conf := math.min(1.0, 0.55 + 0.45 * (1 - (bandDev(rAB, 0.382, 0.886) + bandDev(rBC, 0.382, 0.886) + bandDev(rCD, 1.27, 1.62) + bandDev(rAD, 0.78, 0.8)) / 4))
+                else if rAD >= 0.86 and rAD <= 0.94 and rAB >= 0.362 and rAB <= 0.906 and rBC >= 0.362 and rBC <= 0.906 and rCD >= 1.598 and rCD <= 2.638
+                    k := 17
+                    conf := math.min(1.0, 0.55 + 0.45 * (1 - (bandDev(rAB, 0.382, 0.886) + bandDev(rBC, 0.382, 0.886) + bandDev(rCD, 1.618, 2.618) + bandDev(rAD, 0.88, 0.92)) / 4))
+                else if rAD >= 1.25 and rAD <= 1.34 and rAB >= 0.362 and rAB <= 0.906 and rBC >= 0.362 and rBC <= 0.906 and rCD >= 1.598 and rCD <= 2.26
+                    k := 18
+                    conf := math.min(1.0, 0.55 + 0.45 * (1 - (bandDev(rAB, 0.382, 0.886) + bandDev(rBC, 0.382, 0.886) + bandDev(rCD, 1.618, 2.24) + bandDev(rAD, 1.27, 1.32)) / 4))
+                else if rAD >= 1.59 and rAD <= 1.67 and rAB >= 0.362 and rAB <= 0.66 and rBC >= 0.362 and rBC <= 0.906 and rCD >= 2.598 and rCD <= 3.638
+                    k := 19
+                    conf := math.min(1.0, 0.55 + 0.45 * (1 - (bandDev(rAB, 0.382, 0.886) + bandDev(rBC, 0.382, 0.886) + bandDev(rCD, 2.618, 3.618) + bandDev(rAD, 1.61, 1.65)) / 4))
+                else if rAD >= 0.766 and rAD <= 0.806 and rCD >= 0.598 and rCD <= 0.806 and rBC >= 1.11 and rBC <= 1.434
+                    k := 20
+                    conf := math.min(1.0, 0.55 + 0.45 * (1 - (bandDev(rAB, 0.382, 0.886) + bandDev(rBC, 1.13, 1.414) + bandDev(rCD, 0.618, 0.786) + bandDev(rAD, 0.786, 0.786)) / 4))
+                if k > 0
+                    m := newMatch(k, s, s + 4, conf, hiAt(s) ? 1 : -1)
+                    addLine(m, s, s + 1, 4, false, false)
+                    addLine(m, s + 1, s + 2, 4, false, false)
+                    addLine(m, s + 2, s + 3, 4, false, false)
+                    addLine(m, s + 3, s + 4, 4, false, true)
+                    addLab(m, "X", s)
+                    addLab(m, "A", s + 1)
+                    addLab(m, "B", s + 2)
+                    addLab(m, "C", s + 3)
+                    addLab(m, "D", s + 4)
+    m
+
+// ═══════════════════════════ ترقيم موجات إليوت ═══════════════════════════
+// نفس قواعد التطبيق الصارمة: دافع، قطري، تصحيح (كلاسيكي + جاري)
+labelImpulse(int s) =>
+    string res = ""
+    if s + 6 <= array.size(pIdx) and alternating(s, 6) and balancedLegs(s, 6)
+        float p0 = prAt(s)
+        float p1 = prAt(s + 1)
+        float p2 = prAt(s + 2)
+        float p3 = prAt(s + 3)
+        float p4 = prAt(s + 4)
+        float p5 = prAt(s + 5)
+        bool up = p1 > p0
+        if (up and hiAt(s)) or (not up and not hiAt(s))
+            float l1 = math.abs(p1 - p0)
+            float l3 = math.abs(p3 - p2)
+            float l5 = math.abs(p5 - p4)
+            bool ok = false
+            if up
+                ok := p2 > p0 and p4 > p1 and p3 > p1
+            else
+                ok := p2 < p0 and p4 < p1 and p3 < p1
+            if ok and l3 >= math.min(l1, l5)
+                res := "12345"
+    res
+
+labelDiagonal(int s) =>
+    string res = ""
+    if s + 6 <= array.size(pIdx) and alternating(s, 6) and balancedLegs(s, 6)
+        float p0 = prAt(s)
+        float p1 = prAt(s + 1)
+        float p2 = prAt(s + 2)
+        float p3 = prAt(s + 3)
+        float p4 = prAt(s + 4)
+        float p5 = prAt(s + 5)
+        bool up = p1 > p0
+        if (up and hiAt(s)) or (not up and not hiAt(s))
+            float l1 = math.abs(p1 - p0)
+            float l3 = math.abs(p3 - p2)
+            float l5 = math.abs(p5 - p4)
+            bool ok = false
+            if up
+                ok := p2 > p0 and p3 > p1 and p4 < p1 and p4 > p2 and p5 > p3 and (p3 - p4) < (p1 - p2)
+            else
+                ok := p2 < p0 and p3 < p1 and p4 > p1 and p4 < p2 and p5 < p3 and (p4 - p3) < (p2 - p1)
+            if ok and l3 >= math.min(l1, l5)
+                res := "12345"
+    res
+
+labelCorrection(int s) =>
+    string res = ""
+    if s + 4 <= array.size(pIdx) and alternating(s, 4)
+        float a0 = prAt(s)
+        float a1 = prAt(s + 1)
+        float a2 = prAt(s + 2)
+        float a3 = prAt(s + 3)
+        bool  down = hiAt(s)
+        float lA = math.abs(a1 - a0)
+        float lB = math.abs(a2 - a1)
+        float lC = math.abs(a3 - a2)
+        if lA > 0 and lB / lA >= 0.1 and lB / lA < 1
+            bool ok = down ? a3 < a1 : a3 > a1
+            if not ok and lB > 0 and lC / lB >= 0.1
+                ok := down ? a3 < a2 : a3 > a2
+            if ok
+                res := "ABC"
+    res
+
+// ═══════════════════════════ الماسح ═══════════════════════════
+overlap(int s1, int e1, int s2, int e2) => (s1 <= e2 and e1 >= s2)
+
+// يُفحص آخر 100 محور فقط في كل شمعة: كلفة ثابتة مهما طال التاريخ
+found = array.new<Match>(0)
+if array.size(pIdx) > 2
+    int scanFrom = math.max(0, array.size(pIdx) - 100)
+    for i = scanFrom to array.size(pIdx) - 1
+        Match cand = blankMatch()
+        Match h  = matchHarmonic(i)
+        Match hs = matchHS(i)
+        Match db = matchDouble(i)
+        Match ae = matchAdamEve(i)
+        Match cp = matchCup(i)
+        Match co = matchConsolidation(i)
+        // الأفضل ثقة أولاً، ثم الأكثر شرحاً للمحاور
+        float best = -1.0
+        if h.valid
+            best := h.conf + 0.02 * (h.e - h.s)
+            cand := h
+        if hs.valid and hs.conf + 0.02 * (hs.e - hs.s) > best
+            best := hs.conf + 0.02 * (hs.e - hs.s)
+            cand := hs
+        if db.valid and db.conf + 0.02 * (db.e - db.s) > best
+            best := db.conf + 0.02 * (db.e - db.s)
+            cand := db
+        if ae.valid and ae.conf + 0.02 * (ae.e - ae.s) > best
+            best := ae.conf + 0.02 * (ae.e - ae.s)
+            cand := ae
+        if cp.valid and cp.conf + 0.02 * (cp.e - cp.s) > best
+            best := cp.conf + 0.02 * (cp.e - cp.s)
+            cand := cp
+        if co.valid and co.conf + 0.02 * (co.e - co.s) > best
+            best := co.conf + 0.02 * (co.e - co.s)
+            cand := co
+        if cand.valid and cand.conf >= i_minConf
+            bool clash = false
+            if array.size(found) > 0
+                for j = 0 to array.size(found) - 1
+                    Match f = array.get(found, j)
+                    if overlap(f.s, f.e, cand.s, cand.e) and f.kind == cand.kind and math.abs(f.s - cand.s) <= 1
+                        clash := true
+            if not clash and array.size(found) < i_maxPat
+                array.push(found, cand)
+
+// ═══════════════════════════ الرسم ═══════════════════════════
+// الرسم على آخر شمعة فقط: الكائنات تبقى على الشارت ولا حاجة لإعادة إنشائها
+// في كل شمعة (توفير لحدود وقت التشغيل)
+if barstate.islast and array.size(pIdx) > 0
+    // نطاق السعر المرئي لتقييد التمديد (مثل projectToEdge في التطبيق)
+    float loPx = ta.lowest(low, 500)
+    float hiPx = ta.highest(high, 500)
+    bool  hasRange = not na(loPx) and not na(hiPx) and hiPx > loPx
+    float padPx = hasRange ? (hiPx - loPx) * 0.08 : na
+    // ─── أشكال ───
+    if i_showPat and array.size(found) > 0
+        for i = 0 to array.size(found) - 1
+            Match f = array.get(found, i)
+            color col = f.dir == 1 ? i_bullCol : i_bearCol
+            for j = 0 to array.size(f.fromP) - 1
+                int   x1 = idxAt(array.get(f.fromP, j))
+                float y1 = prAt(array.get(f.fromP, j))
+                int   x2 = idxAt(array.get(f.toP, j))
+                float y2 = prAt(array.get(f.toP, j))
+                bool  ext = array.get(f.ext, j)
+                bool  dash = array.get(f.dash, j)
+                int   w = array.get(f.role, j) == 1 ? 1 : 2
+                if ext
+                    // تمديد بالميل الأصلي، مقيّد بنطاق السعر حتى لا يغوص
+                    // الخط المائل خارج الشارت (مطابق projectToEdge)
+                    int   rightEdge = bar_index + 5
+                    int   segDx = x2 - x1
+                    bool  ray = true
+                    float ye = y2
+                    int   xe = rightEdge
+                    if math.abs(segDx) > 1
+                        float s = (y2 - y1) / segDx
+                        float yp = y1 + s * (xe - x1)
+                        if hasRange
+                            float top = hiPx + padPx
+                            float bot = loPx - padPx
+                            if yp > top and s > 0
+                                ye := top
+                                xe := x1 + int((top - y1) / s)
+                                ray := false
+                            else if yp < bot and s < 0
+                                ye := bot
+                                xe := x1 + int((bot - y1) / s)
+                                ray := false
+                            else
+                                ye := yp
+                        else
+                            ye := yp
+                    else
+                        ye := y1
+                    if xe < x2
+                        xe := x2
+                        ye := y2
+                        ray := false
+                    x2 := xe
+                    y2 := ye
+                    line.new(x1, y1, x2, y2, xloc = xloc.bar_index,
+                         color = col, width = w,
+                         style = dash ? line.style_dashed : line.style_solid,
+                         extend = ray ? extend.right : extend.none)
+                else
+                    line.new(x1, y1, x2, y2, xloc = xloc.bar_index,
+                         color = col, width = w,
+                         style = dash ? line.style_dashed : line.style_solid,
+                         extend = extend.none)
+
+            // شارة اسم الشكل عند أول محور
+            int   bx = idxAt(f.s)
+            float byy = prAt(f.s)
+            label.new(bx, byy, text = kindName(f.kind, true),
+                 xloc = xloc.bar_index, yloc = yloc.price,
+                 color = color.new(col, 85), textcolor = col,
+                 style = f.dir == 1 ? label.style_label_up : label.style_label_down,
+                 size = size.small)
+
+            // تسميات الأدوار
+            for j = 0 to array.size(f.lab) - 1
+                int   lx = idxAt(array.get(f.labP, j))
+                float ly = prAt(array.get(f.labP, j))
+                label.new(lx, ly, text = array.get(f.lab, j),
+                     xloc = xloc.bar_index, yloc = yloc.price,
+                     color = color.new(color.gray, 92), textcolor = col,
+                     style = label.style_none, size = size.tiny)
+
+    // ─── ترقيم موجات إليوت ───
+    // نص ملون حسب الدرجة (أخضر=دافع صغرى، برتقالي=تصحيح)، والبديل
+    // يُكتب كاملاً "2 or B" مثل برامج التحليل الاحترافية
+    if i_showEW or i_showCorr
+        // آخر 150 محوراً: كلفة ثابتة، وتغطي كامل الشاشة عادة
+        int i = math.max(0, array.size(pIdx) - 150)
+        while i < array.size(pIdx)
+            string ew = labelImpulse(i)
+            if ew == ""
+                ew := labelDiagonal(i)
+            if ew != "" and i_showEW
+                string alt = labelCorrection(i)
+                bool showAlt = alt != "" and i_showCorr
+                int[] ps = array.new_int(0)
+                array.push(ps, i + 1)
+                array.push(ps, i + 2)
+                array.push(ps, i + 3)
+                array.push(ps, i + 4)
+                array.push(ps, i + 5)
+                for j = 0 to 4
+                    int   p = array.get(ps, j)
+                    int   x = idxAt(p)
+                    float y = prAt(p)
+                    string t = str.substring(ew, j, j + 1)
+                    if showAlt and j < 3
+                        t := t + " or " + str.substring(alt, j, j + 1)
+                    label.new(x, y, text = t,
+                         xloc = xloc.bar_index, yloc = yloc.price,
+                         color = color.new(color.white, 100),
+                         textcolor = #089981, style = label.style_none,
+                         size = size.normal)
+                i += 6
+            else
+                string cw = labelCorrection(i)
+                if cw != "" and i_showCorr
+                    int[]  ps  = array.new_int(0)
+                    array.push(ps, i + 1)
+                    array.push(ps, i + 2)
+                    array.push(ps, i + 3)
+                    for j = 0 to 2
+                        int   p = array.get(ps, j)
+                        int   x = idxAt(p)
+                        float y = prAt(p)
+                        label.new(x, y, text = str.substring(cw, j, j + 1),
+                             xloc = xloc.bar_index, yloc = yloc.price,
+                             color = color.new(color.white, 100),
+                             textcolor = #FF6D00, style = label.style_none,
+                             size = size.normal)
+                    i += 4
+                else
+                    i += 1
+
+// ═══════════════ سطر حالة التشخيص (اختياري) ═══════════════
+// يعرض عدد المحاور والحساسية وعدد ترقيمات إليوت والأشكال على آخر شمعة،
+// فيتأكد المستخدم أن المحرك يعمل بدون الحاجة لعدّ الآثار بالعين
+int nImp = 0
+int nCor = 0
+int d = math.max(0, array.size(pIdx) - 150)
+while d < array.size(pIdx)
+    string e1 = labelImpulse(d)
+    if e1 == ""
+        e1 := labelDiagonal(d)
+    if e1 == ""
+        if labelCorrection(d) == ""
+            d += 1
+        else
+            nCor += 1
+            d += 4
+    else
+        nImp += 1
+        d += 6
+
+if i_debug
+    var table dbg = table.new(position.top_left, 2, 5,
+         bgcolor = color.new(color.black, 15), frame_color = color.gray,
+         frame_width = 1)
+    table.cell(dbg, 0, 0, "مركاز v2.4", text_color = color.white, text_size = size.small)
+    table.cell(dbg, 1, 0, str.tostring(array.size(pIdx)) + " محور", text_color = color.white, text_size = size.small)
+    table.cell(dbg, 0, 1, "الحساسية", text_color = color.gray, text_size = size.small)
+    table.cell(dbg, 1, 1, str.tostring(dev, "#.##") + "%", text_color = color.white, text_size = size.small)
+    table.cell(dbg, 0, 2, "موجات دافعة", text_color = color.gray, text_size = size.small)
+    table.cell(dbg, 1, 2, str.tostring(nImp), text_color = #089981, text_size = size.small)
+    table.cell(dbg, 0, 3, "تصحيحات ABC", text_color = color.gray, text_size = size.small)
+    table.cell(dbg, 1, 3, str.tostring(nCor), text_color = #FF6D00, text_size = size.small)
+    table.cell(dbg, 0, 4, "أشكال", text_color = color.gray, text_size = size.small)
+    table.cell(dbg, 1, 4, str.tostring(array.size(found)), text_color = color.white, text_size = size.small)

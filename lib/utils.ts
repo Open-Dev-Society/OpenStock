@@ -236,6 +236,9 @@ export function formatSymbolForTradingView(symbol: string): string {
     if (!symbol) return '';
     const upperSymbol = symbol.toUpperCase();
 
+    // Bare 4-digit codes are Tadawul convention (main market + Nomu).
+    if (/^\d{4}$/.test(upperSymbol)) return `TADAWUL:${upperSymbol}`;
+
     // Check for known exchange suffixes, trying longer suffixes first
     // to avoid ".TWO" matching ".TW" prematurely
     const suffixes = Object.keys(FINNHUB_TO_TRADINGVIEW_EXCHANGE)

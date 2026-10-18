@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildYahooUrl, dailyQuoteFromCandles, isCandleRangeId, isTadawulSymbol, normalizeYahooSymbol, parseYahooChart, resampleDaily, resampleMonthly, resampleWeekly, riyadhDay, sessionMove, validCandles } from '@/lib/yahoo';
+import { buildYahooUrl, dailyQuoteFromCandles, isCandleRangeId, isTadawulSymbol, mergeProxyHistory, normalizeYahooSymbol, parseYahooChart, resampleDaily, resampleMonthly, resampleWeekly, riyadhDay, sessionMove, validCandles } from '@/lib/yahoo';
 import { TADAWUL_COMPANIES, TADAWUL_COUNT, TADAWUL_MAIN_COMPANIES, TADAWUL_MAIN_COUNT, isNomuSymbol } from '@/lib/tadawul-companies';
 import { matchTadawulCompanies, tadawulDisplayName } from '@/lib/tadawul-search';
 
@@ -67,13 +67,22 @@ describe('normalizeYahooSymbol', () => {
         expect(normalizeYahooSymbol('TASI')).toBe('^TASI.SR');
     });
 
+    it('accepts bare 4-digit Tadawul codes (watchlist links)', () => {
+        expect(normalizeYahooSymbol('2222')).toBe('2222.SR');
+        expect(normalizeYahooSymbol(' 1120 ')).toBe('1120.SR');
+        expect(normalizeYahooSymbol('9544')).toBe('9544.SR');
+    });
+
     it('rejects non-Saudi symbols', () => {
         expect(normalizeYahooSymbol('AAPL')).toBeNull();
         expect(normalizeYahooSymbol('')).toBeNull();
+        expect(normalizeYahooSymbol('222')).toBeNull();
+        expect(normalizeYahooSymbol('22222')).toBeNull();
     });
 
     it('isTadawulSymbol matches', () => {
         expect(isTadawulSymbol('2222.SR')).toBe(true);
+        expect(isTadawulSymbol('2222')).toBe(true);
         expect(isTadawulSymbol('AAPL')).toBe(false);
     });
 });
@@ -231,5 +240,37 @@ describe('isCandleRangeId', () => {
         expect(isCandleRangeId('1m')).toBe(true);
         expect(isCandleRangeId('XX')).toBe(false);
         expect(isCandleRangeId(undefined)).toBe(false);
+    });
+});
+
+describe('mergeProxyHistory', () => {
+    const day = (d: string, o: number, h: number, l: number, c: number) => ({ time: d, open: o, high: h, low: l, close: c, volume: 100 });
+    // 30 overlapping days at ratio exactly 100, then 10 older proxy-only days
+    const real = Array.from({ length: 30 }, (_, i) => day(`2025-01-${String(i + 1).padStart(2, '0')}`, 1000 + i, 1010 + i, 990 + i, 1005 + i));
+    const proxyOld = Array.from({ length: 10 }, (_, i) => day(`2024-12-${String(i + 1).padStart(2, '0')}`, 9 + i * 0.1, 9.2 + i * 0.1, 8.8 + i * 0.1, 9.05 + i * 0.1));
+    const proxyOverlap = real.map((c) => day(c.time as string, c.open / 100, c.high / 100, c.low / 100, c.close / 100));
+
+    it('prepends scaled older bars and flags the seam', async () => {
+        const merged = mergeProxyHistory(real, [...proxyOld, ...proxyOverlap]);
+        expect(merged.length).toBe(40);
+        expect(merged[0].time).toBe('2024-12-01');
+        expect((merged[0] as { estimated?: true }).estimated).toBe(true);
+        expect((merged[10] as { estimated?: true }).estimated).toBeUndefined();
+        expect(merged[10].close).toBe(real[0].close);
+        expect(merged.estimatedFrom).toBe('2024-12-01');
+        // scaled by the overlap ratio (~100)
+        expect(merged[0].close).toBeCloseTo(905, 0);
+    });
+
+    it('returns real untouched when overlap is too thin to calibrate', async () => {
+        const thin = mergeProxyHistory(real.slice(0, 5), [...proxyOld, ...proxyOverlap.slice(0, 5)]);
+        expect(thin.length).toBe(5);
+        expect((thin as { estimatedFrom?: string }).estimatedFrom).toBeUndefined();
+    });
+
+    it('returns real untouched when the proxy adds nothing older', async () => {
+        const same = mergeProxyHistory(real, proxyOverlap);
+        expect(same.length).toBe(real.length);
+        expect((same as { estimatedFrom?: string }).estimatedFrom).toBeUndefined();
     });
 });

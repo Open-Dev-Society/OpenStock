@@ -19,9 +19,10 @@ export const TWELVE_RANGE_MAP: Partial<Record<CandleRangeId, { interval: string;
 };
 
 // "2222.SR" or "TADAWUL:2222" -> "2222". Anything else -> null.
+// Bare 4-digit codes are Tadawul convention (see normalizeYahooSymbol).
 export function twelveSymbol(symbol: string): string | null {
     const upper = (symbol || '').trim().toUpperCase();
-    const m = upper.match(/^(\d+)\.SR$/) || upper.match(/^TADAWUL:(\d+)$/);
+    const m = upper.match(/^(\d+)\.SR$/) || upper.match(/^TADAWUL:(\d+)$/) || upper.match(/^(\d{4})$/);
     return m ? m[1] : null;
 }
 

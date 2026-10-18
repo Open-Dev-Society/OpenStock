@@ -26,9 +26,13 @@ export type OhlcCandle = {
 };
 
 // "2222.SR" or "TADAWUL:2222" -> "2222.SR". TASI index -> "^TASI.SR". Anything else -> null.
+// Bare 4-digit codes ("2222") are Tadawul convention (main market + Nomu) —
+// this is also how watchlist rows link out — so they normalize too. Foreign
+// bare-numeric tickers are vanishingly rare and this app is Saudi-first.
 export function normalizeYahooSymbol(symbol: string): string | null {
     const upper = (symbol || '').trim().toUpperCase();
     if (/^\d+\.SR$/.test(upper)) return upper;
+    if (/^\d{4}$/.test(upper)) return `${upper}.SR`;
     if (upper === 'TADAWUL:TASI' || upper === 'TASI' || upper === '^TASI.SR') return '^TASI.SR';
     if (upper.startsWith('TADAWUL:')) {
         const ticker = upper.slice('TADAWUL:'.length);
@@ -188,4 +192,38 @@ export function parseYahooChart(json: unknown, intraday = false): { candles: Ohl
         currency: result.meta?.currency || 'SAR',
         name: result.meta?.shortName || result.meta?.longName || '',
     };
+}
+
+export type IndexCandles = Array<OhlcCandle & { estimated?: true }> & { estimatedFrom?: string };
+
+// Pure merge step for index backfill: scale older proxy bars by the
+// real/proxy close ratio over the overlap and prepend them, flagged.
+// Kept here (not in the actions file) because Server Actions modules may
+// only export async functions.
+export function mergeProxyHistory(real: OhlcCandle[], proxy: OhlcCandle[]): IndexCandles {
+    const realByTime = new Map(real.map((c) => [c.time, c]));
+    const ratios: number[] = [];
+    for (const p of proxy) {
+        const r = realByTime.get(p.time);
+        if (r && p.close > 0) ratios.push(r.close / p.close);
+    }
+    if (ratios.length < 20) return real;
+    const mean = ratios.reduce((a, b) => a + b, 0) / ratios.length;
+    if (!(mean > 0)) return real;
+    const firstReal = real.length > 0 ? String(real[0].time) : null;
+    const backfill = proxy
+        .filter((p) => firstReal === null || String(p.time) < firstReal)
+        .map((p) => ({
+            time: p.time,
+            open: p.open * mean,
+            high: p.high * mean,
+            low: p.low * mean,
+            close: p.close * mean,
+            volume: p.volume,
+            estimated: true as const,
+        }));
+    if (backfill.length === 0) return real;
+    const merged: IndexCandles = [...backfill, ...real];
+    merged.estimatedFrom = String(backfill[0].time);
+    return merged;
 }

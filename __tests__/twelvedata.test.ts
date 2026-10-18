@@ -12,6 +12,7 @@ describe('twelveSymbol', () => {
     it('maps app symbols to bare Twelve numbers', () => {
         expect(twelveSymbol('2222.SR')).toBe('2222');
         expect(twelveSymbol('TADAWUL:1120')).toBe('1120');
+        expect(twelveSymbol('2222')).toBe('2222');
     });
 
     it('rejects non-Tadawul symbols', () => {

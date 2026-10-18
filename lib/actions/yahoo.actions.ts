@@ -3,6 +3,9 @@
 import {
     CandleRangeId,
     CANDLE_RANGES,
+    IndexCandles,
+    OhlcCandle,
+    mergeProxyHistory,
     YahooDailyQuote,
     buildYahooUrl,
     dailyQuoteFromCandles,
@@ -21,7 +24,8 @@ export async function getTadawulCandles(symbol: string, rangeId: CandleRangeId =
     if (!yahooSymbol) return null;
     // Index history (year-ranges return one point; max/monthly has a 2023-2026
     // gap), so rebuild D/W/M bars from 2 years of hourly candles instead.
-    const resample = yahooSymbol.startsWith('^') && (rangeId === 'D' || rangeId === 'W' || rangeId === 'M');
+    const isIndex = yahooSymbol.startsWith('^');
+    const resample = isIndex && (rangeId === 'D' || rangeId === 'W' || rangeId === 'M');
     const fetchRange: CandleRangeId = resample ? '1H' : rangeId;
     const intraday = CANDLE_RANGES[fetchRange]?.intraday ?? false;
     try {
@@ -35,8 +39,7 @@ export async function getTadawulCandles(symbol: string, rangeId: CandleRangeId =
         }
         const parsed = parseYahooChart(await res.json(), intraday);
         if (!parsed) return null;
-        // Hourly bars come back with unix times; resample down to the requested frame.
-        const candles = !resample
+        let candles: OhlcCandle[] = !resample
             ? parsed.candles
             : rangeId === 'D'
                 ? resampleDaily(parsed.candles)
@@ -44,10 +47,55 @@ export async function getTadawulCandles(symbol: string, rangeId: CandleRangeId =
                     ? resampleWeekly(parsed.candles)
                     : resampleMonthly(parsed.candles);
         if (candles.length === 0) return null;
-        return { candles, currency: parsed.currency, name: parsed.name };
+        // Hourly history caps at 2 years, so index D/W/M charts start in Oct
+        // 2024. Backfill the earlier part from a Saudi-market tracker fund
+        // scaled into index points (see backfillIndexHistory) so the chart and
+        // the Elliott/pattern work cover the same window users see elsewhere.
+        let estimatedFrom: string | undefined;
+        if (isIndex) {
+            const filled = await backfillIndexHistory(candles, rangeId);
+            estimatedFrom = filled.estimatedFrom;
+            candles = filled;
+        }
+        return { candles, currency: parsed.currency, name: parsed.name, estimatedFrom };
     } catch (e) {
         console.error('Yahoo chart error', yahooSymbol, e);
         return null;
+    }
+}
+
+// TASI index daily bars before the hourly window, reconstructed from a Saudi
+// equity tracker (KSA on Yahoo: daily history reaches far past the index's own
+// hourly cap). KSA is a USD fund, so its closes are scaled by the ratio between
+// real index closes and fund closes over the period where both exist — measured
+// at ~1% coefficient of variation, with ~1% drift across the overlap, which is
+// immaterial for swing/pivot analysis but is NOT an official index close.
+// Bars are flagged so the chart can say so instead of passing them off as data.
+const INDEX_PROXY_SYMBOL = 'KSA';
+
+async function backfillIndexHistory(real: OhlcCandle[], frame: CandleRangeId): Promise<IndexCandles> {
+    try {
+        // Always a long daily window: the point is history the index itself
+        // cannot serve (CANDLE_RANGES['D'] is only 1y — too short to reach
+        // behind the hourly cap, which silently produced an empty backfill).
+        const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${INDEX_PROXY_SYMBOL}?interval=1d&range=5y`, {
+            headers: { 'User-Agent': 'Mozilla/5.0' },
+            next: { revalidate: 900 },
+        });
+        if (!res.ok) return real;
+        const proxied = parseYahooChart(await res.json(), false);
+        if (!proxied || proxied.candles.length === 0) return real;
+        // Resample the proxy into the frame the caller asked for, so the
+        // backfilled bars line up with the real ones bar-for-bar.
+        const proxy = frame === 'D'
+            ? proxied.candles
+            : frame === 'W'
+                ? resampleWeekly(proxied.candles)
+                : resampleMonthly(proxied.candles);
+        return mergeProxyHistory(real, proxy);
+    } catch (e) {
+        console.error('Index backfill failed', e);
+        return real;
     }
 }
 

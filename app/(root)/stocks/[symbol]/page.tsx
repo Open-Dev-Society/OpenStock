@@ -16,6 +16,8 @@ import { isCandleRangeId, isTadawulSymbol } from '@/lib/yahoo';
 import TadawulChart from "@/components/stocks/TadawulChart";
 import SaudiSymbolInfo from "@/components/SaudiSymbolInfo";
 import SaudiTerminalWatchlist from "@/components/SaudiTerminal";
+import StockInfoDock from "@/components/stocks/StockInfoDock";
+import { InfoSection, NewsSection } from "@/components/stocks/StockInfoSections";
 import { getLang } from "@/lib/i18n-server";
 import { tx } from "@/lib/i18n";
 
@@ -53,6 +55,21 @@ export default async function StockDetails({ params, searchParams }: StockDetail
                     {tadawul ? (
                         <Panel title={tx(lang, 'stock.chart')} sub={tx(lang, 'stock.chartTadawul')}>
                             <TadawulChart symbol={symbol} tvUrl={tradingViewSymbolUrl(tvSymbol)} lang={lang} initialRange={initialRange} />
+                            {/* Both panels render here on the server; the dock only
+                                switches between them, so no Server Action is ever
+                                called from a Client Component. */}
+                            <StockInfoDock
+                                info={
+                                    <Suspense fallback={null}>
+                                        <InfoSection symbol={symbol} />
+                                    </Suspense>
+                                }
+                                news={
+                                    <Suspense fallback={null}>
+                                        <NewsSection symbol={symbol} />
+                                    </Suspense>
+                                }
+                            />
                         </Panel>
                     ) : isChartEmbeddable(tvSymbol) ? (
                         <Panel title={tx(lang, 'stock.chart')} sub={tx(lang, 'stock.chartLive')}>
