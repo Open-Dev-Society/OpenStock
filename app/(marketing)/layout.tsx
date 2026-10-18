@@ -9,6 +9,8 @@ import UpdateBanner from "@/components/UpdateBanner";
 import { DISCORD_URL, REPO_URL } from "@/lib/constants";
 
 const FOOTER_LINKS = [
+    { href: '/s', label: 'Stocks' },
+    { href: '/compare', label: 'Guides' },
     { href: '/about', label: 'About' },
     { href: '/help', label: 'Help' },
     { href: '/api-docs', label: 'Architecture' },

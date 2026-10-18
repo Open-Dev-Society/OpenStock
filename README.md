@@ -222,7 +222,7 @@ Import the repository, set the variables above for Production, and connect Innge
 
 ```
 app/
-  (marketing)/    public pages: landing, about, help, api-docs, sponsor, love, changelog, terms
+  (marketing)/    public pages: landing, about, help, api-docs, sponsor, love, changelog, terms, /s/[ticker], /compare
   (auth)/         sign-in, sign-up, forgot-password, reset-password
   (root)/         the signed-in app: dashboard, watchlist, stocks/[symbol], profile
   api/            auth/[...all] (Better Auth), inngest (background jobs), quotes (live prices)
@@ -236,7 +236,7 @@ lib/
   markets.ts      the dashboard's markets            market-data.ts   cached vs realtime
   changelog.ts    releases and contributor credits   sponsors.ts      sponsors and tiers
   rate-limit.ts   MongoDB-backed limits for auth and live quotes
-middleware.ts     sends signed-out visitors from app pages to sign-in
+middleware.ts     public marketing, /s and /compare pages; app pages redirect to sign-in
 scripts/          check-env.mjs, test-db.mjs, and one-off maintenance scripts
 __tests__/        Vitest tests
 ```
