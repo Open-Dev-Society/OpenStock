@@ -5,6 +5,7 @@ import { tadawulDisplayName } from '@/lib/tadawul-search';
 import { parseYahooChart, type OhlcCandle } from '@/lib/yahoo';
 import { rsi } from '@/lib/indicators';
 import { rsiBurst, rsiMomentum, scoreSetup, type SetupScore } from '@/lib/setup-scan';
+import { revalidateTag } from 'next/cache';
 
 export type ScanRow = {
     symbol: string;
@@ -15,6 +16,13 @@ export type ScanRow = {
 type ScannedSymbol = { symbol: string; name: string; candles: OhlcCandle[] };
 
 const CONCURRENCY = 12;
+
+// Cache tag for the hourly Yahoo snapshot the scan reads. The Refresh button
+// drops this tag, so a manual refresh really re-pulls the daily closes
+// instead of replaying the same hour-old cache entry.
+// (This file is 'use server', so only async functions may be exported — the
+// tag itself lives in a plain module below.)
+const SCREENER_CACHE_TAG = 'screener-scan';
 
 // One shared pass over the main market only (Nomu excluded). Heavy cold
 // (~30s for ~284 symbols with 12 workers), then shared from the 1-hour data cache.
@@ -31,7 +39,9 @@ async function fetchAllDaily(): Promise<ScannedSymbol[]> {
                     {
                         headers: { 'User-Agent': 'Mozilla/5.0' },
                         signal: AbortSignal.timeout(12_000),
-                        next: { revalidate: 3600 },
+                        // Tagged so the Refresh button can drop the hour-old
+                        // snapshot and pull fresh closes on demand.
+                        next: { revalidate: 3600, tags: [SCREENER_CACHE_TAG] },
                     },
                 );
                 if (!res.ok) continue;
@@ -142,4 +152,11 @@ export async function scanRsiBurst(top = 25, minJump = 6, maxRsi = 50): Promise<
     }
     results.sort((a, b) => (b.setup.rsiChange ?? 0) - (a.setup.rsiChange ?? 0));
     return { rows: results.slice(0, top), scanned: TADAWUL_MAIN_COMPANIES.length };
+}
+
+// Manual refresh: drop the hour-old Yahoo snapshot so the next render pulls
+// fresh daily closes. Without this, router.refresh() replays the same cached
+// rows and the button looks dead.
+export async function refreshScreenerCache(): Promise<void> {
+    revalidateTag(SCREENER_CACHE_TAG);
 }
