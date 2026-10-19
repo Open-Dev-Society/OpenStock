@@ -19,6 +19,11 @@ COPY . .
 
 # The build needs no secrets or database: pass every variable at runtime (FINNHUB_API_KEY, not NEXT_PUBLIC_*,
 # which Next.js freezes at build time and would record in the image layers).
+# The one setting the browser needs at build time, and not a secret: "cached" (hourly quotes, the default) or
+# "realtime" (every 15 seconds, with price alerts). docker compose passes it from .env.
+ARG NEXT_PUBLIC_OPENSTOCK_DATA_MODE=cached
+ENV NEXT_PUBLIC_OPENSTOCK_DATA_MODE=$NEXT_PUBLIC_OPENSTOCK_DATA_MODE
+
 # Build the Next.js application
 RUN npm run build
 # Or if using pnpm:

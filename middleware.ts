@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionCookie } from "better-auth/cookies";
-
-const PUBLIC_PATHS = new Set(['/', '/about', '/help', '/terms', '/api-docs', '/sponsor', '/love', '/changelog']);
+import { getSessionCookie } from 'better-auth/cookies';
+import { isPublicPath } from '@/lib/public-paths';
 
 export async function middleware(request: NextRequest) {
-    // The marketing site is public
-    if (PUBLIC_PATHS.has(request.nextUrl.pathname)) return NextResponse.next();
+    // Marketing, public ticker and comparison pages, robots.txt and sitemap.xml.
+    // The signed-in app (/stocks, /dashboard, /watchlist, /profile) still requires a session cookie.
+    if (isPublicPath(request.nextUrl.pathname)) return NextResponse.next();
 
     const sessionCookie = getSessionCookie(request);
 
@@ -19,6 +19,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
-        '/((?!api|_next/static|_next/image|favicon.ico|sign-in|sign-up|forgot-password|reset-password|assets).*)',
+        // robots.txt and sitemap.xml are excluded so a crawler is never sent to sign-in,
+        // even if the public-path list above is edited later.
+        '/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|sign-in|sign-up|forgot-password|reset-password|assets).*)',
     ],
 };

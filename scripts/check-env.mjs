@@ -9,6 +9,8 @@
  * along with guidance on how to fix common issues.
  */
 
+import 'dotenv/config';
+
 // =============================================
 // VARIABLE CATEGORIES
 // =============================================
@@ -18,9 +20,6 @@
  * These will cause the script to exit with code 1 if missing.
  */
 const requiredVars = {
-    // Core
-    'NODE_ENV': 'development, production, or test',
-
     // Database (MongoDB Atlas or local Docker)
     'MONGODB_URI': 'MongoDB connection string (Atlas: mongodb+srv://... | Docker: mongodb://root:example@mongodb:27017/openstock?authSource=admin)',
 
@@ -28,27 +27,27 @@ const requiredVars = {
     'BETTER_AUTH_SECRET': 'Secret key for Better Auth (generate with: openssl rand -hex 32)',
     'BETTER_AUTH_URL': 'Auth URL (e.g., http://localhost:3000 or https://your-domain.com)',
 
-    // Finnhub (Market data - required for stock features)
-    'NEXT_PUBLIC_FINNHUB_API_KEY': 'Finnhub API key (free tier available at finnhub.io)',
-    'FINNHUB_BASE_URL': 'Finnhub API base URL (default: https://finnhub.io/api/v1)',
-
-    // Inngest (Background jobs, cron, AI)
-    'INNGEST_SIGNING_KEY': 'Inngest signing key (required for Vercel deployment; get from Inngest dashboard)',
-    'INNGEST_EVENT_KEY': 'Inngest event key (required in production: sign-up sends the welcome-email event with it)',
-
 };
+
+// The Finnhub key can be set under any of these names (checked separately below)
+const finnhubKeyNames = ['FINNHUB_API_KEYS', 'FINNHUB_API_KEY', 'NEXT_PUBLIC_FINNHUB_API_KEY'];
 
 /**
  * OPTIONAL: Can be set but not required for basic functionality.
  * These are checked and reported but won't cause failure.
  */
 const optionalVars = {
+    // Inngest (background jobs). Optional locally with `npx inngest-cli dev`; required in production.
+    'INNGEST_SIGNING_KEY': 'Inngest signing key (production; from the Inngest dashboard)',
+    'INNGEST_EVENT_KEY': 'Inngest event key (production: sign-up sends the welcome-email event with it)',
+
     // Email (Nodemailer via Gmail). Without it the app runs; welcome and news emails are disabled.
     'NODEMAILER_EMAIL': 'Gmail address for sending emails',
     'NODEMAILER_PASSWORD': 'Gmail app password (use App Passwords if 2FA enabled; not your regular password)',
 
     // AI Providers (for Inngest workflows)
     'GEMINI_API_KEY': 'Google Gemini API key (for AI-powered welcome emails and news summaries)',
+    'GEMINI_MODEL': 'Gemini model override (default: gemini-2.5-flash-lite)',
 
     // Adanos sentiment insights (optional alternative data source)
     'ADANOS_API_KEY': 'Adanos API key for stock sentiment insights (Reddit, X.com, news, Polymarket)',
@@ -56,14 +55,20 @@ const optionalVars = {
 
     // MiniMax (optional AI provider fallback)
     'MINIMAX_API_KEY': 'MiniMax API key (used when AI_PROVIDER=minimax or as fallback)',
+    'MINIMAX_MODEL': 'MiniMax model override (default: MiniMax-M3)',
+    'MINIMAX_BASE_URL': 'MiniMax API base URL override (default: https://api.minimax.io/v1)',
+    'SIRAY_API_KEY': 'Siray.ai API key (used when AI_PROVIDER=siray or as fallback)',
 
     // Kit (ConvertKit) for email broadcasts
     'KIT_API_KEY': 'ConvertKit API key (for news summary broadcasts)',
     'KIT_API_SECRET': 'ConvertKit API secret (for news summary broadcasts)',
+    'KIT_WELCOME_FORM_ID': 'Kit form new users are subscribed to',
 
-    // Market data freshness + key pool
-    'FINNHUB_API_KEYS': 'Comma-separated Finnhub keys, rotated per request (each adds 60 req/min). Falls back to NEXT_PUBLIC_FINNHUB_API_KEY',
-    'NEXT_PUBLIC_OPENSTOCK_DATA_MODE': '"cached" (default: quotes refresh hourly, shared by everyone) or "realtime" (every 15s; OpenStock Cloud / self-hosted)',
+    // Market data freshness (fixed at build time: rebuild after changing it)
+    'NEXT_PUBLIC_OPENSTOCK_DATA_MODE': '"cached" (default: quotes refresh hourly, shared by everyone) or "realtime" (every 15s, with price alerts)',
+
+    // Docker Compose only
+    'MONGO_ROOT_PASSWORD': 'Root password for the Compose MongoDB (use the same one in MONGODB_URI)',
 
     // Social sign-in (Better Auth)
     'GOOGLE_CLIENT_ID': 'Google OAuth client ID (callback: <BETTER_AUTH_URL>/api/auth/callback/google)',
@@ -80,8 +85,7 @@ const optionalVars = {
  * Warns if these are set so you can migrate away.
  */
 const deprecatedVars = {
-    // Legacy Finnhub key (deprecated in favor of NEXT_PUBLIC_FINNHUB_API_KEY)
-    'FINNHUB_API_KEY': 'Legacy Finnhub key - use NEXT_PUBLIC_FINNHUB_API_KEY instead',
+    'FINNHUB_BASE_URL': 'Not used: OpenStock always calls https://finnhub.io/api/v1. Safe to delete.',
 };
 
 // =============================================
@@ -148,6 +152,14 @@ for (const [key, description] of Object.entries(requiredVars)) {
     }
 }
 
+// 1b. A Finnhub key under any of its names
+const finnhubKey = finnhubKeyNames.find((key) => process.env[key]?.trim());
+if (finnhubKey) {
+    state.present.push({ key: finnhubKey, description: 'Finnhub API key', value: maskValue(process.env[finnhubKey].trim()), category: 'required' });
+} else {
+    state.missing.push({ key: finnhubKeyNames.join(' or '), description: 'Finnhub API key (free at finnhub.io)', severity: 'critical', hint: 'Get a free key at finnhub.io → Dashboard → API, then set FINNHUB_API_KEY (or several, comma-separated, in FINNHUB_API_KEYS)' });
+}
+
 // 2. Check deprecated variables
 for (const [key, description] of Object.entries(deprecatedVars)) {
     const value = process.env[key];
@@ -179,13 +191,9 @@ for (const [key, description] of Object.entries(optionalVars)) {
 // Helper function to get hint for missing vars
 function getHint(key, type) {
     const hints = {
-        'NODE_ENV': 'Set to "development", "production", or "test"',
         'MONGODB_URI': 'Use Atlas URI (mongodb+srv://...) or Docker connection string',
         'BETTER_AUTH_SECRET': 'Generate with: openssl rand -hex 32',
         'BETTER_AUTH_URL': 'e.g., http://localhost:3000 or https://your-domain.com',
-        'NEXT_PUBLIC_FINNHUB_API_KEY': 'Get free key at finnhub.io → Dashboard → API',
-        'FINNHUB_BASE_URL': 'Usually default is fine: https://finnhub.io/api/v1',
-        'INNGEST_SIGNING_KEY': 'Get from Inngest dashboard → Env settings → Keys',
         'NODEMAILER_EMAIL': 'Your Gmail address',
         'NODEMAILER_PASSWORD': 'Generate Gmail App Password: myaccount.google.com → Security → App passwords',
     };

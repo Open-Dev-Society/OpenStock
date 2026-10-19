@@ -1,0 +1,69 @@
+{
+  "$schema": "https://fundingjson.org/schema/v1.1.0.json",
+  "version": "v1.1.0",
+  "entity": {
+    "type": "individual",
+    "role": "owner",
+    "name": "Ravi Pratap Singh",
+    "email": "opendevsociety@gmail.com",
+    "description": "Founder and maintainer of Open Dev Society, a community that builds free, open-source software in public, with every contributor credited.\n\nI created and maintain OpenStock, a free, AGPL-licensed alternative to paid market platforms. I review community pull requests, ship releases, run the hosted community instance and keep self-hosting free with every feature.\n\nGitHub: https://github.com/ravixalgorithm",
+    "webpageUrl": {
+      "url": "https://github.com/Open-Dev-Society/OpenStock",
+      "wellKnown": "https://github.com/Open-Dev-Society/OpenStock/blob/main/.well-known/funding-manifest-urls"
+    }
+  },
+  "projects": [
+    {
+      "guid": "openstock",
+      "name": "OpenStock",
+      "description": "OpenStock is a free, open-source alternative to expensive market platforms. People track prices, set personalised alerts, watch the whole market and dig into company insights without a paywall. It runs as a free hosted community instance (13,000+ registered users) and can be self-hosted with every feature.\n\nThe repository has 20,000+ GitHub stars and 2,500+ forks, and every merged pull request is credited on the public changelog.\n\nFunding would pay for maintainer time (reviewing community pull requests, fixing bugs, shipping releases), hosting and the database for the community instance, and properly licensed market data so the free hosted app stays sustainable.",
+      "webpageUrl": {
+        "url": "https://openstock-ods.vercel.app"
+      },
+      "repositoryUrl": {
+        "url": "https://github.com/Open-Dev-Society/OpenStock",
+        "wellKnown": "https://github.com/Open-Dev-Society/OpenStock/blob/main/.well-known/funding-manifest-urls"
+      },
+      "licenses": ["spdx:AGPL-3.0"],
+      "tags": ["finance", "data-visualization", "web-development", "education", "self-hosted", "nextjs", "typescript", "stock-market", "open-source-alternative"]
+    }
+  ],
+  "funding": {
+    "channels": [
+      {
+        "guid": "github-sponsors",
+        "type": "payment-provider",
+        "address": "https://github.com/sponsors/ravixalgorithm",
+        "description": "Recurring or one-time sponsorship through GitHub Sponsors."
+      },
+      {
+        "guid": "bank",
+        "type": "bank",
+        "description": "Bank transfer to the maintainer's Indian bank account. Details shared by email on request."
+      }
+    ],
+    "plans": [
+      {
+        "guid": "maintainer-year",
+        "status": "active",
+        "name": "OpenStock maintenance for one year",
+        "description": "Covers a year of maintainer time, hosting and database costs for the free community instance, and a commercial market-data licence so the hosted app stays free and compliant.",
+        "amount": 25000,
+        "currency": "USD",
+        "frequency": "yearly",
+        "channels": ["bank"]
+      },
+      {
+        "guid": "community-sponsor",
+        "status": "active",
+        "name": "Community sponsorship",
+        "description": "Sponsor tiers from $5 a month (Backer) to $500 a month (Partner). Details at https://openstock-ods.vercel.app/sponsor",
+        "amount": 0,
+        "currency": "USD",
+        "frequency": "monthly",
+        "channels": ["github-sponsors"]
+      }
+    ],
+    "history": []
+  }
+}

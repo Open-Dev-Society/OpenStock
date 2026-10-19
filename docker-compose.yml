@@ -2,6 +2,9 @@ services:
   openstock:
     build:
       context: .
+      args:
+        # Fixed into the app at build time; set it in .env, then rebuild
+        NEXT_PUBLIC_OPENSTOCK_DATA_MODE: ${NEXT_PUBLIC_OPENSTOCK_DATA_MODE:-cached}
     ports:
       - "3000:3000"
     env_file:
