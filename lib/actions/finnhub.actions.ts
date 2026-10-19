@@ -13,6 +13,12 @@ type FinnhubQuote = {
     dp?: number;
 };
 
+type FinnhubStockMetrics = {
+    metric?: {
+        dividendYieldIndicatedAnnual?: number | null;
+    };
+};
+
 type FinnhubCompanyProfile = {
     currency?: string;
     exchange?: string;
@@ -83,6 +89,26 @@ export async function getCompanyProfile(symbol: string) {
         return await fetchJSON<FinnhubCompanyProfile>(url, 86400);
     } catch (e) {
         console.error('Error fetching profile for', symbol, e);
+        return null;
+    }
+}
+
+export async function getStockMetrics(symbol: string): Promise<number | null> {
+    const token = process.env.FINNHUB_API_KEY || NEXT_PUBLIC_FINNHUB_API_KEY;
+    if (!token) {
+        console.error('FINNHUB API key is not configured');
+        return null;
+    }
+
+    try {
+        const url = `${FINNHUB_BASE_URL}/stock/metric?symbol=${encodeURIComponent(symbol)}&metric=all&token=${token}`;
+        const data = await fetchJSON<FinnhubStockMetrics>(url, 3600);
+        const dividendYield = data?.metric?.dividendYieldIndicatedAnnual;
+        return typeof dividendYield === 'number' && Number.isFinite(dividendYield)
+            ? dividendYield
+            : null;
+    } catch (error) {
+        console.error('Error fetching stock metrics for', symbol, error);
         return null;
     }
 }

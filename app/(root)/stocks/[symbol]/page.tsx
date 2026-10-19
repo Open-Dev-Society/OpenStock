@@ -12,6 +12,7 @@ import {
 
 import { isStockInWatchlist } from '@/lib/actions/watchlist.actions';
 import { getStockSentimentInsights } from '@/lib/actions/adanos.actions';
+import { getStockMetrics } from '@/lib/actions/finnhub.actions';
 import { formatSymbolForTradingView } from '@/lib/utils';
 import { auth } from '@/lib/better-auth/auth';
 import { headers } from 'next/headers';
@@ -20,15 +21,15 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
     const { symbol } = await params;
     const tvSymbol = formatSymbolForTradingView(symbol);
     const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
-    const dividendYield: number | null = 2.45; // TODO: replace with real Finnhub data
 
     const session = await auth.api.getSession({
         headers: await headers()
     });
     const userId = session?.user?.id;
-    const [isInWatchlist, sentimentInsights] = await Promise.all([
+    const [isInWatchlist, sentimentInsights, dividendYield] = await Promise.all([
         userId ? isStockInWatchlist(userId, symbol) : Promise.resolve(false),
         getStockSentimentInsights(symbol),
+        getStockMetrics(symbol),
     ]);
 
     return (
