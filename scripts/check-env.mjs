@@ -3,122 +3,273 @@
 /**
  * Environment Variables Checker
  * Run: node scripts/check-env.mjs
+ *
+ * Checks your .env file against the requirements for OpenStock.
+ * Provides detailed feedback on missing, present, and deprecated variables,
+ * along with guidance on how to fix common issues.
  */
 
+import 'dotenv/config';
+
+// =============================================
+// VARIABLE CATEGORIES
+// =============================================
+
+/**
+ * REQUIRED: Must be set for the app to function.
+ * These will cause the script to exit with code 1 if missing.
+ */
 const requiredVars = {
-    // Core
-    'NODE_ENV': 'development or production',
-    
-    // Database
-    'MONGODB_URI': 'MongoDB connection string',
-    
+    // Database (MongoDB Atlas or local Docker)
+    'MONGODB_URI': 'MongoDB connection string (Atlas: mongodb+srv://... | Docker: mongodb://root:example@mongodb:27017/openstock?authSource=admin)',
+
     // Better Auth
-    'BETTER_AUTH_SECRET': 'Secret key for Better Auth',
-    'BETTER_AUTH_URL': 'Auth URL (e.g., http://localhost:3000)',
-    
-    // Finnhub
-    'NEXT_PUBLIC_FINNHUB_API_KEY': 'Finnhub API key (public)',
-    'FINNHUB_BASE_URL': 'Finnhub API base URL',
-    
-    // Inngest
-    'GEMINI_API_KEY': 'Google Gemini API key',
-    'INNGEST_SIGNING_KEY': 'Inngest signing key (for Vercel)',
-    
-    // Email
-    'NODEMAILER_EMAIL': 'Gmail address for sending emails',
-    'NODEMAILER_PASSWORD': 'Gmail app password (not regular password)',
+    'BETTER_AUTH_SECRET': 'Secret key for Better Auth (generate with: openssl rand -hex 32)',
+    'BETTER_AUTH_URL': 'Auth URL (e.g., http://localhost:3000 or https://your-domain.com)',
+
 };
 
-const deprecatedVars = {
-    'FINNHUB_API_KEY': 'Legacy Finnhub key (deprecated, use NEXT_PUBLIC_FINNHUB_API_KEY)',
-};
+// The Finnhub key can be set under any of these names (checked separately below)
+const finnhubKeyNames = ['FINNHUB_API_KEYS', 'FINNHUB_API_KEY', 'NEXT_PUBLIC_FINNHUB_API_KEY'];
 
+/**
+ * OPTIONAL: Can be set but not required for basic functionality.
+ * These are checked and reported but won't cause failure.
+ */
 const optionalVars = {
-    'ADANOS_API_KEY': 'Optional Adanos API key for stock sentiment insights',
-    'ADANOS_API_BASE_URL': 'Optional Adanos API base URL override',
+    // Inngest (background jobs). Optional locally with `npx inngest-cli dev`; required in production.
+    'INNGEST_SIGNING_KEY': 'Inngest signing key (production; from the Inngest dashboard)',
+    'INNGEST_EVENT_KEY': 'Inngest event key (production: sign-up sends the welcome-email event with it)',
+
+    // Email (Nodemailer via Gmail). Without it the app runs; welcome and news emails are disabled.
+    'NODEMAILER_EMAIL': 'Gmail address for sending emails',
+    'NODEMAILER_PASSWORD': 'Gmail app password (use App Passwords if 2FA enabled; not your regular password)',
+
+    // AI Providers (for Inngest workflows)
+    'GEMINI_API_KEY': 'Google Gemini API key (for AI-powered welcome emails and news summaries)',
+    'GEMINI_MODEL': 'Gemini model override (default: gemini-2.5-flash-lite)',
+
+    // Adanos sentiment insights (optional alternative data source)
+    'ADANOS_API_KEY': 'Adanos API key for stock sentiment insights (Reddit, X.com, news, Polymarket)',
+    'ADANOS_API_BASE_URL': 'Adanos API base URL override (default: https://api.adanos.org)',
+
+    // MiniMax (optional AI provider fallback)
+    'MINIMAX_API_KEY': 'MiniMax API key (used when AI_PROVIDER=minimax or as fallback)',
+    'MINIMAX_MODEL': 'MiniMax model override (default: MiniMax-M3)',
+    'MINIMAX_BASE_URL': 'MiniMax API base URL override (default: https://api.minimax.io/v1)',
+    'SIRAY_API_KEY': 'Siray.ai API key (used when AI_PROVIDER=siray or as fallback)',
+
+    // Kit (ConvertKit) for email broadcasts
+    'KIT_API_KEY': 'ConvertKit API key (for news summary broadcasts)',
+    'KIT_API_SECRET': 'ConvertKit API secret (for news summary broadcasts)',
+    'KIT_WELCOME_FORM_ID': 'Kit form new users are subscribed to',
+
+    // Market data freshness (fixed at build time: rebuild after changing it)
+    'NEXT_PUBLIC_OPENSTOCK_DATA_MODE': '"cached" (default: quotes refresh hourly, shared by everyone) or "realtime" (every 15s, with price alerts)',
+
+    // Docker Compose only
+    'MONGO_ROOT_PASSWORD': 'Root password for the Compose MongoDB (use the same one in MONGODB_URI)',
+
+    // Social sign-in (Better Auth)
+    'GOOGLE_CLIENT_ID': 'Google OAuth client ID (callback: <BETTER_AUTH_URL>/api/auth/callback/google)',
+    'GOOGLE_CLIENT_SECRET': 'Google OAuth client secret',
+    'GITHUB_CLIENT_ID': 'GitHub OAuth app client ID (callback: <BETTER_AUTH_URL>/api/auth/callback/github)',
+    'GITHUB_CLIENT_SECRET': 'GitHub OAuth app client secret',
+
+    // AI Provider selection (defaults to "gemini")
+    'AI_PROVIDER': 'AI provider: "gemini" | "minimax" | "siray" (default: "gemini")',
 };
+
+/**
+ * DEPRECATED: Still supported but prefer the new name.
+ * Warns if these are set so you can migrate away.
+ */
+const deprecatedVars = {
+    'FINNHUB_BASE_URL': 'Not used: OpenStock always calls https://finnhub.io/api/v1. Safe to delete.',
+};
+
+// =============================================
+// STATE TRACKING
+// =============================================
+
+const state = {
+    present: [],
+    missing: [],
+    warnings: [],
+    optionalPresent: [],
+};
+
+// Helper to classify a variable
+function classifyVar(key) {
+    if (requiredVars[key] !== undefined) return 'required';
+    if (optionalVars[key] !== undefined) return 'optional';
+    if (deprecatedVars[key] !== undefined) return 'deprecated';
+    return 'unknown';
+}
+
+// =============================================
+// MASKING HELPER
+// =============================================
+
+/**
+ * Masks sensitive values for display.
+ * Shows first 4 chars and last 4 chars, with *** in middle.
+ * For very short values, shows *** entirely.
+ */
+function maskValue(value) {
+    if (value.length <= 4) {
+        return '****';
+    }
+    return value.substring(0, 4) + '***' + value.substring(value.length - 4);
+}
+
+// =============================================
+// CHECK ALL VARIABLES
+// =============================================
 
 console.log('🔍 Checking Environment Variables...\n');
-console.log('='.repeat(60));
+console.log('='.repeat(70));
 
-let missing = [];
-let present = [];
-let warnings = [];
-
-// Check required variables
+// 1. Check required variables
 for (const [key, description] of Object.entries(requiredVars)) {
     const value = process.env[key];
-    if (!value || value.trim() === '') {
-        missing.push({ key, description });
+    const trimmed = value ? value.trim() : '';
+
+    if (!trimmed) {
+        state.missing.push({
+            key,
+            description,
+            severity: 'critical',
+            hint: getHint(key, 'required'),
+        });
     } else {
-        present.push({ key, description, value: maskValue(value) });
+        state.present.push({
+            key,
+            description,
+            value: maskValue(trimmed),
+            category: 'required',
+        });
     }
 }
 
-// Check deprecated variables
+// 1b. A Finnhub key under any of its names
+const finnhubKey = finnhubKeyNames.find((key) => process.env[key]?.trim());
+if (finnhubKey) {
+    state.present.push({ key: finnhubKey, description: 'Finnhub API key', value: maskValue(process.env[finnhubKey].trim()), category: 'required' });
+} else {
+    state.missing.push({ key: finnhubKeyNames.join(' or '), description: 'Finnhub API key (free at finnhub.io)', severity: 'critical', hint: 'Get a free key at finnhub.io → Dashboard → API, then set FINNHUB_API_KEY (or several, comma-separated, in FINNHUB_API_KEYS)' });
+}
+
+// 2. Check deprecated variables
 for (const [key, description] of Object.entries(deprecatedVars)) {
     const value = process.env[key];
-    if (value) {
-        warnings.push({ key, description, message: 'This variable is deprecated' });
+    if (value && value.trim()) {
+        state.warnings.push({
+            key,
+            description,
+            message: 'This variable is deprecated. Please use the recommended alternative.',
+        });
     }
 }
 
-// Check optional variables
+// 3. Check optional variables
 for (const [key, description] of Object.entries(optionalVars)) {
     const value = process.env[key];
-    if (value) {
-        warnings.push({ key, description, message: 'Optional integration enabled' });
+    if (value && value.trim()) {
+        state.optionalPresent.push({
+            key,
+            description,
+            value: maskValue(value.trim()),
+        });
     }
 }
 
-// Display results
-console.log('\n✅ Present Variables:');
-console.log('-'.repeat(60));
-if (present.length === 0) {
+// =============================================
+// DISPLAY RESULTS
+// =============================================
+
+// Helper function to get hint for missing vars
+function getHint(key, type) {
+    const hints = {
+        'MONGODB_URI': 'Use Atlas URI (mongodb+srv://...) or Docker connection string',
+        'BETTER_AUTH_SECRET': 'Generate with: openssl rand -hex 32',
+        'BETTER_AUTH_URL': 'e.g., http://localhost:3000 or https://your-domain.com',
+        'NODEMAILER_EMAIL': 'Your Gmail address',
+        'NODEMAILER_PASSWORD': 'Generate Gmail App Password: myaccount.google.com → Security → App passwords',
+    };
+    return hints[key] || 'Check the OpenStock API_DOCS.md for setup instructions';
+}
+
+// Display Present Required Variables
+console.log('\n✅ Present Required Variables:');
+console.log('-'.repeat(70));
+if (state.present.length === 0) {
     console.log('  None found');
 } else {
-    present.forEach(({ key, description, value }) => {
+    state.present.forEach(({ key, description, value }) => {
         console.log(`  ✓ ${key}`);
         console.log(`    ${description}`);
-        console.log(`    Value: ${value}\n`);
+        console.log(`    Value: ${value}`);
     });
 }
 
-if (missing.length > 0) {
-    console.log('\n❌ Missing Variables:');
-    console.log('-'.repeat(60));
-    missing.forEach(({ key, description }) => {
+// Display Missing Required Variables
+if (state.missing.length > 0) {
+    console.log('\n❌ Missing Required Variables:');
+    console.log('-'.repeat(70));
+    state.missing.forEach(({ key, description, severity, hint }) => {
         console.log(`  ✗ ${key}`);
-        console.log(`    ${description}\n`);
+        console.log(`    ${description}`);
+        console.log(`    ⚠ ${hint}`);
     });
 }
 
-if (warnings.length > 0) {
-    console.log('\n⚠️  Warnings:');
-    console.log('-'.repeat(60));
-    warnings.forEach(({ key, message }) => {
-        console.log(`  ⚠ ${key}: ${message}\n`);
+// Display Deprecated Variables Warnings
+if (state.warnings.length > 0) {
+    console.log('\n⚠️  Deprecated Variables:');
+    console.log('-'.repeat(70));
+    state.warnings.forEach(({ key, description, message }) => {
+        console.log(`  ⚠ ${key}`);
+        console.log(`    ${description}`);
+        console.log(`    ${message}`);
     });
 }
 
-// Summary
-console.log('\n' + '='.repeat(60));
-console.log(`Summary: ${present.length}/${Object.keys(requiredVars).length} required variables present`);
-if (missing.length > 0) {
-    console.log(`\n⚠️  Missing ${missing.length} required variable(s).`);
+// Display Present Optional Variables
+console.log('\n📦 Present Optional Variables:');
+console.log('-'.repeat(70));
+if (state.optionalPresent.length === 0) {
+    console.log('  None found (features will work without these)');
+} else {
+    state.optionalPresent.forEach(({ key, description, value }) => {
+        console.log(`  ✓ ${key}`);
+        console.log(`    ${description}`);
+        console.log(`    Value: ${value}`);
+    });
+}
+
+// =============================================
+// SUMMARY AND EXIT CODE
+// =============================================
+
+console.log('\n' + '='.repeat(70));
+const criticalMissing = state.missing.filter(m => m.severity === 'critical').length;
+const totalRequired = Object.keys(requiredVars).length;
+const presentRequired = state.present.length;
+
+console.log(`Summary: ${presentRequired}/${totalRequired} required variables present`);
+console.log(`Optional variables: ${state.optionalPresent.length}/${Object.keys(optionalVars).length} enabled`);
+
+if (criticalMissing > 0) {
+    console.log(`\n⚠️  ${criticalMissing} critical variable(s) are missing.`);
     console.log('\nTo fix:');
-    console.log('1. Create a .env file in the project root');
-    console.log('2. Add the missing variables');
-    console.log('3. For Vercel: Add these in Project Settings > Environment Variables');
+    console.log('1. Create a .env file in the project root (copy from .env.example)');
+    console.log('2. Add the missing variables listed above');
+    console.log('3. Refer to API_DOCS.md for each variable\'s source and setup instructions');
+    console.log('4. For Vercel: Add these in Project Settings > Environment Variables');
     process.exit(1);
 } else {
     console.log('\n✅ All required environment variables are set!');
-}
-
-// Helper function to mask sensitive values
-function maskValue(value) {
-    if (value.length <= 8) {
-        return '***';
-    }
-    return value.substring(0, 4) + '***' + value.substring(value.length - 4);
+    console.log('   Optional integrations are available if configured.');
+    process.exit(0);
 }

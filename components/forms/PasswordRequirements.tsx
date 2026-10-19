@@ -7,7 +7,7 @@ import { Check, X } from 'lucide-react';
 
 const PasswordRequirements = ({ password }: { password: string }) => {
     return (
-        <ul className="space-y-1.5 mt-2">
+        <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5">
             {PASSWORD_RULES.map((rule) => {
                 const passed = rule.test(password);
                 return (

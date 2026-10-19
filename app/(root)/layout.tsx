@@ -1,13 +1,12 @@
-import Header from "@/components/Header";
-import { auth } from "@/lib/better-auth/auth";
-import { headers } from "next/headers";
+import { getSession } from "@/lib/better-auth/auth";
 import { redirect } from "next/navigation";
-import Footer from "@/components/Footer";
+import AppShell from "@/components/shell/AppShell";
 import DonatePopup from "@/components/DonatePopup";
-import SirayBanner from "@/components/SirayBanner";
+import { searchStocks } from "@/lib/actions/finnhub.actions";
+import { getUserWatchlist } from "@/lib/actions/watchlist.actions";
 
 const Layout = async ({ children }: { children: React.ReactNode }) => {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getSession();
 
     if (!session?.user) redirect('/sign-in');
 
@@ -17,18 +16,22 @@ const Layout = async ({ children }: { children: React.ReactNode }) => {
         email: session.user.email,
     }
 
+    const [initialStocks, watchlist] = await Promise.all([
+        searchStocks(),
+        getUserWatchlist(),
+    ]);
+
     return (
-        <main className="min-h-screen text-gray-400">
-            <SirayBanner />
-            <Header user={user} />
-
-            <div className="container py-10">
+        <>
+            <AppShell
+                user={user}
+                watchlist={watchlist.map(({ symbol, company }: { symbol: string; company: string }) => ({ symbol, company }))}
+                initialStocks={initialStocks}
+            >
                 {children}
-            </div>
-
-            <Footer />
+            </AppShell>
             <DonatePopup />
-        </main>
+        </>
     )
 }
 export default Layout

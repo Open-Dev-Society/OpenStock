@@ -61,7 +61,7 @@ const ForgotPasswordPage = () => {
                     validation={{
                         required: 'Email is required',
                         pattern: {
-                            value: /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/,
+                            value: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
                             message: 'Please enter a valid email address',
                         },
                     }}

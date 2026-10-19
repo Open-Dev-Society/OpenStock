@@ -1,8 +1,7 @@
 import { inngest } from "@/lib/inngest/client";
 import { NEWS_SUMMARY_EMAIL_PROMPT, PERSONALIZED_WELCOME_EMAIL_PROMPT } from "@/lib/inngest/prompts";
-import { sendNewsSummaryEmail, sendWelcomeEmail } from "@/lib/nodemailer";
-import { getAllUsersForNewsEmail } from "@/lib/actions/user.actions";
-import { getWatchlistSymbolsByEmail } from "@/lib/actions/watchlist.actions";
+import { sendNewsSummaryEmail, sendStockAlertEmail, sendWelcomeEmail } from "@/lib/nodemailer";
+import { getAllUsersForNewsEmail, getWatchlistSymbolsByEmail } from "@/lib/actions/user.actions";
 import { getNews } from "@/lib/actions/finnhub.actions";
 import { getFormattedTodayDate } from "@/lib/utils";
 import { callAIProviderWithFallback } from "@/lib/ai-provider";
@@ -29,7 +28,7 @@ export const sendSignUpEmail = inngest.createFunction(
             }
         });
 
-        await step.run('send-welcome-email', async () => {
+        const emailResult = await step.run('send-welcome-email', async () => {
             try {
 
                 const { data: { email, name } } = event;
@@ -37,6 +36,10 @@ export const sendSignUpEmail = inngest.createFunction(
 
                 console.log(`📧 Attempting to send welcome email to: ${email}`);
                 const result = await sendWelcomeEmail({ email, name, intro: introText });
+                if (result.status !== 'sent') {
+                    console.log(`Welcome email skipped for: ${email}`);
+                    return result;
+                }
                 console.log(`✅ Welcome email sent successfully to: ${email}`);
                 return result;
             } catch (error) {
@@ -45,10 +48,9 @@ export const sendSignUpEmail = inngest.createFunction(
             }
         })
 
-        return {
-            success: true,
-            message: 'Welcome email sent successfully'
-        }
+        return emailResult.status === 'sent'
+            ? { success: true, message: 'Welcome email sent successfully' }
+            : { success: true, message: 'Welcome email skipped because email credentials are not configured' };
     }
 )
 
@@ -97,14 +99,6 @@ export const sendWeeklyNewsSummary = inngest.createFunction(
                 console.log(`📋 Target Audience: Found ${subData.total_subscribers} total subscribers in Kit.`);
                 console.log(`✅ Confirmed (Active) Subscribers receiving email: ${confirmedCount}`);
 
-                // Log names/emails for the user to see in Inngest dashboard
-                if (subscriberList.length > 0) {
-                    console.log('--- Recipient List ---');
-                    subscriberList.forEach((s: any) => {
-                        console.log(`${s.email_address} (${s.first_name || 'No Name'}) - Status: ${s.state}`);
-                    });
-                    console.log('----------------------');
-                }
             } catch (e) {
                 console.warn("Could not list subscribers for logging:", e);
             }
@@ -203,7 +197,7 @@ export const sendWeeklyNewsSummary = inngest.createFunction(
 )
 
 export const checkStockAlerts = inngest.createFunction(
-    { id: 'check-stock-alerts', triggers: [{ cron: '*/5 * * * *' }] }, // Run every 5 minutes
+    { id: 'check-stock-alerts', concurrency: 1, triggers: [{ cron: '*/5 * * * *' }] }, // Every 5 minutes; one run at a time so an alert is never emailed twice
     async ({ step }) => {
         // Step 1: Fetch active alerts
         const activeAlerts = await step.run('fetch-active-alerts', async () => {
@@ -268,20 +262,54 @@ export const checkStockAlerts = inngest.createFunction(
             }
         }
 
-        // Step 5: Process triggers
+        // Step 5: Email the alert owner, then mark triggered
         if (triggeredAlerts.length > 0) {
             await step.run('process-triggered-alerts', async () => {
                 const { connectToDatabase } = await import("@/database/mongoose");
                 const { Alert } = await import("@/database/models/alert.model");
-                // In a real app we would import 'kit' here and use kit.sendBroadcast or similar
-                // For now, we just log it as the critical logic is the detection
-                await connectToDatabase();
+                const mongoose = await connectToDatabase();
+                const db = mongoose.connection.db;
+                if (!db) throw new Error("No DB Connection");
 
                 for (const { alert, currentPrice } of triggeredAlerts) {
+                    // Claim the alert atomically before emailing. Inngest's concurrency limits steps, not
+                    // whole runs, so two overlapping runs can hold the same alert; only one wins this update.
+                    const claimed = await Alert.findOneAndUpdate(
+                        { _id: alert._id, active: true, triggered: false },
+                        { $set: { triggered: true, active: false } },
+                    );
+                    if (!claimed) continue;
+                    const release = () => Alert.findByIdAndUpdate(alert._id, { triggered: false, active: true }).catch(() => {});
+
                     console.log(`🚀 ALERT FIRED: ${alert.symbol} is ${currentPrice} (${alert.condition} ${alert.targetPrice})`);
 
-                    // Mark triggered
-                    await Alert.findByIdAndUpdate(alert._id, { triggered: true, active: false });
+                    // Per-alert try/catch: a failure releases the claim so the next 5-min run retries it,
+                    // and never throws the step (a step retry would re-email alerts already sent in this loop).
+                    try {
+                        // Better Auth users may be keyed by `id` or `_id` (see getWatchlistSymbolsByEmail)
+                        const user = await db.collection('user').findOne<{ email?: string }>(
+                            mongoose.isValidObjectId(alert.userId)
+                                ? { $or: [{ id: alert.userId }, { _id: new mongoose.Types.ObjectId(alert.userId) }] }
+                                : { id: alert.userId }
+                        );
+
+                        if (user?.email) {
+                            const result = await sendStockAlertEmail({
+                                email: user.email,
+                                symbol: alert.symbol,
+                                currentPrice,
+                                targetPrice: alert.targetPrice,
+                                condition: alert.condition,
+                            });
+                            // Email not configured: release so the alert fires once email works
+                            if (result.status === 'skipped') await release();
+                        } else {
+                            console.warn(`⚠️ No email for user ${alert.userId}; closing alert ${alert._id} without notifying`);
+                        }
+                    } catch (error) {
+                        await release();
+                        console.error(`❌ Failed to process alert ${alert._id} (${alert.symbol}); will retry next run`, error);
+                    }
                 }
             });
         }
@@ -335,12 +363,11 @@ export const checkInactiveUsers = inngest.createFunction(
 
         // Step 2: Send Emails
         const results = await step.run('send-reengagement-emails', async () => {
-            const { kit } = await import("@/lib/kit");
             const { connectToDatabase } = await import("@/database/mongoose");
             const mongoose = await connectToDatabase();
             const db = mongoose.connection.db;
 
-            const sent: string[] = [];
+            const sent = 0; // nothing is sent until a 1:1 sender exists
 
             for (const user of inactiveUsers) {
                 if (!user.email) continue;
@@ -439,23 +466,12 @@ export const checkInactiveUsers = inngest.createFunction(
                     // 1. Add tag "Inactive" to user.
                     // 2. (This is too slow for loop).
 
-                    // CHECK: Is this the test user?
-                    if (user.email === '11aravipratapsingh@gmail.com') {
-                        console.log(`🚀 Sending REAL Re-engagement Email to TEST USER: ${user.email}`);
-                        await kit.sendBroadcast(subject, content);
-                    } else {
-                        console.log(`[Re-engagement Mock] Would send to ${user.email}`);
-                    }
-
-                    // Update DB to avoid loop
-                    if (db) {
-                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                        // @ts-ignore
-                        await db.collection('user').updateOne({ _id: new mongoose.Types.ObjectId(user.id) }, { $set: { lastReengagementSentAt: new Date() } });
-                    }
-                    sent.push(user.email);
+                    // Not sent. kit.sendBroadcast mails the whole list, so a "test user" send here went to every
+                    // subscriber. Wire up a 1:1 send (Kit tag + sequence, or nodemailer) before enabling this, and
+                    // only then set lastReengagementSentAt and count it: marking unsent users would skip them for 30 days.
+                    void subject; void content; void db;
                 } catch (e) {
-                    console.error("Failed to process user", user.email, e);
+                    console.error("Failed to process user", user.id, e);
                 }
             }
             return sent;

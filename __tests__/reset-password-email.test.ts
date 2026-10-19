@@ -11,7 +11,7 @@ import { sendPasswordResetEmail } from '@/lib/nodemailer/reset-password';
 
 describe('sendPasswordResetEmail', () => {
     const originalEnv = { ...process.env };
-    const sendMailMock = vi.mocked(transporter.sendMail);
+    const sendMailMock = vi.mocked(transporter!.sendMail);
 
     beforeEach(() => {
         process.env = {
@@ -41,6 +41,16 @@ describe('sendPasswordResetEmail', () => {
         expect(mailOptions.html).toContain('href="https://example.com/reset-password?token=a%20b&amp;next=%3Cscript%3E"');
         expect(mailOptions.html).not.toContain('<script>');
         expect(mailOptions.text).toContain('https://example.com/reset-password?token=a%20b&next=%3Cscript%3E');
+    });
+
+    it('keeps the already-encoded callbackURL from Better Auth intact', async () => {
+        const resetUrl = 'http://localhost:3000/api/auth/reset-password/abc123?callbackURL=http%3A%2F%2Flocalhost%3A3000%2Freset-password';
+        await sendPasswordResetEmail({ email: 'user@example.com', name: 'User', resetUrl });
+
+        const [mailOptions] = sendMailMock.mock.calls[0];
+        expect(mailOptions.html).toContain(`href="${resetUrl}"`);
+        expect(mailOptions.text).toContain(resetUrl);
+        expect(mailOptions.html).not.toContain('%253A');
     });
 
     it('throws when reset email credentials are missing', async () => {
