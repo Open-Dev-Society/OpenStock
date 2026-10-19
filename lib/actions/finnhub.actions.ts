@@ -67,20 +67,6 @@ const FINNHUB_EXCHANGE_SUFFIXES = new Set([
     'TA', 'TO', 'TW', 'TWO', 'V', 'VI', 'WA',
 ]);
 
-<<<<<<< HEAD
-async function fetchJSON<T>(url: string, revalidateSeconds?: number, options: RequestInit = {}): Promise<T> {
-    const requestOptions: RequestInit & { next?: { revalidate?: number } } = {
-        ...(revalidateSeconds
-        ? { cache: 'force-cache', next: { revalidate: revalidateSeconds } }
-        : { cache: 'no-store' }),
-        ...options,
-    };
-
-    const res = await fetch(url, requestOptions);
-    if (!res.ok) {
-        const text = await res.text().catch(() => '');
-        throw new Error(`Fetch failed ${res.status}: ${text}`);
-=======
 // Thrown instead of calling Finnhub while an endpoint is in its failure cool-down; not worth logging again.
 class RecentFailure extends Error {}
 const logFailure = (what: string, symbol: string, e: unknown) => {
@@ -100,7 +86,6 @@ async function withSlot<T>(run: () => Promise<T>): Promise<T> {
     } finally {
         activeRequests--;
         waitingForSlot.shift()?.();
->>>>>>> upstream/main
     }
 }
 
@@ -218,23 +203,20 @@ export async function getCompanyProfile(symbol: string) {
 }
 
 export async function getStockMetrics(symbol: string): Promise<number | null> {
-    const token = process.env.FINNHUB_API_KEY || NEXT_PUBLIC_FINNHUB_API_KEY;
-    if (!token) {
+    if (FINNHUB_KEYS.length === 0) {
         console.error('FINNHUB API key is not configured');
         return null;
     }
 
     try {
-        const url = `${FINNHUB_BASE_URL}/stock/metric?symbol=${encodeURIComponent(symbol)}&metric=all&token=${token}`;
-        const data = await fetchJSON<FinnhubStockMetrics>(url, 3600, {
-            signal: AbortSignal.timeout(5000),
-        });
+        const url = `${FINNHUB_BASE_URL}/stock/metric?symbol=${encodeURIComponent(symbol)}&metric=all`;
+        const data = await fetchJSON<FinnhubStockMetrics>(url, 3600);
         const dividendYield = data?.metric?.dividendYieldIndicatedAnnual;
         return typeof dividendYield === 'number' && Number.isFinite(dividendYield)
             ? dividendYield
             : null;
     } catch (error) {
-        console.error('Error fetching stock metrics for', symbol, error);
+        logFailure('stock metrics', symbol, error);
         return null;
     }
 }

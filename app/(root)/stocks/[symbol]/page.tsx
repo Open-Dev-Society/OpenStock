@@ -10,35 +10,11 @@ import {
     COMPANY_PROFILE_WIDGET_CONFIG,
     COMPANY_FINANCIALS_WIDGET_CONFIG,
 } from "@/lib/constants";
-<<<<<<< HEAD
-
-import { isStockInWatchlist } from '@/lib/actions/watchlist.actions';
 import { getStockSentimentInsights } from '@/lib/actions/adanos.actions';
 import { getStockMetrics } from '@/lib/actions/finnhub.actions';
-import { formatSymbolForTradingView } from '@/lib/utils';
-import { auth } from '@/lib/better-auth/auth';
-import { headers } from 'next/headers';
-
-export default async function StockDetails({ params }: StockDetailsPageProps) {
-    const { symbol } = await params;
-    const tvSymbol = formatSymbolForTradingView(symbol);
-    const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
-
-    const session = await auth.api.getSession({
-        headers: await headers()
-    });
-    const userId = session?.user?.id;
-    const [isInWatchlist, sentimentInsights, dividendYield] = await Promise.all([
-        userId ? isStockInWatchlist(userId, symbol) : Promise.resolve(false),
-        getStockSentimentInsights(symbol),
-        getStockMetrics(symbol),
-    ]);
-=======
-import { getStockSentimentInsights } from '@/lib/actions/adanos.actions';
 import { formatSymbolForTradingView, isChartEmbeddable, tradingViewSymbolUrl } from '@/lib/utils';
 
 const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
->>>>>>> upstream/main
 
 async function Sentiment({ symbol }: { symbol: string }) {
     const insight = await getStockSentimentInsights(symbol);
@@ -46,6 +22,17 @@ async function Sentiment({ symbol }: { symbol: string }) {
     return (
         <Panel title="Sentiment" sub="Reddit, X.com, news and Polymarket">
             <StockSentimentCard insight={insight} />
+        </Panel>
+    );
+}
+
+async function DividendYield({ symbol }: { symbol: string }) {
+    const dividendYield = await getStockMetrics(symbol);
+    return (
+        <Panel title="Dividend Yield">
+            <p className="text-2xl font-semibold text-white">
+                {dividendYield !== null ? `${dividendYield.toFixed(2)}%` : "—"}
+            </p>
         </Panel>
     );
 }
@@ -97,38 +84,10 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                             config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(tvSymbol)}
                             height={400}
                         />
-<<<<<<< HEAD
-                    </div>
-<div className="w-fit min-w-[160px] rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] px-5 py-4 flex flex-col gap-1.5 transition-all hover:border-white/20 hover:bg-white/[0.06]">
-    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        Dividend Yield
-    </span>
-    <span className="text-2xl font-semibold text-white leading-tight">
-        {dividendYield !== null ? `${dividendYield.toFixed(2)}%` : "—"}
-    </span>
-</div>
-
-                    <StockSentimentCard insight={sentimentInsights} />
-
-                    <TradingViewWidget
-                        scriptUrl={`${scriptUrl}technical-analysis.js`}
-                        config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(tvSymbol)}
-                        height={400}
-                    />
-
-                    <TradingViewWidget
-                        scriptUrl={`${scriptUrl}company-profile.js`}
-                        config={COMPANY_PROFILE_WIDGET_CONFIG(tvSymbol)}
-                        height={440}
-                    />
-
-                    <TradingViewWidget
-                        scriptUrl={`${scriptUrl}financials.js`}
-                        config={COMPANY_FINANCIALS_WIDGET_CONFIG(tvSymbol)}
-                        height={800}
-                    />
-=======
                     </Panel>
+                    <Suspense fallback={null}>
+                        <DividendYield symbol={symbol} />
+                    </Suspense>
                     <Suspense fallback={null}>
                         <Sentiment symbol={symbol} />
                     </Suspense>
@@ -139,7 +98,6 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                             height={440}
                         />
                     </Panel>
->>>>>>> upstream/main
                 </div>
             </div>
         </>
