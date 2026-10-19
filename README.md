@@ -291,7 +291,7 @@ You belong here. Whether you're a student, a self-taught dev or a seasoned engin
 3. Keep the pull request focused: a test for new logic, a screenshot for UI changes.
 4. Before you open it, run `npm test`, `npx tsc --noEmit` and `npm run lint`.
 
-Every merged pull request, and every issue that leads to a fix, is credited on the [changelog](https://openstock-ods.vercel.app/changelog) and below. Be kind, guide beginners, no gatekeeping: that's the Open Dev Society way.
+Every merged pull request, and every issue that leads to a fix, is credited on the [changelog](https://openstock-ods.vercel.app/changelog) and below. Be kind, guide beginners, no gatekeeping: that's the Open Dev Society way. Participation is covered by the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## 🏆 Contributors <a name="contributors"></a>
 
