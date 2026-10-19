@@ -39,12 +39,15 @@ const FINNHUB_EXCHANGE_SUFFIXES = new Set([
     'TA', 'TO', 'TW', 'TWO', 'V', 'VI', 'WA',
 ]);
 
-async function fetchJSON<T>(url: string, revalidateSeconds?: number): Promise<T> {
-    const options: RequestInit & { next?: { revalidate?: number } } = revalidateSeconds
+async function fetchJSON<T>(url: string, revalidateSeconds?: number, options: RequestInit = {}): Promise<T> {
+    const requestOptions: RequestInit & { next?: { revalidate?: number } } = {
+        ...(revalidateSeconds
         ? { cache: 'force-cache', next: { revalidate: revalidateSeconds } }
-        : { cache: 'no-store' };
+        : { cache: 'no-store' }),
+        ...options,
+    };
 
-    const res = await fetch(url, options);
+    const res = await fetch(url, requestOptions);
     if (!res.ok) {
         const text = await res.text().catch(() => '');
         throw new Error(`Fetch failed ${res.status}: ${text}`);
@@ -102,7 +105,9 @@ export async function getStockMetrics(symbol: string): Promise<number | null> {
 
     try {
         const url = `${FINNHUB_BASE_URL}/stock/metric?symbol=${encodeURIComponent(symbol)}&metric=all&token=${token}`;
-        const data = await fetchJSON<FinnhubStockMetrics>(url, 3600);
+        const data = await fetchJSON<FinnhubStockMetrics>(url, 3600, {
+            signal: AbortSignal.timeout(5000),
+        });
         const dividendYield = data?.metric?.dividendYieldIndicatedAnnual;
         return typeof dividendYield === 'number' && Number.isFinite(dividendYield)
             ? dividendYield
