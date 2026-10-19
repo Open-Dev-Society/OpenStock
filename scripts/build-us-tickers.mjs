@@ -43,6 +43,28 @@ function parseCsv(text) {
     return body.map((r) => Object.fromEntries(header.map((key, i) => [key, r[i] ?? ''])));
 }
 
+// Wikipedia's Nasdaq-100 table uses ICB industries. /s groups by sector, so these strings
+// have to match the S&P 500 GICS sectors or the same industry splits into two headings.
+const ICB_TO_GICS = {
+    'Technology': 'Information Technology',
+    'Telecommunications': 'Communication Services',
+    'Health Care': 'Health Care',
+    'Financials': 'Financials',
+    'Real Estate': 'Real Estate',
+    'Consumer Discretionary': 'Consumer Discretionary',
+    'Consumer Staples': 'Consumer Staples',
+    'Industrials': 'Industrials',
+    'Basic Materials': 'Materials',
+    'Energy': 'Energy',
+    'Utilities': 'Utilities',
+};
+
+function gicsSector(icb) {
+    const sector = ICB_TO_GICS[icb];
+    if (!sector) throw new Error(`No GICS sector for ICB industry "${icb}"`);
+    return sector;
+}
+
 function textOf(html) {
     return html.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&#039;|&apos;/g, "'").replace(/&quot;/g, '"').trim();
 }
@@ -104,7 +126,7 @@ for (const row of ndxRows) {
         symbol: row.symbol,
         name: row.name,
         exchange: secHit?.exchange || 'Nasdaq',
-        sector: row.sector,
+        sector: gicsSector(row.sector),
         subIndustry: row.subIndustry,
         cik: secHit?.cik || '',
         indexes: ['NDX100'],
@@ -116,7 +138,7 @@ const list = [...tickers.values()].sort((a, b) => a.symbol.localeCompare(b.symbo
 const missingCik = list.filter((t) => !t.cik).map((t) => t.symbol);
 const file = {
     generated: new Date().toISOString().slice(0, 10),
-    note: 'Static index membership, names, GICS or ICB sector, and SEC CIK. No market prices. Regenerate with scripts/build-us-tickers.mjs.',
+    note: 'Static index membership, names, GICS sector, and SEC CIK. No market prices. Regenerate with scripts/build-us-tickers.mjs.',
     tickers: list,
 };
 

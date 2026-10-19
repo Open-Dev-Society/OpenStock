@@ -57,6 +57,8 @@ describe('tickers', () => {
         expect(US_TICKERS.length).toBeGreaterThanOrEqual(500);
         expect(US_TICKERS.length).toBeLessThan(600);
         expect(US_TICKERS.every((ticker) => ticker.cik && ticker.symbol && ticker.name)).toBe(true);
+        const gics = new Set(['Communication Services', 'Consumer Discretionary', 'Consumer Staples', 'Energy', 'Financials', 'Health Care', 'Industrials', 'Information Technology', 'Materials', 'Real Estate', 'Utilities']);
+        expect(US_TICKERS.every((ticker) => gics.has(ticker.sector))).toBe(true);
         const apple = findTicker('aapl');
         expect(apple?.indexes).toEqual(['SP500', 'NDX100']);
         expect(apple?.cik).toBe('320193');

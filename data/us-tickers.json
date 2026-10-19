@@ -1,6 +1,6 @@
 {
-  "generated": "2026-10-18",
-  "note": "Static index membership, names, GICS or ICB sector, and SEC CIK. No market prices. Regenerate with scripts/build-us-tickers.mjs.",
+  "generated": "2026-10-19",
+  "note": "Static index membership, names, GICS sector, and SEC CIK. No market prices. Regenerate with scripts/build-us-tickers.mjs.",
   "tickers": [
     {
       "symbol": "A",
@@ -233,7 +233,7 @@
       "symbol": "ALAB",
       "name": "Astera Labs",
       "exchange": "Nasdaq",
-      "sector": "Technology",
+      "sector": "Information Technology",
       "subIndustry": "Semiconductors",
       "cik": "1736297",
       "indexes": [
@@ -513,7 +513,7 @@
       "symbol": "ARM",
       "name": "Arm Holdings",
       "exchange": "Nasdaq",
-      "sector": "Technology",
+      "sector": "Information Technology",
       "subIndustry": "Semiconductors",
       "cik": "1973239",
       "indexes": [
@@ -524,7 +524,7 @@
       "symbol": "ASML",
       "name": "ASML Holding",
       "exchange": "Nasdaq",
-      "sector": "Technology",
+      "sector": "Information Technology",
       "subIndustry": "Industrial Machinery",
       "cik": "937966",
       "indexes": [
@@ -1359,7 +1359,7 @@
       "symbol": "CRWV",
       "name": "CoreWeave",
       "exchange": "Nasdaq",
-      "sector": "Technology",
+      "sector": "Information Technology",
       "subIndustry": "Computer Services",
       "cik": "1769628",
       "indexes": [
@@ -3681,7 +3681,7 @@
       "symbol": "MSTR",
       "name": "MicroStrategy",
       "exchange": "Nasdaq",
-      "sector": "Technology",
+      "sector": "Information Technology",
       "subIndustry": "Software",
       "cik": "1050446",
       "indexes": [
@@ -3726,7 +3726,7 @@
       "symbol": "NBIS",
       "name": "Nebius Group",
       "exchange": "Nasdaq",
-      "sector": "Technology",
+      "sector": "Information Technology",
       "subIndustry": "Computer Services",
       "cik": "1513845",
       "indexes": [
@@ -4119,7 +4119,7 @@
       "symbol": "PDD",
       "name": "PDD Holdings",
       "exchange": "Nasdaq",
-      "sector": "Technology",
+      "sector": "Information Technology",
       "subIndustry": "EDP Services",
       "cik": "1737806",
       "indexes": [
@@ -4633,7 +4633,7 @@
       "symbol": "SHOP",
       "name": "Shopify",
       "exchange": "Nasdaq",
-      "sector": "Technology",
+      "sector": "Information Technology",
       "subIndustry": "Software",
       "cik": "1594805",
       "indexes": [
@@ -4756,7 +4756,7 @@
       "symbol": "SPCX",
       "name": "SpaceX",
       "exchange": "Nasdaq",
-      "sector": "Telecommunications",
+      "sector": "Communication Services",
       "subIndustry": "Telecommunications Services",
       "cik": "1181412",
       "indexes": [
@@ -5089,7 +5089,7 @@
       "symbol": "TRI",
       "name": "Thomson Reuters",
       "exchange": "Nasdaq",
-      "sector": "Technology",
+      "sector": "Information Technology",
       "subIndustry": "Software",
       "cik": "1075124",
       "indexes": [

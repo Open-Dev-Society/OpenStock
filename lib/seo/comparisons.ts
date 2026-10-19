@@ -101,8 +101,8 @@ export const GUIDES: Guide[] = [
         slug: 'free-stock-watchlist',
         kicker: 'Watchlist',
         title: 'Free stock watchlist with email alerts',
-        description: 'A free watchlist for up to 50 symbols, saved to your OpenStock account. Email alerts fire when a price crosses your target, on a self-hosted realtime instance or on OpenStock Cloud.',
-        lede: 'The watchlist is a list of companies you actually follow, not a feed. Add a symbol from search, set a price above or below the market, and OpenStock emails you when the trade crosses it.',
+        description: 'A free watchlist for up to 50 symbols, saved to your OpenStock account. Email alerts currently need a self-hosted instance in realtime mode. They are off on the hosted site.',
+        lede: 'The watchlist is a list of companies you actually follow, not a feed. Add a symbol from search and keep the chart. Email alerts currently need a self-hosted instance; the hosted site does not send them, and OpenStock Cloud is not on sale.',
         sections: [
             {
                 heading: 'On the free hosted site',
@@ -229,7 +229,7 @@ export const GUIDES: Guide[] = [
         slug: 'track-nse-stocks',
         kicker: 'India',
         title: 'Track NSE stocks free',
-        description: 'How OpenStock shows Indian stocks: BSE charts and end-of-day quotes in the signed-in app. Public company pages in this version are US listings only, because those are the filings we can publish from EDGAR.',
+        description: 'How OpenStock shows Indian stocks: BSE charts and end-of-day quotes in the signed-in app. This release does not include Indian ticker pages or EDGAR mappings.',
         lede: 'You can follow Indian names on OpenStock without paying. The signed-in app uses BSE symbols, because free TradingView embeds do not license NSE charts. The public directory on this site is US-only for now.',
         sections: [
             {
@@ -242,7 +242,7 @@ export const GUIDES: Guide[] = [
             {
                 heading: 'What the public pages do not include',
                 paragraphs: [
-                    'The open stock directory (/s) is the S&P 500 plus the Nasdaq-100. Each of those pages can link a CIK and a 10-K or 20-F on SEC EDGAR. Indian issuers do not file there, and this site will not invent a public quote page from a data plan that does not allow redistribution. NIFTY 50 pages are a later step, after each symbol is checked in a TradingView embed.',
+                    'The open stock directory (/s) is the S&P 500 plus the Nasdaq-100, with EDGAR links for those listings. This release does not include Indian ticker pages or EDGAR mappings. NIFTY 50 pages are a later step, after each symbol is checked in a TradingView embed. This site will not invent a public quote page from a data plan that does not allow redistribution.',
                 ],
             },
             {
