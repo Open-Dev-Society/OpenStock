@@ -15,60 +15,61 @@ indicator("مركاز كاونت — تاسي 30 دقيقة v1.0 (2026-10-20)", 
 //   2026-10-15 14:00 low  -> iii    2026-10-20 10:00 high -> 2
 //                                  2026-10-20 12:00 low  -> 3
 
-isTasi = syminfo.tickerid == "TADAWUL:TASI" or syminfo.tickerid == "TADAWUL_DLY:TASI"
+isTasi = syminfo.ticker == "TASI"
 onFrame = timeframe.period == "30"
 active = isTasi and onFrame
 
 badgeBg = color.rgb(179, 58, 52)
+sz = size.normal
 badgeTx = color.white
 plainTx = color.rgb(232, 83, 79)
 
-// Bar match on the raw epoch, so no date string can be mis-parsed.
-// Pine's `time` is milliseconds on intraday frames; the second check keeps
-// the script valid if that ever changes.
-f_at(tsSec) => time == tsSec * 1000 or time == tsSec
+// Bar match on an explicit Riyadh wall clock, so no date string can be
+// mis-parsed. The same helper the OpenStock Manual Count script uses.
+mkT(_y, _mo, _d, _h, _mi) => timestamp("Asia/Riyadh", _y, _mo, _d, _h, _mi)
+bar_is(t) => time == t
 
-t3 = 1791963000
-t4 = 1791964800
-t5 = 1792051200
-tx = 1792053000
-tiii = 1792062000
-ta = 1792314000
-tb = 1792317600
-tc = 1792321200
-t1 = 1792407600
-t2 = 1792479600
-t3b = 1792486800
+t3 = mkT(2026, 10, 14, 10, 30)
+t4 = mkT(2026, 10, 14, 11, 0)
+t5 = mkT(2026, 10, 15, 11, 0)
+tx = mkT(2026, 10, 15, 11, 30)
+tiii = mkT(2026, 10, 15, 14, 0)
+ta = mkT(2026, 10, 18, 12, 0)
+tb = mkT(2026, 10, 18, 13, 0)
+tc = mkT(2026, 10, 18, 14, 0)
+t1 = mkT(2026, 10, 19, 14, 0)
+t2 = mkT(2026, 10, 20, 10, 0)
+t3b = mkT(2026, 10, 20, 12, 0)
 
 if active
     // --- wave badges: box + pointer, like the reference ---
-    if f_at(t3)
-        label.new(time, low, "3", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_label_up, color = badgeBg, textcolor = badgeTx, textsize = size.normal)
-    if f_at(t4)
-        label.new(time, high, "4", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_label_down, color = badgeBg, textcolor = badgeTx, textsize = size.normal)
-    if f_at(t5)
-        label.new(time, low, "5", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_label_up, color = badgeBg, textcolor = badgeTx, textsize = size.normal)
-    if f_at(tx)
-        label.new(time, high, "x", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_label_down, color = badgeBg, textcolor = badgeTx, textsize = size.normal)
-    if f_at(tiii)
-        label.new(time, low, "iii", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_label_up, color = badgeBg, textcolor = badgeTx, textsize = size.normal)
+    if bar_is(t3)
+        label.new(time, low, "3", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_label_up, color = badgeBg, textcolor = badgeTx, size = sz)
+    if bar_is(t4)
+        label.new(time, high, "4", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_label_down, color = badgeBg, textcolor = badgeTx, size = sz)
+    if bar_is(t5)
+        label.new(time, low, "5", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_label_up, color = badgeBg, textcolor = badgeTx, size = sz)
+    if bar_is(tx)
+        label.new(time, high, "x", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_label_down, color = badgeBg, textcolor = badgeTx, size = sz)
+    if bar_is(tiii)
+        label.new(time, low, "iii", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_label_up, color = badgeBg, textcolor = badgeTx, size = sz)
 
     // --- plain wave numbers: red text, offset off the pivot ---
-    if f_at(ta)
-        label.new(time, high + (high - low) * 0.6, "a", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_none, textcolor = plainTx, textsize = size.normal)
-    if f_at(tb)
-        label.new(time, low - (high - low) * 0.6, "b", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_none, textcolor = plainTx, textsize = size.normal)
-    if f_at(tc)
-        label.new(time, high + (high - low) * 0.6, "c", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_none, textcolor = plainTx, textsize = size.normal)
-        label.new(time, high + (high - low) * 1.9, "iv", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_none, textcolor = plainTx, textsize = size.normal)
-    if f_at(t1)
-        label.new(time, low - (high - low) * 0.6, "1", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_none, textcolor = plainTx, textsize = size.normal)
-    if f_at(t2)
-        label.new(time, high + (high - low) * 0.6, "2", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_none, textcolor = plainTx, textsize = size.normal)
-    if f_at(t3b)
-        label.new(time, low - (high - low) * 0.6, "3", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_none, textcolor = plainTx, textsize = size.normal)
+    if bar_is(ta)
+        label.new(time, high + (high - low) * 0.6, "a", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_none, textcolor = plainTx, size = sz)
+    if bar_is(tb)
+        label.new(time, low - (high - low) * 0.6, "b", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_none, textcolor = plainTx, size = sz)
+    if bar_is(tc)
+        label.new(time, high + (high - low) * 0.6, "c", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_none, textcolor = plainTx, size = sz)
+        label.new(time, high + (high - low) * 1.9, "iv", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_none, textcolor = plainTx, size = sz)
+    if bar_is(t1)
+        label.new(time, low - (high - low) * 0.6, "1", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_none, textcolor = plainTx, size = sz)
+    if bar_is(t2)
+        label.new(time, high + (high - low) * 0.6, "2", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_none, textcolor = plainTx, size = sz)
+    if bar_is(t3b)
+        label.new(time, low - (high - low) * 0.6, "3", xloc = xloc.bar_time, yloc = yloc.price, style = label.style_none, textcolor = plainTx, size = sz)
 
     // --- live-edge projections: wave 4 bounce and the final wave-5 low ---
     if barstate.islast
-        label.new(bar_index + 1, 10041.2, "4 ?", xloc = xloc.bar_index, yloc = yloc.price, style = label.style_none, textcolor = plainTx, textsize = size.normal)
-        label.new(bar_index + 2, 9928.7, "v ?", xloc = xloc.bar_index, yloc = yloc.price, style = label.style_none, textcolor = plainTx, textsize = size.normal)
+        label.new(bar_index + 1, 10041.2, "4 ?", xloc = xloc.bar_index, yloc = yloc.price, style = label.style_none, textcolor = plainTx, size = sz)
+        label.new(bar_index + 2, 9928.7, "v ?", xloc = xloc.bar_index, yloc = yloc.price, style = label.style_none, textcolor = plainTx, size = sz)
