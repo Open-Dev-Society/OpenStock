@@ -23,8 +23,8 @@ function arg(name: string, fallback: string) {
 
 // rangeId -> Yahoo range/interval, mirroring CANDLE_RANGES in lib/yahoo.ts
 const RANGES: Record<string, [string, string]> = {
-    '1m': ['7d', '1m'], '5m': ['1mo', '5m'], '15m': ['1mo', '15m'],
-    '30m': ['1mo', '30m'], '1H': ['2y', '1h'], 'D': ['1y', '1d'],
+    '1m': ['7d', '1m'], '5m': ['1mo', '5m'], '15m': ['60d', '15m'],
+    '30m': ['60d', '30m'], '1H': ['2y', '1h'], 'D': ['1y', '1d'],
     'W': ['5y', '1wk'], 'M': ['max', '1mo'],
 };
 

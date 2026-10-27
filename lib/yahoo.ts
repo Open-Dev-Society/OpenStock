@@ -5,8 +5,8 @@ export type CandleRangeId = '1m' | '5m' | '15m' | '30m' | '1H' | 'D' | 'W' | 'M'
 
 export const CANDLE_RANGES: Record<CandleRangeId, { range: string; interval: string; label: string; labelAr: string; intraday?: boolean }> = {    '1m': { range: '7d', interval: '1m', label: '1m', labelAr: '1د', intraday: true },
     '5m': { range: '1mo', interval: '5m', label: '5m', labelAr: '5د', intraday: true },
-    '15m': { range: '1mo', interval: '15m', label: '15m', labelAr: '15د', intraday: true },
-    '30m': { range: '1mo', interval: '30m', label: '30m', labelAr: '30د', intraday: true },
+    '15m': { range: '60d', interval: '15m', label: '15m', labelAr: '15د', intraday: true },
+    '30m': { range: '60d', interval: '30m', label: '30m', labelAr: '30د', intraday: true },
     '1H': { range: '2y', interval: '1h', label: '1H', labelAr: '1س', intraday: true },
     'D': { range: '1y', interval: '1d', label: 'D', labelAr: 'يوم' },
     'W': { range: '5y', interval: '1wk', label: 'W', labelAr: 'أسبوع' },

@@ -91,7 +91,7 @@ describe('buildYahooUrl', () => {
     it('builds intraday and monthly urls', () => {
         expect(buildYahooUrl('2222.SR', '1m')).toContain('interval=1m&range=7d');
         expect(buildYahooUrl('2222.SR', '5m')).toContain('interval=5m&range=1mo');
-        expect(buildYahooUrl('2222.SR', '30m')).toContain('interval=30m&range=1mo');
+        expect(buildYahooUrl('2222.SR', '30m')).toContain('interval=30m&range=60d');
         expect(buildYahooUrl('2222.SR', '1H')).toContain('interval=1h&range=2y');
         expect(buildYahooUrl('2222.SR', 'D')).toContain('interval=1d&range=1y');
         expect(buildYahooUrl('2222.SR', 'W')).toContain('interval=1wk&range=5y');
