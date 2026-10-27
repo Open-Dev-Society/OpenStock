@@ -28,7 +28,7 @@ describe("getProviderConfig", () => {
     const config = getProviderConfig("minimax");
     expect(config.name).toBe("minimax");
     expect(config.baseUrl).toBe("https://api.minimax.io/v1");
-    expect(config.model).toBe("MiniMax-M3");
+    expect(config.model).toBe("MiniMax-M3.1-Flash");
     expect(config.apiKey).toBe("test-key");
   });
 
@@ -175,7 +175,7 @@ describe("callAIProvider", () => {
       "Bearer test-minimax-key"
     );
     const body = JSON.parse(options.body);
-    expect(body.model).toBe("MiniMax-M3");
+    expect(body.model).toBe("MiniMax-M3.1-Flash");
     expect(body.messages[0].content).toBe("test prompt");
     expect(body.temperature).toBe(0.7);
   });
@@ -247,6 +247,70 @@ describe("callAIProvider", () => {
     await expect(callAIProvider("hello", "minimax")).rejects.toThrow(
       "minimax returned empty response"
     );
+  });
+});
+
+// ── MiniMax request boundary ───────────────────────────────────────
+
+describe.each([
+  [undefined, "https://api.minimax.io/v1"],
+  ["https://api.minimaxi.com/v1", "https://api.minimaxi.com/v1"],
+  ["https://custom.minimax.example/v1", "https://custom.minimax.example/v1"],
+])("MiniMax requests with base URL %s", (baseUrl, expectedBaseUrl) => {
+  const originalEnv = { ...process.env };
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it.each([
+    [undefined, "MiniMax-M3.1-Flash"],
+    ["MiniMax-M3.1-Flash", "MiniMax-M3.1-Flash"],
+    ["MiniMax-M3", "MiniMax-M3"],
+    ["MiniMax-M2.5-highspeed", "MiniMax-M2.5-highspeed"],
+    ["custom-model", "custom-model"],
+  ])("preserves model %s for primary and fallback requests", async (model, expectedModel) => {
+    process.env.MINIMAX_API_KEY = "test-minimax-key";
+    if (model === undefined) delete process.env.MINIMAX_MODEL;
+    else process.env.MINIMAX_MODEL = model;
+    if (baseUrl === undefined) delete process.env.MINIMAX_BASE_URL;
+    else process.env.MINIMAX_BASE_URL = baseUrl;
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: "MiniMax response" } }] }),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+    const prompt = "Summarize this week's market news.";
+
+    // The email workflows call this entry point without a provider argument.
+    process.env.AI_PROVIDER = "minimax";
+    expect(await callAIProviderWithFallback(prompt)).toBe("MiniMax response");
+
+    delete process.env.AI_PROVIDER;
+    process.env.GEMINI_API_KEY = "test-primary-key";
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 503, statusText: "Unavailable" });
+    expect(await callAIProviderWithFallback(prompt)).toBe("MiniMax response");
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+
+    for (const index of [0, 2]) {
+      const [url, options] = mockFetch.mock.calls[index];
+      expect(url).toBe(`${expectedBaseUrl}/chat/completions`);
+      expect(options.method).toBe("POST");
+      expect(options.headers).toEqual({
+        "Content-Type": "application/json",
+        Authorization: "Bearer test-minimax-key",
+      });
+      // Exact equality also guards against injecting unsupported thinking,
+      // reasoning_effort, reasoning_split, or service_tier parameters.
+      expect(JSON.parse(options.body)).toEqual({
+        model: expectedModel,
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+      });
+    }
   });
 });
 

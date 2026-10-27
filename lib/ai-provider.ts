@@ -36,9 +36,9 @@ export function getProviderConfig(
         apiKey: process.env.MINIMAX_API_KEY || "",
         baseUrl:
           process.env.MINIMAX_BASE_URL || "https://api.minimax.io/v1",
-        // Defaults to the current MiniMax-M3 model. Set MINIMAX_MODEL to
-        // select another model (e.g. the previous MiniMax-M2.7).
-        model: process.env.MINIMAX_MODEL || "MiniMax-M3",
+        // Defaults to MiniMax-M3.1-Flash. Set MINIMAX_MODEL to MiniMax-M3
+        // or keep an explicit custom or legacy model override.
+        model: process.env.MINIMAX_MODEL || "MiniMax-M3.1-Flash",
       };
 
     case "siray":

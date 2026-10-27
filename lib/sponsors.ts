@@ -6,11 +6,23 @@ export type Sponsor = {
     name: string;
     url: string;
     logo?: string;       // white/transparent logo in /public, shown on dark surfaces
+    iconOnly?: boolean;  // logo is a mark without the name, so the name is shown beside it
+    banner?: string;     // sponsor-supplied banner, shown whole in the sponsor band instead of the logo
+    blurb?: string;      // one line for the floating banner on the landing page
     tier?: SponsorTierId;
     period?: string;     // e.g. "2026"
 };
 
 export type SponsorTierId = 'backer' | 'supporter' | 'company' | 'partner';
+
+// One border colour per tier, shared by the tier cards on /sponsor and the sponsor band.
+export const TIER_COLOR: Record<SponsorTierId, string> = {
+    backer: 'oklch(0.72 0.11 50)',
+    supporter: 'oklch(0.72 0.12 250)',
+    company: 'oklch(0.8 0.13 176)',
+    partner: 'oklch(0.72 0.14 300)',
+};
+export const tierBorder = (tier: SponsorTierId) => `color-mix(in oklch, ${TIER_COLOR[tier]} 55%, transparent)`;
 
 // Registered accounts on the hosted app (13K+ as of September 2026). Update from the user collection count.
 export const REGISTERED_USERS = '13,000+';
@@ -49,10 +61,21 @@ export const SPONSOR_TIERS: {
     },
 ];
 
-export const ACTIVE_SPONSORS: Sponsor[] = [];
+export const ACTIVE_SPONSORS: Sponsor[] = [
+    { name: 'Orbit', url: 'https://github.com/diip3sh/orbit', logo: '/assets/icons/orbit.png', iconOnly: true, tier: 'partner', blurb: 'Free, open-source screen recorder and video editor for macOS.' },
+    { name: 'RapidProxy', url: 'https://www.rapidproxy.io/?ref=openstock', logo: '/assets/icons/rapidproxy.png', banner: '/assets/images/rapidproxy-banner.png', tier: 'company' },
+];
 
 export const PREVIOUS_SPONSORS: Sponsor[] = [
-    { name: 'Siray.ai', url: 'https://www.siray.ai', logo: '/assets/icons/siray.svg', period: '2026' },
+    { name: 'Atlas Cloud', url: 'https://www.atlascloud.ai', logo: '/assets/icons/atlascloud.svg', tier: 'partner' },
+    { name: 'Siray.ai', url: 'https://www.siray.ai', logo: '/assets/icons/siray.svg', tier: 'partner', period: '2026' },
+];
+
+// People who sponsored publicly on GitHub (private sponsors stay anonymous). Avatars come from GitHub.
+export const SUPPORTERS: { name: string; login: string }[] = [
+    { name: 'Jonas Gunklach', login: 'jonasgunklach' },
+    { name: 'Dan Sellars', login: 'xlab-nyc' },
+    { name: 'Mangolito', login: 'Mangolito' },
 ];
 
 // Counted from GitHub Sponsors; individual sponsors stay anonymous unless they sponsor publicly.

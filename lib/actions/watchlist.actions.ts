@@ -5,20 +5,32 @@ import { Watchlist } from '@/database/models/watchlist.model';
 import { revalidatePath } from 'next/cache';
 import { requireUserId } from '@/lib/better-auth/auth';
 
+// Tickers as Finnhub writes them (AAPL, BRK.B, RELIANCE.NS, M&M.NS, 0700.HK, BINANCE:BTCUSDT). Server actions take
+// untrusted input, and every symbol here becomes Finnhub calls on /watchlist and in the news digest.
+const SYMBOL_PATTERN = /^[A-Z0-9][A-Z0-9.&:-]{0,24}$/;
+const MAX_WATCHLIST = 50;
+
 // -- CRUD Operations --
 
 export async function addToWatchlist(symbol: string, company: string) {
     const userId = await requireUserId();
+    const ticker = String(symbol ?? '').trim().toUpperCase();
+    if (!SYMBOL_PATTERN.test(ticker)) throw new Error('Invalid symbol');
+    const name = String(company ?? '').trim().slice(0, 120);
     try {
         await connectToDatabase();
 
+        if (!(await Watchlist.exists({ userId, symbol: ticker })) && (await Watchlist.countDocuments({ userId })) >= MAX_WATCHLIST) {
+            return { error: `Your watchlist is full (${MAX_WATCHLIST} stocks). Remove one to add another.` };
+        }
+
         // Upsert to avoid duplicates/errors if it already exists
         const newItem = await Watchlist.findOneAndUpdate(
-            { userId, symbol: symbol.toUpperCase() },
+            { userId, symbol: ticker },
             {
                 userId,
-                symbol: symbol.toUpperCase(),
-                company,
+                symbol: ticker,
+                company: name,
                 addedAt: new Date()
             },
             { upsert: true, new: true }

@@ -13,10 +13,12 @@ vi.mock('@/lib/market-data', () => ({ get alertsEnabled() { return flags.alertsE
 
 const findOneAndDelete = vi.fn();
 const create = vi.fn();
+const countDocuments = vi.fn().mockResolvedValue(0);
 vi.mock('@/database/models/alert.model', () => ({
     Alert: {
         findOneAndDelete: (...args: unknown[]) => findOneAndDelete(...args),
         create: (...args: unknown[]) => create(...args),
+        countDocuments: (...args: unknown[]) => countDocuments(...args),
     },
 }));
 
@@ -28,6 +30,13 @@ describe('alert actions are scoped to the session user', () => {
         requireUserId.mockResolvedValue('user-123');
         findOneAndDelete.mockResolvedValue({ _id: 'alert-1', userId: 'user-123' });
         create.mockImplementation(async (doc: unknown) => doc);
+    });
+
+    it('caps active alerts per user, counting only that user’s', async () => {
+        countDocuments.mockResolvedValueOnce(50);
+        await expect(createAlert({ symbol: 'AAPL', targetPrice: 200, condition: 'ABOVE' })).rejects.toThrow('up to 50 active alerts');
+        expect(countDocuments).toHaveBeenCalledWith({ userId: 'user-123', active: true });
+        expect(create).not.toHaveBeenCalled();
     });
 
     it('deletes the user’s own alert', async () => {

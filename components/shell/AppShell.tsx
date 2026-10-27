@@ -7,6 +7,7 @@ import TabBar from "@/components/shell/TabBar";
 import SearchCommand from "@/components/SearchCommand";
 import { cn } from "@/lib/utils";
 import type { Lang } from "@/lib/i18n";
+import UpdateBanner from "@/components/UpdateBanner";
 
 type AppShellProps = {
     user: User;
@@ -48,7 +49,10 @@ const AppShell = ({ user, watchlist, initialStocks, lang, children }: AppShellPr
                 <div className="app">
                     <TabBar onMenu={() => setNavOpen(true)} lang={lang} />
                     <main ref={workspaceRef} className={cn('workspace', pathname === '/dashboard' && 'is-first-tab')}>
-                        <div className="workspace-inner">{children}</div>
+                        <div className="workspace-inner">
+                            <UpdateBanner />
+                            {children}
+                        </div>
                     </main>
                 </div>
             </div>

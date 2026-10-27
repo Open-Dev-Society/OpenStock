@@ -2,15 +2,17 @@ services:
   openstock:
     build:
       context: .
-      extra_hosts:
-        - "mongodb:host-gateway"
+      args:
+        # Fixed into the app at build time; set it in .env, then rebuild
+        NEXT_PUBLIC_OPENSTOCK_DATA_MODE: ${NEXT_PUBLIC_OPENSTOCK_DATA_MODE:-cached}
     ports:
       - "3000:3000"
     env_file:
       - .env
     restart: unless-stopped
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
 
   mongodb:
     image: mongo:7
@@ -18,13 +20,14 @@ services:
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
-    ports:
-      - "27017:27017"
+      # Set MONGO_ROOT_PASSWORD in .env and use the same password in MONGODB_URI. Only read on the first start.
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-example}
+    # No published port: only the app reaches MongoDB, over the Compose network. To use mongosh or Compass from
+    # your machine, add  ports: ["127.0.0.1:27017:27017"]  (a bare "27017:27017" exposes it on every interface).
     volumes:
       - mongo-data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -11,6 +11,8 @@ import { alertsEnabled } from '@/lib/market-data';
 // the symbol ends up in alert emails.
 const SYMBOL_PATTERN = /^(BINANCE:[A-Z0-9]{2,20}|[A-Z0-9][A-Z0-9.-]{0,14})$/;
 const CONDITIONS = ['ABOVE', 'BELOW'];
+// The checker re-prices every active alert's symbol through Finnhub every 5 minutes
+const MAX_ACTIVE_ALERTS = 50;
 
 // Create a new alert. Server actions take untrusted input, so only validated fields are stored.
 export async function createAlert(params: {
@@ -30,8 +32,12 @@ export async function createAlert(params: {
     if (!hasFinnhubQuotes(symbol)) throw new Error('Alerts are available for US stocks and crypto');
     if (!Number.isFinite(targetPrice) || targetPrice <= 0) throw new Error('Target price must be a positive number');
 
+    await connectToDatabase();
+    if (await Alert.countDocuments({ userId, active: true }) >= MAX_ACTIVE_ALERTS) {
+        throw new Error(`You can have up to ${MAX_ACTIVE_ALERTS} active alerts`);
+    }
+
     try {
-        await connectToDatabase();
         // expiresAt and triggered come from the schema defaults, never from the caller
         const newAlert = await Alert.create({ userId, symbol, targetPrice, condition, active: true });
         revalidatePath('/watchlist');

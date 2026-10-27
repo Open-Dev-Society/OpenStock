@@ -823,3 +823,33 @@
     background: var(--up);
     box-shadow: 0 0 0 3px oklch(0.70 0.164 150 / 0.18);
 }
+
+/* Wall of love: rows drift sideways forever. Each row renders its items 4x, so -50% moves exactly two copies. */
+@keyframes marquee { to { transform: translateX(-50%); } }
+.marquee { display: flex; flex: none; width: max-content; animation: marquee 60s linear infinite; }
+.marquee.is-reverse { animation-direction: reverse; }
+.marquee:hover { animation-play-state: paused; }
+.marquee-mask { mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+@media (prefers-reduced-motion: reduce) {
+    .marquee { width: auto; margin-inline: auto; padding-inline: 20px; }
+    .marquee > div:first-child { flex-wrap: wrap; justify-content: center; row-gap: 12px; }
+    .marquee > [aria-hidden], .marquee-mask.is-extra { display: none; }
+    .marquee-mask { mask-image: none; }
+}
+
+/* X posts (react-tweet) in the site palette */
+.love-wall .react-tweet-theme {
+    --tweet-container-margin: 0;
+    --tweet-font-family: inherit;
+    --tweet-font-color: var(--text);
+    --tweet-font-color-secondary: var(--faint);
+    --tweet-bg-color: var(--card);
+    --tweet-bg-color-hover: var(--card);
+    --tweet-quoted-bg-color-hover: var(--hover);
+    --tweet-border: none;
+    --tweet-color-blue-secondary: var(--brand-ink);
+    --tweet-color-blue-secondary-hover: var(--brand-soft);
+    --tweet-body-font-size: 15px;
+    --tweet-body-line-height: 1.5;
+    max-width: none;
+}

@@ -2,7 +2,7 @@ import { Check, Cloud, HandCoins, MessageCircle, Minus, Users } from "lucide-rea
 import IconCard from "@/components/marketing/IconCard";
 import { getRepoStats, formatCount } from "@/lib/github";
 import { DISCORD_URL, sponsorCheckoutUrl } from "@/lib/constants";
-import { ACTIVE_SPONSORS, FUNDING_USES, REGISTERED_USERS, SPONSOR_CONTACT_EMAIL, SPONSOR_GOAL, SPONSOR_RECIPIENT, SPONSOR_TIERS, type SponsorTierId } from "@/lib/sponsors";
+import { ACTIVE_SPONSORS, FUNDING_USES, REGISTERED_USERS, SPONSOR_CONTACT_EMAIL, SPONSOR_GOAL, SPONSOR_RECIPIENT, SPONSOR_TIERS, tierBorder, type SponsorTierId } from "@/lib/sponsors";
 import { cn } from "@/lib/utils";
 
 export const metadata = {
@@ -83,7 +83,11 @@ export default async function SponsorPage() {
                         const filled = ACTIVE_SPONSORS.filter((s) => s.tier === tier.id).length;
                         const taken = tier.slots ? filled >= tier.slots : false;
                         return (
-                            <div key={tier.id} className={cn('hatch', tier.featured && 'shadow-[0_0_0_1px_oklch(0.8_0.13_176/0.45),0_6px_18px_oklch(0_0_0/0.22)]')}>
+                            <div
+                                key={tier.id}
+                                className={cn('hatch', tier.featured && 'shadow-[0_6px_18px_oklch(0_0_0/0.22)]')}
+                                style={{ outline: `1px solid ${tierBorder(tier.id)}` }}
+                            >
                                 <div className="card flex h-full flex-col gap-4 p-5">
                                     <div className="flex items-center justify-between gap-2">
                                         <h3 className="text-[17px] font-bold tracking-[-0.02em]">{tier.name}</h3>

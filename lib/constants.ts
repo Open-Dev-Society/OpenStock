@@ -135,7 +135,7 @@ export const CANDLE_CHART_WIDGET_CONFIG = (symbol: string) => ({
     allow_symbol_change: false,
     calendar: false,
     details: true,
-    hide_side_toolbar: true,
+    hide_side_toolbar: false, // drawing tools (trend lines, Fibonacci, text); drawings last until reload
     hide_top_toolbar: false,
     hide_legend: false,
     hide_volume: false,

@@ -108,14 +108,9 @@ export const sendWeeklyNewsSummary = inngest.createFunction(
                 console.log(`📋 Target Audience: Found ${subData.total_subscribers} total subscribers in Kit.`);
                 console.log(`✅ Confirmed (Active) Subscribers receiving email: ${confirmedCount}`);
 
-                // Log names/emails for the user to see in Inngest dashboard
-                if (subscriberList.length > 0) {
-                    console.log('--- Recipient List ---');
-                    subscriberList.forEach((s) => {
-                        console.log(`${s.email_address} (${s.first_name || 'No Name'}) - Status: ${s.state}`);
-                    });
-                    console.log('----------------------');
-                }
+                // Recipient emails are deliberately NOT logged (privacy fix
+                // from origin/main): the console stays free of subscriber
+                // addresses.
             } catch (e) {
                 console.warn("Could not list subscribers for logging:", e);
             }
@@ -379,12 +374,11 @@ export const checkInactiveUsers = inngest.createFunction(
 
         // Step 2: Send Emails
         const results = await step.run('send-reengagement-emails', async () => {
-            const { kit } = await import("@/lib/kit");
             const { connectToDatabase } = await import("@/database/mongoose");
             const mongoose = await connectToDatabase();
             const db = mongoose.connection.db;
 
-            const sent: string[] = [];
+            const sent = 0; // nothing is sent until a 1:1 sender exists
 
             for (const user of inactiveUsers) {
                 if (!user.email) continue;
@@ -483,23 +477,12 @@ export const checkInactiveUsers = inngest.createFunction(
                     // 1. Add tag "Inactive" to user.
                     // 2. (This is too slow for loop).
 
-                    // CHECK: Is this the test user?
-                    if (user.email === '11aravipratapsingh@gmail.com') {
-                        console.log(`🚀 Sending REAL Re-engagement Email to TEST USER: ${user.email}`);
-                        await kit.sendBroadcast(subject, content);
-                    } else {
-                        console.log(`[Re-engagement Mock] Would send to ${user.email}`);
-                    }
-
-                    // Update DB to avoid loop
-                    if (db) {
-                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                        // @ts-ignore
-                        await db.collection('user').updateOne({ _id: new mongoose.Types.ObjectId(user.id) }, { $set: { lastReengagementSentAt: new Date() } });
-                    }
-                    sent.push(user.email);
+                    // Not sent. kit.sendBroadcast mails the whole list, so a "test user" send here went to every
+                    // subscriber. Wire up a 1:1 send (Kit tag + sequence, or nodemailer) before enabling this, and
+                    // only then set lastReengagementSentAt and count it: marking unsent users would skip them for 30 days.
+                    void subject; void content; void db;
                 } catch (e) {
-                    console.error("Failed to process user", user.email, e);
+                    console.error("Failed to process user", user.id, e);
                 }
             }
             return sent;

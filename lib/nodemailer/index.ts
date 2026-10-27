@@ -5,7 +5,7 @@ import {
     STOCK_ALERT_UPPER_EMAIL_TEMPLATE,
     STOCK_ALERT_LOWER_EMAIL_TEMPLATE,
 } from "@/lib/nodemailer/templates";
-import { escapeHtml, formatPrice } from "@/lib/utils";
+import { escapeHtml, formatPrice, sanitizeEmailIntro } from "@/lib/utils";
 
 type EmailSendResult =
     | { status: 'skipped' }
@@ -48,9 +48,10 @@ export const sendWelcomeEmail = async ({ email, name, intro }: WelcomeEmailData)
             return { status: 'skipped' } satisfies EmailSendResult;
         }
 
+        // Function replacements: a string would expand $& or $' inside the name
         const htmlTemplate = WELCOME_EMAIL_TEMPLATE
-            .replace('{{name}}', name)
-            .replace('{{intro}}', intro);
+            .replace('{{name}}', () => escapeHtml(name))
+            .replace('{{intro}}', () => sanitizeEmailIntro(intro));
 
         const mailOptions = {
             from: `"Openstock" <${process.env.NODEMAILER_EMAIL}>`,

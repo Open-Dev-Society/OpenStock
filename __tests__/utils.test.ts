@@ -62,6 +62,12 @@ describe('formatSymbolForTradingView', () => {
         expect(formatSymbolForTradingView('RELIANCE.BO')).toBe('BSE:RELIANCE');
     });
 
+    it('spells Indian tickers with - or & the way TradingView does (#113)', () => {
+        expect(formatSymbolForTradingView('BAJAJ-AUTO.NS')).toBe('BSE:BAJAJ_AUTO');
+        expect(formatSymbolForTradingView('M&M.NS')).toBe('BSE:M_M');
+        expect(formatSymbolForTradingView('M&MFIN.BO')).toBe('BSE:M_MFIN');
+    });
+
     it('maps Australia (.AX) to ASX prefix', () => {
         expect(formatSymbolForTradingView('BHP.AX')).toBe('ASX:BHP');
     });
@@ -73,6 +79,7 @@ describe('formatSymbolForTradingView', () => {
     // European exchanges
     it('maps London (.L) to LSE prefix', () => {
         expect(formatSymbolForTradingView('SHEL.L')).toBe('LSE:SHEL');
+        expect(formatSymbolForTradingView('BT-A.L')).toBe('LSE:BT.A');
     });
 
     it('maps Germany/Xetra (.DE) to XETR prefix', () => {
@@ -100,12 +107,14 @@ describe('formatSymbolForTradingView', () => {
     });
 
     it('maps Stockholm (.ST) to OMXSTO prefix', () => {
-        expect(formatSymbolForTradingView('ERIC-B.ST')).toBe('OMXSTO:ERIC-B');
+        expect(formatSymbolForTradingView('ERIC-B.ST')).toBe('OMXSTO:ERIC_B');
+        expect(formatSymbolForTradingView('NOVO-B.CO')).toBe('OMXCOP:NOVO_B');
     });
 
     // Americas
     it('maps Toronto (.TO) to TSX prefix', () => {
         expect(formatSymbolForTradingView('RY.TO')).toBe('TSX:RY');
+        expect(formatSymbolForTradingView('RCI-B.TO')).toBe('TSX:RCI-B');
     });
 
     it('maps Brazil (.SA) to BMFBOVESPA prefix', () => {

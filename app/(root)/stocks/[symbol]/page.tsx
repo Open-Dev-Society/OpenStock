@@ -3,14 +3,15 @@ import { CandlestickChart } from "lucide-react";
 import TradingViewWidget from "@/components/TradingViewWidget";
 import StockHeader, { StockHeaderSkeleton } from "@/components/stocks/StockHeader";
 import StockSentimentCard from "@/components/stocks/StockSentimentCard";
+import StockChart from "@/components/stocks/StockChart";
 import Panel from "@/components/Panel";
 import {
-    CANDLE_CHART_WIDGET_CONFIG,
     TECHNICAL_ANALYSIS_WIDGET_CONFIG,
     COMPANY_PROFILE_WIDGET_CONFIG,
     COMPANY_FINANCIALS_WIDGET_CONFIG,
 } from "@/lib/constants";
 import { getStockSentimentInsights } from '@/lib/actions/adanos.actions';
+import { getStockMetrics } from '@/lib/actions/finnhub.actions';
 import { formatSymbolForTradingView, isChartEmbeddable, tradingViewSymbolUrl } from '@/lib/utils';
 import { isCandleRangeId, isTadawulSymbol } from '@/lib/yahoo';
 import TadawulChart from "@/components/stocks/TadawulChart";
@@ -30,6 +31,17 @@ async function Sentiment({ symbol }: { symbol: string }) {
     return (
         <Panel title={tx(lang, 'stock.sentiment')} sub={tx(lang, 'stock.sentimentSub')}>
             <StockSentimentCard insight={insight} />
+        </Panel>
+    );
+}
+
+async function DividendYield({ symbol }: { symbol: string }) {
+    const dividendYield = await getStockMetrics(symbol);
+    return (
+        <Panel title="Dividend Yield">
+            <p className="text-2xl font-semibold text-white">
+                {dividendYield !== null ? `${dividendYield.toFixed(2)}%` : "—"}
+            </p>
         </Panel>
     );
 }
@@ -72,14 +84,7 @@ export default async function StockDetails({ params, searchParams }: StockDetail
                             />
                         </Panel>
                     ) : isChartEmbeddable(tvSymbol) ? (
-                        <Panel title={tx(lang, 'stock.chart')} sub={tx(lang, 'stock.chartLive')}>
-                            <TradingViewWidget
-                                scriptUrl={`${scriptUrl}advanced-chart.js`}
-                                config={CANDLE_CHART_WIDGET_CONFIG(tvSymbol)}
-                                height={560}
-                                allowExpand
-                            />
-                        </Panel>
+                        <StockChart tvSymbol={tvSymbol} scriptUrl={`${scriptUrl}advanced-chart.js`} />
                     ) : (
                         // TradingView refuses this exchange's chart in embeds; say so instead of showing its error
                         <Panel title={tx(lang, 'stock.chart')} sub="Only on TradingView for this exchange">
@@ -122,6 +127,9 @@ export default async function StockDetails({ params, searchParams }: StockDetail
                             height={400}
                         />
                     </Panel>
+                    <Suspense fallback={null}>
+                        <DividendYield symbol={symbol} />
+                    </Suspense>
                     <Suspense fallback={null}>
                         <Sentiment symbol={symbol} />
                     </Suspense>

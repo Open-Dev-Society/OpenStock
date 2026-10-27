@@ -12,7 +12,10 @@ import { getSession } from '@/lib/better-auth/auth';
 
 const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
 // Key pool: each free key has its own 60 req/min, so N keys = N x the quota. Rotated per request.
-const FINNHUB_KEYS = (process.env.FINNHUB_API_KEYS || process.env.NEXT_PUBLIC_FINNHUB_API_KEY || process.env.FINNHUB_API_KEY || '')
+// Read through an alias: `next build` freezes a literal process.env.NEXT_PUBLIC_* into the bundle, so Docker and
+// Railway images (built without secrets) would ignore a NEXT_PUBLIC_FINNHUB_API_KEY set at runtime.
+const env = process.env;
+const FINNHUB_KEYS = (env.FINNHUB_API_KEYS || env.NEXT_PUBLIC_FINNHUB_API_KEY || env.FINNHUB_API_KEY || '')
     .split(',')
     .map((k) => k.trim())
     .filter(Boolean);
@@ -37,6 +40,12 @@ type FinnhubQuote = {
     o?: number;  // open
     pc?: number; // previous close
     t?: number;  // unix time of the last trade
+};
+
+type FinnhubStockMetrics = {
+    metric?: {
+        dividendYieldIndicatedAnnual?: number | null;
+    };
 };
 
 type FinnhubCompanyProfile = {
@@ -192,6 +201,25 @@ export async function getCompanyProfile(symbol: string) {
         return await fetchJSON<FinnhubCompanyProfile>(url, 86400);
     } catch (e) {
         logFailure('profile', symbol, e);
+        return null;
+    }
+}
+
+export async function getStockMetrics(symbol: string): Promise<number | null> {
+    if (FINNHUB_KEYS.length === 0) {
+        console.error('FINNHUB API key is not configured');
+        return null;
+    }
+
+    try {
+        const url = `${FINNHUB_BASE_URL}/stock/metric?symbol=${encodeURIComponent(symbol)}&metric=all`;
+        const data = await fetchJSON<FinnhubStockMetrics>(url, 3600);
+        const dividendYield = data?.metric?.dividendYieldIndicatedAnnual;
+        return typeof dividendYield === 'number' && Number.isFinite(dividendYield)
+            ? dividendYield
+            : null;
+    } catch (error) {
+        logFailure('stock metrics', symbol, error);
         return null;
     }
 }

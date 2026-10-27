@@ -88,7 +88,7 @@ export default function ArchitecturePage() {
 
             <section className="mx-auto mt-24 grid max-w-[1200px] items-start gap-10 px-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                 <div>
-                    <SectionHead kicker="AI" title="Emails that don’t go down with a provider." sub="Welcome emails and news summaries are written by Gemini 2.5 Flash-Lite. If it fails, the request is retried on MiniMax-M3, or any OpenAI-compatible provider you configure." />
+                    <SectionHead kicker="AI" title="Emails that don’t go down with a provider." sub="Welcome emails and news summaries are written by Gemini 2.5 Flash-Lite. If it fails, the request is retried on MiniMax-M3.1-Flash by default. Set MINIMAX_MODEL to MiniMax-M3 or keep your configured model override." />
                 </div>
                 <div className="hatch">
                     <ol className="card flex flex-col gap-1 p-4">

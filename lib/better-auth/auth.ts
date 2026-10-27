@@ -30,6 +30,8 @@ const createAuth = (database: MongoDb) => betterAuth({
             minPasswordLength: 8,
             maxPasswordLength: 128,
             autoSignIn: true,
+            // A reset is how a victim takes an account back: sign out every other session (off by default)
+            revokeSessionsOnPasswordReset: true,
             sendResetPassword: async ({ user, url }) => {
                 void sendPasswordResetEmail({
                     email: user.email,
@@ -47,8 +49,8 @@ const createAuth = (database: MongoDb) => betterAuth({
         },
         // No account linking. Sign-up doesn't verify emails, so linking a Google/GitHub identity to an
         // existing account with the same email would let someone pre-register a victim's address and
-        // later capture their social sign-in. In Better Auth 1.3 this switch also blocks explicit
-        // linking; revisit (email verification or a newer Better Auth) when social sign-in ships.
+        // later capture their social sign-in. This switch also blocks explicit linking (still true in 1.7);
+        // when social sign-in ships, `disableImplicitLinking: true` keeps explicit linking and drops only the email match.
         account: {
             accountLinking: { enabled: false },
         },
@@ -73,6 +75,12 @@ let authInstance: ReturnType<typeof createAuth> | null = null;
 export const getAuth = async () => {
     if (authInstance) return authInstance;
 
+    // Without a secret better-auth falls back to a public default anyone could forge sessions with (1.7 refuses it in
+    // production too); fail here first, before connecting. Checked on first use, not at import, so `next build` needs no secrets.
+    if (process.env.NODE_ENV === 'production' && !process.env.BETTER_AUTH_SECRET && !process.env.AUTH_SECRET) {
+        throw new Error('BETTER_AUTH_SECRET must be set in production');
+    }
+
     const mongoose = await connectToDatabase();
     const database = mongoose.connection.db;
     if (!database) {
@@ -83,7 +91,19 @@ export const getAuth = async () => {
     return authInstance;
 }
 
-export const auth = await getAuth();
+type Auth = ReturnType<typeof createAuth>;
+
+// Connects on first use, not at import: `next build` imports this module while collecting page data, and a
+// top-level `await getAuth()` made every build (Docker, Railway, CI) need a reachable MongoDB.
+export const auth = {
+    api: new Proxy({} as Auth['api'], {
+        get: (_, method) => async (...args: unknown[]) => {
+            const { api } = await getAuth();
+            return (api[method as keyof Auth['api']] as (...a: unknown[]) => unknown)(...args);
+        },
+    }),
+    handler: async (request: Request) => (await getAuth()).handler(request),
+};
 
 // One session lookup per request, shared by layouts, pages and actions
 export const getSession = cache(async () => auth.api.getSession({ headers: await headers() }));
