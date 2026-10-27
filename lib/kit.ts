@@ -1,5 +1,3 @@
-const KIT_API_URL = 'https://api.kit.com/v4';
-
 interface KitConfig {
     apiKey: string;
     apiSecret: string;
@@ -88,9 +86,9 @@ export const kit = {
                 throw new Error(JSON.stringify(error));
             }
             return await response.json();
-        } catch (error: any) {
+        } catch (error) {
             // Double check if error was thrown above or network error
-            if (error.message && error.message.includes('saved as a draft')) {
+            if (error instanceof Error && error.message.includes('saved as a draft')) {
                 return { success: true, status: 'draft', message: error.message };
             }
             console.error("Kit API Error (sendBroadcast):", error);
@@ -102,7 +100,7 @@ export const kit = {
      * List subscribers from Kit (for verification/logging)
      */
     listSubscribers: async () => {
-        const { apiKey, apiSecret } = getConfig();
+        const { apiSecret } = getConfig();
         try {
             const response = await fetch(`https://api.convertkit.com/v3/subscribers?api_secret=${apiSecret}`, {
                 method: 'GET',

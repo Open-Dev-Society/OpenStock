@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-require-imports -- run directly with node as CommonJS */
 const dns = require('dns');
 const { promisify } = require('util');
 
@@ -30,7 +30,7 @@ async function getStandardConnectionString() {
             // Atlas TXT often looks like: "authSource=admin&replicaSet=atlas-..."
             const params = new URLSearchParams(txts[0].join(''));
             replicaSet = params.get('replicaSet');
-        } catch (e) {
+        } catch {
             console.warn("Could not fetch TXT record for options, guessing/omitting...");
         }
 

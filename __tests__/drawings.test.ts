@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PATTERNS, cycleIndices, drawingColor, fibLevelPrices, gannGuides, normalizeTimeKey, patternById } from '@/lib/drawings';
+import { PATTERNS, cycleIndices, drawingColor, fibLevelPrices, gannGuides, moveTextNote, normalizeTimeKey, patternById, TEXT_MAX, updateTextNoteText, type TextNote } from '@/lib/drawings';
 
 describe('fibLevelPrices', () => {
     it('spans 0% at the extreme to 100% at the other side', () => {
@@ -93,5 +93,54 @@ describe('drawingColor', () => {
         expect(drawingColor({ tool: 'fibo' })).toBe('#EAB308');
         expect(drawingColor({ tool: 'gann' })).toBe('#7E57C2');
         expect(drawingColor({ tool: 'trend', color: 'red' })).toBe('#2962FF');
+    });
+});
+
+describe('moveTextNote', () => {
+    const notes: TextNote[] = [
+        { id: 'a', time: '2026-10-01', price: 100, text: 'first' },
+        { id: 'b', time: '2026-10-02', price: 200, text: 'second' },
+    ];
+
+    it('moves only the targeted note to the new anchor', () => {
+        const moved = moveTextNote(notes, 'a', '2026-10-05', 123.5);
+        expect(moved[0]).toEqual({ id: 'a', time: '2026-10-05', price: 123.5, text: 'first' });
+        expect(moved[1]).toBe(notes[1]);
+    });
+
+    it('accepts numeric times like intraday charts use', () => {
+        const moved = moveTextNote(notes, 'b', 1793000000, 90);
+        expect(moved[1].time).toBe(1793000000);
+        expect(moved[1].price).toBe(90);
+    });
+
+    it('leaves the list untouched for unknown ids or bad anchors', () => {
+        expect(moveTextNote(notes, 'zzz', '2026-10-05', 1)).toBe(notes);
+        expect(moveTextNote(notes, 'a', '2026-10-05', NaN)).toBe(notes);
+        expect(moveTextNote(notes, 'a', '2026-10-05', Infinity)).toBe(notes);
+    });
+});
+
+describe('updateTextNoteText', () => {
+    const notes: TextNote[] = [
+        { id: 'a', time: '2026-10-01', price: 100, text: 'old' },
+        { id: 'b', time: '2026-10-02', price: 200, text: 'keep' },
+    ];
+
+    it('replaces only the targeted note text, trimmed', () => {
+        const upd = updateTextNoteText(notes, 'a', '  new   text  ');
+        expect(upd[0].text).toBe('new text');
+        expect(upd[1]).toBe(notes[1]);
+    });
+
+    it('applies the same gate as makeTextNote', () => {
+        expect(updateTextNoteText(notes, 'a', '')).toBe(notes);
+        expect(updateTextNoteText(notes, 'a', '   ')).toBe(notes);
+        expect(updateTextNoteText(notes, 'a', 'x'.repeat(TEXT_MAX + 1))).toBe(notes);
+        expect(updateTextNoteText(notes, 'a', 42)).toBe(notes);
+    });
+
+    it('does nothing for unknown ids', () => {
+        expect(updateTextNoteText(notes, 'zzz', 'text')).toBe(notes);
     });
 });

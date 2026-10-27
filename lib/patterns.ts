@@ -57,8 +57,6 @@ export const PATTERN_META: Record<PatternKind, { label: string; labelAr: string;
 };
 
 const ratio = (leg: number, full: number): number => (full === 0 ? Infinity : leg / full);
-const near = (a: number, t: number, tol: number): boolean => Math.abs(a - t) <= tol;
-const slopePct = (a: PatternPivot, b: PatternPivot): number => (b.price - a.price) / a.price;
 
 // --- Reversal patterns: defined on 5 alternating pivots (H,L,H,L,H or mirror) ---
 

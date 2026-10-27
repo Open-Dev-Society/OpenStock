@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import ChangePill from '@/components/ChangePill';
 import { getYahooDailyQuotes, getTadawulCandles } from '@/lib/actions/yahoo.actions';
 import type { YahooDailyQuote } from '@/lib/yahoo';
 import { getMarket, isMarketOpen } from '@/lib/markets';

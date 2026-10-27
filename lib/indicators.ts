@@ -542,7 +542,7 @@ export type ElliottMarker<TimeType> = {
     position: 'aboveBar' | 'belowBar' | 'atPriceTop' | 'atPriceBottom';
     price?: number;
     color: string;
-    shape: 'circle';
+    shape: 'circle' | 'square';
     size: number;
     text: string;
 };
@@ -552,11 +552,89 @@ export type ElliottMarker<TimeType> = {
 // library keys markers by time and drops the rest. Primaries win the draw;
 // an alternate count on an already-labelled bar is merged into that marker's
 // text ("2 or B"), mirroring how analysts write "(ii) or (B)".
+// Professional nested count, as professional charting packages draw it: one
+// window read at several levels AT ONCE, with the finest structure drawn
+// largest.
+//
+// The engine above descends INTO a labelled leg and numbers what validates
+// inside it. That produces a flat list per degree, which is not how an
+// analyst reads a chart: the same swing is simultaneously the end of a
+// correction, a wave of a higher impulse, and one leg of a finer one.
+//
+// This builds that overlay from independent scans of the SAME window, each at
+// its own sensitivity, then merges them under the engine's own rules:
+//   - a bar already claimed by a higher degree keeps that label
+//   - no two structures may claim the same pivots
+//   - every structure is a real count from the same validators
+//
+// The levels are, finest last: (1)..(5) / (a)..(c), then i..v / a..c,
+// then 1..5 / A..C, then I..V / (A)..(C).
+export type NestedLevel = {
+    degree: 'major' | 'minor' | 'sub' | 'deep';
+    labels: WaveLabel[];
+};
+
+export function elliottNestedLevels(
+    highs: number[],
+    lows: number[],
+    closes: number[],
+    devPct?: number,
+): NestedLevel[] {
+    const dev = devPct ?? autoDevPct(highs, lows, closes);
+    const levels: NestedLevel[] = [];
+
+    // Level 1 — the working zigzag, numbered as a minor degree.
+    const pivots = zigzag(highs, lows, closes, dev);
+    const { labels: minor, windows } = scanDegreeEx(pivots, 'minor');
+    if (minor.length) levels.push({ degree: 'minor', labels: minor });
+
+    // Level 2 — a coarser zigzag (~2.75x), numbered as a major degree.
+    const coarseDev = Math.min(8, dev * 2.75);
+    if (coarseDev > dev) {
+        const coarse = zigzag(highs, lows, closes, coarseDev);
+        if (coarse.length >= 6) {
+            const major = scanDegree(coarse, 'major');
+            if (major.length) levels.push({ degree: 'major', labels: major });
+        }
+    }
+
+    // Level 3 — one notch finer than the working zigzag.
+    const fineDev = dev / 2.75;
+    if (fineDev > 0) {
+        const fine = zigzag(highs, lows, closes, fineDev);
+        if (fine.length >= 4) {
+            const sub = scanDegree(fine, 'minor').map((l) => ({
+                ...l,
+                label: SUB_GLYPH[l.label] ?? l.label,
+                degree: 'sub' as const,
+            }));
+            if (sub.length) levels.push({ degree: 'sub', labels: sub });
+        }
+    }
+
+    // Level 4 — the finest level. It must come from the engine's own
+    // descendLevel, NOT from an independent scan: scanning a very fine
+    // zigzag on its own finds far more alternating corrections than complete
+    // impulses, so the result reads as broken fragments ("(1) (a) (2) (b)")
+    // rather than a count. descendLevel only emits a structure it validated
+    // whole, and it descends with a strictly tighter sensitivity.
+    // The nested levels deliberately SHARE pivots — that is the point of a
+    // nested count (one swing is the end of a correction AND a wave of the
+    // next impulse). So the finest level is scanned against a fresh used-bar
+    // set; the merge that resolves the overlap happens at draw time.
+    const deepUsed = new Set<number>();
+    const deep = descendLevel(highs, lows, closes, pivots, windows, dev, deepUsed, 'deep', DEEP_GLYPH, 1, 0);
+    if (deep.length) levels.push({ degree: 'deep', labels: deep });
+
+    return levels;
+}
+
 export function elliottMarkers(
     labels: WaveLabel[],
     times: (number | string)[],
     color: string,
     correctiveColor: string,
+    degreeColors?: { sub?: string; major?: string },
 ): ElliottMarker<number | string>[] {
     const corrective = new Set(['A', 'B', 'C', '(A)', '(B)', '(C)', 'a', 'b', 'c']);
     const seen = new Set<number | string>();
@@ -565,7 +643,13 @@ export function elliottMarkers(
     for (const l of labels) {
         const time = times[l.index];
         if (time == null) continue;
-        const c = corrective.has(l.label) ? correctiveColor : color;
+        // each degree keeps its own colour so the inner count reads as a second
+        // layer on the same chart (major = amber, sub = pink, minor = blue/orange)
+        const c = l.degree === 'sub'
+            ? (degreeColors?.sub ?? correctiveColor)
+            : l.degree === 'major'
+                ? (degreeColors?.major ?? color)
+                : corrective.has(l.label) ? correctiveColor : color;
         const existing = byTime.get(time);
         if (existing !== undefined) {
             if (l.alternate && !existing.text.split(' or ').includes(l.label)) {
@@ -577,11 +661,11 @@ export function elliottMarkers(
         seen.add(time);
         let marker: ElliottMarker<number | string>;
         if (l.degree === 'major') {
-            marker = { time, position: l.position === 'aboveBar' ? 'aboveBar' : 'belowBar', color: c, shape: 'circle', size: 3, text: l.label };
+            marker = { time, position: l.position === 'aboveBar' ? 'aboveBar' : 'belowBar', color: c, shape: 'square', size: 3, text: l.label };
         } else if (l.degree === 'sub') {
-            marker = { time, position: l.position === 'aboveBar' ? 'atPriceTop' : 'atPriceBottom', price: l.price, color: c, shape: 'circle', size: 2, text: l.label };
+            marker = { time, position: l.position === 'aboveBar' ? 'atPriceTop' : 'atPriceBottom', price: l.price, color: c, shape: 'square', size: 2, text: l.label };
         } else {
-            marker = { time, position: l.position === 'aboveBar' ? 'atPriceTop' : 'atPriceBottom', price: l.price, color: c, shape: 'circle', size: 2, text: l.label };
+            marker = { time, position: l.position === 'aboveBar' ? 'atPriceTop' : 'atPriceBottom', price: l.price, color: c, shape: 'square', size: 2, text: l.label };
         }
         byTime.set(time, marker);
         out.push(marker);

@@ -2,7 +2,7 @@
 // A screen, not a prediction: these are setups matching momentum/oversold/
 // breakout criteria, not financial advice.
 
-import { adx, macd, rsi, sma, stochastic } from '@/lib/indicators';
+import { macd, rsi, sma, stochastic } from '@/lib/indicators';
 
 export type SetupSignal =
     | 'oversold' // RSI(14) < 30: washed-out bounce watch

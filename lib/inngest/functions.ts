@@ -1,10 +1,19 @@
 import { inngest } from "@/lib/inngest/client";
 import { NEWS_SUMMARY_EMAIL_PROMPT, PERSONALIZED_WELCOME_EMAIL_PROMPT } from "@/lib/inngest/prompts";
-import { sendNewsSummaryEmail, sendStockAlertEmail, sendWelcomeEmail } from "@/lib/nodemailer";
-import { getAllUsersForNewsEmail, getWatchlistSymbolsByEmail } from "@/lib/actions/user.actions";
-import { getNews } from "@/lib/actions/finnhub.actions";
-import { getFormattedTodayDate } from "@/lib/utils";
+import { sendStockAlertEmail, sendWelcomeEmail } from "@/lib/nodemailer";
 import { callAIProviderWithFallback } from "@/lib/ai-provider";
+
+// Shape of a Kit (ConvertKit) subscriber record as returned by listSubscribers().
+type KitSubscriber = { email_address: string; first_name?: string | null; state?: string };
+
+// Shape of an alert document as returned by Alert.find(...).lean().
+type LeanAlert = {
+    _id: unknown;
+    userId: string;
+    symbol: string;
+    targetPrice: number;
+    condition: 'ABOVE' | 'BELOW';
+};
 
 export const sendSignUpEmail = inngest.createFunction(
     { id: 'sign-up-email', triggers: [{ event: 'app/user.created' }] },
@@ -93,8 +102,8 @@ export const sendWeeklyNewsSummary = inngest.createFunction(
             // Fetch subscribers for verification log
             try {
                 const subData = await kit.listSubscribers();
-                const subscriberList = subData.subscribers || [];
-                const confirmedCount = subscriberList.filter((s: any) => s.state === 'active').length;
+                const subscriberList: KitSubscriber[] = subData.subscribers || [];
+                const confirmedCount = subscriberList.filter((s) => s.state === 'active').length;
 
                 console.log(`📋 Target Audience: Found ${subData.total_subscribers} total subscribers in Kit.`);
                 console.log(`✅ Confirmed (Active) Subscribers receiving email: ${confirmedCount}`);
@@ -102,7 +111,7 @@ export const sendWeeklyNewsSummary = inngest.createFunction(
                 // Log names/emails for the user to see in Inngest dashboard
                 if (subscriberList.length > 0) {
                     console.log('--- Recipient List ---');
-                    subscriberList.forEach((s: any) => {
+                    subscriberList.forEach((s) => {
                         console.log(`${s.email_address} (${s.first_name || 'No Name'}) - Status: ${s.state}`);
                     });
                     console.log('----------------------');
@@ -116,7 +125,6 @@ export const sendWeeklyNewsSummary = inngest.createFunction(
 
             // --- HTML EMAIL TEMPLATE ---
             // Using inline styles for compatibility. Accent Color: Teal (#20c997)
-            const logoUrl = "https://raw.githubusercontent.com/ravixalgorithm/OpenStock/main/public/assets/images/logo.png";
 
             const content = `
             <!DOCTYPE html>
@@ -216,11 +224,11 @@ export const checkStockAlerts = inngest.createFunction(
             await connectToDatabase();
             const now = new Date();
 
-            return await Alert.find({
+            return (await Alert.find({
                 active: true,
                 triggered: false,
                 expiresAt: { $gt: now }
-            }).lean();
+            }).lean()) as LeanAlert[];
         });
 
         if (!activeAlerts || activeAlerts.length === 0) {
@@ -228,7 +236,7 @@ export const checkStockAlerts = inngest.createFunction(
         }
 
         // Step 2: Group by symbol
-        const symbols = [...new Set(activeAlerts.map((a: any) => a.symbol))];
+        const symbols = [...new Set(activeAlerts.map((a) => a.symbol))];
 
         // Step 3: Fetch prices
         const prices = await step.run('fetch-prices', async () => {
@@ -250,10 +258,10 @@ export const checkStockAlerts = inngest.createFunction(
         });
 
         // Step 4: Check conditions
-        type TriggeredAlert = { alert: any; currentPrice: number };
+        type TriggeredAlert = { alert: LeanAlert; currentPrice: number };
         const triggeredAlerts: TriggeredAlert[] = [];
 
-        for (const alert of activeAlerts as any[]) {
+        for (const alert of activeAlerts) {
             const currentPrice = prices[alert.symbol];
             if (!currentPrice) continue;
 

@@ -169,7 +169,7 @@ describe('formatMarketCapValue', () => {
 describe('formatChangePercent', () => {
     it('returns empty string for undefined/null', () => {
         expect(formatChangePercent(undefined)).toBe('');
-        expect(formatChangePercent(null as any)).toBe('');
+        expect(formatChangePercent(null as unknown as number)).toBe('');
     });
 
     it('formats positive change with + sign', () => {

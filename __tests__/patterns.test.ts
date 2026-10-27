@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { detectPatterns, patternBarTime, PATTERN_META, PatternKind } from '@/lib/patterns';
-import { zigzag } from '@/lib/indicators';
 
 // Deterministic series builder: legs of (from, to, steps). Steps vary per leg
 // so "Adam turns fast, Eve turns slow" is actually representable.

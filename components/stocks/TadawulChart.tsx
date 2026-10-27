@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, type PointerEvent as ReactPointerEvent } from 'react';
 import { 
     ArrowRightToLine, FoldVertical, Maximize2, Minimize2, RefreshCw, 
     RotateCcw, UnfoldVertical, ZoomIn, ZoomOut, Camera, HelpCircle 
@@ -15,7 +15,6 @@ import {
     LineStyle,
     ColorType,
     type IChartApi,
-    type IPaneApi,
     type ISeriesApi,
     type ISeriesMarkersPluginApi,
     type UTCTimestamp,
@@ -33,6 +32,7 @@ declare global {
 }
 import { CANDLE_RANGES, OhlcCandle, validCandles, type CandleRangeId } from '@/lib/yahoo';
 import { bollinger, cci, donchian, elliottMarkers, elliottWaveLabels, ema, macd, rsi, sma, stochastic, adx, studyPoints, autoDevPct, ELLIOTT_ENGINE_VERSION } from '@/lib/indicators';
+import { handCount, handCountMarkers } from '@/lib/hand-elliott';
 import { tx, type Lang } from '@/lib/i18n';
 import {
     fibLevelPrices,
@@ -54,7 +54,9 @@ import {
     TEXT_MAX,
     loadTexts,
     makeTextNote,
+    moveTextNote,
     saveTexts,
+    updateTextNoteText,
     type TextNote,
     type CountDegree,
     type CountKind,
@@ -65,17 +67,21 @@ import {
     type PatternTool,
 } from '@/lib/drawings';
 import { getMarket, isMarketOpen } from '@/lib/markets';
-import { detectPatterns, patternBarTime, projectToEdge, type DetectedPattern, type PatternPivot } from '@/lib/patterns';
+import { detectPatterns, patternBarTime, projectToEdge, type DetectedPattern } from '@/lib/patterns';
 import { getTadawulCandles } from '@/lib/actions/yahoo.actions';
 import { getTwelveIntraday } from '@/lib/actions/twelvedata.actions';
 
 const RANGE_IDS = Object.keys(CANDLE_RANGES) as CandleRangeId[];
-// Refetch cadence follows the server cache TTLs: Twelve Data live = 15s,
-// Yahoo intraday = 60s. Polling faster only re-reads the same cached payload
-// and burns API quota (Twelve free quota dies in minutes at 1s).
+// Refetch cadence: Twelve Data follows its 15s server TTL (polling faster
+// re-reads the same payload and burns free quota — it dies in minutes at 1s);
+// Yahoo candles are fetched fresh server-side, so 60s is a throttle so polls
+// don't hammer Yahoo — not a cache TTL.
 // A separate 1s UI tick keeps the "updated Ns ago" label feeling live.
 const POLL_MS = 15_000;
 const DELAYED_REFETCH_MS = 60_000;
+// Closed-market cadence: no live ticks to follow, but every session still
+// prints new bars — a tab left open for days must keep picking them up.
+const CLOSED_REFETCH_MS = 5 * 60_000;
 const AGE_TICK_MS = 1_000;
 
 type IndKey = 'ma20' | 'ema50' | 'bb' | 'sr' | 'rsi' | 'macd' | 'cci' | 'stoch' | 'adx' | 'elliott' | 'volume';
@@ -140,12 +146,6 @@ const loadState = (): { enabled: Record<IndKey, boolean>; params: Record<IndKey,
     return { enabled, params, colors };
 };
 
-const riyadhTime = new Intl.DateTimeFormat('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Asia/Riyadh',
-});
-
 // Crosshair axis label: full date + time for intraday, day + month + year for daily.
 const riyadhDateTime = new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
@@ -205,7 +205,6 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
             if (next) setRange(next);
         } catch { /* ignore */ }
         // Run once per symbol; refs mirror the latest values.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [symbol]);
     const manualRefresh = useRef<(() => void) | null>(null);
     const [candles, setCandles] = useState<OhlcCandle[]>([]);
@@ -234,8 +233,7 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
     const [menuOpen, setMenuOpen] = useState(false);
     const [expanded, setExpanded] = useState(false);
     const [helpOpen, setHelpOpen] = useState(false);
-    const [exporting, setExporting] = useState(false);
-    const [autoRefresh, setAutoRefresh] = useState(false);
+    const [, setExporting] = useState(false);
 
     // Shortcut keys listener
     useEffect(() => {
@@ -439,6 +437,11 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
     const [textDraft, setTextDraft] = useState<DrawPoint | null>(null);
     const [textValue, setTextValue] = useState('');
     const [texts, setTexts] = useState<TextNote[]>([]);
+    // Which saved note the edit box is rewriting (null = the box adds new notes).
+    const [editTextId, setEditTextId] = useState<string | null>(null);
+    // The note under the cursor on the chart (highlighted ring while set).
+    const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
+    const dragTextRef = useRef<{ id: string; moved: boolean } | null>(null);
     const [hover, setHover] = useState<{ x: number; y: number; candle: OhlcCandle } | null>(null);
     const candlesRef = useRef<OhlcCandle[]>([]);
     candlesRef.current = candles;
@@ -474,6 +477,10 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
     const stochRef = useRef<{ pane: PaneApi; k: ISeriesApi<'Line'>; d: ISeriesApi<'Line'> } | null>(null);
     const adxRef = useRef<{ pane: PaneApi; adx: ISeriesApi<'Line'>; plus: ISeriesApi<'Line'>; minus: ISeriesApi<'Line'> } | null>(null);
     const waveMarkersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
+    // the reader's own count is drawn on its own series so its badges never
+    // collide with the engine's markers (one marker per bar per series)
+    const handSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
+    const handMarkersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
     // The zoom-floor listener is parked here so data passes can mute it
     // (see feedSeries below).
     const rangeCbRef = useRef<(() => void) | null>(null);
@@ -577,11 +584,11 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         });
     }, [lineWidth]);
 
-    const trackLine = (s: ISeriesApi<'Line'>) => {
+    const trackLine = useCallback((s: ISeriesApi<'Line'>) => {
         lineRegistry.current.add(s);
         try { s.applyOptions({ lineWidth }); } catch { /* ignore */ }
         return s;
-    };
+    }, [lineWidth]);
 
     const cycleColor = (key: string) => {
         setIndState((prev) => {
@@ -640,9 +647,18 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
             priceFormat: { type: 'volume' },
             priceScaleId: '',
         });
+        // carrier series for the hand-count labels: no line, markers only
+        const handSeries = chart.addSeries(LineSeries, {
+            color: 'rgba(0,0,0,0)',
+            lineWidth: 1,
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+        });
         chart.priceScale('').applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
         chartRef.current = chart;
         candleRef.current = candleSeries;
+        handSeriesRef.current = handSeries;
         // Volume visibility is driven by the Volume indicator toggle (on by default)
         volumeRef.current = volumeSeries;
 
@@ -658,6 +674,9 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                 setPatternPreview(null);
                 return;
             }
+            // Any bare chart click drops the note selection (a drag on a note
+            // never reaches here — the SVG overlay captures it first).
+            setSelectedTextId(null);
             const pt = toPoint(param.point.x, param.point.y);
             if (!pt) return;
             // Free-text note: one click plants the anchor; the text is
@@ -778,8 +797,8 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         };
     }, []);
 
-    // Load candles per range. Refetch follows the server cache TTLs
-    // (live 15s / delayed 60s) — faster polling returns the same payload.
+    // Load candles per range. Twelve refetches on its 15s server TTL; Yahoo
+    // is always fresh upstream and refetched at most every 60s (throttle).
     useEffect(() => {
         let cancelled = false;
         const intraday = CANDLE_RANGES[range]?.intraday ?? false;
@@ -809,6 +828,18 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
             }
             const res = await getTadawulCandles(symbol, range);
             if (cancelled) return;
+            // Yahoo's index endpoints intermittently answer with a single bar
+            // (the same glitch that broke D/W/M history — a 1-bar cache entry
+            // lives an hour). One bar is not a chart: keep what we have and
+            // surface the retry instead of collapsing the frame to one candle.
+            if (res && res.candles.length < 3) {
+                console.warn('Degenerate candle payload', symbol, range, res.candles.length);
+                if (!silent) {
+                    setFailed(true);
+                    setLoading(false);
+                }
+                return;
+            }
             if (!res) {
                 if (!silent) {
                     setFailed(true);
@@ -836,26 +867,38 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
 
         // Re-check the session on every tick: pages opened before 10:00 must
         // still go live at the open instead of staying frozen all session.
-        // Live source refetches every 15s tick; delayed Yahoo only every 60s
-        // (the server cache has nothing newer before that). Hidden tabs skip
+        // Live source refetches every 15s tick; Yahoo only every 60s (fresh
+        // upstream, throttled so polls don't hammer it). Hidden tabs skip
         // refetch to save API quota.
         let timer: ReturnType<typeof setInterval> | null = null;
+        const onVisible = () => {
+            // A tab hidden through whole sessions never polls; heal it the
+            // moment the user comes back instead of showing the old snapshot.
+            if (document.hidden) return;
+            if (Date.now() - lastFetchAt.current >= DELAYED_REFETCH_MS) load(true);
+        };
         if (intraday) {
             timer = setInterval(() => {
-                if (!isMarketOpen(getMarket('sa'))) {
-                    setLive(false);
+                const open = isMarketOpen(getMarket('sa'));
+                setLive(open);
+                if (document.hidden) return;
+                const stale = Date.now() - lastFetchAt.current;
+                if (!open) {
+                    // Market closed: keep a slow cadence so a long-lived tab
+                    // still picks up each new session's bars when it opens.
+                    if (stale >= CLOSED_REFETCH_MS) load(true);
                     return;
                 }
-                setLive(true);
-                if (document.hidden) return;
-                if (sourceRef.current === 'live' || Date.now() - lastFetchAt.current >= DELAYED_REFETCH_MS) {
+                if (sourceRef.current === 'live' || stale >= DELAYED_REFETCH_MS) {
                     load(true);
                 }
             }, POLL_MS);
+            document.addEventListener('visibilitychange', onVisible);
         }
         return () => {
             cancelled = true;
             manualRefresh.current = null;
+            document.removeEventListener('visibilitychange', onVisible);
             if (timer) clearInterval(timer);
         };
     }, [symbol, range]);
@@ -896,9 +939,20 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         // engine draws (merged as "1 or A"), so the badge must match the chart.
         setElliottCount(labels.filter((l) => !l.alternate).length);
         setElliottAltCount(labels.filter((l) => l.alternate).length);
-        markers.setMarkers(elliottMarkers(labels, sec.map((c) => c.time), indColors.elliott, '#FF6D00') as SeriesMarker<Time>[]);
+        markers.setMarkers(elliottMarkers(labels, sec.map((c) => c.time), '#7F1D1D', '#7F1D1D', { sub: '#C62828', major: '#C62828' }) as SeriesMarker<Time>[]);
+
+        // the reader's own count (fine 3% zigzag, iron rules enforced) as a
+        // second layer in red squares
+        const handSeries = handSeriesRef.current;
+        if (handSeries) {
+            if (!handMarkersRef.current) handMarkersRef.current = createSeriesMarkers(handSeries, []);
+            const hand = handCount(highs, lows, closes, { marketOpen: isMarketOpen(getMarket('sa')) });
+            handMarkersRef.current.setMarkers(
+                (hand ? handCountMarkers(hand, sec.map((c) => c.time), '#C62828', 0, 1) : []) as SeriesMarker<Time>[],
+            );
+        }
         if (!window.__ewdbg) window.__ewdbg = { sym: symbolRef.current, candles: sec.length, labels: labels.length, held: markers.markers().length };
-    }, [inds.elliott, indParams.elliott.dev, indColors.elliott, elliottAuto]);
+    }, [inds.elliott, indParams.elliott.dev, elliottAuto]);
 
     // Push data into the series (fit only on range/symbol change or Reset,
     // never on silent auto-refresh, so the user's zoom never jumps).
@@ -1058,7 +1112,7 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
             });
         } else macdRef.current = dropPane(macdRef.current);
         });
-    }, [candles, inds, indParams, indColors, feedSeries, feedStudy]);
+    }, [candles, inds, indParams, indColors, feedSeries, feedStudy, trackLine]);
 
     // Oscillator panes for CCI / Stochastic / ADX (same create-feed-remove pattern)
     useEffect(() => {
@@ -1130,7 +1184,7 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
             });
         } else adxRef.current = dropPane(adxRef.current);
         });
-    }, [candles, inds, indParams, indColors, feedSeries, feedStudy]);
+    }, [candles, inds, indParams, indColors, feedSeries, feedStudy, trackLine]);
 
     // Full-screen chart mode: the container grows via CSS and autoSize follows it.
     // Refit after layout settles so data is always in view. Close with Exit or Esc.
@@ -1152,6 +1206,9 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         setDrawings(loadDrawings(symbol, range));
         setPatterns(loadPatterns(symbol, range));
         setTexts(loadTexts(symbol, range));
+        // Saved notes belong to the previous frame; selection/editing follow them.
+        setSelectedTextId(null);
+        setEditTextId(null);
         setDraftA(null);
         setPreviewB(null);
         setTool(null);
@@ -1201,6 +1258,7 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         setCountDraft([]);
         setCountOpen(false);
         setTextMode(false);
+        setEditTextId(null);
         setTextDraft(null);
     };
 
@@ -1215,6 +1273,7 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         setCountDraft([]);
         setCountOpen(false);
         setTextMode(false);
+        setEditTextId(null);
         setTextDraft(null);
     };
 
@@ -1233,6 +1292,7 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         setPreviewB(null);
         setCountOpen(true);
         setTextMode(false);
+        setEditTextId(null);
         setTextDraft(null);
     };
 
@@ -1248,6 +1308,7 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
     // and every other tool cancels text mode for the same reason.
     const pickText = () => {
         setTextMode((prev) => !prev);
+        setEditTextId(null);
         setTextDraft(null);
         setPatternTool(null);
         setPatternDraft([]);
@@ -1262,6 +1323,17 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
     };
 
     const commitText = () => {
+        // Editing an existing note: rewrite its text in place (same gate as create).
+        if (editTextId) {
+            setTexts((prev) => {
+                const upd = updateTextNoteText(prev, editTextId, textValue);
+                saveTexts(symbolRef.current, rangeRef.current, upd);
+                return upd;
+            });
+            setEditTextId(null);
+            setTextValue('');
+            return;
+        }
         const draft = textDraftRef.current;
         if (!draft) return;
         const note = makeTextNote(draft.time, draft.price, textValue);
@@ -1276,7 +1348,67 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         setTextValue('');
     };
 
+    // Load a saved note into the edit box (✎ in the list, double-click on the chart).
+    const startEditText = (id: string) => {
+        const note = texts.find((t) => t.id === id);
+        if (!note) return;
+        setTextMode(true);
+        setTextDraft(null);
+        textDraftRef.current = null;
+        setEditTextId(id);
+        setTextValue(note.text);
+    };
+
+    const cancelEditText = () => {
+        setEditTextId(null);
+        setTextValue('');
+    };
+
+    // ---- Drag-to-move for notes on the chart ----
+    const noteFromPixel = (x: number, y: number): DrawPoint | null => {
+        const c = chartRef.current;
+        if (!c) return null;
+        const time = normalizeTimeKey(c.timeScale().coordinateToTime(x));
+        const price = candleRef.current?.coordinateToPrice(y) ?? null;
+        if (time == null || price == null || !Number.isFinite(price)) return null;
+        return { time, price };
+    };
+
+    const onTextPointerDown = (e: ReactPointerEvent<SVGGElement>, id: string) => {
+        // Capture keeps move events flowing once the cursor leaves the note,
+        // and stopping propagation keeps the chart from panning under it.
+        e.stopPropagation();
+        try { e.currentTarget.ownerSVGElement?.setPointerCapture(e.pointerId); } catch { /* unsupported */ }
+        dragTextRef.current = { id, moved: false };
+        setSelectedTextId(id);
+    };
+
+    const onTextPointerMove = (e: ReactPointerEvent<SVGSVGElement>) => {
+        const drag = dragTextRef.current;
+        if (!drag) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const pt = noteFromPixel(e.clientX - rect.left, e.clientY - rect.top);
+        if (!pt) return;
+        drag.moved = true;
+        // Live position while dragging; persisted once on release below.
+        setTexts((prev) => moveTextNote(prev, drag.id, pt.time, pt.price));
+    };
+
+    const onTextPointerUp = () => {
+        const drag = dragTextRef.current;
+        if (!drag) return;
+        dragTextRef.current = null;
+        if (drag.moved) {
+            setTexts((prev) => {
+                saveTexts(symbolRef.current, rangeRef.current, prev);
+                return prev;
+            });
+        }
+    };
+
     const deleteText = (id: string) => {
+        if (editTextId === id) cancelEditText();
+        if (selectedTextId === id) setSelectedTextId(null);
         setTexts((prev) => {
             const next = prev.filter((t) => t.id !== id);
             saveTexts(symbolRef.current, rangeRef.current, next);
@@ -1286,6 +1418,8 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
 
     const clearTexts = () => {
         setTexts([]);
+        setEditTextId(null);
+        setSelectedTextId(null);
         saveTexts(symbolRef.current, rangeRef.current, []);
     };
 
@@ -1452,6 +1586,7 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
         setTransferOpen(false);
         setTransferMsg(null);
         setTextMode(false);
+        setEditTextId(null);
         setTextDraft(null);
         setTextValue('');
     };
@@ -2192,33 +2327,50 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                     <div className="relative">
                         <div className="card absolute end-0 z-20 mt-1 flex w-72 flex-col gap-2 p-2.5">
                             <p className="px-0.5 text-[11.5px] leading-snug text-faint">
-                                {textDraft ? tx(lang, 'draw.textType') : tx(lang, 'draw.textHint')}
+                                {editTextId
+                                    ? tx(lang, 'draw.textEditing')
+                                    : textDraft ? tx(lang, 'draw.textType') : tx(lang, 'draw.textHint')}
                             </p>
                             <input
-                                // key remounts per anchor so typing always starts fresh
-                                key={textDraft ? `${textDraft.time}` : 'empty'}
+                                // key remounts per anchor/edit target so typing always starts fresh
+                                key={editTextId ?? (textDraft ? `${textDraft.time}` : 'empty')}
                                 autoFocus
                                 value={textValue}
                                 onChange={(e) => setTextValue(e.target.value.slice(0, TEXT_MAX))}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') commitText();
-                                    else if (e.key === 'Escape') cancelDrawing();
+                                    else if (e.key === 'Escape') { if (editTextId) cancelEditText(); else cancelDrawing(); }
                                 }}
                                 placeholder={tx(lang, 'draw.textPh')}
                                 maxLength={TEXT_MAX}
                                 className="w-full rounded border border-line bg-transparent p-1.5 text-[13px] text-foreground"
                             />
-                            <button type="button" onClick={commitText} disabled={!textDraft || !textValue.trim()} className="pill w-full">
-                                {tx(lang, 'draw.textSave')}
+                            <button
+                                type="button"
+                                onClick={commitText}
+                                disabled={editTextId ? !textValue.trim() : !textDraft || !textValue.trim()}
+                                className="pill w-full"
+                            >
+                                {editTextId ? tx(lang, 'draw.textUpdate') : tx(lang, 'draw.textSave')}
                             </button>
                             {texts.length > 0 && (
                                 <>
                                     <div className="border-t border-line" />
+                                    <p className="px-0.5 text-[11px] leading-snug text-faint">{tx(lang, 'draw.textMove')}</p>
                                     {texts.map((t) => (
-                                        <div key={t.id} className="search-item-link w-full">
+                                        <div key={t.id} className={`search-item-link w-full ${editTextId === t.id ? 'bg-hover' : ''}`}>
                                             <span className="flex-1 truncate text-start text-[12.5px]">
                                                 {t.text}
                                             </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => startEditText(t.id)}
+                                                aria-label={tx(lang, 'draw.textEdit')}
+                                                title={tx(lang, 'draw.textEdit')}
+                                                className="rounded px-1.5 text-faint hover:bg-hover hover:text-foreground"
+                                            >
+                                                ✎
+                                            </button>
                                             <button
                                                 type="button"
                                                 onClick={() => deleteText(t.id)}
@@ -2448,7 +2600,13 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                     );
                 })()}
                 {viewW > 0 && mainH > 0 && (
-                    <svg className="pointer-events-none absolute inset-0" width={viewW} height={viewH}>
+                    <svg
+                        className="pointer-events-none absolute inset-0"
+                        width={viewW}
+                        height={viewH}
+                        onPointerMove={onTextPointerMove}
+                        onPointerUp={onTextPointerUp}
+                    >
                         <defs>
                             <clipPath id={clipId}><rect x={0} y={0} width={viewW} height={mainH} /></clipPath>
                         </defs>
@@ -2466,12 +2624,23 @@ export default function TadawulChart({ symbol, tvUrl, lang, initialRange = '1m' 
                                 const x = X(t.time);
                                 const y = Y(t.price);
                                 if (x == null || y == null) return null;
+                                const selected = selectedTextId === t.id;
                                 return (
-                                    <g key={t.id}>
+                                    <g
+                                        key={t.id}
+                                        // The overlay is pointer-events-none so the chart
+                                        // stays interactive; only the notes opt back in,
+                                        // with a generous grab zone around the anchor dot.
+                                        style={{ pointerEvents: 'auto', cursor: 'move', touchAction: 'none' }}
+                                        onPointerDown={(e) => onTextPointerDown(e, t.id)}
+                                        onDoubleClick={(e) => { e.stopPropagation(); startEditText(t.id); }}
+                                    >
+                                        <circle cx={x} cy={y} r={12} fill="transparent" />
+                                        {selected && <circle cx={x} cy={y} r={7} fill="none" stroke="#EAB308" strokeWidth={1.5} />}
                                         <circle cx={x} cy={y} r={3.5} fill="#EAB308" />
                                         <text
                                             x={x} y={y - 8} textAnchor="middle" fontSize={13} fontWeight={600}
-                                            fill="#F5F5F5" style={{ paintOrder: 'stroke', stroke: 'rgba(0,0,0,0.85)', strokeWidth: 3 }}
+                                            fill={selected ? '#EAB308' : '#F5F5F5'} style={{ paintOrder: 'stroke', stroke: 'rgba(0,0,0,0.85)', strokeWidth: 3 }}
                                         >
                                             {t.text}
                                         </text>

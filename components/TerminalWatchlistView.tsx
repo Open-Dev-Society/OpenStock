@@ -22,7 +22,7 @@ const fmt = (v: number) =>
 
 // Client table with per-symbol show/hide (same toggle UX as the Indicators menu).
 export default function TerminalWatchlistView({ rows, lang, hasCustom }: { rows: TerminalRow[]; lang: Lang; hasCustom: boolean }) {
-    const { hidden, toggle } = useWatchlistVisibility();
+    const { hidden } = useWatchlistVisibility();
     const visible = rows.filter((r) => !hidden.includes(r.tv));
     const hiddenCount = rows.length - visible.length;
 

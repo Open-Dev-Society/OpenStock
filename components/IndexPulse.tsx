@@ -6,7 +6,7 @@ import { getYahooDailyQuotes } from "@/lib/actions/yahoo.actions";
 import { singleQuoteConfig } from "@/lib/constants";
 import { getMarket, type Market } from "@/lib/markets";
 import { tradingViewSymbolUrl } from "@/lib/utils";
-import type { Lang } from "@/lib/i18n";
+import { tx, type Lang } from "@/lib/i18n";
 import type { YahooDailyQuote } from "@/lib/yahoo";
 
 const SINGLE_QUOTE = 'https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js';
@@ -38,6 +38,21 @@ export default async function IndexPulse({ market = getMarket('sa'), lang = 'en'
                     );
                 }
                 if (!tile.finnhub) {
+                    // TradingView free embeds refuse TADAWUL quotes ("This symbol is only
+                    // available on TradingView"), so a quote widget for them is a broken tile.
+                    // Show a plain tile instead of the error state.
+                    if (tile.symbol.startsWith('TADAWUL:')) {
+                        return (
+                            <div key={tile.symbol} className="bento-tile">
+                                <div className="bento-head">
+                                    <span className="truncate">{tile.label}</span>
+                                    <span className="mono ms-auto text-xs text-faint">{tile.symbol.replace('TADAWUL:', '')}</span>
+                                </div>
+                                <p className="bento-value self-start">—</p>
+                                <div className="bento-foot"><span>{tx(lang, 'tile.noQuote')}</span></div>
+                            </div>
+                        );
+                    }
                     return (
                         <div key={tile.symbol} className="bento-tile p-1.5">
                             <TradingViewWidget scriptUrl={SINGLE_QUOTE} config={singleQuoteConfig(tile.symbol)} height={112} />

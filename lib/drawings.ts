@@ -184,6 +184,24 @@ export function saveTexts(symbol: string, range: string, notes: TextNote[]) {
     } catch { /* ignore */ }
 }
 
+// Move one note to a new anchor (drag on the chart). Unknown ids and bad
+// prices leave the list untouched, so a stray drag never corrupts saved notes.
+export function moveTextNote(notes: TextNote[], id: string, time: string | number, price: number): TextNote[] {
+    if ((typeof time !== 'string' && typeof time !== 'number') || typeof price !== 'number' || !Number.isFinite(price)) return notes;
+    if (!notes.some((n) => n.id === id)) return notes; // same reference: no change, no re-render
+    return notes.map((n) => (n.id === id ? { ...n, time, price } : n));
+}
+
+// Replace a note's text with the SAME gate makeTextNote applies (trimmed,
+// whitespace collapsed, 1..TEXT_MAX). Invalid text leaves the list unchanged.
+export function updateTextNoteText(notes: TextNote[], id: string, text: unknown): TextNote[] {
+    if (typeof text !== 'string') return notes;
+    const clean = text.trim().replace(/\s+/g, ' ');
+    if (clean.length === 0 || clean.length > TEXT_MAX) return notes;
+    if (!notes.some((n) => n.id === id)) return notes; // same reference: no change, no re-render
+    return notes.map((n) => (n.id === id ? { ...n, text: clean } : n));
+}
+
 export const newDrawingId = () =>
     `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 

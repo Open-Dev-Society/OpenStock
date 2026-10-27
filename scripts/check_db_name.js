@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-require-imports -- run directly with node as CommonJS */
 const mongoose = require('mongoose');
 require('dotenv').config({ path: '.env' });
 const dns = require('dns');

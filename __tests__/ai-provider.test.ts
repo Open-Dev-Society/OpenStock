@@ -4,7 +4,6 @@ import {
   getFallbackProviderName,
   callAIProvider,
   callAIProviderWithFallback,
-  type AIProviderName,
 } from "@/lib/ai-provider";
 
 // ── getProviderConfig ──────────────────────────────────────────────

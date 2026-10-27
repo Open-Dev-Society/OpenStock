@@ -18,7 +18,12 @@ import {
 } from '@/lib/yahoo';
 
 // Daily/weekly Tadawul candles from Yahoo Finance (free, no key, covers .SR).
-// Cached 15 minutes in the Next data cache, shared across users.
+// Always fetched fresh (cache: 'no-store'). With `next.revalidate`, Next's
+// Data Cache serves an expired entry stale-first and revalidates behind it,
+// so a refresh painted a dead payload first (a 26h-old 30m entry ending
+// 22 Oct 9695.86) and the chart visibly flipped to the fresh bars a moment
+// later. The chart polls at 60s live / 5min closed anyway, so the shared
+// cache never held anything a user could see — only the flip.
 export async function getTadawulCandles(symbol: string, rangeId: CandleRangeId = 'D') {
     const yahooSymbol = normalizeYahooSymbol(symbol);
     if (!yahooSymbol) return null;
@@ -31,7 +36,7 @@ export async function getTadawulCandles(symbol: string, rangeId: CandleRangeId =
     try {
         const res = await fetch(buildYahooUrl(yahooSymbol, fetchRange), {
             headers: { 'User-Agent': 'Mozilla/5.0' },
-            next: { revalidate: intraday ? 60 : 900 },
+            cache: 'no-store',
         });
         if (!res.ok) {
             console.error('Yahoo chart failed', yahooSymbol, rangeId, res.status);

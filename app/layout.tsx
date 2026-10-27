@@ -35,7 +35,7 @@ export default async function RootLayout({
 }>) {
     const lang = await getLang();
     return (
-        <html lang={lang} dir={lang === 'ar' ? 'rtl' : 'ltr'} className="dark">
+        <html lang={lang} dir={lang === 'ar' ? 'rtl' : 'ltr'} className="dark" suppressHydrationWarning>
             <body
                 className={`${jakarta.variable} ${arabic.variable} ${plexMono.variable} font-sans antialiased`}
             >
