@@ -1,22 +1,44 @@
-// Yahoo Finance helpers for Tadawul (.SR) quotes, which TradingView's free embeds and Finnhub's free plan don't price.
+// Yahoo Finance helpers for exchanges the free sources price badly: Tadawul (.SR) is blocked in TradingView's free
+// embeds and on Finnhub free; Warsaw (GPW, .WA) renders in embeds but only end of day, where Yahoo is ~15 minutes delayed.
 // Pure functions, covered by tests; the network call lives in lib/actions/yahoo.actions.ts.
 
-// "2222.SR" or "TADAWUL:2222" -> "2222.SR". TASI index -> "^TASI.SR". Anything else -> null.
+type YahooExchange = { suffix: string; currency: string; ticker: RegExp; indices: Record<string, string> };
+
+// TradingView prefix -> Yahoo suffix, trading currency, the shape of a ticker, and index tickers with their Yahoo symbols
+const YAHOO_EXCHANGES: Record<string, YahooExchange> = {
+    TADAWUL: { suffix: 'SR', currency: 'SAR', ticker: /^\d+$/, indices: { TASI: '^TASI.SR' } },
+    GPW: { suffix: 'WA', currency: 'PLN', ticker: /^[A-Z0-9]+$/, indices: { WIG20: 'WIG20.WA', WIG: 'WIG.WA', MWIG40: 'MWIG40.WA', SWIG80: 'SWIG80.WA' } },
+};
+
+const INDEX_SYMBOLS = new Set(Object.values(YAHOO_EXCHANGES).flatMap((ex) => Object.values(ex.indices)));
+
+// "2222.SR" or "TADAWUL:2222" -> "2222.SR"; "PKN.WA" or "GPW:PKN" -> "PKN.WA".
+// Indices: "TADAWUL:TASI" -> "^TASI.SR", "GPW:WIG20" -> "WIG20.WA". Anything else -> null.
 export function normalizeYahooSymbol(symbol: string): string | null {
     const upper = (symbol || '').trim().toUpperCase();
-    if (/^\d+\.SR$/.test(upper)) return upper;
-    if (upper === 'TADAWUL:TASI' || upper === '^TASI.SR') return '^TASI.SR';
-    const ticker = upper.startsWith('TADAWUL:') ? upper.slice('TADAWUL:'.length) : '';
-    return /^\d+$/.test(ticker) ? `${ticker}.SR` : null;
+    if (INDEX_SYMBOLS.has(upper)) return upper;
+    for (const [prefix, ex] of Object.entries(YAHOO_EXCHANGES)) {
+        const ticker = upper.startsWith(`${prefix}:`) ? upper.slice(prefix.length + 1)
+            : upper.endsWith(`.${ex.suffix}`) ? upper.slice(0, -(ex.suffix.length + 1))
+            : null;
+        if (ticker === null) continue;
+        if (ex.indices[ticker]) return ex.indices[ticker];
+        return ex.ticker.test(ticker) ? `${ticker}.${ex.suffix}` : null;
+    }
+    return null;
 }
 
-export const isTadawulSymbol = (symbol: string) => normalizeYahooSymbol(symbol) !== null;
+export const isYahooSymbol = (symbol: string) => normalizeYahooSymbol(symbol) !== null;
 
-// "TADAWUL:2222" -> "2222.SR", the symbol our stock pages use. The TASI index has no stock page.
-export const tadawulAppSymbol = (tvSymbol: string) => {
+// "TADAWUL:2222" -> "2222.SR", "GPW:PKN" -> "PKN.WA": the symbols our stock pages use. Indices have no stock page.
+export const yahooAppSymbol = (tvSymbol: string) => {
     const yahoo = normalizeYahooSymbol(tvSymbol);
-    return yahoo && !yahoo.startsWith('^') ? yahoo : null;
+    return yahoo && !INDEX_SYMBOLS.has(yahoo) ? yahoo : null;
 };
+
+// The exchange's currency for a Yahoo symbol ("PKN.WA" -> "PLN"), for when Yahoo leaves meta.currency out
+export const yahooCurrency = (yahooSymbol: string) =>
+    Object.values(YAHOO_EXCHANGES).find((ex) => yahooSymbol.toUpperCase().endsWith(`.${ex.suffix}`))?.currency ?? 'USD';
 
 export type YahooDailyQuote = {
     price: number;
@@ -36,8 +58,9 @@ type YahooChartJson = {
 };
 
 // Today's quote from a /v8/finance/chart response: Yahoo's own day change when it sends one,
-// else the last two daily closes (the TASI index only ever returns one daily bar, so it needs the former).
-export function dailyQuoteFromChart(json: unknown): YahooDailyQuote | null {
+// else the last two daily closes (TASI and the WIG indices only ever return one daily bar, so they need the former).
+// longName first: GPW short names look like "PKN C.XWAR PLN".
+export function dailyQuoteFromChart(json: unknown, fallbackCurrency = 'USD'): YahooDailyQuote | null {
     const result = (json as YahooChartJson)?.chart?.result?.[0];
     const meta = result?.meta;
     const closes = (result?.indicators?.quote?.[0]?.close ?? []).filter((n): n is number => Number.isFinite(n));
@@ -49,7 +72,7 @@ export function dailyQuoteFromChart(json: unknown): YahooDailyQuote | null {
         price,
         change,
         changePercent: meta?.regularMarketChangePercent ?? (prev ? (change / prev) * 100 : 0),
-        currency: result.meta?.currency || 'SAR',
-        name: result.meta?.shortName || result.meta?.longName || '',
+        currency: result.meta?.currency || fallbackCurrency,
+        name: result.meta?.longName || result.meta?.shortName || '',
     };
 }

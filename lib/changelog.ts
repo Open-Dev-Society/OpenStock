@@ -42,6 +42,7 @@ export const RELEASES: Release[] = [
                 title: 'Markets',
                 items: [
                     'Saudi Arabia (Tadawul) joins the dashboard: TASI, Aramco, Al Rajhi and STC tiles, today’s movers and a quotes table, priced from Yahoo Finance because TradingView blocks Tadawul in embeds. Saudi stock pages and watchlist rows show the price too. #145',
+                    'Poland (GPW Warsaw) joins the dashboard: WIG20, WIG, mWIG40 and sWIG80 tiles, today’s movers and a quotes table of blue chips, priced from Yahoo Finance (delayed) because TradingView embeds have Warsaw only end of day. Polish stock pages and watchlist rows show the price too. #147',
                 ],
             },
             {
@@ -85,6 +86,7 @@ export const RELEASES: Release[] = [
             { login: 'cosark', prs: [111] },
             { login: 'muskanbandta23', prs: [115] },
             { login: 'ahmaddirar-ios', prs: [142] },
+            { login: 'pawisoon', prs: [147] },
             { login: 'nexitpl', issues: [47, 54] },
             { login: 'brainistry10', issues: [113] },
             { login: 'Greatz08', issues: [83] },

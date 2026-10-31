@@ -2,16 +2,18 @@ import Link from 'next/link';
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import ChangePill from '@/components/ChangePill';
 import { getYahooDailyQuotes } from '@/lib/actions/yahoo.actions';
-import { tadawulAppSymbol } from '@/lib/yahoo';
+import { yahooAppSymbol } from '@/lib/yahoo';
 import type { Market } from '@/lib/markets';
 
 const fmt = (v: number) => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const symbolsOf = (market: Market) => [...new Set(market.groups.flatMap((g) => g.symbols.map(([s]) => s)))];
 
-// Our own quotes table for Tadawul (Yahoo daily quotes, SAR): TradingView's market-quotes widget shows no TADAWUL values in free embeds.
-export default async function SaudiQuotesTable({ market }: { market: Market }) {
+// Our own quotes table for Yahoo-priced markets: TradingView's market-quotes widget shows no TADAWUL values in free embeds,
+// and only end-of-day GPW values.
+export default async function YahooQuotesTable({ market }: { market: Market }) {
     const quotes = await getYahooDailyQuotes(symbolsOf(market));
+    const currency = Object.values(quotes)[0]?.currency;
 
     return (
         <div className="overflow-x-auto">
@@ -31,7 +33,7 @@ export default async function SaudiQuotesTable({ market }: { market: Market }) {
                         </tr>
                         {group.symbols.map(([tvSymbol, name]) => {
                             const q = quotes[tvSymbol];
-                            const appSymbol = tadawulAppSymbol(tvSymbol);
+                            const appSymbol = yahooAppSymbol(tvSymbol);
                             return (
                                 <tr key={tvSymbol} className="border-t border-line/60 transition-colors hover:bg-hover/40">
                                     <td className="px-3 py-2">
@@ -50,13 +52,13 @@ export default async function SaudiQuotesTable({ market }: { market: Market }) {
                     </tbody>
                 ))}
             </table>
-            <p className="px-3 py-2 text-[11.5px] text-faint">Prices in SAR via Yahoo Finance, delayed about 15 minutes.</p>
+            <p className="px-3 py-2 text-[11.5px] text-faint">Prices{currency ? ` in ${currency}` : ''} via Yahoo Finance, delayed about 15 minutes.</p>
         </div>
     );
 }
 
 // Today's biggest movers across the same groups, ranked by day change %
-export async function SaudiMovers({ market, count = 8 }: { market: Market; count?: number }) {
+export async function YahooMovers({ market, count = 8 }: { market: Market; count?: number }) {
     const symbols = symbolsOf(market);
     const nameOf = Object.fromEntries(market.groups.flatMap((g) => g.symbols));
     const quotes = await getYahooDailyQuotes(symbols);
@@ -74,13 +76,13 @@ export async function SaudiMovers({ market, count = 8 }: { market: Market; count
                 const up = quote.changePercent >= 0;
                 return (
                     <li key={symbol}>
-                        <Link href={`/stocks/${tadawulAppSymbol(symbol)}`} className="flex items-center gap-3 rounded-[10px] px-3 py-2 transition-colors hover:bg-hover/60">
+                        <Link href={`/stocks/${yahooAppSymbol(symbol)}`} className="flex items-center gap-3 rounded-[10px] px-3 py-2 transition-colors hover:bg-hover/60">
                             <span className={up ? 'text-up' : 'text-down'}>
                                 {up ? <ArrowUpRight className="size-4" /> : <ArrowDownRight className="size-4" />}
                             </span>
                             <span className="min-w-0 flex-1">
                                 <span className="block truncate text-[13.5px] font-semibold">{name}</span>
-                                <span className="mono block text-[11.5px] text-faint">{symbol.replace('TADAWUL:', '')}</span>
+                                <span className="mono block text-[11.5px] text-faint">{symbol.split(':').pop()}</span>
                             </span>
                             <span className="relative h-1.5 w-20 overflow-hidden rounded-full bg-hover">
                                 <span
