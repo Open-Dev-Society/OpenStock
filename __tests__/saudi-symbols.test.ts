@@ -60,10 +60,13 @@ describe('searchSaudiSymbols', () => {
 });
 
 describe('the Saudi table itself', () => {
-    it('holds the whole main market, with a unique ticker each', () => {
-        expect(SAUDI_SYMBOLS.length).toBeGreaterThanOrEqual(270);
+    it('holds both markets, with a unique ticker each', () => {
+        expect(SAUDI_SYMBOLS.length).toBeGreaterThanOrEqual(388);
         expect(new Set(SAUDI_SYMBOLS.map((entry) => entry.symbol)).size).toBe(SAUDI_SYMBOLS.length);
         expect(SAUDI_SYMBOLS.every((entry) => /^\d{4}\.SR$/.test(entry.symbol))).toBe(true);
+        // Main market and the parallel market (Nomu, 9xxx) are both covered.
+        expect(SAUDI_SYMBOLS.filter((entry) => entry.symbol.startsWith('9')).length).toBeGreaterThanOrEqual(110);
+        expect(SAUDI_SYMBOLS.filter((entry) => !entry.symbol.startsWith('9')).length).toBeGreaterThanOrEqual(270);
     });
 
     it('gives every company at least one Arabic name', () => {
@@ -79,5 +82,11 @@ describe('the Saudi table itself', () => {
         expect(searchSaudiSymbols('علم')[0]?.symbol).toBe('7203.SR');
         expect(searchSaudiSymbols('أديس')[0]?.symbol).toBe('2382.SR');
         expect(searchSaudiSymbols('كابلات الرياض')[0]?.symbol).toBe('4142.SR');
+    });
+
+    it('finds parallel-market (Nomu) companies too', () => {
+        expect(searchSaudiSymbols('فش فاش')[0]?.symbol).toBe('9515.SR');
+        expect(searchSaudiSymbols('إنمار')[0]?.symbol).toBe('9521.SR');
+        expect(searchSaudiSymbols('الناقول')[0]?.symbol).toBe('9514.SR');
     });
 });
