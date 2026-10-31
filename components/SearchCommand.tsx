@@ -151,7 +151,16 @@ export default function SearchCommand({ initialStocks }: { initialStocks: StockW
                             <li key={stock.symbol} className={cn('search-item', listTarget && 'flex items-center gap-1 pr-2')}>
                                 <Link
                                     href={`/stocks/${stock.symbol}`}
-                                    onClick={handleSelectStock}
+                                    onClick={(e) => {
+                                        // In list mode the row files the stock instead of navigating:
+                                        // the prompt says "add", and the row is the biggest target.
+                                        if (listTarget) {
+                                            e.preventDefault();
+                                            addToList(stock);
+                                            return;
+                                        }
+                                        handleSelectStock();
+                                    }}
                                     className={cn('search-item-link group', listTarget && 'min-w-0 flex-1')}
                                 >
                                     <span className="mono w-20 shrink-0 text-[13px] font-semibold text-brand-ink truncate">{stock.symbol}</span>
