@@ -56,7 +56,7 @@ export default function DonatePopup() {
     return (
         <Dialog open={open} onOpenChange={(next) => (next ? setOpen(true) : handleDismiss())}>
             <DialogContent className="gap-5 sm:max-w-[440px]">
-                <DialogHeader className="gap-3 text-left">
+                <DialogHeader className="gap-3 text-start">
                     <span className="bento-ico size-11 bg-brand-soft text-brand-ink">
                         <Heart className="size-5 fill-current" />
                     </span>

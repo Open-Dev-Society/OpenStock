@@ -21,7 +21,7 @@ export default function PulseTile({ symbol, label, initial }: { symbol: string; 
             <div className="bento-head">
                 <span className="bento-ico"><LineChart /></span>
                 <span className="truncate">{label}</span>
-                <span className="mono ml-auto text-xs text-faint">{symbol.replace('BINANCE:', '')}</span>
+                <span className="mono ms-auto text-xs text-faint">{symbol.replace('BINANCE:', '')}</span>
             </div>
             <PriceFlash value={quote?.c} className="bento-value self-start">
                 {quote?.c ? (

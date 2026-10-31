@@ -43,7 +43,7 @@ export default async function MarketingLayout({ children }: { children: React.Re
                             <span className="live-dot" /> Sponsor
                         </Link>
                     </nav>
-                    <div className="ml-auto flex items-center gap-2">
+                    <div className="ms-auto flex items-center gap-2">
                         <a href={REPO_URL} target="_blank" rel="noreferrer" className="btn btn-ghost hidden h-9 px-3 sm:inline-flex" aria-label="OpenStock on GitHub">
                             <Github />
                             {repo && <span className="num">{formatCount(repo.stars)}</span>}
