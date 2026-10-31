@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { searchSaudiSymbols, normalizeArabic } from '@/lib/saudi-symbols';
+import { SAUDI_SYMBOLS, searchSaudiSymbols, normalizeArabic } from '@/lib/saudi-symbols';
 
 // Arabic users type company names in Arabic script. Finnhub's index is Latin-only, so a local
 // table answers those queries. These tests pin the normalisation and the ranking.
@@ -56,5 +56,28 @@ describe('searchSaudiSymbols', () => {
 
     it('caps the list', () => {
         expect(searchSaudiSymbols('ال', 3).length).toBeLessThanOrEqual(3);
+    });
+});
+
+describe('the Saudi table itself', () => {
+    it('holds the whole main market, with a unique ticker each', () => {
+        expect(SAUDI_SYMBOLS.length).toBeGreaterThanOrEqual(270);
+        expect(new Set(SAUDI_SYMBOLS.map((entry) => entry.symbol)).size).toBe(SAUDI_SYMBOLS.length);
+        expect(SAUDI_SYMBOLS.every((entry) => /^\d{4}\.SR$/.test(entry.symbol))).toBe(true);
+    });
+
+    it('gives every company at least one Arabic name', () => {
+        const noArabic = SAUDI_SYMBOLS.filter(
+            (entry) => !entry.aliases.some((alias) => /[\u0600-\u06FF]/.test(alias))
+        );
+        expect(noArabic).toEqual([]);
+    });
+
+    it('finds listings that postdate the published list', () => {
+        expect(searchSaudiSymbols('فلاي ناس')[0]?.symbol).toBe('4264.SR');
+        expect(searchSaudiSymbols('جاهز')[0]?.symbol).toBe('6017.SR');
+        expect(searchSaudiSymbols('علم')[0]?.symbol).toBe('7203.SR');
+        expect(searchSaudiSymbols('أديس')[0]?.symbol).toBe('2382.SR');
+        expect(searchSaudiSymbols('كابلات الرياض')[0]?.symbol).toBe('4142.SR');
     });
 });
