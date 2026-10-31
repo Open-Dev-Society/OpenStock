@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dailyQuoteFromChart, normalizeYahooSymbol, yahooAppSymbol } from '@/lib/yahoo';
+import { dailyQuoteFromChart, normalizeYahooSymbol, yahooAppSymbol, yahooCurrency } from '@/lib/yahoo';
 import { formatSymbolForTradingView, isChartEmbeddable } from '@/lib/utils';
 
 describe('Tadawul symbols', () => {
@@ -58,6 +58,15 @@ describe('dailyQuoteFromChart', () => {
     it("prefers Yahoo's own day change (TASI sends a single daily bar)", () => {
         const json = { chart: { result: [{ meta: { regularMarketPrice: 9921.5, fulldayChange: -101.97, regularMarketChangePercent: -1.017 }, indicators: { quote: [{ close: [9921.5] }] } }] } };
         expect(dailyQuoteFromChart(json)).toMatchObject({ price: 9921.5, change: -101.97, changePercent: -1.017 });
+    });
+
+    it("falls back to the exchange's currency when Yahoo omits it", () => {
+        expect(yahooCurrency('PKN.WA')).toBe('PLN');
+        expect(yahooCurrency('^TASI.SR')).toBe('SAR');
+        expect(yahooCurrency('AAPL')).toBe('USD');
+        const noCurrency = { chart: { result: [{ meta: {}, indicators: { quote: [{ close: [10, 11] }] } }] } };
+        expect(dailyQuoteFromChart(noCurrency, yahooCurrency('2222.SR'))?.currency).toBe('SAR');
+        expect(dailyQuoteFromChart(noCurrency)?.currency).toBe('USD');
     });
 
     it('returns null when Yahoo has nothing', () => {

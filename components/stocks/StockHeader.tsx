@@ -4,7 +4,7 @@ import CreateAlertModal from "@/components/watchlist/CreateAlertModal";
 import StockLivePrice from "@/components/stocks/StockLivePrice";
 import { isStockInWatchlist } from "@/lib/actions/watchlist.actions";
 import { getCompanyProfile, getLiveQuotes } from "@/lib/actions/finnhub.actions";
-import { formatNumber, formatPrice, formatSymbolForTradingView } from "@/lib/utils";
+import { formatNumber, formatPrice, formatSymbolForTradingView, isChartEmbeddable } from "@/lib/utils";
 import { hasFinnhubQuotes } from "@/lib/markets";
 import { symbolInfoConfig } from "@/lib/constants";
 import TradingViewWidget from "@/components/TradingViewWidget";
@@ -14,7 +14,8 @@ import { isYahooSymbol } from "@/lib/yahoo";
 
 // Symbols Finnhub's free plan can't price (most non-US listings) use TradingView's quote panel instead.
 // TradingView blocks Tadawul quotes in embeds and has Warsaw only end of day, so those show a delayed Yahoo price
-// (and skip TradingView's panel, which would show a second, older price for Warsaw).
+// and skip TradingView's panel, which would show a second, older price for Warsaw. If Yahoo has no quote,
+// Warsaw falls back to that panel; Tadawul's is blocked either way.
 async function TradingViewHeader({ symbol }: { symbol: string }) {
     const yahooPriced = isYahooSymbol(symbol);
     const [isInWatchlist, yahoo] = await Promise.all([
@@ -23,6 +24,7 @@ async function TradingViewHeader({ symbol }: { symbol: string }) {
     ]);
     const quote = yahoo?.[symbol];
     const tvSymbol = formatSymbolForTradingView(symbol);
+    const hidePanel = quote || (yahooPriced && !isChartEmbeddable(tvSymbol));
     return (
         <section className="hatch">
             <div className="card flex flex-wrap items-center justify-between gap-4 p-4">
@@ -45,7 +47,7 @@ async function TradingViewHeader({ symbol }: { symbol: string }) {
                     </span>
                 </div>
             </div>
-            {!yahooPriced && (
+            {!hidePanel && (
                 <div className="card mt-[3px] p-1">
                     <TradingViewWidget scriptUrl="https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js" config={symbolInfoConfig(tvSymbol)} height={180} />
                 </div>
