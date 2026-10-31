@@ -44,7 +44,11 @@ export default async function NamedListTable({
                     </tr>
                 </thead>
                 <tbody>
-                    {rows.map((row) => (
+                    {rows.map((row) => {
+                        // getWatchlistData falls back to the ticker when the feed has no name, so the
+                        // stored company is the better label whenever the two are the same.
+                        const company = row.name && row.name !== row.symbol ? row.name : storedCompany.get(row.symbol) || row.name;
+                        return (
                         <tr key={row.symbol}>
                             <td className="max-w-[320px]">
                                 <Link href={`/stocks/${row.symbol}`} className="group flex items-center gap-3">
@@ -54,8 +58,8 @@ export default async function NamedListTable({
                                         <span className="logo-well is-empty">{row.symbol[0]}</span>
                                     )}
                                     <span className="min-w-0">
-                                        <span className="block truncate font-semibold text-foreground transition-colors group-hover:text-brand-ink" title={row.name}>
-                                            {row.name || storedCompany.get(row.symbol)}
+                                        <span className="block truncate font-semibold text-foreground transition-colors group-hover:text-brand-ink" title={company}>
+                                            {company}
                                         </span>
                                         <span className="mono block text-[12px] text-faint">{row.symbol}</span>
                                     </span>
@@ -73,7 +77,8 @@ export default async function NamedListTable({
                                 </div>
                             </td>
                         </tr>
-                    ))}
+                        );
+                    })}
                 </tbody>
             </table>
         </div>

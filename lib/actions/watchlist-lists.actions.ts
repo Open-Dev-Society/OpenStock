@@ -61,6 +61,9 @@ export async function createWatchlistList(name: string): Promise<{ error: string
     if (!clean) return { error: 'Give the list a name of up to 60 characters.' };
     try {
         await connectToDatabase();
+        // The duplicate-name handler below only works if the unique index exists, which is not
+        // guaranteed on a fresh deployment: init() builds it once per process, before any write.
+        await WatchlistList.init();
         if (!canAddList(await WatchlistList.countDocuments({ userId }))) {
             return { error: `You can keep ${MAX_LISTS} lists. Delete one to make room.` };
         }
@@ -68,6 +71,12 @@ export async function createWatchlistList(name: string): Promise<{ error: string
             return { error: `You already have a list called “${clean}”.` };
         }
         const created = await WatchlistList.create({ userId, name: clean, symbols: [] });
+        // Two tabs can both pass the check above; whoever lands over the cap takes its own row back,
+        // so the user gets the readable error instead of an eleventh list.
+        if ((await WatchlistList.countDocuments({ userId })) > MAX_LISTS) {
+            await WatchlistList.deleteOne({ _id: created._id, userId });
+            return { error: `You can keep ${MAX_LISTS} lists. Delete one to make room.` };
+        }
         revalidate();
         return toSummary(created);
     } catch (error) {
@@ -118,7 +127,7 @@ export async function addSymbolToList(
         // row) or the list is full or gone, which the owner-scoped read below tells apart.
         const replaced = await WatchlistList.findOneAndUpdate(
             { _id: listId, userId, 'symbols.symbol': ticker },
-            { $set: { 'symbols.$.company': entry.company, 'symbols.$.addedAt': entry.addedAt } },
+            { $set: { 'symbols.$.company': entry.company } },
             { new: true }
         );
         if (replaced) {

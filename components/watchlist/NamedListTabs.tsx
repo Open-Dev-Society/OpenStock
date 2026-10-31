@@ -87,7 +87,6 @@ export default function NamedListTabs({
                     onChange={(e) => setName(e.target.value)}
                     placeholder="New list name"
                     aria-label="New list name"
-                    maxLength={60}
                     className="h-8 w-40 rounded-full bg-page px-3 text-[13px] shadow-[inset_0_0_0_1px_var(--line)] outline-none placeholder:text-faint focus-visible:ring-2 focus-visible:ring-ring"
                 />
                 <button type="submit" disabled={busy || !name.trim()} className="pill h-8" title="Create the list">

@@ -31,6 +31,9 @@ export default function AddToListMenu({
     const [naming, setNaming] = useState(false);
     const [name, setName] = useState('');
     const [busy, setBusy] = useState(false);
+    // A create that succeeded but whose add failed leaves a real list behind; retrying must reuse
+    // it, or the second attempt dies on the duplicate-name check.
+    const [createdId, setCreatedId] = useState<string | null>(null);
 
     const add = async (list: { id: string; name: string }) => {
         setPending(list.id);
@@ -49,32 +52,45 @@ export default function AddToListMenu({
         }
     };
 
-    // Create the list and file the symbol in one go. If the add fails the list stays, which is
-    // recoverable from the panel above; the error says what happened either way.
+    // Create the list and file the symbol in one go. If the add fails the list stays, so the id is
+    // kept and a retry only re-runs the add. The error says what happened either way.
     const createAndAdd = async (e: React.FormEvent) => {
         e.preventDefault();
         if (busy) return;
         setBusy(true);
         try {
-            const created = await createWatchlistList(name);
-            if ('error' in created) {
-                toast.error(created.error);
-                return;
+            let listId = createdId;
+            let listName = name;
+            if (!listId) {
+                const created = await createWatchlistList(name);
+                if ('error' in created) {
+                    toast.error(created.error);
+                    return;
+                }
+                listId = created.id;
+                listName = created.name;
+                setCreatedId(created.id);
             }
-            const added = await addSymbolToList(created.id, symbol, company);
+            const added = await addSymbolToList(listId, symbol, company);
             if ('error' in added) {
                 toast.error(added.error);
                 return;
             }
-            toast.success(`Created “${created.name}” and added ${symbol}`);
+            toast.success(`Created “${listName}” and added ${symbol}`);
             setNaming(false);
             setName('');
+            setCreatedId(null);
             router.refresh();
         } catch {
             toast.error('Couldn’t create the list');
         } finally {
             setBusy(false);
         }
+    };
+
+    const closeDialog = (next: boolean) => {
+        setNaming(next);
+        if (!next) setCreatedId(null);
     };
 
     return (
@@ -109,7 +125,7 @@ export default function AddToListMenu({
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            <Dialog open={naming} onOpenChange={setNaming}>
+            <Dialog open={naming} onOpenChange={closeDialog}>
                 <DialogContent className="sm:max-w-sm">
                     <DialogHeader>
                         <DialogTitle>New list</DialogTitle>
@@ -120,16 +136,20 @@ export default function AddToListMenu({
                             onChange={(e) => setName(e.target.value)}
                             placeholder="List name"
                             aria-label="List name"
-                            maxLength={60}
                             autoFocus
                             className="h-9 rounded-full bg-page px-3 text-[13px] shadow-[inset_0_0_0_1px_var(--line)] outline-none placeholder:text-faint focus-visible:ring-2 focus-visible:ring-ring"
                         />
+                        {createdId && (
+                            <p className="text-[12px] text-muted-foreground">
+                                “{name}” was created — press the button again to retry adding {symbol}.
+                            </p>
+                        )}
                         <div className="flex justify-end gap-2">
-                            <button type="button" onClick={() => setNaming(false)} className="pill h-8">
+                            <button type="button" onClick={() => closeDialog(false)} className="pill h-8">
                                 Cancel
                             </button>
                             <button type="submit" disabled={busy || !name.trim()} className="btn btn-primary">
-                                <Plus className="size-3.5" /> Create and add
+                                <Plus className="size-3.5" /> {createdId ? 'Retry add' : 'Create and add'}
                             </button>
                         </div>
                     </form>

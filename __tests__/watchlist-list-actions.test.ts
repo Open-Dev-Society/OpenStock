@@ -12,16 +12,25 @@ vi.mock('@/database/mongoose', () => ({ connectToDatabase: vi.fn().mockResolvedV
 const findOneAndUpdate = vi.fn();
 const findOne = vi.fn();
 const updateOne = vi.fn();
+const create = vi.fn();
+const countDocuments = vi.fn();
+const deleteOne = vi.fn();
+const init = vi.fn();
 vi.mock('@/database/models/watchlist-list.model', () => ({
     WatchlistList: {
         findOneAndUpdate: (...args: unknown[]) => findOneAndUpdate(...args),
         findOne: (...args: unknown[]) => findOne(...args),
         updateOne: (...args: unknown[]) => updateOne(...args),
+        create: (...args: unknown[]) => create(...args),
+        countDocuments: (...args: unknown[]) => countDocuments(...args),
+        deleteOne: (...args: unknown[]) => deleteOne(...args),
+        init: (...args: unknown[]) => init(...args),
+        exists: vi.fn().mockResolvedValue(false),
     },
 }));
 
-import { addSymbolToList, removeSymbolFromList } from '@/lib/actions/watchlist-lists.actions';
-import { MAX_LIST_SYMBOLS } from '@/lib/watchlist-lists';
+import { addSymbolToList, createWatchlistList, removeSymbolFromList } from '@/lib/actions/watchlist-lists.actions';
+import { MAX_LIST_SYMBOLS, MAX_LISTS } from '@/lib/watchlist-lists';
 
 const LIST_ID = '6ae5ddcacd4956020465901d';
 const USER = 'user-123';
@@ -54,7 +63,8 @@ describe('named list writes are scoped and atomic', () => {
 
         const [filter, update] = findOneAndUpdate.mock.calls[1];
         expect(filter).toMatchObject({ _id: LIST_ID, userId: USER, 'symbols.symbol': 'AAPL' });
-        expect(update).toEqual({ $set: { 'symbols.$.company': 'Apple Inc.', 'symbols.$.addedAt': expect.any(Date) } });
+        // Only the company is refreshed: the day it was first added is the truthful one.
+        expect(update).toEqual({ $set: { 'symbols.$.company': 'Apple Inc.' } });
         expect(updateOne).not.toHaveBeenCalled();
     });
 
@@ -113,5 +123,38 @@ describe('named list writes are scoped and atomic', () => {
             error: 'That is not a symbol we can look up.',
         });
         expect(findOneAndUpdate).not.toHaveBeenCalled();
+    });
+});
+
+describe('createWatchlistList keeps the ten-list cap honest', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        requireUserId.mockResolvedValue(USER);
+        countDocuments.mockResolvedValue(9);
+        create.mockResolvedValue({ _id: LIST_ID, name: 'Banks', symbols: [] });
+    });
+
+    it('waits for the unique index before the first insert', async () => {
+        await createWatchlistList('Banks');
+
+        expect(init).toHaveBeenCalled();
+        expect(init.mock.invocationCallOrder[0]).toBeLessThan(create.mock.invocationCallOrder[0]);
+    });
+
+    it('drops its own insert when a concurrent create pushed the user over the cap', async () => {
+        // The pre-check saw 9, but by the time the insert lands another tab made it 11.
+        countDocuments.mockResolvedValueOnce(9).mockResolvedValueOnce(MAX_LISTS + 1);
+
+        await expect(createWatchlistList('Banks')).resolves.toEqual({
+            error: `You can keep ${MAX_LISTS} lists. Delete one to make room.`,
+        });
+        expect(deleteOne).toHaveBeenCalledWith({ _id: LIST_ID, userId: USER });
+    });
+
+    it('keeps the list when the recount is still within the cap', async () => {
+        countDocuments.mockResolvedValueOnce(9).mockResolvedValueOnce(MAX_LISTS);
+
+        await expect(createWatchlistList('Banks')).resolves.toMatchObject({ id: LIST_ID, name: 'Banks' });
+        expect(deleteOne).not.toHaveBeenCalled();
     });
 });

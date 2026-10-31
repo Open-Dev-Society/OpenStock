@@ -154,7 +154,9 @@ export default function SearchCommand({ initialStocks }: { initialStocks: StockW
                                     onClick={(e) => {
                                         // In list mode the row files the stock instead of navigating:
                                         // the prompt says "add", and the row is the biggest target.
+                                        // A modified click is still a request to open the stock.
                                         if (listTarget) {
+                                            if (e.metaKey || e.ctrlKey || e.shiftKey) return;
                                             e.preventDefault();
                                             addToList(stock);
                                             return;
