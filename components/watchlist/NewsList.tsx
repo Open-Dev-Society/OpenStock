@@ -1,13 +1,15 @@
-import { formatDistanceToNow } from "date-fns";
 import { ArrowUpRight, Newspaper } from "lucide-react";
+import { useFormatter, useTranslations } from "next-intl";
 
 export default function NewsList({ news }: { news: MarketNewsArticle[] }) {
+    const t = useTranslations('NewsList');
+    const format = useFormatter();
     if (news.length === 0) {
         return (
             <div className="empty-state">
                 <span className="empty-icon"><Newspaper className="size-5" /></span>
-                <h3>No recent news</h3>
-                <p>Nothing published in the last few days for these symbols.</p>
+                <h3>{t('emptyTitle')}</h3>
+                <p>{t('emptyBody')}</p>
             </div>
         );
     }
@@ -21,7 +23,7 @@ export default function NewsList({ news }: { news: MarketNewsArticle[] }) {
                         <span className="min-w-0 flex-1">
                             <span className="line-clamp-2 font-semibold text-foreground group-hover:text-brand-ink transition-colors">{item.headline}</span>
                             <span className="mt-1 block truncate text-[12.5px] text-faint">
-                                {item.source}{item.datetime ? ` · ${formatDistanceToNow(item.datetime * 1000, { addSuffix: true })}` : ''}
+                                {item.source}{item.datetime ? ` · ${format.relativeTime(item.datetime * 1000)}` : ''}
                             </span>
                         </span>
                         <ArrowUpRight className="mt-1 size-4 flex-none text-faint opacity-0 transition-opacity group-hover:opacity-100" />

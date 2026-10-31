@@ -1,5 +1,7 @@
+import { useTranslations, type Messages } from 'next-intl';
 import type { StockSentimentInsights } from '@/lib/actions/adanos.helpers';
 import { cn } from '@/lib/utils';
+import { toMessageKey } from '@/i18n/config';
 
 interface StockSentimentCardProps {
     insight: StockSentimentInsights | null;
@@ -17,6 +19,9 @@ function formatCompactNumber(value: number): string {
     }).format(value);
 }
 
+type AlignmentKey = keyof Messages['StockSentiment']['alignment'];
+type MetricKey = keyof Messages['StockSentiment']['metric'];
+
 const TREND_CLASS: Record<string, string> = {
     rising: 'is-up',
     falling: 'is-down',
@@ -31,14 +36,15 @@ function getAlignmentClass(alignment: string): string {
 }
 
 export default function StockSentimentCard({ insight }: StockSentimentCardProps) {
+    const t = useTranslations('StockSentiment');
     if (!insight) {
         return null;
     }
 
     const summary = [
-        { label: 'Avg. buzz', value: formatScore(insight.averageBuzz, '/100') },
-        { label: 'Bullish avg', value: formatScore(insight.bullishAverage, '%') },
-        { label: 'Coverage', value: `${insight.availableSources}/4 sources` },
+        { label: t('avgBuzz'), value: formatScore(insight.averageBuzz, '/100') },
+        { label: t('bullishAvg'), value: formatScore(insight.bullishAverage, '%') },
+        { label: t('coverage'), value: t('coverageValue', { count: insight.availableSources, total: 4 }) },
     ];
 
     return (
@@ -52,24 +58,28 @@ export default function StockSentimentCard({ insight }: StockSentimentCardProps)
                 ))}
             </div>
             <p className="border-t border-line px-3 py-2.5 text-[12.5px] text-faint">
-                Source alignment: <span className={cn('font-semibold', getAlignmentClass(insight.sourceAlignment))}>{insight.sourceAlignment}</span>
+                {t.rich('sourceAlignment', {
+                    // Alignment text comes from lib/actions/adanos.helpers ("Bullish alignment" -> alignment.bullishAlignment)
+                    alignment: t(`alignment.${toMessageKey(insight.sourceAlignment) as AlignmentKey}`),
+                    value: (chunks) => <span className={cn('font-semibold', getAlignmentClass(insight.sourceAlignment))}>{chunks}</span>,
+                })}
             </p>
 
             <ul className="row-list border-t border-line">
                 {insight.sources.map((source) => (
                     <li key={source.source} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3 py-2.5">
                         <div className="min-w-0">
-                            <p className="truncate font-semibold text-foreground">{source.label}</p>
+                            <p className="truncate font-semibold text-foreground">{source.source === 'news' ? t('newsSource') : source.label}</p>
                             <p className="num truncate text-[12px] text-faint">
-                                {formatCompactNumber(source.metricValue)} {source.metricLabel.toLowerCase()}
+                                {t(`metric.${toMessageKey(source.metricLabel) as MetricKey}`, { value: formatCompactNumber(source.metricValue), count: source.metricValue })}
                             </p>
                         </div>
                         <div className="num text-right text-[12.5px]">
                             <p className="font-semibold text-foreground">{formatScore(source.buzzScore, '')}</p>
-                            <p className="text-faint">buzz</p>
+                            <p className="text-faint">{t('buzz')}</p>
                         </div>
                         <span className={cn('pill w-[74px] justify-center capitalize', TREND_CLASS[source.trend ?? ''])}>
-                            {source.bullishPct !== null ? `${source.bullishPct.toFixed(0)}% bull` : (source.trend ?? 'No trend')}
+                            {source.bullishPct !== null ? t('bullPct', { pct: source.bullishPct.toFixed(0) }) : (source.trend ? t(`trend.${source.trend}`) : t('noTrend'))}
                         </span>
                     </li>
                 ))}

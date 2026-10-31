@@ -1,17 +1,19 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { PASSWORD_RULES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { Check, X } from 'lucide-react';
 
 const PasswordRequirements = ({ password }: { password: string }) => {
+    const t = useTranslations('Password');
     return (
         <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5">
             {PASSWORD_RULES.map((rule) => {
                 const passed = rule.test(password);
                 return (
-                    <li key={rule.label} className="flex items-center gap-2 text-xs">
+                    <li key={rule.key} className="flex items-center gap-2 text-xs">
                         {password.length === 0 ? (
                             <span className="size-3.5 rounded-full border border-gray-500" />
                         ) : passed ? (
@@ -26,7 +28,7 @@ const PasswordRequirements = ({ password }: { password: string }) => {
                                 passed ? 'text-green-500' : password.length > 0 && 'text-red-500',
                             )}
                         >
-                            {rule.label}
+                            {t(`rules.${rule.key}`)}
                         </span>
                     </li>
                 );

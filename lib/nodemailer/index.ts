@@ -5,7 +5,8 @@ import {
     STOCK_ALERT_UPPER_EMAIL_TEMPLATE,
     STOCK_ALERT_LOWER_EMAIL_TEMPLATE,
 } from "@/lib/nodemailer/templates";
-import { escapeHtml, formatPrice, sanitizeEmailIntro } from "@/lib/utils";
+import { formatPrice, sanitizeEmailIntro } from "@/lib/utils";
+import { escapeAll, fillTemplate, getEmailTranslator } from "@/lib/nodemailer/i18n";
 
 type EmailSendResult =
     | { status: 'skipped' }
@@ -41,23 +42,39 @@ if (transporter) {
     });
 }
 
-export const sendWelcomeEmail = async ({ email, name, intro }: WelcomeEmailData) => {
+export const sendWelcomeEmail = async ({ email, name, intro, locale }: WelcomeEmailData & { locale?: string }) => {
     try {
         if (!transporter) {
             console.warn('⚠️ Welcome email skipped: email credentials are not configured.');
             return { status: 'skipped' } satisfies EmailSendResult;
         }
 
-        // Function replacements: a string would expand $& or $' inside the name
-        const htmlTemplate = WELCOME_EMAIL_TEMPLATE
-            .replace('{{name}}', () => escapeHtml(name))
-            .replace('{{intro}}', () => sanitizeEmailIntro(intro));
+        const { lang, t } = await getEmailTranslator(locale);
+        const htmlTemplate = fillTemplate(WELCOME_EMAIL_TEMPLATE, {
+            ...escapeAll({
+                title: t('welcome.title'),
+                logoAlt: t('common.logoAlt'),
+                dashboardAlt: t('welcome.dashboardAlt'),
+                heading: t('welcome.heading', { name }),
+                featuresLabel: t('welcome.featuresLabel'),
+                featureWatchlist: t('welcome.featureWatchlist'),
+                featureSearch: t('welcome.featureSearch'),
+                featureDashboard: t('welcome.featureDashboard'),
+                closing: t('welcome.closing'),
+                cta: t('welcome.cta'),
+                initiative: t('welcome.initiative'),
+                unsubscribe: t('common.unsubscribe'),
+                visitOpenstock: t('common.visitOpenstock'),
+            }),
+            lang,
+            intro: sanitizeEmailIntro(intro),
+        });
 
         const mailOptions = {
             from: `"Openstock" <${process.env.NODEMAILER_EMAIL}>`,
             to: email,
-            subject: `Welcome to Openstock - your open-source stock market toolkit!`,
-            text: 'Thanks for joining Openstock, an initiative by open dev society',
+            subject: t('welcome.subject'),
+            text: t('welcome.text'),
             html: htmlTemplate,
         };
 
@@ -101,8 +118,8 @@ export const sendNewsSummaryEmail = async (
 };
 
 export const sendStockAlertEmail = async (
-    { email, symbol, currentPrice, targetPrice, condition }:
-    { email: string; symbol: string; currentPrice: number; targetPrice: number; condition: 'ABOVE' | 'BELOW' }
+    { email, symbol, currentPrice, targetPrice, condition, locale }:
+    { email: string; symbol: string; currentPrice: number; targetPrice: number; condition: 'ABOVE' | 'BELOW'; locale?: string }
 ) => {
     try {
         if (!transporter) {
@@ -115,18 +132,39 @@ export const sendStockAlertEmail = async (
         const money = (value: number) => symbol.startsWith('BINANCE:')
             ? `${value.toLocaleString('en-US', { maximumFractionDigits: value < 1 ? 6 : 2 })} USDT`
             : formatPrice(value);
-        const htmlTemplate = (isUpper ? STOCK_ALERT_UPPER_EMAIL_TEMPLATE : STOCK_ALERT_LOWER_EMAIL_TEMPLATE)
-            .replaceAll('{{symbol}}', escapeHtml(symbol))
-            .replaceAll('{{company}}', '') // Alerts don't store the company name
-            .replaceAll('{{currentPrice}}', money(currentPrice))
-            .replaceAll('{{targetPrice}}', money(targetPrice))
-            .replaceAll('{{timestamp}}', new Date().toUTCString());
+        const { lang, t } = await getEmailTranslator(locale);
+        const dir = isUpper ? 'Above' : 'Below';
+        const values = { symbol, price: money(currentPrice), target: money(targetPrice) };
+        const htmlTemplate = fillTemplate(isUpper ? STOCK_ALERT_UPPER_EMAIL_TEMPLATE : STOCK_ALERT_LOWER_EMAIL_TEMPLATE, {
+            ...escapeAll({
+                symbol,
+                currentPrice: values.price,
+                targetPrice: values.target,
+                timestamp: new Date().toLocaleString(lang, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'UTC', timeZoneName: 'short' }),
+                title: t(`stockAlert.title${dir}`, values),
+                logoAlt: t('common.logoAlt'),
+                heading: t(`stockAlert.heading${dir}`),
+                currentPriceLabel: t('stockAlert.currentPrice'),
+                details: t('stockAlert.details'),
+                targetPriceLabel: t('stockAlert.targetPriceLabel'),
+                triggerLabel: t('stockAlert.triggerLabel'),
+                trigger: t(`stockAlert.trigger${dir}`, values),
+                calloutTitle: t(`stockAlert.calloutTitle${dir}`),
+                calloutBody: t(`stockAlert.calloutBody${dir}`, values),
+                cta: t('stockAlert.cta'),
+                footer: t('stockAlert.footer'),
+                unsubscribe: t('common.unsubscribe'),
+                visitOpenstock: t('common.visitOpenstock'),
+            }),
+            company: '', // Alerts don't store the company name
+            lang,
+        });
 
         const mailOptions = {
             from: `"Openstock" <${process.env.NODEMAILER_EMAIL}>`,
             to: email,
-            subject: `🔔 Price Alert: ${symbol} is ${isUpper ? 'above' : 'below'} ${money(targetPrice)}`,
-            text: `${symbol} is now ${money(currentPrice)}, ${isUpper ? 'above' : 'below'} your target of ${money(targetPrice)}.`,
+            subject: t(`stockAlert.subject${dir}`, values),
+            text: t(`stockAlert.text${dir}`, values),
             html: htmlTemplate,
         };
 

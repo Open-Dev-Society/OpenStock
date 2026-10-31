@@ -5,17 +5,23 @@ import { Button } from "@/components/ui/button";
 import InputField from "@/components/forms/InputField";
 import ChoiceChips from "@/components/forms/ChoiceChips";
 import PasswordRequirements from "@/components/forms/PasswordRequirements";
-import { INVESTMENT_GOALS, PASSWORD_VALIDATION, PREFERRED_INDUSTRIES, RISK_TOLERANCE_OPTIONS } from "@/lib/constants";
+import { INVESTMENT_GOALS, passwordValidation, PREFERRED_INDUSTRIES, RISK_TOLERANCE_OPTIONS } from "@/lib/constants";
 import { CountrySelectField } from "@/components/forms/CountrySelectField";
 import FooterLink from "@/components/forms/FooterLink";
 import { signUpWithEmail } from "@/lib/actions/auth.actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import OpenDevSocietyBranding from "@/components/OpenDevSocietyBranding";
 import SocialAuthButtons from "@/components/forms/SocialAuthButtons";
 import React from "react";
 
 const SignUp = () => {
+    const t = useTranslations('SignUp');
+    const tFields = useTranslations('AuthFields');
+    const tPrefs = useTranslations('PreferenceFields');
+    const tPassword = useTranslations('Password');
+    const tBrand = useTranslations('OpenDevSocietyBranding');
     const router = useRouter()
     const {
         register,
@@ -45,57 +51,57 @@ const SignUp = () => {
                 router.push('/dashboard');
                 return;
             }
-            toast.error('Sign up failed', {
-                description: result.error ?? 'We could not create your account.',
+            toast.error(t('failed'), {
+                description: result.error ?? t('couldNotCreate'),
             });
         } catch (e) {
             console.error(e);
-            toast.error('Sign up failed', {
-                description: e instanceof Error ? e.message : 'Failed to create an account.'
+            toast.error(t('failed'), {
+                description: e instanceof Error ? e.message : t('failedGeneric')
             })
         }
     }
 
     return (
         <>
-            <h1 className="form-title mb-2">Create your account</h1>
-            <p className="mb-8 text-faint">Free and open source. No card needed.</p>
+            <h1 className="form-title mb-2">{t('title')}</h1>
+            <p className="mb-8 text-faint">{t('subtitle')}</p>
 
             <SocialAuthButtons />
 
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-8">
-                <section className="flex flex-col gap-4" aria-label="Account">
+                <section className="flex flex-col gap-4" aria-label={t('accountSection')}>
                     <InputField
                         name="fullName"
-                        label="Full name"
-                        placeholder="Your name"
+                        label={t('fullNameLabel')}
+                        placeholder={t('fullNamePlaceholder')}
                         register={register}
                         error={errors.fullName}
-                        validation={{ required: 'Full name is required', minLength: 2 }}
+                        validation={{ required: t('fullNameRequired'), minLength: 2 }}
                     />
                     <InputField
                         name="email"
-                        label="Email"
+                        label={tFields('email')}
                         placeholder="you@example.com"
                         register={register}
                         error={errors.email}
                         validation={{
-                            required: 'Email is required',
+                            required: tFields('emailRequired'),
                             pattern: {
                                 value: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
-                                message: 'Please enter a valid email address'
+                                message: tFields('emailInvalid')
                             }
                         }}
                     />
                     <div className="flex flex-col gap-2">
                         <InputField
                             name="password"
-                            label="Password"
-                            placeholder="At least 8 characters"
+                            label={t('passwordLabel')}
+                            placeholder={t('passwordPlaceholder')}
                             type="password"
                             register={register}
                             error={errors.password}
-                            validation={PASSWORD_VALIDATION}
+                            validation={passwordValidation({ required: tPassword('required'), minLength: tPassword('minLength'), pattern: tPassword('pattern') })}
                         />
                         <PasswordRequirements password={passwordValue ?? ''} />
                     </div>
@@ -103,29 +109,29 @@ const SignUp = () => {
 
                 <section className="flex flex-col gap-5 border-t border-line pt-6" aria-labelledby="personalize">
                     <div>
-                        <p id="personalize" className="kicker text-brand-ink">Personalize</p>
-                        <p className="mt-1 text-[13px] text-faint">Used to tailor your welcome email.</p>
+                        <p id="personalize" className="kicker text-brand-ink">{t('personalize')}</p>
+                        <p className="mt-1 text-[13px] text-faint">{t('personalizeHint')}</p>
                     </div>
                     <CountrySelectField
                         name="country"
-                        label="Country"
+                        label={tPrefs('country')}
                         control={control}
                         error={errors.country}
                         required
                     />
-                    <ChoiceChips name="investmentGoals" label="Investment goal" options={INVESTMENT_GOALS} control={control} />
-                    <ChoiceChips name="riskTolerance" label="Risk tolerance" options={RISK_TOLERANCE_OPTIONS} control={control} />
-                    <ChoiceChips name="preferredIndustry" label="Preferred industry" options={PREFERRED_INDUSTRIES} control={control} />
+                    <ChoiceChips name="investmentGoals" label={tPrefs('investmentGoal')} options={INVESTMENT_GOALS} optionGroup="investmentGoals" control={control} />
+                    <ChoiceChips name="riskTolerance" label={tPrefs('riskTolerance')} options={RISK_TOLERANCE_OPTIONS} optionGroup="riskTolerance" control={control} />
+                    <ChoiceChips name="preferredIndustry" label={tPrefs('preferredIndustry')} options={PREFERRED_INDUSTRIES} optionGroup="industries" control={control} />
                 </section>
 
                 <div className="flex flex-col gap-4">
                     <Button type="submit" disabled={isSubmitting} className="yellow-btn w-full">
-                        {isSubmitting ? 'Creating account' : 'Create account'}
+                        {isSubmitting ? t('submitting') : t('submit')}
                     </Button>
-                    <FooterLink text="Already have an account?" linkText="Sign in" href="/sign-in" />
+                    <FooterLink text={t('haveAccount')} linkText={t('signIn')} href="/sign-in" />
                 </div>
 
-                <OpenDevSocietyBranding outerClassName="flex justify-center" />
+                <OpenDevSocietyBranding outerClassName="flex justify-center" text={tBrand('initiativeBy')} />
             </form>
         </>
     )

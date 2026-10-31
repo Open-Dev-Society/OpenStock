@@ -1,0 +1,605 @@
+{
+  "Common": {
+    "notAvailable": "N/A",
+    "close": "Close",
+    "cancel": "Cancel",
+    "save": "Save",
+    "loading": "Loading…",
+    "somethingWentWrong": "Something went wrong. Please try again."
+  },
+  "Language": {
+    "label": "Language",
+    "changed": "Language changed"
+  },
+  "Options": {
+    "investmentGoals": {
+      "growth": "Growth",
+      "income": "Income",
+      "balanced": "Balanced",
+      "conservative": "Conservative"
+    },
+    "riskTolerance": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "industries": {
+      "technology": "Technology",
+      "healthcare": "Healthcare",
+      "finance": "Finance",
+      "energy": "Energy",
+      "consumerGoods": "Consumer Goods"
+    },
+    "alertType": {
+      "upper": "Upper",
+      "lower": "Lower"
+    },
+    "condition": {
+      "greater": "Greater than (>)",
+      "less": "Less than (<)"
+    }
+  },
+  "Password": {
+    "rules": {
+      "min8": "At least 8 characters",
+      "upper": "At least 1 uppercase letter",
+      "lower": "At least 1 lowercase letter",
+      "number": "At least 1 number"
+    },
+    "required": "Password is required",
+    "minLength": "Password must be at least 8 characters",
+    "pattern": "Password must include uppercase, lowercase, and a number"
+  },
+  "Markets": {
+    "names": {
+      "us": "United States",
+      "in": "India",
+      "de": "Germany",
+      "ca": "Canada",
+      "au": "Australia",
+      "sa": "Saudi Arabia",
+      "crypto": "Crypto",
+      "fx": "Forex",
+      "pl": "Poland"
+    },
+    "feed": {
+      "live": "Live",
+      "delayed": "Delayed",
+      "endOfDay": "End of day"
+    },
+    "groups": {
+      "financial": "Financial",
+      "technology": "Technology",
+      "consumer": "Consumer",
+      "banks": "Banks",
+      "industry": "Industry",
+      "finance": "Finance",
+      "energy": "Energy",
+      "growth": "Growth",
+      "resources": "Resources",
+      "consumerHealth": "Consumer & health",
+      "energyMaterials": "Energy & materials",
+      "telecomConsumer": "Telecom & consumer",
+      "majors": "Majors",
+      "more": "More",
+      "commodityFX": "Commodity FX",
+      "banksInsurance": "Banks & insurance",
+      "energyIndustry": "Energy & industry",
+      "consumerTech": "Consumer & tech"
+    }
+  },
+  "WatchlistTable": {
+    "headers": {
+      "company": "Company",
+      "symbol": "Symbol",
+      "price": "Price",
+      "change": "Change",
+      "marketCap": "Market Cap",
+      "peRatio": "P/E Ratio",
+      "alert": "Alert",
+      "action": "Action"
+    }
+  },
+  "AuthLayout": {
+    "testimonialQuote": "“For me, OpenStock isn’t just another stock app. It’s about giving people clarity and control in the market, without barriers or subscriptions.”",
+    "founderRole": "Founder {org}",
+    "starAlt": "star"
+  },
+  "AuthFields": {
+    "email": "Email",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Please enter a valid email address"
+  },
+  "PreferenceFields": {
+    "country": "Country",
+    "investmentGoal": "Investment goal",
+    "riskTolerance": "Risk tolerance",
+    "preferredIndustry": "Preferred industry"
+  },
+  "SignIn": {
+    "title": "Welcome back",
+    "subtitle": "Sign in to your watchlist and alerts.",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "forgotPassword": "Forgot password?",
+    "submit": "Sign In",
+    "submitting": "Signing In",
+    "noAccount": "Don't have an account?",
+    "createAccount": "Create an account",
+    "failed": "Sign in failed",
+    "invalidCredentials": "Invalid email or password.",
+    "failedGeneric": "Failed to sign in."
+  },
+  "SignUp": {
+    "title": "Create your account",
+    "subtitle": "Free and open source. No card needed.",
+    "accountSection": "Account",
+    "fullNameLabel": "Full name",
+    "fullNamePlaceholder": "Your name",
+    "fullNameRequired": "Full name is required",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "At least 8 characters",
+    "personalize": "Personalize",
+    "personalizeHint": "Used to tailor your welcome email.",
+    "submit": "Create account",
+    "submitting": "Creating account",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "failed": "Sign up failed",
+    "couldNotCreate": "We could not create your account.",
+    "failedGeneric": "Failed to create an account."
+  },
+  "ForgotPassword": {
+    "title": "Forgot your password?",
+    "subtitle": "Enter your email address and we'll send you a password reset link.",
+    "submit": "Send reset link",
+    "submitting": "Sending reset link",
+    "remembered": "Remembered it?",
+    "signIn": "Sign in",
+    "sent": "If an account exists for that email, a reset link has been sent.",
+    "unavailable": "Password reset unavailable",
+    "unableToStart": "Unable to start password reset."
+  },
+  "ResetPassword": {
+    "loading": "Loading reset form...",
+    "title": "Choose a new password",
+    "subtitle": "Enter a new password for your account.",
+    "newPasswordLabel": "New Password",
+    "newPasswordPlaceholder": "Enter a new password",
+    "confirmPasswordLabel": "Confirm Password",
+    "confirmPasswordPlaceholder": "Confirm your new password",
+    "confirmRequired": "Please confirm your new password",
+    "mismatch": "Passwords do not match",
+    "submit": "Reset password",
+    "submitting": "Resetting password",
+    "needFreshLink": "Need a fresh link?",
+    "requestAnother": "Request another one",
+    "invalidLink": "Reset link is invalid or expired.",
+    "updated": "Password updated. You can sign in now.",
+    "failed": "Password reset failed",
+    "unableToReset": "Unable to reset your password."
+  },
+  "SocialAuth": {
+    "signInFailed": "Sign in failed",
+    "connectionError": "Check your connection and try again.",
+    "redirecting": "Redirecting",
+    "or": "or"
+  },
+  "CountrySelect": {
+    "placeholder": "Select your country...",
+    "searchPlaceholder": "Search countries...",
+    "empty": "No country found.",
+    "required": "Please select {field}",
+    "hint": "Helps us show market data and news relevant to you."
+  },
+  "ProfilePage": {
+    "metaTitle": "Profile",
+    "memberSince": "member since {date}",
+    "statWatching": "Watching",
+    "statActiveAlerts": "Active alerts",
+    "statPausedAlerts": "Paused alerts",
+    "statSignInMethods": "Sign-in methods",
+    "detailsTitle": "Details",
+    "detailsSub": "Your name and what your welcome email is tailored to",
+    "signInMethodsTitle": "Sign-in methods",
+    "signInMethodsSub": "Ways you can get into this account",
+    "methodCredential": "Email and password",
+    "connected": "Connected",
+    "passwordTitle": "Password",
+    "passwordSub": "Changing it signs out your other devices"
+  },
+  "ProfileForm": {
+    "nameLabel": "Name",
+    "namePlaceholder": "Your name",
+    "nameRequired": "Name is required",
+    "nameMinLength": "At least 2 characters",
+    "saveFailed": "Couldn’t save",
+    "saved": "Profile saved",
+    "submit": "Save changes",
+    "submitting": "Saving",
+    "upToDate": "Up to date"
+  },
+  "PasswordForm": {
+    "currentLabel": "Current password",
+    "currentPlaceholder": "Your current password",
+    "currentRequired": "Enter your current password",
+    "newLabel": "New password",
+    "newPlaceholder": "At least 8 characters",
+    "notChanged": "Password not changed",
+    "changed": "Password changed",
+    "otherDevicesSignedOut": "Other devices were signed out.",
+    "submit": "Change password",
+    "submitting": "Changing"
+  },
+  "Dashboard": {
+    "title": "Markets",
+    "sub": "{market} · {status, select, open {open now} other {closed now}} · {feed, select, live {live data} delayed {delayed data} other {end of day data}}",
+    "pulseTitle": "Pulse",
+    "pulseSubFinnhub": "Our shared quotes via Finnhub",
+    "pulseSubYahoo": "Delayed quotes via Yahoo Finance",
+    "pulseSubTradingView": "{feed, select, live {Live quotes via TradingView} delayed {Delayed quotes via TradingView} other {End of day quotes via TradingView}}",
+    "moversTitle": "Movers",
+    "moversSub": "Biggest moves today",
+    "leadersTitle": "Leaders",
+    "leadersSub": "12-month trend by group",
+    "stockHeatmapTitle": "S&P 500 heatmap",
+    "cryptoHeatmapTitle": "Crypto heatmap",
+    "heatmapSub": "Sized by market cap, coloured by today’s move",
+    "quotesTitle": "Quotes",
+    "quotesSub": "{market} leaders by group",
+    "storiesTitle": "Top stories",
+    "storiesSub": "Newest first"
+  },
+  "MarketSwitcher": {
+    "label": "Markets",
+    "openNow": "Open now",
+    "closedNow": "Closed now"
+  },
+  "PulseTile": {
+    "vsPrevClose": "{change} vs prev close",
+    "unavailable": "Quote unavailable"
+  },
+  "DataFreshness": {
+    "live": "Live · 15s",
+    "asOf": "As of {time} · refreshed hourly",
+    "delayed": "Delayed · refreshed hourly"
+  },
+  "YahooQuotes": {
+    "changePercent": "Change %",
+    "unavailable": "Quotes unavailable right now.",
+    "source": "Prices in {currency} via Yahoo Finance, delayed about 15 minutes.",
+    "sourceNoCurrency": "Prices via Yahoo Finance, delayed about 15 minutes."
+  },
+  "TradingViewWidget": {
+    "fullScreen": "Full screen",
+    "exitFullScreen": "Exit full screen",
+    "exitFullScreenHint": "Exit full screen (Esc)"
+  },
+  "Errors": {
+    "signUpFailed": "Sign up failed",
+    "signInFailed": "Sign in failed",
+    "signOutFailed": "Sign out failed",
+    "tooManyAttempts": "Too many attempts. Please wait a few minutes and try again.",
+    "socialSignInUnavailable": "{provider} sign in is not available right now.",
+    "resetEmailNotConfigured": "Password reset email is not configured.",
+    "resetBaseUrlMissing": "BETTER_AUTH_URL must be configured before password reset emails can be sent.",
+    "resetEmailFailed": "Unable to send password reset email.",
+    "resetLinkInvalid": "Reset link is invalid or expired.",
+    "nameLength": "Name must be 2 to 80 characters.",
+    "pickCountry": "Pick a country.",
+    "pickEachOption": "Pick one option in each group.",
+    "profileSaveFailed": "Couldn’t save your profile.",
+    "passwordChangeFailed": "Current password is incorrect, or the new one is too short.",
+    "watchlistFull": "Your watchlist is full ({max} stocks). Remove one to add another.",
+    "listNotFound": "That list no longer exists.",
+    "listNameInvalid": "Give the list a name of up to 60 characters.",
+    "listLimit": "You can keep {max} lists. Delete one to make room.",
+    "listExists": "You already have a list called “{name}”.",
+    "symbolInvalid": "That is not a symbol we can look up.",
+    "listFull": "A list holds up to {max} symbols."
+  },
+  "NewsSources": {
+    "companyNews": "Company News",
+    "marketNews": "Market News"
+  },
+  "Emails": {
+    "common": {
+      "logoAlt": "OpenStock Logo",
+      "unsubscribe": "Unsubscribe",
+      "visitOpenstock": "Visit OpenStock"
+    },
+    "welcome": {
+      "subject": "Welcome to Openstock - your open-source stock market toolkit!",
+      "text": "Thanks for joining Openstock, an initiative by open dev society",
+      "title": "Welcome to OpenStock",
+      "dashboardAlt": "OpenStock Dashboard Preview",
+      "heading": "Welcome aboard {name}",
+      "fallbackIntro": "Thanks for joining Openstock. You now have the tools to track markets and make smarter moves.",
+      "featuresLabel": "Here's what you can do right now:",
+      "featureWatchlist": "Set up your watchlist to follow your favorite stocks",
+      "featureSearch": "Search any stock with ⌘K and open it as a tab",
+      "featureDashboard": "Explore the dashboard for trends and the latest market news",
+      "closing": "We'll keep you informed with timely updates, insights, and alerts — so you can focus on making the right calls.",
+      "cta": "Go to Dashboard",
+      "initiative": "Initiative by Open Dev Society"
+    },
+    "resetPassword": {
+      "subject": "Reset your Openstock password",
+      "heading": "Reset your password",
+      "greeting": "Hi {name},",
+      "greetingNoName": "Hi there,",
+      "body": "We received a request to reset your Openstock password. Use the button below to choose a new one.",
+      "cta": "Reset password",
+      "ignore": "If you did not request this, you can safely ignore this email.",
+      "text": "Reset your password: {url}"
+    },
+    "stockAlert": {
+      "subjectAbove": "🔔 Price Alert: {symbol} is above {target}",
+      "subjectBelow": "🔔 Price Alert: {symbol} is below {target}",
+      "textAbove": "{symbol} is now {price}, above your target of {target}.",
+      "textBelow": "{symbol} is now {price}, below your target of {target}.",
+      "titleAbove": "Price Alert: {symbol} Hit Upper Target",
+      "titleBelow": "Price Alert: {symbol} Hit Lower Target",
+      "headingAbove": "📈 Price Above Reached",
+      "headingBelow": "📉 Price Below Hit",
+      "currentPrice": "Current Price",
+      "details": "Alert Details",
+      "targetPriceLabel": "Target Price:",
+      "triggerLabel": "Trigger:",
+      "triggerAbove": "Price exceeded your upper threshold of {target}",
+      "triggerBelow": "Price dropped below your lower threshold of {target}",
+      "calloutTitleAbove": "Opportunity Alert!",
+      "calloutBodyAbove": "{symbol} has reached your target price! This could be a good time to review your position and consider taking profits or adjusting your strategy.",
+      "calloutTitleBelow": "Price Dropped",
+      "calloutBodyBelow": "{symbol} dropped below your target price. This might be a good time to buy.",
+      "cta": "View Dashboard",
+      "footer": "You're receiving this because you subscribed to Openstock news updates."
+    }
+  },
+  "Sidebar": {
+    "homeAria": "OpenStock dashboard",
+    "searchStocks": "Search stocks",
+    "overview": "Overview",
+    "watchlist": "Watchlist",
+    "watching": "Watching",
+    "watchingEmpty": "Star a stock to pin it here.",
+    "resources": {
+      "help": "Help",
+      "apiDocs": "API docs",
+      "about": "About",
+      "terms": "Terms"
+    },
+    "support": "Support OpenStock",
+    "sponsor": "Sponsor",
+    "sponsorSlotsOpen": "Sponsor slots open",
+    "sponsorSlotsLeft": "{count, plural, one {# sponsor slot left} other {# sponsor slots left}}",
+    "sponsorPitch": "Put your company in front of every OpenStock user.",
+    "signOut": "Sign out"
+  },
+  "TabBar": {
+    "pages": {
+      "overview": "Overview",
+      "watchlist": "Watchlist",
+      "profile": "Profile"
+    },
+    "openMenu": "Open menu",
+    "closeTab": "Close {label}",
+    "openStock": "Open a stock",
+    "openStockHint": "Open a stock (⌘K)"
+  },
+  "SearchCommand": {
+    "title": "Search stocks",
+    "placeholder": "Search by company or symbol",
+    "searching": "Searching",
+    "noMatch": "Nothing matches “{query}”",
+    "noStocks": "No stocks available",
+    "results": "Results",
+    "popular": "Popular",
+    "listPlaceholder": "Add a stock to “{list}”",
+    "addingTo": "Adding to <name>{list}</name>",
+    "addedToList": "{symbol} added to “{list}”",
+    "addFailed": "Couldn’t add the symbol",
+    "addTitle": "Add {symbol} to {list}",
+    "add": "Add",
+    "adding": "Adding"
+  },
+  "UpdateBanner": {
+    "new": "New",
+    "seeWhatsNew": "See what’s new",
+    "fullChangelog": "Read the full changelog"
+  },
+  "DonatePopup": {
+    "kicker": "Open for sponsors",
+    "title": "Keep OpenStock free",
+    "description": "Your love for OpenStock and Open Dev Society has helped us grow, and we’re now hitting Vercel’s free tier limits. Sponsor from $5 a month, give once, or talk with us about a partnership.",
+    "becomeSponsor": "Become a sponsor",
+    "maybeLater": "Maybe later"
+  },
+  "OpenDevSocietyBranding": {
+    "initiativeBy": "Initiative by"
+  },
+  "StockPage": {
+    "sentimentTitle": "Sentiment",
+    "sentimentSub": "Reddit, X.com, news and Polymarket",
+    "dividendYieldTitle": "Dividend Yield",
+    "chartTitle": "Chart",
+    "chartUnavailableSub": "Only on TradingView for this exchange",
+    "chartUnavailableTitle": "Chart not available here",
+    "chartUnavailableBody": "TradingView doesn’t license {exchange} charts for other sites. Financials, technicals and the profile below still work.",
+    "openOnTradingView": "Open chart on TradingView",
+    "financialsTitle": "Financials",
+    "financialsSub": "Income statement, balance sheet and ratios",
+    "technicalsTitle": "Technicals",
+    "technicalsSub": "Oscillators and moving averages, 1h",
+    "profileTitle": "Profile",
+    "profileSub": "What the company does"
+  },
+  "StockHeader": {
+    "quoteViaYahoo": "delayed quote via Yahoo Finance",
+    "quoteViaTradingView": "quote via TradingView",
+    "alertsHint": "Price alerts need a quote source we can check every 5 minutes",
+    "alertsScope": "Alerts: US stocks and crypto",
+    "setAlert": "Set alert",
+    "open": "Open",
+    "openHint": "First trade of the session",
+    "dayRange": "Day range",
+    "dayRangeHint": "Low to high",
+    "prevClose": "Prev close",
+    "prevCloseHint": "Last session",
+    "marketCap": "Market cap"
+  },
+  "StockChart": {
+    "title": "Chart",
+    "sub": "Live from TradingView · switch interval and style in the chart",
+    "indicatorsButton": "Indicators",
+    "keptNote": "Kept on every chart in this browser",
+    "indicators": {
+      "sma": "Moving average (SMA)",
+      "ema": "Exponential MA (EMA)",
+      "bollingerBands": "Bollinger Bands",
+      "vwap": "VWAP",
+      "rsi": "RSI",
+      "macd": "MACD",
+      "stochastic": "Stochastic",
+      "atr": "ATR"
+    }
+  },
+  "StockSentiment": {
+    "avgBuzz": "Avg. buzz",
+    "bullishAvg": "Bullish avg",
+    "coverage": "Coverage",
+    "coverageValue": "{count}/{total} sources",
+    "sourceAlignment": "Source alignment: <value>{alignment}</value>",
+    "alignment": {
+      "noSentimentMix": "No sentiment mix",
+      "singleSourceView": "Single-source view",
+      "bullishAlignment": "Bullish alignment",
+      "bearishAlignment": "Bearish alignment",
+      "tightAlignment": "Tight alignment",
+      "wideDivergence": "Wide divergence",
+      "mixed": "Mixed"
+    },
+    "metric": {
+      "mentions": "{value} {count, plural, one {mention} other {mentions}}",
+      "trades": "{value} {count, plural, one {trade} other {trades}}"
+    },
+    "newsSource": "News",
+    "buzz": "buzz",
+    "bullPct": "{pct}% bull",
+    "trend": {
+      "rising": "Rising",
+      "falling": "Falling",
+      "stable": "Stable"
+    },
+    "noTrend": "No trend"
+  },
+  "WatchlistButton": {
+    "added": "{symbol} added to watchlist",
+    "removed": "{symbol} removed from watchlist",
+    "updateFailed": "Couldn’t update your watchlist",
+    "addLabel": "Add {symbol} to watchlist",
+    "removeLabel": "Remove {symbol} from watchlist",
+    "watch": "Watch",
+    "watching": "Watching"
+  },
+  "WatchlistPage": {
+    "title": "Watchlist",
+    "symbolCount": "{count, plural, one {# symbol} other {# symbols}}",
+    "addSymbol": "Add symbol",
+    "symbolsTitle": "Symbols",
+    "symbolsSub": "Click a row for charts, technicals and financials",
+    "newsTitle": "News",
+    "newsSubWatched": "Latest stories for the symbols you watch",
+    "newsSubGeneral": "General market news",
+    "alertsTitle": "Alerts",
+    "alertsSubActive": "{count} active · checked every 5 minutes",
+    "alertsSubCloud": "An OpenStock Cloud feature",
+    "listsTitle": "My lists",
+    "listsSub": "Group the stocks you watch into named lists"
+  },
+  "WatchlistTableRow": {
+    "today": "Today",
+    "emptyTitle": "Nothing on your watchlist yet",
+    "emptyBody": "Search for a company and star it to track its price here and set alerts.",
+    "searchStocks": "Search stocks",
+    "setAlertLabel": "Set a price alert for {symbol}",
+    "alertsUnavailable": "Alerts are available for US stocks and crypto"
+  },
+  "AlertsPanel": {
+    "status": {
+      "triggered": "Triggered",
+      "paused": "Paused",
+      "expired": "Expired",
+      "watching": "Watching"
+    },
+    "removed": "Alert for {symbol} removed",
+    "removeFailed": "Couldn’t remove the alert",
+    "cloudTitle": "Alerts come with Cloud",
+    "cloudBody": "Email price alerts are part of OpenStock Cloud, $5 a month and coming soon.",
+    "seeCloud": "See OpenStock Cloud",
+    "emptyTitle": "No alerts yet",
+    "emptyBody": "Use the bell on any row, or “Set alert” on a stock page. We email you when it fires.",
+    "movedNotice": "Alerts moved to <link>OpenStock Cloud</link>, so these are paused.",
+    "above": "Above {price}",
+    "below": "Below {price}",
+    "until": "until {date}",
+    "removeTitle": "Remove alert",
+    "removeLabel": "Remove alert for {symbol}"
+  },
+  "CreateAlertModal": {
+    "risesAbove": "Rises above",
+    "fallsBelow": "Falls below",
+    "created": "Alert set: {symbol} {condition, select, ABOVE {above} other {below}} {price}",
+    "createFailed": "Couldn’t create the alert",
+    "kicker": "Price alert",
+    "description": "We email you when the price crosses your target. Checked every 5 minutes, expires after 90 days.",
+    "conditionLabel": "Condition",
+    "targetPrice": "Target price",
+    "priceUnavailable": "Current price unavailable",
+    "alreadyMet": "Already {condition, select, ABOVE {above} other {below}} this — it will fire on the next check",
+    "now": "Now {price}",
+    "nowWithDistance": "Now {price} · {distance}% away",
+    "setting": "Setting alert",
+    "setAlert": "Set alert",
+    "cloudTitle": "Price alerts come with Cloud",
+    "cloudBody": "Cloud adds email price alerts and live quotes for $5 a month. It’s coming soon. Self-hosting includes both today.",
+    "seeCloud": "See OpenStock Cloud",
+    "selfHost": "Self-host"
+  },
+  "NewsList": {
+    "emptyTitle": "No recent news",
+    "emptyBody": "Nothing published in the last few days for these symbols."
+  },
+  "NamedLists": {
+    "starred": "Starred",
+    "addStock": "Add a stock",
+    "addStockTo": "Add a stock to {list}",
+    "newListName": "New list name",
+    "create": "Create",
+    "createTitle": "Create the list",
+    "createFailed": "Couldn’t create the list",
+    "delete": "Delete",
+    "deleteTitle": "Delete {list}",
+    "deleteConfirm": "Delete the list “{list}”? The stocks you starred are not affected.",
+    "deleteFailed": "Couldn’t delete the list",
+    "emptyTitle": "“{list}” is empty",
+    "emptyBody": "Use “Add a stock” above, or the list button on any row of your watchlist.",
+    "removeFrom": "Remove {symbol} from {list}",
+    "removedFrom": "{symbol} removed from “{list}”",
+    "removeFailed": "Couldn’t remove the symbol",
+    "menuTitle": "Add {symbol} to a list",
+    "menuLabel": "Add {symbol} to a named list",
+    "menuHeading": "Add to a list",
+    "menuEmpty": "No lists yet — start one below.",
+    "newListItem": "New list…",
+    "newListTitle": "New list",
+    "listName": "List name",
+    "addedTo": "{symbol} added to “{list}”",
+    "addFailed": "Couldn’t add the symbol",
+    "addToFailed": "Couldn’t add {symbol} to “{list}”",
+    "createdAndAdded": "Created “{list}” and added {symbol}",
+    "retryHint": "“{list}” was created — press the button again to retry adding {symbol}.",
+    "retryAdd": "Retry add",
+    "createAndAdd": "Create and add"
+  }
+}

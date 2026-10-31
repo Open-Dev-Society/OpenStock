@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Star } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { addToWatchlist, removeFromWatchlist } from "@/lib/actions/watchlist.actions";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ interface WatchlistButtonProps {
 }
 
 const WatchlistButton = ({ symbol, company, isInWatchlist, variant = "button", onWatchlistChange }: WatchlistButtonProps) => {
+    const t = useTranslations('WatchlistButton');
     const router = useRouter();
     const [added, setAdded] = useState(isInWatchlist);
     const [loading, setLoading] = useState(false);
@@ -35,19 +37,19 @@ const WatchlistButton = ({ symbol, company, isInWatchlist, variant = "button", o
                     return;
                 }
             } else await removeFromWatchlist(symbol);
-            toast.success(next ? `${symbol} added to watchlist` : `${symbol} removed from watchlist`);
+            toast.success(next ? t('added', { symbol }) : t('removed', { symbol }));
             onWatchlistChange?.(symbol, next);
             router.refresh(); // sidebar lists the watchlist from the layout
         } catch (error) {
             console.error("Watchlist action failed:", error);
             setAdded(!next);
-            toast.error("Couldn’t update your watchlist");
+            toast.error(t('updateFailed'));
         } finally {
             setLoading(false);
         }
     };
 
-    const label = added ? `Remove ${symbol} from watchlist` : `Add ${symbol} to watchlist`;
+    const label = added ? t('removeLabel', { symbol }) : t('addLabel', { symbol });
 
     if (variant === "icon") {
         return (
@@ -60,7 +62,7 @@ const WatchlistButton = ({ symbol, company, isInWatchlist, variant = "button", o
     return (
         <button type="button" onClick={handleClick} disabled={loading} className={cn('btn btn-ghost', added && 'is-on')} aria-pressed={added}>
             <Star fill={added ? 'currentColor' : 'none'} />
-            {added ? 'Watching' : 'Watch'}
+            {added ? t('watching') : t('watch')}
         </button>
     );
 };

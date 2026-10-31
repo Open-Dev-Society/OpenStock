@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState } from "react";
 import { Github } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { signInWithSocial } from "@/lib/actions/auth.actions";
 
@@ -30,6 +31,7 @@ export const SocialProvidersProvider = ({ enabled, children }: { enabled: Provid
 );
 
 const SocialAuthButtons = () => {
+    const t = useTranslations('SocialAuth');
     const enabled = useContext(EnabledProviders);
     const [pending, setPending] = useState<string | null>(null);
     const providers = PROVIDERS.filter((p) => enabled.includes(p.id));
@@ -42,10 +44,10 @@ const SocialAuthButtons = () => {
                 window.location.href = result.url;
                 return;
             }
-            toast.error('Sign in failed', { description: result.error });
+            toast.error(t('signInFailed'), { description: result.error });
         } catch {
             // Network failure or a stale action after a deploy
-            toast.error('Sign in failed', { description: 'Check your connection and try again.' });
+            toast.error(t('signInFailed'), { description: t('connectionError') });
         }
         setPending(null);
     }
@@ -65,13 +67,13 @@ const SocialAuthButtons = () => {
                         className="h-12 border-gray-600 text-gray-400 text-base rounded-lg cursor-pointer"
                     >
                         {icon}
-                        {pending === id ? 'Redirecting' : label}
+                        {pending === id ? t('redirecting') : label}
                     </Button>
                 ))}
             </div>
             <div className="flex items-center gap-3 text-sm text-gray-500">
                 <span className="h-px flex-1 bg-gray-600" />
-                or
+                {t('or')}
                 <span className="h-px flex-1 bg-gray-600" />
             </div>
         </div>

@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { LayoutDashboard, Menu, Plus, Star, X } from "lucide-react";
 import { openSearch } from "@/components/SearchCommand";
 import { cn } from "@/lib/utils";
@@ -11,27 +12,28 @@ const PINNED = ['/dashboard', '/watchlist'];
 const STORAGE_KEY = 'openstock-tabs';
 const MAX_TABS = 12;
 
-const PAGE_LABELS: Record<string, string> = {
-    '/dashboard': 'Overview',
-    '/watchlist': 'Watchlist',
-    '/profile': 'Profile',
+// Message keys under TabBar.pages
+const PAGE_LABELS: Record<string, 'overview' | 'watchlist' | 'profile'> = {
+    '/dashboard': 'overview',
+    '/watchlist': 'watchlist',
+    '/profile': 'profile',
 };
 
 // Pages become browser-style tabs; stock pages are labelled by their symbol.
-const tabLabel = (path: string) => {
+const stockSymbol = (path: string) => {
     const stock = path.match(/^\/stocks\/([^/]+)$/);
-    if (stock) return decodeURIComponent(stock[1]).toUpperCase();
-    return PAGE_LABELS[path] ?? null;
+    return stock ? decodeURIComponent(stock[1]).toUpperCase() : null;
 };
 
 const withTab = (tabs: string[], path: string) => {
-    if (!tabLabel(path) || tabs.includes(path)) return tabs;
+    if (!(stockSymbol(path) || PAGE_LABELS[path]) || tabs.includes(path)) return tabs;
     const next = [...tabs, path];
     const extra = next.length - MAX_TABS;
     return extra > 0 ? next.filter((t, i) => PINNED.includes(t) || i >= extra + PINNED.length) : next;
 };
 
 const TabBar = ({ onMenu }: { onMenu: () => void }) => {
+    const t = useTranslations('TabBar');
     const pathname = usePathname();
     const router = useRouter();
     const [tabs, setTabs] = useState(() => withTab(PINNED, pathname));
@@ -61,6 +63,8 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
         el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     }, [pathname, tabs]);
 
+    const tabLabel = (path: string) => stockSymbol(path) ?? (PAGE_LABELS[path] ? t(`pages.${PAGE_LABELS[path]}`) : null);
+
     const closeTab = (path: string) => {
         const index = tabs.indexOf(path);
         const next = tabs.filter((t) => t !== path);
@@ -70,7 +74,7 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
 
     return (
         <div className="tabbar">
-            <button type="button" onClick={onMenu} className="chrome-btn lg:hidden" aria-label="Open menu">
+            <button type="button" onClick={onMenu} className="chrome-btn lg:hidden" aria-label={t('openMenu')}>
                 <Menu />
             </button>
 
@@ -104,7 +108,7 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
                             {!pinned && (
                                 <button
                                     type="button"
-                                    aria-label={`Close ${tabLabel(path)}`}
+                                    aria-label={t('closeTab', { label: tabLabel(path) ?? path })}
                                     className="tab-close relative z-10"
                                     onClick={() => closeTab(path)}
                                 >
@@ -116,7 +120,7 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
                 })}
             </div>
 
-            <button type="button" onClick={openSearch} className="chrome-btn -ml-2" aria-label="Open a stock" title="Open a stock (⌘K)">
+            <button type="button" onClick={openSearch} className="chrome-btn -ml-2" aria-label={t('openStock')} title={t('openStockHint')}>
                 <Plus />
             </button>
         </div>

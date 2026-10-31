@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/better-auth/auth";
+import { getTranslations } from "next-intl/server";
 import { INVESTMENT_GOALS, PREFERRED_INDUSTRIES, RISK_TOLERANCE_OPTIONS } from "@/lib/constants";
 
 export type ProfileInput = {
@@ -17,13 +18,14 @@ const isOption = (options: readonly { value: string }[], value: string) => optio
 
 // Every call acts on the signed-in user's own session; nothing here takes a user id from the client.
 export async function updateProfile(input: ProfileInput) {
+    const t = await getTranslations('Errors');
     const name = input.name.trim();
-    if (name.length < 2 || name.length > 80) return { success: false, error: 'Name must be 2 to 80 characters.' };
-    if (!/^[A-Z]{2}$/.test(input.country)) return { success: false, error: 'Pick a country.' };
+    if (name.length < 2 || name.length > 80) return { success: false, error: t('nameLength') };
+    if (!/^[A-Z]{2}$/.test(input.country)) return { success: false, error: t('pickCountry') };
     if (!isOption(INVESTMENT_GOALS, input.investmentGoals)
         || !isOption(RISK_TOLERANCE_OPTIONS, input.riskTolerance)
         || !isOption(PREFERRED_INDUSTRIES, input.preferredIndustry)) {
-        return { success: false, error: 'Pick one option in each group.' };
+        return { success: false, error: t('pickEachOption') };
     }
 
     try {
@@ -41,7 +43,7 @@ export async function updateProfile(input: ProfileInput) {
         return { success: true };
     } catch (e) {
         console.error('Profile update failed', e);
-        return { success: false, error: 'Couldn’t save your profile.' };
+        return { success: false, error: t('profileSaveFailed') };
     }
 }
 
@@ -54,6 +56,7 @@ export async function changePassword({ currentPassword, newPassword }: { current
         return { success: true };
     } catch (e) {
         console.error('Password change failed', e);
-        return { success: false, error: 'Current password is incorrect, or the new one is too short.' };
+        const t = await getTranslations('Errors');
+        return { success: false, error: t('passwordChangeFailed') };
     }
 }

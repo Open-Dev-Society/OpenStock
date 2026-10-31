@@ -6,6 +6,7 @@ import { ArrowUpRight, Loader2, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { searchStocks } from "@/lib/actions/finnhub.actions";
 import { addSymbolToList } from "@/lib/actions/watchlist-lists.actions";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -34,6 +35,7 @@ export const SearchButton = ({ children, className }: { children: React.ReactNod
 
 export default function SearchCommand({ initialStocks }: { initialStocks: StockWithWatchlistStatus[] }) {
     const router = useRouter();
+    const t = useTranslations('SearchCommand');
     const [open, setOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
     const [loading, setLoading] = useState(false)
@@ -106,11 +108,11 @@ export default function SearchCommand({ initialStocks }: { initialStocks: StockW
                 toast.error(result.error);
                 return;
             }
-            toast.success(`${stock.symbol} added to “${listTarget.name}”`);
+            toast.success(t('addedToList', { symbol: stock.symbol, list: listTarget.name }));
             // The palette stays open so several stocks can be filed in one go.
             router.refresh();
         } catch {
-            toast.error('Couldn’t add the symbol');
+            toast.error(t('addFailed'));
         } finally {
             setAdding(null);
         }
@@ -125,28 +127,32 @@ export default function SearchCommand({ initialStocks }: { initialStocks: StockW
                 setOpen(next);
                 if (!next) setListTarget(null);
             }}
+            title={t('title')}
+            description={t('placeholder')}
             className="search-dialog"
         >
             <div className="search-field">
                 <CommandInput
                     value={searchTerm}
                     onValueChange={setSearchTerm}
-                    placeholder={listTarget ? `Add a stock to “${listTarget.name}”` : "Search by company or symbol"}
+                    placeholder={listTarget ? t('listPlaceholder', { list: listTarget.name }) : t('placeholder')}
                     className="search-input"
                 />
                 {loading && <Loader2 className="search-loader" />}
             </div>
             <CommandList className="search-list">
                 {loading ? (
-                    <CommandEmpty className="search-list-empty">Searching</CommandEmpty>
+                    <CommandEmpty className="search-list-empty">{t('searching')}</CommandEmpty>
                 ) : displayStocks?.length === 0 ? (
                     <div className="search-list-indicator">
-                        {isSearchMode ? `Nothing matches “${searchTerm.trim()}”` : 'No stocks available'}
+                        {isSearchMode ? t('noMatch', { query: searchTerm.trim() }) : t('noStocks')}
                     </div>
                 ) : (
                     <ul>
                         <li className="search-count">
-                            {listTarget ? <>Adding to <span className="font-semibold">{listTarget.name}</span></> : isSearchMode ? 'Results' : 'Popular'}
+                            {listTarget
+                                ? t.rich('addingTo', { list: listTarget.name, name: (chunks) => <span className="font-semibold">{chunks}</span> })
+                                : isSearchMode ? t('results') : t('popular')}
                             <span className="num"> · {displayStocks?.length || 0}</span>
                         </li>
                         {displayStocks?.map((stock) => (
@@ -178,9 +184,9 @@ export default function SearchCommand({ initialStocks }: { initialStocks: StockW
                                         onClick={() => addToList(stock)}
                                         disabled={adding !== null}
                                         className="pill h-7 shrink-0"
-                                        title={`Add ${stock.symbol} to ${listTarget.name}`}
+                                        title={t('addTitle', { symbol: stock.symbol, list: listTarget.name })}
                                     >
-                                        <Plus className="size-3.5" /> {adding === stock.symbol ? 'Adding' : 'Add'}
+                                        <Plus className="size-3.5" /> {adding === stock.symbol ? t('adding') : t('add')}
                                     </button>
                                 )}
                             </li>

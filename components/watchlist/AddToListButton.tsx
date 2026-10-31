@@ -1,6 +1,7 @@
 'use client';
 
 import { Plus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { openSearchForList } from '@/components/SearchCommand';
 
 // Opens the app's search palette in "add to this list" mode. The palette is mounted once in the
@@ -14,14 +15,15 @@ export default function AddToListButton({
     listName: string;
     className?: string;
 }) {
+    const t = useTranslations('NamedLists');
     return (
         <button
             type="button"
             className={className}
-            title={`Add a stock to ${listName}`}
+            title={t('addStockTo', { list: listName })}
             onClick={() => openSearchForList(listId, listName)}
         >
-            <Plus /> Add a stock
+            <Plus /> {t('addStock')}
         </button>
     );
 }

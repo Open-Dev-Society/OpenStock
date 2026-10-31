@@ -1,4 +1,5 @@
 import { Bell, CalendarClock, Gauge, Landmark, MoveVertical } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
 import WatchlistButton from "@/components/WatchlistButton";
 import CreateAlertModal from "@/components/watchlist/CreateAlertModal";
 import StockLivePrice from "@/components/stocks/StockLivePrice";
@@ -18,9 +19,11 @@ import { isYahooSymbol } from "@/lib/yahoo";
 // Warsaw falls back to that panel; Tadawul's is blocked either way.
 async function TradingViewHeader({ symbol }: { symbol: string }) {
     const yahooPriced = isYahooSymbol(symbol);
-    const [isInWatchlist, yahoo] = await Promise.all([
+    const [isInWatchlist, yahoo, t, locale] = await Promise.all([
         isStockInWatchlist(symbol),
         yahooPriced ? getYahooDailyQuotes([symbol]) : null,
+        getTranslations('StockHeader'),
+        getLocale(),
     ]);
     const quote = yahoo?.[symbol];
     const tvSymbol = formatSymbolForTradingView(symbol);
@@ -31,7 +34,7 @@ async function TradingViewHeader({ symbol }: { symbol: string }) {
                 <div className="min-w-0">
                     <h1 className="mono truncate text-xl font-bold tracking-[-0.02em]">{symbol}</h1>
                     <p className="text-[12.5px] text-faint">
-                        {[tvSymbol.split(':')[0], quote?.name, yahooPriced ? 'delayed quote via Yahoo Finance' : 'quote via TradingView'].filter(Boolean).join(' · ')}
+                        {[tvSymbol.split(':')[0], quote?.name, yahooPriced ? t('quoteViaYahoo') : t('quoteViaTradingView')].filter(Boolean).join(' · ')}
                     </p>
                 </div>
                 {quote && (
@@ -42,14 +45,14 @@ async function TradingViewHeader({ symbol }: { symbol: string }) {
                 )}
                 <div className="flex items-center gap-2">
                     <WatchlistButton symbol={symbol} company={symbol} isInWatchlist={isInWatchlist} />
-                    <span className="pill h-9 px-3" title="Price alerts need a quote source we can check every 5 minutes">
-                        <Bell /> Alerts: US stocks and crypto
+                    <span className="pill h-9 px-3" title={t('alertsHint')}>
+                        <Bell /> {t('alertsScope')}
                     </span>
                 </div>
             </div>
             {!hidePanel && (
                 <div className="card mt-[3px] p-1">
-                    <TradingViewWidget scriptUrl="https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js" config={symbolInfoConfig(tvSymbol)} height={180} />
+                    <TradingViewWidget scriptUrl="https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js" config={symbolInfoConfig(tvSymbol, locale)} height={180} />
                 </div>
             )}
         </section>
@@ -59,10 +62,11 @@ async function TradingViewHeader({ symbol }: { symbol: string }) {
 export default async function StockHeader({ symbol }: { symbol: string }) {
     if (!hasFinnhubQuotes(symbol)) return <TradingViewHeader symbol={symbol} />;
 
-    const [isInWatchlist, quotes, profile] = await Promise.all([
+    const [isInWatchlist, quotes, profile, t] = await Promise.all([
         isStockInWatchlist(symbol),
         getLiveQuotes([symbol]),
         getCompanyProfile(symbol),
+        getTranslations('StockHeader'),
     ]);
     const quote = quotes[symbol];
 
@@ -71,10 +75,10 @@ export default async function StockHeader({ symbol }: { symbol: string }) {
     const money = (value?: number) => (value ? formatPrice(value, currency) : '—');
 
     const stats = [
-        { label: 'Open', icon: CalendarClock, value: money(quote?.o), hint: 'First trade of the session' },
-        { label: 'Day range', icon: MoveVertical, value: quote?.l && quote?.h ? `${money(quote.l)} – ${money(quote.h)}` : '—', hint: 'Low to high' },
-        { label: 'Prev close', icon: Gauge, value: money(quote?.pc), hint: 'Last session' },
-        { label: 'Market cap', icon: Landmark, value: profile?.marketCapitalization ? formatNumber(profile.marketCapitalization) : '—', hint: currency },
+        { label: t('open'), icon: CalendarClock, value: money(quote?.o), hint: t('openHint') },
+        { label: t('dayRange'), icon: MoveVertical, value: quote?.l && quote?.h ? `${money(quote.l)} – ${money(quote.h)}` : '—', hint: t('dayRangeHint') },
+        { label: t('prevClose'), icon: Gauge, value: money(quote?.pc), hint: t('prevCloseHint') },
+        { label: t('marketCap'), icon: Landmark, value: profile?.marketCapitalization ? formatNumber(profile.marketCapitalization) : '—', hint: currency },
     ];
 
     return (
@@ -99,7 +103,7 @@ export default async function StockHeader({ symbol }: { symbol: string }) {
                 <div className="flex items-center gap-2">
                     <WatchlistButton symbol={symbol} company={company} isInWatchlist={isInWatchlist} />
                     <CreateAlertModal symbol={symbol} currentPrice={quote?.c} currency={currency}>
-                        <button type="button" className="btn btn-primary"><Bell /> Set alert</button>
+                        <button type="button" className="btn btn-primary"><Bell /> {t('setAlert')}</button>
                     </CreateAlertModal>
                 </div>
             </div>

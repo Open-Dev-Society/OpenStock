@@ -4,6 +4,7 @@ import { connectToDatabase } from '@/database/mongoose';
 import { Watchlist } from '@/database/models/watchlist.model';
 import { revalidatePath } from 'next/cache';
 import { requireUserId } from '@/lib/better-auth/auth';
+import { getTranslations } from 'next-intl/server';
 
 // Tickers as Finnhub writes them (AAPL, BRK.B, RELIANCE.NS, M&M.NS, 0700.HK, BINANCE:BTCUSDT). Server actions take
 // untrusted input, and every symbol here becomes Finnhub calls on /watchlist and in the news digest.
@@ -21,7 +22,8 @@ export async function addToWatchlist(symbol: string, company: string) {
         await connectToDatabase();
 
         if (!(await Watchlist.exists({ userId, symbol: ticker })) && (await Watchlist.countDocuments({ userId })) >= MAX_WATCHLIST) {
-            return { error: `Your watchlist is full (${MAX_WATCHLIST} stocks). Remove one to add another.` };
+            const t = await getTranslations('Errors');
+            return { error: t('watchlistFull', { max: MAX_WATCHLIST }) };
         }
 
         // Upsert to avoid duplicates/errors if it already exists

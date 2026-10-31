@@ -4,8 +4,6 @@ import { connectToDatabase } from "@/database/mongoose";
 type Counter = { _id: string; count: number; expiresAt: Date };
 let ttlIndex: Promise<unknown> | null = null;
 
-export const TOO_MANY_ATTEMPTS = 'Too many attempts. Please wait a few minutes and try again.';
-
 // Fixed-window counters in MongoDB, shared by every server instance (an in-memory limit resets per serverless
 // instance). better-auth's own limiter only runs on its /api/auth routes, not on auth.api calls from server actions.
 // ponytail: two first hits in the same instant can both start at 1; fine for abuse limits.

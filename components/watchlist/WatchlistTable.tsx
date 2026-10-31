@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell, Search, Star } from "lucide-react";
+import { useTranslations } from "next-intl";
 import CreateAlertModal from "./CreateAlertModal";
 import AddToListMenu from "./AddToListMenu";
 import WatchlistButton from "@/components/WatchlistButton";
@@ -18,6 +19,8 @@ type Row = Awaited<ReturnType<typeof getWatchlistData>>[number];
 const SUGGESTIONS = ['AAPL', 'NVDA', 'MSFT', 'TSLA', 'AMZN'];
 
 export default function WatchlistTable({ initialRows, lists = [] }: { initialRows: Row[]; lists?: { id: string; name: string }[] }) {
+    const t = useTranslations('WatchlistTableRow');
+    const th = useTranslations('WatchlistTable.headers');
     const [baseRows, setBaseRows] = useState(initialRows);
     const live = useLiveQuotes(baseRows.map((r) => r.symbol));
 
@@ -33,9 +36,9 @@ export default function WatchlistTable({ initialRows, lists = [] }: { initialRow
         return (
             <div className="empty-state">
                 <span className="empty-icon"><Star className="size-5" /></span>
-                <h3>Nothing on your watchlist yet</h3>
-                <p className="max-w-sm">Search for a company and star it to track its price here and set alerts.</p>
-                <SearchButton className="btn btn-primary mt-3"><Search /> Search stocks</SearchButton>
+                <h3>{t('emptyTitle')}</h3>
+                <p className="max-w-sm">{t('emptyBody')}</p>
+                <SearchButton className="btn btn-primary mt-3"><Search /> {t('searchStocks')}</SearchButton>
                 <div className="mt-4 flex flex-wrap justify-center gap-1.5">
                     {SUGGESTIONS.map((s) => (
                         <Link key={s} href={`/stocks/${s}`} className="pill mono h-7 px-3 hover:bg-hover hover:text-foreground">{s}</Link>
@@ -50,12 +53,12 @@ export default function WatchlistTable({ initialRows, lists = [] }: { initialRow
             <table className="data-table">
                 <thead>
                     <tr>
-                        <th>Company</th>
-                        <th className="is-num">Price</th>
-                        <th className="is-num">Today</th>
-                        <th className="is-num">Change</th>
-                        <th className="is-num">Market cap</th>
-                        <th className="w-[88px]"><span className="sr-only">Actions</span></th>
+                        <th>{th('company')}</th>
+                        <th className="is-num">{th('price')}</th>
+                        <th className="is-num">{t('today')}</th>
+                        <th className="is-num">{th('change')}</th>
+                        <th className="is-num">{th('marketCap')}</th>
+                        <th className="w-[88px]"><span className="sr-only">{th('action')}</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -85,12 +88,12 @@ export default function WatchlistTable({ initialRows, lists = [] }: { initialRow
                                     <AddToListMenu symbol={row.symbol} company={row.name} lists={lists} />
                                     {hasFinnhubQuotes(row.symbol) ? (
                                         <CreateAlertModal symbol={row.symbol} currentPrice={row.price} currency={row.currency}>
-                                            <button type="button" className="icon-btn" title={`Set a price alert for ${row.symbol}`} aria-label={`Set a price alert for ${row.symbol}`}>
+                                            <button type="button" className="icon-btn" title={t('setAlertLabel', { symbol: row.symbol })} aria-label={t('setAlertLabel', { symbol: row.symbol })}>
                                                 <Bell />
                                             </button>
                                         </CreateAlertModal>
                                     ) : (
-                                        <span className="icon-btn opacity-40" title="Alerts are available for US stocks and crypto"><Bell /></span>
+                                        <span className="icon-btn opacity-40" title={t('alertsUnavailable')}><Bell /></span>
                                     )}
                                     <WatchlistButton
                                         symbol={row.symbol}

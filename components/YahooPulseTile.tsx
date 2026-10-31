@@ -6,9 +6,13 @@ import { yahooAppSymbol, type YahooDailyQuote } from '@/lib/yahoo';
 const formatAmount = (value: number) =>
     value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+type PulseTileLabels = { vsPrevClose: (change: string) => string; unavailable: string };
+
+const ENGLISH: PulseTileLabels = { vsPrevClose: (change) => `${change} vs prev close`, unavailable: 'Quote unavailable' };
+
 // Pulse tile priced from Yahoo daily quotes. Used for Tadawul, whose TradingView quote widgets are blocked in free embeds,
 // and Warsaw, whose embeds are end of day only.
-export default function YahooPulseTile({ tvSymbol, label, quote }: { tvSymbol: string; label: string; quote: YahooDailyQuote | null }) {
+export default function YahooPulseTile({ tvSymbol, label, quote, labels = ENGLISH }: { tvSymbol: string; label: string; quote: YahooDailyQuote | null; labels?: PulseTileLabels }) {
     const appSymbol = yahooAppSymbol(tvSymbol);
     const body = (
         <>
@@ -25,10 +29,10 @@ export default function YahooPulseTile({ tvSymbol, label, quote }: { tvSymbol: s
                 {quote ? (
                     <>
                         <ChangePill value={quote.changePercent} />
-                        <span className="num truncate">{quote.change > 0 ? '+' : ''}{formatAmount(quote.change)} vs prev close</span>
+                        <span className="num truncate">{labels.vsPrevClose(`${quote.change > 0 ? '+' : ''}${formatAmount(quote.change)}`)}</span>
                     </>
                 ) : (
-                    <span>Quote unavailable</span>
+                    <span>{labels.unavailable}</span>
                 )}
             </div>
         </>

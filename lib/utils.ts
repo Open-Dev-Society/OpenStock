@@ -26,8 +26,9 @@ export function delay(ms: number) {
 }
 
 // Formatted string like "$3.10T", "$900.00B", "$25.00M" or "$999999.99"
-export function formatMarketCapValue(marketCapUsd: number): string {
-    if (!Number.isFinite(marketCapUsd) || marketCapUsd <= 0) return 'N/A';
+// notAvailable: pass the translated Common.notAvailable from a component
+export function formatMarketCapValue(marketCapUsd: number, notAvailable = 'N/A'): string {
+    if (!Number.isFinite(marketCapUsd) || marketCapUsd <= 0) return notAvailable;
 
     if (marketCapUsd >= 1e12) return `$${(marketCapUsd / 1e12).toFixed(2)}T`; // Trillions
     if (marketCapUsd >= 1e9) return `$${(marketCapUsd / 1e9).toFixed(2)}B`; // Billions
@@ -83,13 +84,15 @@ export const formatArticle = (
     article: RawNewsArticle,
     isCompanyNews: boolean,
     symbol?: string,
-    index: number = 0
+    index: number = 0,
+    // Shown when Finnhub omits the source; getNews passes the NewsSources messages
+    fallbackSource: string = isCompanyNews ? 'Company News' : 'Market News'
 ) => ({
     id: isCompanyNews ? Date.now() + Math.random() : article.id + index,
     headline: article.headline!.trim(),
     summary:
         article.summary!.trim().substring(0, isCompanyNews ? 200 : 150) + '...',
-    source: article.source || (isCompanyNews ? 'Company News' : 'Market News'),
+    source: article.source || fallbackSource,
     url: article.url!,
     datetime: article.datetime!,
     image: article.image || '',
@@ -119,10 +122,10 @@ export const formatPrice = (price: number, currency = 'USD') => {
 // Alias for consistency
 export const formatCurrency = formatPrice;
 
-export function formatNumber(num?: number | null): string {
+export function formatNumber(num?: number | null, notAvailable = 'N/A'): string {
     // Guard against missing/invalid market caps (Finnhub omits this field for many
     // symbols, e.g. ETFs). Without this, `num * 1e6` yields NaN and renders "NaN".
-    if (num === undefined || num === null || !Number.isFinite(num)) return 'N/A';
+    if (num === undefined || num === null || !Number.isFinite(num)) return notAvailable;
 
     // If number is small (likely already in millions from Finnhub), multiply by 1M to get actual value
     // Typical mega-cap is > 100B. 100B in millions is 100,000.
@@ -145,9 +148,10 @@ export const formatDateToday = new Date().toLocaleDateString('en-US', {
 });
 
 
-export const getAlertText = (alert: Alert) => {
+// label: pass a translated "Price" from a component
+export const getAlertText = (alert: Alert, label = 'Price') => {
     const condition = alert.alertType === 'upper' ? '>' : '<';
-    return `Price ${condition} ${formatPrice(alert.threshold)}`;
+    return `${label} ${condition} ${formatPrice(alert.threshold)}`;
 };
 
 export const getFormattedTodayDate = () => new Date().toLocaleDateString('en-US', {
