@@ -6,6 +6,7 @@ import { tadawulAppSymbol } from '@/lib/yahoo';
 import { saudiSymbolNameAr } from '@/lib/saudi-symbols';
 import { tx, type Lang } from '@/lib/i18n';
 import type { Market } from '@/lib/markets';
+import { arDigits } from "@/lib/i18n";
 
 const fmt = (v: number) => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -42,11 +43,11 @@ export default async function SaudiQuotesTable({ market, lang }: { market: Marke
                                             <span dir="ltr" className="mono text-[11px] text-faint">{appSymbol}</span>
                                         </Link>
                                     </td>
-                                    <td className="num px-3 py-2 text-right font-semibold">{q ? fmt(q.price) : '—'}</td>
+                                    <td className="num px-3 py-2 text-right font-semibold">{q ? arDigits(fmt(q.price), lang) : '—'}</td>
                                     <td className={`num px-3 py-2 text-right ${q && q.change < 0 ? 'text-down' : 'text-up'}`}>
-                                        {q ? <bdi>{`${q.change > 0 ? '+' : ''}${fmt(q.change)}`}</bdi> : '—'}
+                                        {q ? <bdi>{`${q.change > 0 ? '+' : ''}${arDigits(fmt(q.change), lang)}`}</bdi> : '—'}
                                     </td>
-                                    <td className="px-3 py-2 text-right"><ChangePill value={q?.changePercent} /></td>
+                                    <td className="px-3 py-2 text-right"><ChangePill value={q?.changePercent} lang={lang} /></td>
                                 </tr>
                             );
                         })}
@@ -93,7 +94,7 @@ export async function SaudiMovers({ market, count = 8, lang }: { market: Market;
                                     style={{ width: `${(Math.abs(quote.changePercent) / max) * 100}%` }}
                                 />
                             </span>
-                            <ChangePill value={quote.changePercent} />
+                            <ChangePill value={quote.changePercent} lang={lang} />
                         </Link>
                     </li>
                 );

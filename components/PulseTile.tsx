@@ -6,6 +6,7 @@ import ChangePill from "@/components/ChangePill";
 import PriceFlash from "@/components/PriceFlash";
 import { useLiveQuotes, type LiveQuote } from "@/hooks/useLiveQuotes";
 import { tx, type Lang } from "@/lib/i18n";
+import { arDigits } from "@/lib/i18n";
 
 const formatAmount = (value: number) =>
     value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: value < 1 ? 4 : 2 });
@@ -32,9 +33,9 @@ export default function PulseTile({ symbol, label, initial, lang = 'en' }: { sym
             <div className="bento-foot">
                 {quote?.c ? (
                     <>
-                        <ChangePill value={quote.dp} />
+                        <ChangePill value={quote.dp} lang={lang} />
                         <span className="num truncate">
-                            <bdi>{(quote.d ?? 0) > 0 ? '+' : ''}{formatAmount(quote.d ?? 0)}</bdi> {tx(lang, 'tile.prevClose')}
+                            <bdi>{(quote.d ?? 0) > 0 ? '+' : ''}{arDigits(formatAmount(quote.d ?? 0), lang)}</bdi> {tx(lang, 'tile.prevClose')}
                         </span>
                     </>
                 ) : (

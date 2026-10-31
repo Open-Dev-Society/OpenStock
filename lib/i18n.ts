@@ -118,7 +118,7 @@ const en = {
     'wl.change': 'Change',
     'wl.mcap': 'Market cap',
     'wl.chgpct': 'Chg%',
-    'wl.delayedFoot': 'Delayed quotes via Yahoo Finance · SAR',
+    'wl.delayedFoot': 'Delayed quotes via Yahoo Finance',
     'wl.noData': 'No data here yet',
     'wl.added': 'added to watchlist',
     'wl.removed': 'removed from watchlist',
@@ -436,7 +436,7 @@ const ar: Record<StringKey, string> = {
     'wl.change': 'التغير',
     'wl.mcap': 'القيمة السوقية',
     'wl.chgpct': '٪ التغير',
-    'wl.delayedFoot': 'أسعار متأخرة عبر Yahoo Finance · ريال',
+    'wl.delayedFoot': 'أسعار متأخرة عبر Yahoo Finance',
     'wl.noData': 'لا بيانات بعد',
     'wl.added': 'أُضيفت لقائمة المتابعة',
     'wl.removed': 'أُزيلت من قائمة المتابعة',
@@ -723,6 +723,20 @@ export const alignmentLabel = (lang: Lang, alignment: string): string =>
 
 // Security types arrive from the feeds in English ("Common Stock", "ETF"). Known values are
 // translated; anything new is shown exactly as the feed sent it.
+// Arabic-Indic digits for the Arabic interface. Applied at the very end of formatting, so the
+// separators, currency code and percent sign stay exactly where the en-US formatter put them.
+const AR_DIGITS = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+// Wrapped in a left-to-right isolate (U+2066 … U+2069): without it the RTL paragraph reorders
+// "٢٥.٩٢" into something that reads as a different price.
+export const arNumberDigits = (value: string | number, lang: Lang): string => {
+    const text = String(value);
+    return lang === 'ar' ? text.replace(/[0-9]/g, (digit) => AR_DIGITS[Number(digit)]) : text;
+};
+export const arDigits = (value: string | number, lang: Lang): string => {
+    const text = arNumberDigits(value, lang);
+    return lang === 'ar' ? `\u2066${text}\u2069` : text;
+};
+
 const TYPE_KEYS: Record<string, StringKey> = {
     'Common Stock': 'type.common',
     'ETF': 'type.etf',

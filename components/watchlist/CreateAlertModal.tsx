@@ -45,7 +45,7 @@ export default function CreateAlertModal({ symbol, currentPrice, currency = 'USD
             await createAlert({ symbol, targetPrice: target, condition });
             toast.success(tx(lang, 'alertModal.created')
                 .replace('{s}', symbol)
-                .replace('{c}', `${condition === 'ABOVE' ? tx(lang, 'alert.above') : tx(lang, 'alert.below')} ${formatPrice(target, currency)}`));
+                .replace('{c}', `${condition === 'ABOVE' ? tx(lang, 'alert.above') : tx(lang, 'alert.below')} ${formatPrice(target, currency, lang)}`));
             setOpen(false);
             onAlertCreated?.();
         } catch (error) {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { STRINGS, alignmentLabel, choiceLabel, feedWord, marketName, trendLabel, tx, typeLabel, type Lang } from '@/lib/i18n';
+import { STRINGS, alignmentLabel, arDigits, arNumberDigits, choiceLabel, feedWord, marketName, trendLabel, tx, typeLabel, type Lang } from '@/lib/i18n';
 
 describe('i18n dictionaries', () => {
     const langs: Lang[] = ['en', 'ar'];
@@ -68,5 +68,21 @@ describe('value lookups', () => {
         // A type we have never seen is shown exactly as it arrived, never blanked.
         expect(typeLabel('ar', 'Carbon Credit')).toBe('Carbon Credit');
         expect(typeLabel('ar', null)).toBe('');
+    });
+});
+
+describe('Arabic digits', () => {
+    it('leaves English output untouched', () => {
+        expect(arDigits('1,234.50', 'en')).toBe('1,234.50');
+        expect(arNumberDigits('12.5', 'en')).toBe('12.5');
+    });
+
+    it('swaps the digits but keeps the separators', () => {
+        expect(arNumberDigits('1,234.50', 'ar')).toBe('١,٢٣٤.٥٠');
+    });
+
+    it('isolates a formatted amount so the RTL paragraph cannot reorder it', () => {
+        // U+2066 LRI … U+2069 PDI: without the pair "25.92" can render as "92.25"-looking text.
+        expect(arDigits('25.92', 'ar')).toBe('\u2066٢٥.٩٢\u2069');
     });
 });

@@ -13,6 +13,7 @@ import ChangePill from "@/components/ChangePill";
 import { getYahooDailyQuotes } from "@/lib/actions/yahoo.actions";
 import { isTadawulSymbol } from "@/lib/yahoo";
 import { saudiSymbolNameAr } from "@/lib/saudi-symbols";
+import Price from "@/components/Price";
 
 // Symbols Finnhub's free plan can't price (most non-US listings) use TradingView's quote panel instead.
 // TradingView blocks Tadawul quotes in embeds, so those show a delayed Yahoo price.
@@ -35,8 +36,8 @@ async function TradingViewHeader({ symbol, lang }: { symbol: string; lang: Lang 
                 </div>
                 {saudi && (
                     <div className="flex items-center gap-3">
-                        <p className="num text-2xl font-bold tracking-[-0.03em]">{formatPrice(saudi.price, saudi.currency)}</p>
-                        <ChangePill value={saudi.changePercent} />
+                        <p className="num text-2xl font-bold tracking-[-0.03em]"><Price value={saudi.price} currency={saudi.currency} lang={lang} /></p>
+                        <ChangePill value={saudi.changePercent} lang={lang} />
                     </div>
                 )}
                 <div className="flex items-center gap-2">

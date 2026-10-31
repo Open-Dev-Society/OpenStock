@@ -4,6 +4,8 @@ import ChangePill from '@/components/ChangePill';
 import { tadawulAppSymbol, type YahooDailyQuote } from '@/lib/yahoo';
 import { tx, type Lang } from '@/lib/i18n';
 import { saudiSymbolNameAr } from '@/lib/saudi-symbols';
+import { arDigits } from "@/lib/i18n";
+import Price from "@/components/Price";
 
 const formatAmount = (value: number) =>
     value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -21,16 +23,16 @@ export default function SaudiPulseTile({ tvSymbol, label, quote, lang }: { tvSym
                 <span className="mono ms-auto text-xs text-faint">{tvSymbol.replace('TADAWUL:', '')}</span>
             </div>
             <p className="bento-value self-start num">
-                {quote ? <><small>SAR&nbsp;</small>{formatAmount(quote.price)}</> : '—'}
+                {quote ? <Price value={quote.price} currency="SAR" lang={lang} /> : '—'}
             </p>
             <div className="bento-foot">
                 {quote ? (
                     <>
-                        <ChangePill value={quote.changePercent} />
+                        <ChangePill value={quote.changePercent} lang={lang} />
                         <span className="num truncate">
                             {/* <bdi> keeps the signed number a single left-to-right run; without it
                                 Arabic renders "-0.08" as "0.08-". */}
-                            <bdi>{quote.change > 0 ? '+' : ''}{formatAmount(quote.change)}</bdi> {tx(lang, 'tile.prevClose')}
+                            <bdi>{quote.change > 0 ? '+' : ''}{arDigits(formatAmount(quote.change), lang)}</bdi> {tx(lang, 'tile.prevClose')}
                         </span>
                     </>
                 ) : (

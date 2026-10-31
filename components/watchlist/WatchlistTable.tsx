@@ -9,11 +9,13 @@ import ChangePill from "@/components/ChangePill";
 import PriceFlash from "@/components/PriceFlash";
 import { useLiveQuotes } from "@/hooks/useLiveQuotes";
 import { SearchButton } from "@/components/SearchCommand";
-import { formatNumber, formatPrice } from "@/lib/utils";
+import { formatNumber } from "@/lib/utils";
 import { hasFinnhubQuotes } from "@/lib/markets";
 import { tx, type Lang } from "@/lib/i18n";
+import { arDigits } from "@/lib/i18n";
 import { saudiSymbolNameAr } from "@/lib/saudi-symbols";
 import type { getWatchlistData } from "@/lib/actions/finnhub.actions";
+import Price from "@/components/Price";
 
 type Row = Awaited<ReturnType<typeof getWatchlistData>>[number];
 const SUGGESTIONS = ['AAPL', 'NVDA', 'MSFT', 'TSLA', 'AMZN'];
@@ -79,11 +81,11 @@ export default function WatchlistTable({ initialRows, lang }: { initialRows: Row
                                 </Link>
                             </td>
                             <td className="is-num font-semibold text-foreground">
-                                <PriceFlash value={row.price} className="px-1">{row.price ? formatPrice(row.price, row.currency) : '—'}</PriceFlash>
+                                <PriceFlash value={row.price} className="px-1">{row.price ? <Price value={row.price} currency={row.currency} lang={lang} /> : '—'}</PriceFlash>
                             </td>
-                            <td className="is-num"><ChangePill value={row.price ? row.changePercent : null} /></td>
-                            <td className="is-num text-muted-foreground">{row.price ? `${row.change > 0 ? '+' : ''}${row.change.toFixed(2)}` : '—'}</td>
-                            <td className="is-num text-muted-foreground">{row.marketCap ? formatNumber(row.marketCap) : '—'}</td>
+                            <td className="is-num"><ChangePill value={row.price ? row.changePercent : null} lang={lang} /></td>
+                            <td className="is-num text-muted-foreground">{row.price ? `${row.change > 0 ? '+' : ''}${arDigits(row.change.toFixed(2), lang)}` : '—'}</td>
+                            <td className="is-num text-muted-foreground">{row.marketCap ? formatNumber(row.marketCap, lang) : '—'}</td>
                             <td>
                                 <div className="flex items-center justify-end gap-1">
                                     {hasFinnhubQuotes(row.symbol) ? (

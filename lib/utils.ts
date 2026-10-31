@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { arDigits } from '@/lib/i18n';
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -108,18 +109,19 @@ export const getChangeColorClass = (changePercent?: number) => {
     return changePercent > 0 ? 'text-green-500' : 'text-red-500';
 };
 
-export const formatPrice = (price: number, currency = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
+export const formatPrice = (price: number, currency = 'USD', lang: 'en' | 'ar' = 'en') => {
+    const formatted = new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency,
         minimumFractionDigits: 2,
     }).format(price);
+    return lang === 'ar' ? arDigits(formatted, lang) : formatted;
 };
 
 // Alias for consistency
 export const formatCurrency = formatPrice;
 
-export function formatNumber(num?: number | null): string {
+export function formatNumber(num?: number | null, lang: 'en' | 'ar' = 'en'): string {
     // Guard against missing/invalid market caps (Finnhub omits this field for many
     // symbols, e.g. ETFs). Without this, `num * 1e6` yields NaN and renders "NaN".
     if (num === undefined || num === null || !Number.isFinite(num)) return 'N/A';
@@ -129,11 +131,12 @@ export function formatNumber(num?: number | null): string {
     // If we assume typical market cap input IS millions:
     const value = num * 1000000;
 
-    if (value >= 1e12) return (value / 1e12).toFixed(2) + 'T';
-    if (value >= 1e9) return (value / 1e9).toFixed(2) + 'B';
-    if (value >= 1e6) return (value / 1e6).toFixed(2) + 'M';
-    if (value >= 1e3) return (value / 1e3).toFixed(2) + 'K';
-    return value.toString();
+    const withSuffix = (scaled: number, suffix: string) => arDigits(scaled.toFixed(2), lang) + suffix;
+    if (value >= 1e12) return withSuffix(value / 1e12, 'T');
+    if (value >= 1e9) return withSuffix(value / 1e9, 'B');
+    if (value >= 1e6) return withSuffix(value / 1e6, 'M');
+    if (value >= 1e3) return withSuffix(value / 1e3, 'K');
+    return arDigits(value.toString(), lang);
 }
 
 export const formatDateToday = new Date().toLocaleDateString('en-US', {
