@@ -4,11 +4,13 @@
 //     NSE and TVC indices (NIFTY, FTSE, DAX, N225, HSI) are blocked in embeds; LSE, Tokyo, Hong Kong and
 //     others block only the candle chart (see CHART_BLOCKED_EXCHANGES in lib/utils.ts).
 //   - Tadawul is blocked in embeds and on Finnhub free, so Saudi tiles and tables are priced from Yahoo Finance (lib/yahoo.ts).
+//   - GPW (Warsaw) stocks, indices and charts render in embeds, but end of day only, so Polish tiles and tables use Yahoo's
+//     ~15-minute delayed quotes too.
 // Adding a market = adding an entry here with symbols from an exchange that renders in embeds.
 
 import { isInternationalSymbol } from "@/lib/utils";
 
-export type MarketId = 'us' | 'in' | 'de' | 'ca' | 'au' | 'sa' | 'crypto' | 'fx';
+export type MarketId = 'us' | 'in' | 'de' | 'ca' | 'au' | 'sa' | 'pl' | 'crypto' | 'fx';
 
 type Hours = { open: number; close: number }; // minutes of the local day
 
@@ -123,6 +125,21 @@ export const MARKETS: Market[] = [
         news: 'stock',
     },
     {
+        id: 'pl', name: 'Poland', short: 'PL', timeZone: 'Europe/Warsaw', hours: { open: hm(9), close: hm(17) }, feed: 'Delayed', yahoo: true,
+        pulse: [
+            { symbol: 'GPW:WIG20', label: 'WIG20' },
+            { symbol: 'GPW:WIG', label: 'WIG' },
+            { symbol: 'GPW:MWIG40', label: 'mWIG40' },
+            { symbol: 'GPW:SWIG80', label: 'sWIG80' },
+        ],
+        groups: [
+            { title: 'Banks & insurance', symbols: [['GPW:PKO', 'PKO Bank Polski'], ['GPW:PEO', 'Bank Pekao'], ['GPW:PZU', 'PZU'], ['GPW:MBK', 'mBank'], ['GPW:ALR', 'Alior Bank']] },
+            { title: 'Energy & industry', symbols: [['GPW:PKN', 'Orlen'], ['GPW:KGH', 'KGHM'], ['GPW:PGE', 'PGE'], ['GPW:TPE', 'Tauron'], ['GPW:BDX', 'Budimex']] },
+            { title: 'Consumer & tech', symbols: [['GPW:DNP', 'Dino Polska'], ['GPW:LPP', 'LPP'], ['GPW:ALE', 'Allegro'], ['GPW:CDR', 'CD Projekt'], ['GPW:ZAB', 'Żabka']] },
+        ],
+        news: 'stock',
+    },
+    {
         id: 'crypto', name: 'Crypto', short: 'Crypto', timeZone: 'UTC', hours: '24/7', feed: 'Live',
         pulse: [
             { symbol: 'BINANCE:BTCUSDT', label: 'Bitcoin', finnhub: 'BINANCE:BTCUSDT' },
@@ -157,7 +174,7 @@ export const MARKET_COOKIE = 'openstock-market';
 
 export const getMarket = (id?: string | null) => MARKETS.find((m) => m.id === id) ?? MARKETS[0];
 
-const COUNTRY_MARKET: Record<string, MarketId> = { IN: 'in', DE: 'de', CA: 'ca', AU: 'au', SA: 'sa' };
+const COUNTRY_MARKET: Record<string, MarketId> = { IN: 'in', DE: 'de', CA: 'ca', AU: 'au', SA: 'sa', PL: 'pl' };
 export const marketForCountry = (country?: string | null): MarketId => COUNTRY_MARKET[country ?? ''] ?? DEFAULT_MARKET;
 
 // Finnhub free can price (and so alert on) US listings and Binance pairs only.
