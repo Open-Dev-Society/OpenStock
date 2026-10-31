@@ -9,15 +9,20 @@ import { getUserWatchlist } from "@/lib/actions/watchlist.actions";
 import { getUserAlerts } from "@/lib/actions/alert.actions";
 import { alertsEnabled } from "@/lib/market-data";
 import { getLang } from "@/lib/i18n-server";
-import { tx } from "@/lib/i18n";
+import { methodLabel, tx, type Lang } from "@/lib/i18n";
 
-export const metadata = { title: 'Profile | OpenStock' };
+export const generateMetadata = async () => {
+    const lang = await getLang();
+    return { title: `${tx(lang, 'profile.title')} | OpenStock` };
+};
 
+// Google and GitHub keep their brand names, so only credentials are looked up in the dictionary.
 const METHOD_LABELS: Record<string, string> = {
     credential: 'Email and password',
     google: 'Google',
     github: 'GitHub',
 };
+const methodName = (lang: Lang, id: string) => methodLabel(lang, id, METHOD_LABELS[id] ?? id);
 
 export default async function ProfilePage() {
     const session = await getSession();
@@ -31,8 +36,8 @@ export default async function ProfilePage() {
     ]);
     const linked = new Set(accounts.map((a: { providerId: string }) => a.providerId));
     const activeAlerts = alerts.filter((a: { triggered?: boolean }) => !a.triggered).length;
-    const memberSince = new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     const lang = await getLang();
+    const memberSince = new Date(user.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-US', { month: 'long', year: 'numeric' });
 
     const stats = [
         { label: tx(lang, 'profile.watching'), value: watchlist.length, icon: Star },
@@ -49,7 +54,7 @@ export default async function ProfilePage() {
                     </span>
                     <div className="min-w-0 flex-1">
                         <h1 className="truncate text-[22px] font-bold tracking-[-0.03em]">{user.name}</h1>
-                        <p className="truncate text-faint">{user.email} · member since {memberSince}</p>
+                        <p className="truncate text-faint">{user.email} · {tx(lang, 'profile.since').replace('{d}', memberSince)}</p>
                     </div>
                 </div>
                 <div className="bento mt-[3px]">
@@ -82,7 +87,7 @@ export default async function ProfilePage() {
                             {[...linked].map((id) => (
                                 <li key={id} className="flex items-center gap-3 px-3.5 py-3">
                                     <span className="bento-ico"><KeyRound /></span>
-                                    <span className="flex-1 font-semibold">{METHOD_LABELS[id] ?? id}</span>
+                                    <span className="flex-1 font-semibold">{methodName(lang, id)}</span>
                                     <span className="pill is-up">{tx(lang, 'profile.connected')}</span>
                                 </li>
                             ))}

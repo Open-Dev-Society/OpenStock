@@ -183,6 +183,28 @@ const en = {
     'news.emptySub': 'Nothing published in the last few days for these symbols.',
     'tab.open': 'Open a stock',
     'tab.close': 'Close',
+    // Sentiment card, reset-password fallback, alert tooltips
+    'sentiment.avgBuzz': 'Avg. buzz',
+    'sentiment.bullishAvg': 'Bullish avg',
+    'sentiment.coverage': 'Coverage',
+    'sentiment.sources': '{n}/4 sources',
+    'sentiment.alignment': 'Source alignment:',
+    'auth.loadingReset': 'Loading reset form…',
+    'signup.accountRegion': 'Account',
+    'alert.tooltipQuote': 'Price alerts need a quote source we can check every 5 minutes',
+    'alert.tooltipUsOnly': 'Alerts are available for US stocks and crypto',
+    // Stock chart panel (components/stocks/StockChart.tsx)
+    'stock.chartLive': 'Live from TradingView · switch interval and style in the chart',
+    'chart.indicators': 'Indicators',
+    'chart.indicatorsNote': 'Kept on every chart in this browser',
+    'ind.sma': 'Moving average (SMA)',
+    'ind.ema': 'Exponential MA (EMA)',
+    'ind.bollinger': 'Bollinger Bands',
+    'ind.vwap': 'VWAP',
+    'ind.rsi': 'RSI',
+    'ind.macd': 'MACD',
+    'ind.stochastic': 'Stochastic',
+    'ind.atr': 'ATR',
     // Markets (ids come from lib/markets.ts) and the freshness of their data
     'market.us': 'United States',
     'market.in': 'India',
@@ -198,6 +220,78 @@ const en = {
     'feed.live': 'live data',
     'feed.delayed': 'delayed data',
     'feed.eod': 'end-of-day data',
+
+    // Chrome around the app: sponsors, the release banner, the donate popup
+    'sponsor.label': 'Sponsor',
+    'sponsor.slotsOpen': 'Sponsor slots open',
+    'sponsor.slotsLeft': '{n} sponsor slots left',
+    'sponsor.pitch': 'Put your company in front of every OpenStock user.',
+    'banner.new': 'New',
+    'banner.see': 'See what’s new',
+    'banner.readAll': 'Read the full changelog',
+    'donate.kicker': 'Open for sponsors',
+    'donate.title': 'Keep OpenStock free',
+    'donate.body': 'Your love for OpenStock and Open Dev Society has helped us grow, and we’re now hitting Vercel’s free tier limits. Sponsor from $5 a month, give once, or talk with us about a partnership.',
+    'donate.cta': 'Become a sponsor',
+    'donate.later': 'Maybe later',
+    // How old a number is
+    'fresh.live': 'Live · 15s',
+    'fresh.asOf': 'As of {t}',
+    'fresh.delayed': 'Delayed',
+    'fresh.hourly': 'refreshed hourly',
+    'alert.until': 'until {d}',
+    // Password rules
+    'pw.rule8': 'At least 8 characters',
+    'pw.ruleUpper': 'At least 1 uppercase letter',
+    'pw.ruleLower': 'At least 1 lowercase letter',
+    'pw.ruleNumber': 'At least 1 number',
+    // Social sign-in
+    'auth.or': 'or',
+    'auth.redirecting': 'Redirecting',
+    'auth.signInFailed': 'Sign in failed',
+    'auth.checkConnection': 'Check your connection and try again.',
+    // Profile extras
+    'profile.title': 'Profile',
+    'profile.since': 'Member since {d}',
+    'profile.methodCredential': 'Email and password',
+    // Goal / risk / industry options (values come from lib/constants.ts)
+    'opt.growth': 'Growth',
+    'opt.income': 'Income',
+    'opt.balanced': 'Balanced',
+    'opt.conservative': 'Conservative',
+    'opt.low': 'Low',
+    'opt.medium': 'Medium',
+    'opt.high': 'High',
+    'opt.technology': 'Technology',
+    'opt.healthcare': 'Healthcare',
+    'opt.finance': 'Finance',
+    'opt.energy': 'Energy',
+    'opt.consumerGoods': 'Consumer Goods',
+    // Country field
+    'country.select': 'Select your country…',
+    'country.search': 'Search countries…',
+    'country.empty': 'No country found.',
+    'country.help': 'Helps us show market data and news relevant to you.',
+    // Create-alert modal
+    'alertModal.kicker': 'Price alert',
+    'alertModal.desc': 'We email you when the price crosses your target. Checked every 5 minutes, expires after 90 days.',
+    'alertModal.condition': 'Condition',
+    'alertModal.risesAbove': 'Rises above',
+    'alertModal.fallsBelow': 'Falls below',
+    'alertModal.target': 'Target price',
+    'alertModal.noPrice': 'Current price unavailable',
+    'alertModal.alreadyAbove': 'Already above this — it will fire on the next check',
+    'alertModal.alreadyBelow': 'Already below this — it will fire on the next check',
+    'alertModal.now': 'Now {p}',
+    'alertModal.away': '{n}% away',
+    'alertModal.setting': 'Setting alert',
+    'alertModal.set': 'Set alert',
+    'alertModal.created': 'Alert set: {s} {c}',
+    'alertModal.failed': 'Couldn’t create the alert',
+    'alertModal.cloudTitle': 'Price alerts come with Cloud',
+    'alertModal.cloudBody': 'Cloud adds email price alerts and live quotes for $5 a month. It’s coming soon. Self-hosting includes both today.',
+    'alertModal.cloudCta': 'See OpenStock Cloud',
+    'alertModal.selfHost': 'Self-host',
 };
 
 export type StringKey = keyof typeof en;
@@ -366,6 +460,26 @@ const ar: Record<StringKey, string> = {
     'news.emptySub': 'لا يوجد شيء منشور في الأيام الأخيرة لهذه الرموز.',
     'tab.open': 'افتح سهماً',
     'tab.close': 'إغلاق',
+    'sentiment.avgBuzz': 'متوسط الضجيج',
+    'sentiment.bullishAvg': 'متوسط التفاؤل',
+    'sentiment.coverage': 'التغطية',
+    'sentiment.sources': '{n}/4 مصادر',
+    'sentiment.alignment': 'توافق المصادر:',
+    'auth.loadingReset': 'جارٍ تحميل الاستعادة…',
+    'signup.accountRegion': 'الحساب',
+    'alert.tooltipQuote': 'تنبيهات الأسعار تحتاج مصدر أسعار نتحقق منه كل 5 دقائق',
+    'alert.tooltipUsOnly': 'التنبيهات متاحة لأسهم الولايات المتحدة والعملات الرقمية',
+    'stock.chartLive': 'مباشر من TradingView · غيّر الفترة والنمط من داخل الشارت',
+    'chart.indicators': 'المؤشرات',
+    'chart.indicatorsNote': 'تُحفظ على كل شارت في هذا المتصفح',
+    'ind.sma': 'المتوسط المتحرك (SMA)',
+    'ind.ema': 'المتوسط الأسّي (EMA)',
+    'ind.bollinger': 'نطاقات بولنجر',
+    'ind.vwap': 'VWAP',
+    'ind.rsi': 'RSI',
+    'ind.macd': 'MACD',
+    'ind.stochastic': 'ستوكاستيك',
+    'ind.atr': 'ATR',
     'market.us': 'الولايات المتحدة',
     'market.in': 'الهند',
     'market.de': 'ألمانيا',
@@ -380,6 +494,70 @@ const ar: Record<StringKey, string> = {
     'feed.live': 'بيانات مباشرة',
     'feed.delayed': 'بيانات متأخرة',
     'feed.eod': 'بيانات إغلاق اليوم',
+
+    'sponsor.label': 'راعي',
+    'sponsor.slotsOpen': 'أماكن الرعاة متاحة',
+    'sponsor.slotsLeft': 'بقي {n} من أماكن الرعاة',
+    'sponsor.pitch': 'اجعل شركتك أمام كل مستخدمي OpenStock.',
+    'banner.new': 'جديد',
+    'banner.see': 'شاهد الجديد',
+    'banner.readAll': 'اقرأ سجل التغييرات كاملاً',
+    'donate.kicker': 'الباب مفتوح للرعاة',
+    'donate.title': 'خلّ OpenStock مجانياً',
+    'donate.body': 'دعمكم لـ OpenStock و‏Open Dev Society ساعدنا على النمو، ووصلنا الآن إلى حدود الطبقة المجانية في Vercel. ارعَنا من 5$ شهرياً، أو تبرّع مرة واحدة، أو تحدّث معنا عن شراكة.',
+    'donate.cta': 'كن راعياً',
+    'donate.later': 'لاحقاً',
+    'fresh.live': 'مباشر · 15 ث',
+    'fresh.asOf': 'حتى {t}',
+    'fresh.delayed': 'متأخر',
+    'fresh.hourly': 'يُحدّث كل ساعة',
+    'alert.until': 'حتى {d}',
+    'pw.rule8': '8 أحرف على الأقل',
+    'pw.ruleUpper': 'حرف كبير واحد على الأقل',
+    'pw.ruleLower': 'حرف صغير واحد على الأقل',
+    'pw.ruleNumber': 'رقم واحد على الأقل',
+    'auth.or': 'أو',
+    'auth.redirecting': 'جارٍ التحويل…',
+    'auth.signInFailed': 'تعذّر تسجيل الدخول',
+    'auth.checkConnection': 'تحقّق من اتصالك وحاول مرة أخرى.',
+    'profile.title': 'الملف الشخصي',
+    'profile.since': 'عضو منذ {d}',
+    'profile.methodCredential': 'البريد وكلمة المرور',
+    'opt.growth': 'نمو',
+    'opt.income': 'دخل',
+    'opt.balanced': 'متوازن',
+    'opt.conservative': 'متحفّظ',
+    'opt.low': 'منخفض',
+    'opt.medium': 'متوسط',
+    'opt.high': 'مرتفع',
+    'opt.technology': 'التقنية',
+    'opt.healthcare': 'الرعاية الصحية',
+    'opt.finance': 'المال',
+    'opt.energy': 'الطاقة',
+    'opt.consumerGoods': 'السلع الاستهلاكية',
+    'country.select': 'اختر بلدك…',
+    'country.search': 'ابحث عن بلد…',
+    'country.empty': 'لا يوجد بلد مطابق.',
+    'country.help': 'يساعدنا في عرض بيانات وأخبار السوق المناسبة لك.',
+    'alertModal.kicker': 'تنبيه سعر',
+    'alertModal.desc': 'نرسل لك بريداً عندما يتجاوز السعر هدفك. يُفحص كل 5 دقائق، وينتهي بعد 90 يوماً.',
+    'alertModal.condition': 'الشرط',
+    'alertModal.risesAbove': 'يصعد فوق',
+    'alertModal.fallsBelow': 'يهبط تحت',
+    'alertModal.target': 'السعر المستهدف',
+    'alertModal.noPrice': 'السعر الحالي غير متاح',
+    'alertModal.alreadyAbove': 'السعر أعلى من هذا أصلاً — سيُفعَّل عند الفحص التالي',
+    'alertModal.alreadyBelow': 'السعر أدنى من هذا أصلاً — سيُفعَّل عند الفحص التالي',
+    'alertModal.now': 'الآن {p}',
+    'alertModal.away': 'بعيد {n}%',
+    'alertModal.setting': 'جارٍ التعيين…',
+    'alertModal.set': 'عيّن التنبيه',
+    'alertModal.created': 'تم تعيين التنبيه: {s} {c}',
+    'alertModal.failed': 'تعذّر إنشاء التنبيه',
+    'alertModal.cloudTitle': 'تنبيهات الأسعار تأتي مع Cloud',
+    'alertModal.cloudBody': 'يضيف Cloud تنبيهات الأسعار بالبريد والأسعار المباشرة مقابل 5$ شهرياً، وهو قادم قريباً. أما الاستضافة الذاتية فتتضمن الميزتين اليوم.',
+    'alertModal.cloudCta': 'تعرّف على OpenStock Cloud',
+    'alertModal.selfHost': 'استضف بنفسك',
 };
 
 export const STRINGS: Record<Lang, Record<StringKey, string>> = { en, ar };
@@ -397,3 +575,48 @@ const FEED_KEYS: Record<string, StringKey> = { Live: 'feed.live', Delayed: 'feed
 
 export const marketName = (lang: Lang, id: string): string => tx(lang, MARKET_KEYS[id] ?? 'market.us');
 export const feedLabel = (lang: Lang, feed: string): string => tx(lang, FEED_KEYS[feed] ?? 'feed.live');
+
+// Option labels come from lib/constants.ts as English values, and the country list
+// is upstream data, so the lookups stay here rather than in each form.
+const CHOICE_KEYS: Record<string, StringKey> = {
+    Growth: 'opt.growth', Income: 'opt.income', Balanced: 'opt.balanced', Conservative: 'opt.conservative',
+    Low: 'opt.low', Medium: 'opt.medium', High: 'opt.high',
+    Technology: 'opt.technology', Healthcare: 'opt.healthcare', Finance: 'opt.finance',
+    Energy: 'opt.energy', 'Consumer Goods': 'opt.consumerGoods',
+};
+const PW_RULE_KEYS: Record<string, StringKey> = {
+    'At least 8 characters': 'pw.rule8',
+    'At least 1 uppercase letter': 'pw.ruleUpper',
+    'At least 1 lowercase letter': 'pw.ruleLower',
+    'At least 1 number': 'pw.ruleNumber',
+};
+const METHOD_KEYS: Record<string, StringKey> = { credential: 'profile.methodCredential' };
+
+/** Label for a choice-chip option, falling back to the English value it came with. */
+export const choiceLabel = (lang: Lang, value: string, fallback: string): string =>
+    CHOICE_KEYS[value] ? tx(lang, CHOICE_KEYS[value]) : fallback;
+
+/** Label for a password requirement, keyed off the rule text in lib/constants.ts. */
+export const pwRuleLabel = (lang: Lang, label: string): string =>
+    PW_RULE_KEYS[label] ? tx(lang, PW_RULE_KEYS[label]) : label;
+
+/** Sign-in methods from Better Auth; Google and GitHub keep their brand names. */
+export const methodLabel = (lang: Lang, id: string, fallback: string): string =>
+    METHOD_KEYS[id] ? tx(lang, METHOD_KEYS[id]) : fallback;
+
+// TradingView's own widget chrome (menus, tooltips inside the iframe) stays English on
+// purpose: asking the embeds for ar_AE makes them request a fallback support URL that 403s.
+
+/** TradingView indicator ids, labelled in the dictionary. */
+const INDICATOR_KEYS: Record<string, StringKey> = {
+    'STD;SMA': 'ind.sma',
+    'STD;EMA': 'ind.ema',
+    'STD;Bollinger_Bands': 'ind.bollinger',
+    'STD;VWAP': 'ind.vwap',
+    'STD;RSI': 'ind.rsi',
+    'STD;MACD': 'ind.macd',
+    'STD;Stochastic': 'ind.stochastic',
+    'STD;Average_True_Range': 'ind.atr',
+};
+export const indicatorLabel = (lang: Lang, id: string, fallback: string): string =>
+    INDICATOR_KEYS[id] ? tx(lang, INDICATOR_KEYS[id]) : fallback;

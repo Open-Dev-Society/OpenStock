@@ -33,7 +33,7 @@ export default async function IndexPulse({ market = getMarket('us'), lang = 'en'
                         </div>
                     );
                 }
-                return <PulseTile key={tile.symbol} symbol={tile.finnhub} label={tile.label} initial={quotes[tile.finnhub]} />;
+                return <PulseTile key={tile.symbol} symbol={tile.finnhub} label={tile.label} initial={quotes[tile.finnhub]} lang={lang} />;
             })}
         </div>
     );

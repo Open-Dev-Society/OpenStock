@@ -862,3 +862,10 @@ html[lang="ar"] body {
     font-family: var(--font-arabic), var(--font-jakarta), system-ui, sans-serif;
     letter-spacing: 0;
 }
+
+/* A subtree that declares lang="en" (the English-only marketing pages) keeps the Latin face
+   even while the document is Arabic. */
+html[lang="ar"] [lang="en"] {
+    font-family: var(--font-jakarta), system-ui, sans-serif;
+    letter-spacing: normal;
+}

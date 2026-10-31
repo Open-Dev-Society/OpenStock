@@ -55,7 +55,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                         <h2 className="section-title">{tx(lang, 'dash.pulse')}</h2>
                         <p className="section-sub">{pulseSub}</p>
                     </div>
-                    {native && <DataFreshness />}
+                    {native && <DataFreshness lang={lang} />}
                 </div>
                 {/* Keyed so switching markets swaps the tiles instead of reusing old widgets */}
                 <Suspense key={market.id} fallback={<PulseSkeleton />}>

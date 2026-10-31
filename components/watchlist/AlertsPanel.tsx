@@ -82,7 +82,7 @@ export default function AlertsPanel({ alerts, lang }: { alerts: AlertRow[]; lang
                                 <p className="mono font-semibold text-foreground">{alert.symbol}</p>
                                 <p className="num truncate text-[12.5px] text-faint">
                                     {alert.condition === 'ABOVE' ? tx(lang, 'alert.above') : tx(lang, 'alert.below')} {formatPrice(alert.targetPrice)}
-                                    {alert.expiresAt && !alert.triggered && ` · until ${new Date(alert.expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                                    {alert.expiresAt && !alert.triggered && ` · ${tx(lang, 'alert.until').replace('{d}', new Date(alert.expiresAt).toLocaleDateString(lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-US', { month: 'short', day: 'numeric' }))}`}
                                 </p>
                             </div>
                             <span className={status.className}>{status.label}</span>

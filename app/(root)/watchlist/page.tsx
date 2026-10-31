@@ -46,7 +46,7 @@ export default async function WatchlistPage() {
                 <div>
                     <h1 className="page-title">{tx(lang, 'wl.title')}</h1>
                     <p className="page-sub num flex flex-wrap items-center gap-x-2">
-                        {symbols.length} {tx(lang, 'wl.symbolsUnit')} <span aria-hidden>·</span> <DataFreshness />
+                        {symbols.length} {tx(lang, 'wl.symbolsUnit')} <span aria-hidden>·</span> <DataFreshness lang={lang} />
                     </p>
                 </div>
                 <SearchButton className="btn btn-primary"><Plus /> {tx(lang, 'wl.addSymbol')}</SearchButton>
@@ -66,7 +66,7 @@ export default async function WatchlistPage() {
                     </Panel>
                 </div>
 
-                <Panel title={tx(lang, 'wl.alerts')} sub={alertsEnabled ? `${activeAlerts} ${tx(lang, 'wl.alertsSub')}` : tx(lang, 'wl.alertsCloud')} className="self-start">
+                <Panel title={tx(lang, 'wl.alerts')} sub={alertsEnabled ? tx(lang, 'wl.alertsSub').replace('{n}', String(activeAlerts)) : tx(lang, 'wl.alertsCloud')} className="self-start">
                     <AlertsPanel alerts={alerts} lang={lang} />
                 </Panel>
             </div>

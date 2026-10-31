@@ -5,13 +5,14 @@ import { LineChart } from "lucide-react";
 import ChangePill from "@/components/ChangePill";
 import PriceFlash from "@/components/PriceFlash";
 import { useLiveQuotes, type LiveQuote } from "@/hooks/useLiveQuotes";
+import { tx, type Lang } from "@/lib/i18n";
 
 const formatAmount = (value: number) =>
     value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: value < 1 ? 4 : 2 });
 
 // A pulse tile priced from our own quote cache. In realtime mode it refreshes on screen,
 // so the "Live · 15s" label is true; in cached mode it shows the server-rendered quote.
-export default function PulseTile({ symbol, label, initial }: { symbol: string; label: string; initial: LiveQuote | null }) {
+export default function PulseTile({ symbol, label, initial, lang = 'en' }: { symbol: string; label: string; initial: LiveQuote | null; lang?: Lang }) {
     const live = useLiveQuotes([symbol]);
     const quote = live[symbol] ?? initial;
     const isCrypto = symbol.startsWith('BINANCE:');
@@ -32,10 +33,12 @@ export default function PulseTile({ symbol, label, initial }: { symbol: string; 
                 {quote?.c ? (
                     <>
                         <ChangePill value={quote.dp} />
-                        <span className="num truncate">{(quote.d ?? 0) > 0 ? '+' : ''}{formatAmount(quote.d ?? 0)} vs prev close</span>
+                        <span className="num truncate">
+                            <bdi>{(quote.d ?? 0) > 0 ? '+' : ''}{formatAmount(quote.d ?? 0)}</bdi> {tx(lang, 'tile.prevClose')}
+                        </span>
                     </>
                 ) : (
-                    <span>Quote unavailable</span>
+                    <span>{tx(lang, 'tile.noQuote')}</span>
                 )}
             </div>
         </Link>
