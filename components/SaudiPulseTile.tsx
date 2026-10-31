@@ -24,7 +24,11 @@ export default function SaudiPulseTile({ tvSymbol, label, quote, lang }: { tvSym
                 {quote ? (
                     <>
                         <ChangePill value={quote.changePercent} />
-                        <span className="num truncate">{quote.change > 0 ? '+' : ''}{formatAmount(quote.change)} {tx(lang, 'tile.prevClose')}</span>
+                        <span className="num truncate">
+                            {/* <bdi> keeps the signed number a single left-to-right run; without it
+                                Arabic renders "-0.08" as "0.08-". */}
+                            <bdi>{quote.change > 0 ? '+' : ''}{formatAmount(quote.change)}</bdi> {tx(lang, 'tile.prevClose')}
+                        </span>
                     </>
                 ) : (
                     <span>{tx(lang, 'tile.noQuote')}</span>

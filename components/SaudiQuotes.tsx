@@ -42,7 +42,7 @@ export default async function SaudiQuotesTable({ market, lang }: { market: Marke
                                     </td>
                                     <td className="num px-3 py-2 text-right font-semibold">{q ? fmt(q.price) : '—'}</td>
                                     <td className={`num px-3 py-2 text-right ${q && q.change < 0 ? 'text-down' : 'text-up'}`}>
-                                        {q ? `${q.change > 0 ? '+' : ''}${fmt(q.change)}` : '—'}
+                                        {q ? <bdi>{`${q.change > 0 ? '+' : ''}${fmt(q.change)}`}</bdi> : '—'}
                                     </td>
                                     <td className="px-3 py-2 text-right"><ChangePill value={q?.changePercent} /></td>
                                 </tr>
