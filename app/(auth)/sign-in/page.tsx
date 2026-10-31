@@ -55,7 +55,7 @@ const SignIn = () => {
             </div>
             <p className="mb-8 text-faint">{tx(lang, 'auth.welcomeSub')}</p>
 
-            <SocialAuthButtons />
+            <SocialAuthButtons lang={lang} />
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <InputField

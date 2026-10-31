@@ -101,15 +101,17 @@ const Sidebar = ({ user, watchlist, lang }: SidebarProps) => {
                     <a key={sponsor.name} href={sponsor.url} target="_blank" rel="noreferrer" title={sponsor.name} className="flex h-11 items-center gap-2.5 rounded-[11px] px-3 shadow-[inset_0_0_0_1px_var(--line)] transition-colors hover:bg-white/5">
                         {sponsor.logo && <img src={sponsor.logo} alt={sponsor.iconOnly ? '' : sponsor.name} className="h-5 w-auto max-w-[120px]" />}
                         {(!sponsor.logo || sponsor.iconOnly) && <span className="truncate text-[13px] font-semibold text-muted-foreground">{sponsor.name}</span>}
-                        <span className="kicker ms-auto">Sponsor</span>
+                        <span className="kicker ms-auto">{tx(lang, 'sponsor.label')}</span>
                     </a>
                 ))}
                 {openSlots > 0 && (
                     <Link href="/sponsor#tiers" className="group flex flex-col gap-0.5 rounded-[11px] px-3 py-2.5 shadow-[inset_0_0_0_1px_var(--line)] transition-colors hover:bg-white/5">
                         <span className="kicker flex items-center gap-1.5 text-brand-ink">
-                            <span className="live-dot" /> {openSlots === SIDEBAR_SPONSOR_SLOTS ? 'Sponsor slots open' : `${openSlots} sponsor ${openSlots === 1 ? 'slot' : 'slots'} left`}
+                            <span className="live-dot" /> {openSlots === SIDEBAR_SPONSOR_SLOTS
+                                ? tx(lang, 'sponsor.slotsOpen')
+                                : tx(lang, 'sponsor.slotsLeft').replace('{n}', String(openSlots))}
                         </span>
-                        <span className="text-[12.5px] text-faint transition-colors group-hover:text-muted-foreground">Put your company in front of every OpenStock user.</span>
+                        <span className="text-[12.5px] text-faint transition-colors group-hover:text-muted-foreground">{tx(lang, 'sponsor.pitch')}</span>
                     </Link>
                 )}
             </div>

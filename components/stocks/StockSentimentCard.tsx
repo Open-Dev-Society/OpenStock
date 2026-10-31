@@ -1,5 +1,6 @@
 import type { StockSentimentInsights } from '@/lib/actions/adanos.helpers';
 import { cn } from '@/lib/utils';
+import { tx, type Lang } from '@/lib/i18n';
 
 interface StockSentimentCardProps {
     insight: StockSentimentInsights | null;
@@ -30,15 +31,15 @@ function getAlignmentClass(alignment: string): string {
     return 'text-muted-foreground';
 }
 
-export default function StockSentimentCard({ insight }: StockSentimentCardProps) {
+export default function StockSentimentCard({ insight, lang = 'en' }: StockSentimentCardProps & { lang?: Lang }) {
     if (!insight) {
         return null;
     }
 
     const summary = [
-        { label: 'Avg. buzz', value: formatScore(insight.averageBuzz, '/100') },
-        { label: 'Bullish avg', value: formatScore(insight.bullishAverage, '%') },
-        { label: 'Coverage', value: `${insight.availableSources}/4 sources` },
+        { label: tx(lang, 'sentiment.avgBuzz'), value: formatScore(insight.averageBuzz, '/100') },
+        { label: tx(lang, 'sentiment.bullishAvg'), value: formatScore(insight.bullishAverage, '%') },
+        { label: tx(lang, 'sentiment.coverage'), value: tx(lang, 'sentiment.sources').replace('{n}', String(insight.availableSources)) },
     ];
 
     return (
@@ -52,7 +53,7 @@ export default function StockSentimentCard({ insight }: StockSentimentCardProps)
                 ))}
             </div>
             <p className="border-t border-line px-3 py-2.5 text-[12.5px] text-faint">
-                Source alignment: <span className={cn('font-semibold', getAlignmentClass(insight.sourceAlignment))}>{insight.sourceAlignment}</span>
+                {tx(lang, 'sentiment.alignment')} <span className={cn('font-semibold', getAlignmentClass(insight.sourceAlignment))}>{insight.sourceAlignment}</span>
             </p>
 
             <ul className="row-list border-t border-line">

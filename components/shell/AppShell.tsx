@@ -49,7 +49,7 @@ const AppShell = ({ user, watchlist, initialStocks, lang, children }: AppShellPr
                     <TabBar onMenu={() => setNavOpen(true)} lang={lang} />
                     <main ref={workspaceRef} className={cn('workspace', pathname === '/dashboard' && 'is-first-tab')}>
                         <div className="workspace-inner">
-                            <UpdateBanner />
+                            <UpdateBanner lang={lang} />
                             {children}
                         </div>
                     </main>

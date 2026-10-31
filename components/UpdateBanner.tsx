@@ -5,9 +5,10 @@ import { ArrowRight, Check } from "lucide-react";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { LATEST_RELEASE } from "@/lib/changelog";
 import { cn } from "@/lib/utils";
+import { tx, type Lang } from "@/lib/i18n";
 
 // Always shows the latest release. The whole strip opens a short summary; the full history is on /changelog.
-export default function UpdateBanner({ className }: { className?: string }) {
+export default function UpdateBanner({ className, lang = 'en' }: { className?: string; lang?: Lang }) {
     return (
         <Dialog>
             <DialogTrigger
@@ -16,13 +17,13 @@ export default function UpdateBanner({ className }: { className?: string }) {
                     className,
                 )}
             >
-                <span className="pill is-brand shrink-0">New</span>
+                <span className="pill is-brand shrink-0">{tx(lang, 'banner.new')}</span>
                 <span className="min-w-0 flex-1 truncate">
                     <span className="font-semibold text-foreground">{LATEST_RELEASE.title}:</span>{' '}
                     <span className="text-muted-foreground">{LATEST_RELEASE.summary}</span>
                 </span>
                 <span className="flex shrink-0 items-center gap-1 font-semibold text-brand-ink">
-                    <span className="max-sm:hidden">See what’s new</span>
+                    <span className="max-sm:hidden">{tx(lang, 'banner.see')}</span>
                     <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
                 </span>
             </DialogTrigger>
@@ -44,7 +45,7 @@ export default function UpdateBanner({ className }: { className?: string }) {
                 {/* Closes the modal too: the banner stays mounted across navigations */}
                 <DialogClose asChild>
                     <Link href="/changelog" className="btn btn-primary h-10 w-full">
-                        Read the full changelog <ArrowRight />
+                        {tx(lang, 'banner.readAll')} <ArrowRight />
                     </Link>
                 </DialogClose>
             </DialogContent>

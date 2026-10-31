@@ -96,7 +96,7 @@ const ResetPasswordForm = () => {
                     error={errors.newPassword}
                     validation={PASSWORD_VALIDATION}
                 />
-                <PasswordRequirements password={newPassword ?? ''} />
+                <PasswordRequirements password={newPassword ?? ''} lang={lang} />
 
                 <InputField
                     name="confirmPassword"

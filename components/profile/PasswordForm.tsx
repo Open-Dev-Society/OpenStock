@@ -47,7 +47,7 @@ export default function PasswordForm({ lang }: { lang: Lang }) {
                     error={errors.newPassword}
                     validation={PASSWORD_VALIDATION}
                 />
-                <PasswordRequirements password={watch('newPassword') ?? ''} />
+                <PasswordRequirements password={watch('newPassword') ?? ''} lang={lang} />
             </div>
             <button type="submit" disabled={isSubmitting} className="btn btn-ghost self-start">
                 {isSubmitting ? tx(lang, 'pw.changing') : tx(lang, 'pw.change')}

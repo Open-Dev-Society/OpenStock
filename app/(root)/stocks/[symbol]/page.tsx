@@ -23,7 +23,7 @@ async function Sentiment({ symbol, lang }: { symbol: string; lang: Lang }) {
     if (!insight) return null;
     return (
         <Panel title={tx(lang, 'stock.sentiment')} sub={tx(lang, 'stock.sentimentSub')}>
-            <StockSentimentCard insight={insight} />
+            <StockSentimentCard insight={insight} lang={lang} />
         </Panel>
     );
 }
@@ -55,7 +55,7 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
             <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
                 <div className="flex min-w-0 flex-col gap-3">
                     {isChartEmbeddable(tvSymbol) ? (
-                        <StockChart tvSymbol={tvSymbol} scriptUrl={`${scriptUrl}advanced-chart.js`} />
+                        <StockChart tvSymbol={tvSymbol} scriptUrl={`${scriptUrl}advanced-chart.js`} lang={lang} />
                     ) : (
                         // TradingView refuses this exchange's chart in embeds; say so instead of showing its error
                         <Panel title={tx(lang, 'stock.chart')} sub={tx(lang, 'stock.chartTVOnly')}>

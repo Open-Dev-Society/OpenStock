@@ -40,7 +40,7 @@ async function TradingViewHeader({ symbol, lang }: { symbol: string; lang: Lang 
                 )}
                 <div className="flex items-center gap-2">
                     <WatchlistButton symbol={symbol} company={symbol} isInWatchlist={isInWatchlist} lang={lang} />
-                    <span className="pill h-9 px-3" title="Price alerts need a quote source we can check every 5 minutes">
+                    <span className="pill h-9 px-3" title={tx(lang, 'alert.tooltipQuote')}>
                         <Bell /> {tx(lang, 'stock.alertsTV')}
                     </span>
                 </div>
@@ -96,7 +96,7 @@ export default async function StockHeader({ symbol, lang }: { symbol: string; la
 
                 <div className="flex items-center gap-2">
                     <WatchlistButton symbol={symbol} company={company} isInWatchlist={isInWatchlist} lang={lang} />
-                    <CreateAlertModal symbol={symbol} currentPrice={quote?.c} currency={currency}>
+                    <CreateAlertModal symbol={symbol} currentPrice={quote?.c} currency={currency} lang={lang}>
                         <button type="button" className="btn btn-primary"><Bell /> {tx(lang, 'stock.setAlert')}</button>
                     </CreateAlertModal>
                 </div>

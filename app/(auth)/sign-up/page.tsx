@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import OpenDevSocietyBranding from "@/components/OpenDevSocietyBranding";
 import SocialAuthButtons from "@/components/forms/SocialAuthButtons";
 import LangToggle, { useLang } from "@/components/LangToggle";
-import { tx } from "@/lib/i18n";
+import { choiceLabel, tx } from "@/lib/i18n";
 import React from "react";
 
 const SignUp = () => {
@@ -67,10 +67,10 @@ const SignUp = () => {
             </div>
             <p className="mb-8 text-faint">{tx(lang, 'auth.createSub')}</p>
 
-            <SocialAuthButtons />
+            <SocialAuthButtons lang={lang} />
 
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-8">
-                <section className="flex flex-col gap-4" aria-label="Account">
+                <section className="flex flex-col gap-4" aria-label={tx(lang, 'signup.accountRegion')}>
                     <InputField
                         name="fullName"
                         label={tx(lang, 'auth.fullName')}
@@ -103,7 +103,7 @@ const SignUp = () => {
                             error={errors.password}
                             validation={PASSWORD_VALIDATION}
                         />
-                        <PasswordRequirements password={passwordValue ?? ''} />
+                        <PasswordRequirements password={passwordValue ?? ''} lang={lang} />
                     </div>
                 </section>
 
@@ -117,11 +117,12 @@ const SignUp = () => {
                         label={tx(lang, 'profile.country')}
                         control={control}
                         error={errors.country}
+                        lang={lang}
                         required
                     />
-                    <ChoiceChips name="investmentGoals" label={tx(lang, 'profile.goal')} options={INVESTMENT_GOALS} control={control} />
-                    <ChoiceChips name="riskTolerance" label={tx(lang, 'profile.risk')} options={RISK_TOLERANCE_OPTIONS} control={control} />
-                    <ChoiceChips name="preferredIndustry" label={tx(lang, 'profile.industry')} options={PREFERRED_INDUSTRIES} control={control} />
+                    <ChoiceChips name="investmentGoals" label={tx(lang, 'profile.goal')} options={INVESTMENT_GOALS.map((o) => ({ ...o, label: choiceLabel(lang, o.value, o.label) }))} control={control} />
+                    <ChoiceChips name="riskTolerance" label={tx(lang, 'profile.risk')} options={RISK_TOLERANCE_OPTIONS.map((o) => ({ ...o, label: choiceLabel(lang, o.value, o.label) }))} control={control} />
+                    <ChoiceChips name="preferredIndustry" label={tx(lang, 'profile.industry')} options={PREFERRED_INDUSTRIES.map((o) => ({ ...o, label: choiceLabel(lang, o.value, o.label) }))} control={control} />
                 </section>
 
                 <div className="flex flex-col gap-4">

@@ -83,13 +83,13 @@ export default function WatchlistTable({ initialRows, lang }: { initialRows: Row
                             <td>
                                 <div className="flex items-center justify-end gap-1">
                                     {hasFinnhubQuotes(row.symbol) ? (
-                                        <CreateAlertModal symbol={row.symbol} currentPrice={row.price} currency={row.currency}>
+                                        <CreateAlertModal symbol={row.symbol} currentPrice={row.price} currency={row.currency} lang={lang}>
                                             <button type="button" className="icon-btn" title={`Set a price alert for ${row.symbol}`} aria-label={`Set a price alert for ${row.symbol}`}>
                                                 <Bell />
                                             </button>
                                         </CreateAlertModal>
                                     ) : (
-                                        <span className="icon-btn opacity-40" title="Alerts are available for US stocks and crypto"><Bell /></span>
+                                        <span className="icon-btn opacity-40" title={tx(lang, 'alert.tooltipUsOnly')}><Bell /></span>
                                     )}
                                     <WatchlistButton
                                         symbol={row.symbol}

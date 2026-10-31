@@ -21,6 +21,7 @@ const Layout = async ({ children }: { children: React.ReactNode }) => {
         searchStocks(),
         getUserWatchlist(),
     ]);
+    const lang = await getLang();
 
     return (
         <>
@@ -28,11 +29,11 @@ const Layout = async ({ children }: { children: React.ReactNode }) => {
                 user={user}
                 watchlist={watchlist.map(({ symbol, company }: { symbol: string; company: string }) => ({ symbol, company }))}
                 initialStocks={initialStocks}
-                lang={await getLang()}
+                lang={lang}
             >
                 {children}
             </AppShell>
-            <DonatePopup />
+            <DonatePopup lang={lang} />
         </>
     )
 }
