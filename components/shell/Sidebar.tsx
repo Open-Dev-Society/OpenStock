@@ -10,7 +10,7 @@ import { signOut } from "@/lib/actions/auth.actions";
 import { cn } from "@/lib/utils";
 import { tx, type Lang, type StringKey } from "@/lib/i18n";
 import { SIDEBAR_SPONSOR_SLOTS, sidebarSponsors } from "@/lib/sponsors";
-import { saudiSymbolName } from "@/lib/saudi-symbols";
+import { saudiSymbolName, saudiSymbolNameAr } from "@/lib/saudi-symbols";
 
 type SidebarProps = {
     user: User;
@@ -67,7 +67,7 @@ const Sidebar = ({ user, watchlist, lang }: SidebarProps) => {
                     <ul className="scrollbar-hide-default flex min-h-0 flex-col gap-0.5 overflow-y-auto">
                         {watchlist.map(({ symbol, company }) => {
                             // Old rows stored the ticker as the company name; the Saudi table knows better.
-                            const name = company !== symbol ? company : saudiSymbolName(symbol);
+                            const name = (lang === 'ar' ? saudiSymbolNameAr(symbol) : null) ?? (company !== symbol ? company : saudiSymbolName(symbol));
                             return (
                             <li key={symbol}>
                                 <Link

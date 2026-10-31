@@ -12,6 +12,7 @@ import TradingViewWidget from "@/components/TradingViewWidget";
 import ChangePill from "@/components/ChangePill";
 import { getYahooDailyQuotes } from "@/lib/actions/yahoo.actions";
 import { isTadawulSymbol } from "@/lib/yahoo";
+import { saudiSymbolNameAr } from "@/lib/saudi-symbols";
 
 // Symbols Finnhub's free plan can't price (most non-US listings) use TradingView's quote panel instead.
 // TradingView blocks Tadawul quotes in embeds, so those show a delayed Yahoo price.
@@ -29,7 +30,7 @@ async function TradingViewHeader({ symbol, lang }: { symbol: string; lang: Lang 
                 <div className="min-w-0">
                     <h1 dir="ltr" className="mono truncate text-xl font-bold tracking-[-0.02em]">{symbol}</h1>
                     <p className="text-[12.5px] text-faint">
-                        {[tvSymbol.split(':')[0], saudi?.name, tadawul ? tx(lang, 'stock.yahooQuote') : tx(lang, 'stock.tvQuote')].filter(Boolean).join(' · ')}
+                        {[tvSymbol.split(':')[0], (lang === 'ar' ? saudiSymbolNameAr(symbol) : null) ?? saudi?.name, tadawul ? tx(lang, 'stock.yahooQuote') : tx(lang, 'stock.tvQuote')].filter(Boolean).join(' · ')}
                     </p>
                 </div>
                 {saudi && (

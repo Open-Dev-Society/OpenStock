@@ -12,6 +12,7 @@ import { SearchButton } from "@/components/SearchCommand";
 import { formatNumber, formatPrice } from "@/lib/utils";
 import { hasFinnhubQuotes } from "@/lib/markets";
 import { tx, type Lang } from "@/lib/i18n";
+import { saudiSymbolNameAr } from "@/lib/saudi-symbols";
 import type { getWatchlistData } from "@/lib/actions/finnhub.actions";
 
 type Row = Awaited<ReturnType<typeof getWatchlistData>>[number];
@@ -59,7 +60,10 @@ export default function WatchlistTable({ initialRows, lang }: { initialRows: Row
                     </tr>
                 </thead>
                 <tbody>
-                    {rows.map((row) => (
+                    {rows.map((row) => {
+                        // The Saudi table carries the Arabic name; the quote feed is English-only.
+                        const company = (lang === 'ar' ? saudiSymbolNameAr(row.symbol) : null) ?? row.name;
+                        return (
                         <tr key={row.symbol}>
                             <td className="max-w-[320px]">
                                 <Link href={`/stocks/${row.symbol}`} className="group flex items-center gap-3">
@@ -69,7 +73,7 @@ export default function WatchlistTable({ initialRows, lang }: { initialRows: Row
                                         <span className="logo-well is-empty">{row.symbol[0]}</span>
                                     )}
                                     <span className="min-w-0">
-                                        <span dir="auto" className="block truncate font-semibold text-foreground group-hover:text-brand-ink transition-colors" title={row.name}>{row.name}</span>
+                                        <span dir="auto" className="block truncate font-semibold text-foreground group-hover:text-brand-ink transition-colors" title={company}>{company}</span>
                                         <span dir="ltr" className="mono block text-[12px] text-faint">{row.symbol}</span>
                                     </span>
                                 </Link>
@@ -104,7 +108,8 @@ export default function WatchlistTable({ initialRows, lang }: { initialRows: Row
                                 </div>
                             </td>
                         </tr>
-                    ))}
+                        );
+                    })}
                 </tbody>
             </table>
         </div>

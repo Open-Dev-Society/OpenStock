@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { SAUDI_SYMBOLS, searchSaudiSymbols, normalizeArabic, saudiSymbolName } from '@/lib/saudi-symbols';
+import {
+    SAUDI_SYMBOLS,
+    searchSaudiSymbols,
+    normalizeArabic,
+    saudiSymbolName,
+    saudiSymbolNameAr,
+} from '@/lib/saudi-symbols';
 
 // Arabic users type company names in Arabic script. Finnhub's index is Latin-only, so a local
 // table answers those queries. These tests pin the normalisation and the ranking.
@@ -69,10 +75,8 @@ describe('the Saudi table itself', () => {
         expect(SAUDI_SYMBOLS.filter((entry) => !entry.symbol.startsWith('9')).length).toBeGreaterThanOrEqual(270);
     });
 
-    it('gives every company at least one Arabic name', () => {
-        const noArabic = SAUDI_SYMBOLS.filter(
-            (entry) => !entry.aliases.some((alias) => /[\u0600-\u06FF]/.test(alias))
-        );
+    it('gives every company an Arabic name the interface can print', () => {
+        const noArabic = SAUDI_SYMBOLS.filter((entry) => !/[\u0600-\u06FF]/.test(entry.nameAr || ''));
         expect(noArabic).toEqual([]);
     });
 
@@ -82,6 +86,13 @@ describe('the Saudi table itself', () => {
         expect(searchSaudiSymbols('علم')[0]?.symbol).toBe('7203.SR');
         expect(searchSaudiSymbols('أديس')[0]?.symbol).toBe('2382.SR');
         expect(searchSaudiSymbols('كابلات الرياض')[0]?.symbol).toBe('4142.SR');
+    });
+
+    it('returns the Arabic name for the Arabic interface', () => {
+        expect(saudiSymbolNameAr('2222.SR')).toBe('أرامكو السعودية');
+        expect(saudiSymbolNameAr('1120.SR')).toBe('الراجحي');
+        expect(saudiSymbolNameAr('7203.SR')).toBe('علم');
+        expect(saudiSymbolNameAr('AAPL')).toBeNull();
     });
 
     it('names a ticker for the sidebar when a stored row only has the symbol', () => {
