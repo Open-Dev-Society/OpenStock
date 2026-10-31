@@ -71,11 +71,20 @@ export async function createWatchlistList(name: string): Promise<{ error: string
             return { error: `You already have a list called “${clean}”.` };
         }
         const created = await WatchlistList.create({ userId, name: clean, symbols: [] });
-        // Two tabs can both pass the check above; whoever lands over the cap takes its own row back,
-        // so the user gets the readable error instead of an eleventh list.
-        if ((await WatchlistList.countDocuments({ userId })) > MAX_LISTS) {
-            await WatchlistList.deleteOne({ _id: created._id, userId });
-            return { error: `You can keep ${MAX_LISTS} lists. Delete one to make room.` };
+        // Two tabs can both pass the check above. The cap is then enforced on whichever rows are
+        // newest, by id order so both racers pick the same rows: the user keeps exactly ten, and
+        // the request whose row was trimmed returns the readable error.
+        const count = await WatchlistList.countDocuments({ userId });
+        if (count > MAX_LISTS) {
+            const overflow = await WatchlistList.find({ userId })
+                .sort({ createdAt: -1, _id: -1 })
+                .limit(count - MAX_LISTS)
+                .select('_id');
+            const ids = overflow.map((doc) => doc._id);
+            await WatchlistList.deleteMany({ _id: { $in: ids }, userId });
+            if (ids.some((id) => String(id) === String(created._id))) {
+                return { error: `You can keep ${MAX_LISTS} lists. Delete one to make room.` };
+            }
         }
         revalidate();
         return toSummary(created);

@@ -14,7 +14,8 @@ const findOne = vi.fn();
 const updateOne = vi.fn();
 const create = vi.fn();
 const countDocuments = vi.fn();
-const deleteOne = vi.fn();
+const deleteMany = vi.fn();
+const findOverflow = vi.fn();
 const init = vi.fn();
 vi.mock('@/database/models/watchlist-list.model', () => ({
     WatchlistList: {
@@ -23,7 +24,13 @@ vi.mock('@/database/models/watchlist-list.model', () => ({
         updateOne: (...args: unknown[]) => updateOne(...args),
         create: (...args: unknown[]) => create(...args),
         countDocuments: (...args: unknown[]) => countDocuments(...args),
-        deleteOne: (...args: unknown[]) => deleteOne(...args),
+        deleteMany: (...args: unknown[]) => deleteMany(...args),
+        // The overflow query: find().sort().limit().select()
+        find: () => ({
+            sort: () => ({
+                limit: () => ({ select: () => findOverflow() }),
+            }),
+        }),
         init: (...args: unknown[]) => init(...args),
         exists: vi.fn().mockResolvedValue(false),
     },
@@ -144,17 +151,31 @@ describe('createWatchlistList keeps the ten-list cap honest', () => {
     it('drops its own insert when a concurrent create pushed the user over the cap', async () => {
         // The pre-check saw 9, but by the time the insert lands another tab made it 11.
         countDocuments.mockResolvedValueOnce(9).mockResolvedValueOnce(MAX_LISTS + 1);
+        findOverflow.mockResolvedValueOnce([{ _id: LIST_ID }]);
 
         await expect(createWatchlistList('Banks')).resolves.toEqual({
             error: `You can keep ${MAX_LISTS} lists. Delete one to make room.`,
         });
-        expect(deleteOne).toHaveBeenCalledWith({ _id: LIST_ID, userId: USER });
+        expect(deleteMany).toHaveBeenCalledWith({ _id: { $in: [LIST_ID] }, userId: USER });
+    });
+
+    it('keeps the lists the user may keep and trims the newest rows when two creates race', async () => {
+        // Two inserts landed: the row deleted is the newest one, whoever created it, so the user
+        // ends at exactly ten rather than nine.
+        countDocuments.mockResolvedValueOnce(9).mockResolvedValueOnce(MAX_LISTS + 1);
+        findOverflow.mockResolvedValueOnce([{ _id: 'newer-row-of-the-other-tab' }]);
+
+        await expect(createWatchlistList('Banks')).resolves.toMatchObject({ id: LIST_ID, name: 'Banks' });
+        expect(deleteMany).toHaveBeenCalledWith({
+            _id: { $in: ['newer-row-of-the-other-tab'] },
+            userId: USER,
+        });
     });
 
     it('keeps the list when the recount is still within the cap', async () => {
         countDocuments.mockResolvedValueOnce(9).mockResolvedValueOnce(MAX_LISTS);
 
         await expect(createWatchlistList('Banks')).resolves.toMatchObject({ id: LIST_ID, name: 'Banks' });
-        expect(deleteOne).not.toHaveBeenCalled();
+        expect(deleteMany).not.toHaveBeenCalled();
     });
 });

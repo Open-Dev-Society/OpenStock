@@ -34,6 +34,7 @@ export default function AddToListMenu({
     // A create that succeeded but whose add failed leaves a real list behind; retrying must reuse
     // it, or the second attempt dies on the duplicate-name check.
     const [createdId, setCreatedId] = useState<string | null>(null);
+    const [createdName, setCreatedName] = useState('');
 
     const add = async (list: { id: string; name: string }) => {
         setPending(list.id);
@@ -60,7 +61,7 @@ export default function AddToListMenu({
         setBusy(true);
         try {
             let listId = createdId;
-            let listName = name;
+            let listName = createdName;
             if (!listId) {
                 const created = await createWatchlistList(name);
                 if ('error' in created) {
@@ -70,6 +71,7 @@ export default function AddToListMenu({
                 listId = created.id;
                 listName = created.name;
                 setCreatedId(created.id);
+                setCreatedName(created.name);
             }
             const added = await addSymbolToList(listId, symbol, company);
             if ('error' in added) {
@@ -80,6 +82,7 @@ export default function AddToListMenu({
             setNaming(false);
             setName('');
             setCreatedId(null);
+            setCreatedName('');
             router.refresh();
         } catch {
             toast.error('Couldn’t create the list');
@@ -88,9 +91,15 @@ export default function AddToListMenu({
         }
     };
 
+    // The dialog is not dismissible while a request is in flight: closing it would clear the id of
+    // a list that is about to exist, and a reopened dialog would offer to create it again.
     const closeDialog = (next: boolean) => {
+        if (busy && !next) return;
         setNaming(next);
-        if (!next) setCreatedId(null);
+        if (!next) {
+            setCreatedId(null);
+            setCreatedName('');
+        }
     };
 
     return (
@@ -132,23 +141,28 @@ export default function AddToListMenu({
                     </DialogHeader>
                     <form onSubmit={createAndAdd} className="flex flex-col gap-3">
                         <input
-                            value={name}
+                            value={createdId ? createdName : name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="List name"
                             aria-label="List name"
                             autoFocus
-                            className="h-9 rounded-full bg-page px-3 text-[13px] shadow-[inset_0_0_0_1px_var(--line)] outline-none placeholder:text-faint focus-visible:ring-2 focus-visible:ring-ring"
+                            disabled={!!createdId}
+                            className="h-9 rounded-full bg-page px-3 text-[13px] shadow-[inset_0_0_0_1px_var(--line)] outline-none placeholder:text-faint focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
                         />
                         {createdId && (
                             <p className="text-[12px] text-muted-foreground">
-                                “{name}” was created — press the button again to retry adding {symbol}.
+                                “{createdName}” was created — press the button again to retry adding {symbol}.
                             </p>
                         )}
                         <div className="flex justify-end gap-2">
-                            <button type="button" onClick={() => closeDialog(false)} className="pill h-8">
+                            <button type="button" onClick={() => closeDialog(false)} disabled={busy} className="pill h-8">
                                 Cancel
                             </button>
-                            <button type="submit" disabled={busy || !name.trim()} className="btn btn-primary">
+                            <button
+                                type="submit"
+                                disabled={busy || (!createdId && !name.trim())}
+                                className="btn btn-primary"
+                            >
                                 <Plus className="size-3.5" /> {createdId ? 'Retry add' : 'Create and add'}
                             </button>
                         </div>
