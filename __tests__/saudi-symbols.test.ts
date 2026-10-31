@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SAUDI_SYMBOLS, searchSaudiSymbols, normalizeArabic } from '@/lib/saudi-symbols';
+import { SAUDI_SYMBOLS, searchSaudiSymbols, normalizeArabic, saudiSymbolName } from '@/lib/saudi-symbols';
 
 // Arabic users type company names in Arabic script. Finnhub's index is Latin-only, so a local
 // table answers those queries. These tests pin the normalisation and the ranking.
@@ -82,6 +82,12 @@ describe('the Saudi table itself', () => {
         expect(searchSaudiSymbols('علم')[0]?.symbol).toBe('7203.SR');
         expect(searchSaudiSymbols('أديس')[0]?.symbol).toBe('2382.SR');
         expect(searchSaudiSymbols('كابلات الرياض')[0]?.symbol).toBe('4142.SR');
+    });
+
+    it('names a ticker for the sidebar when a stored row only has the symbol', () => {
+        expect(saudiSymbolName('2222.SR')).toBe('Saudi Arabian Oil Co.');
+        expect(saudiSymbolName(' 2222.sr ')).toBe('Saudi Arabian Oil Co.');
+        expect(saudiSymbolName('AAPL')).toBeNull();
     });
 
     it('finds parallel-market (Nomu) companies too', () => {

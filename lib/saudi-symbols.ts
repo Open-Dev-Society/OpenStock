@@ -432,6 +432,12 @@ export function normalizeArabic(value: string): string {
         .trim();
 }
 
+const BY_SYMBOL = new Map(SAUDI_SYMBOLS.map((entry) => [entry.symbol, entry]));
+
+/** The English name for a Tadawul ticker, or null when it is not a Saudi symbol. */
+export const saudiSymbolName = (symbol: string): string | null =>
+    BY_SYMBOL.get((symbol || '').trim().toUpperCase())?.name ?? null;
+
 type IndexEntry = { entry: SaudiSymbol; keys: string[] };
 
 const INDEX: IndexEntry[] = SAUDI_SYMBOLS.map((entry) => ({

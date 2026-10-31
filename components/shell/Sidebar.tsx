@@ -10,6 +10,7 @@ import { signOut } from "@/lib/actions/auth.actions";
 import { cn } from "@/lib/utils";
 import { tx, type Lang, type StringKey } from "@/lib/i18n";
 import { SIDEBAR_SPONSOR_SLOTS, sidebarSponsors } from "@/lib/sponsors";
+import { saudiSymbolName } from "@/lib/saudi-symbols";
 
 type SidebarProps = {
     user: User;
@@ -64,18 +65,22 @@ const Sidebar = ({ user, watchlist, lang }: SidebarProps) => {
                     <p className="px-2.5 text-[12.5px] text-faint">{tx(lang, 'nav.watchingEmpty')}</p>
                 ) : (
                     <ul className="scrollbar-hide-default flex min-h-0 flex-col gap-0.5 overflow-y-auto">
-                        {watchlist.map(({ symbol, company }) => (
+                        {watchlist.map(({ symbol, company }) => {
+                            // Old rows stored the ticker as the company name; the Saudi table knows better.
+                            const name = company !== symbol ? company : saudiSymbolName(symbol);
+                            return (
                             <li key={symbol}>
                                 <Link
                                     href={`/stocks/${symbol}`}
-                                    title={company}
+                                    title={name || symbol}
                                     className={cn('side-item h-8 font-medium', pathname === `/stocks/${symbol}` && 'is-active')}
                                 >
-                                    <span className="mono w-14 shrink-0 text-[12.5px] font-semibold text-foreground">{symbol}</span>
-                                    {company !== symbol && <span className="truncate text-[12.5px] text-faint">{company}</span>}
+                                    <span dir="ltr" className="mono w-14 shrink-0 text-[12.5px] font-semibold text-foreground">{symbol}</span>
+                                    {name && <span dir="auto" className="truncate text-[12.5px] text-faint">{name}</span>}
                                 </Link>
                             </li>
-                        ))}
+                            );
+                        })}
                     </ul>
                 )}
             </div>
