@@ -8,18 +8,35 @@ import { formatNumber, formatPrice, formatSymbolForTradingView } from "@/lib/uti
 import { hasFinnhubQuotes } from "@/lib/markets";
 import { symbolInfoConfig } from "@/lib/constants";
 import TradingViewWidget from "@/components/TradingViewWidget";
+import ChangePill from "@/components/ChangePill";
+import { getYahooDailyQuotes } from "@/lib/actions/yahoo.actions";
+import { isTadawulSymbol } from "@/lib/yahoo";
 
 // Symbols Finnhub's free plan can't price (most non-US listings) use TradingView's quote panel instead.
+// TradingView blocks Tadawul quotes in embeds, so those show a delayed Yahoo price.
 async function TradingViewHeader({ symbol }: { symbol: string }) {
-    const isInWatchlist = await isStockInWatchlist(symbol);
+    const tadawul = isTadawulSymbol(symbol);
+    const [isInWatchlist, yahoo] = await Promise.all([
+        isStockInWatchlist(symbol),
+        tadawul ? getYahooDailyQuotes([symbol]) : null,
+    ]);
+    const saudi = yahoo?.[symbol];
     const tvSymbol = formatSymbolForTradingView(symbol);
     return (
         <section className="hatch">
             <div className="card flex flex-wrap items-center justify-between gap-4 p-4">
                 <div className="min-w-0">
                     <h1 className="mono truncate text-xl font-bold tracking-[-0.02em]">{symbol}</h1>
-                    <p className="text-[12.5px] text-faint">{tvSymbol.split(':')[0]} · quote via TradingView</p>
+                    <p className="text-[12.5px] text-faint">
+                        {[tvSymbol.split(':')[0], saudi?.name, tadawul ? 'delayed quote via Yahoo Finance' : 'quote via TradingView'].filter(Boolean).join(' · ')}
+                    </p>
                 </div>
+                {saudi && (
+                    <div className="flex items-center gap-3">
+                        <p className="num text-2xl font-bold tracking-[-0.03em]">{formatPrice(saudi.price, saudi.currency)}</p>
+                        <ChangePill value={saudi.changePercent} />
+                    </div>
+                )}
                 <div className="flex items-center gap-2">
                     <WatchlistButton symbol={symbol} company={symbol} isInWatchlist={isInWatchlist} />
                     <span className="pill h-9 px-3" title="Price alerts need a quote source we can check every 5 minutes">
@@ -27,9 +44,11 @@ async function TradingViewHeader({ symbol }: { symbol: string }) {
                     </span>
                 </div>
             </div>
-            <div className="card mt-[3px] p-1">
-                <TradingViewWidget scriptUrl="https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js" config={symbolInfoConfig(tvSymbol)} height={180} />
-            </div>
+            {!tadawul && (
+                <div className="card mt-[3px] p-1">
+                    <TradingViewWidget scriptUrl="https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js" config={symbolInfoConfig(tvSymbol)} height={180} />
+                </div>
+            )}
         </section>
     );
 }

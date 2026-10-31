@@ -3,11 +3,12 @@
 //   - TradingView embeds: US, crypto, forex live; TSX + ASX delayed; BSE + XETRA end-of-day.
 //     NSE and TVC indices (NIFTY, FTSE, DAX, N225, HSI) are blocked in embeds; LSE, Tokyo, Hong Kong and
 //     others block only the candle chart (see CHART_BLOCKED_EXCHANGES in lib/utils.ts).
+//   - Tadawul is blocked in embeds and on Finnhub free, so Saudi tiles and tables are priced from Yahoo Finance (lib/yahoo.ts).
 // Adding a market = adding an entry here with symbols from an exchange that renders in embeds.
 
 import { isInternationalSymbol } from "@/lib/utils";
 
-export type MarketId = 'us' | 'in' | 'de' | 'ca' | 'au' | 'crypto' | 'fx';
+export type MarketId = 'us' | 'in' | 'de' | 'ca' | 'au' | 'sa' | 'crypto' | 'fx';
 
 type Hours = { open: number; close: number }; // minutes of the local day
 
@@ -17,9 +18,12 @@ export type Market = {
     short: string;
     timeZone: string;
     hours: Hours | '24/7' | '24/5';
+    tradingDays?: number[]; // 0 = Sunday; Monday to Friday when unset
     feed: 'Live' | 'Delayed' | 'End of day';
     // Tiles on the dashboard. `finnhub` set = native tile with our own cached quote; otherwise a TradingView quote.
     pulse: { symbol: string; label: string; finnhub?: string }[];
+    // Priced from Yahoo instead of TradingView: tiles, leaders and quotes are our own components
+    yahoo?: true;
     groups: { title: string; symbols: [symbol: string, name: string][] }[];
     heatmap?: 'stocks' | 'crypto';
     news: 'stock' | 'crypto' | 'forex';
@@ -104,6 +108,21 @@ export const MARKETS: Market[] = [
         news: 'stock',
     },
     {
+        id: 'sa', name: 'Saudi Arabia', short: 'SA', timeZone: 'Asia/Riyadh', hours: { open: hm(10), close: hm(15) }, tradingDays: [0, 1, 2, 3, 4], feed: 'Delayed', yahoo: true,
+        pulse: [
+            { symbol: 'TADAWUL:TASI', label: 'TASI' },
+            { symbol: 'TADAWUL:2222', label: 'Aramco' },
+            { symbol: 'TADAWUL:1120', label: 'Al Rajhi' },
+            { symbol: 'TADAWUL:7010', label: 'STC' },
+        ],
+        groups: [
+            { title: 'Banks', symbols: [['TADAWUL:1120', 'Al Rajhi Bank'], ['TADAWUL:1180', 'Saudi National Bank'], ['TADAWUL:1150', 'Alinma Bank'], ['TADAWUL:1010', 'Riyad Bank'], ['TADAWUL:1060', 'SAB']] },
+            { title: 'Energy & materials', symbols: [['TADAWUL:2222', 'Saudi Aramco'], ['TADAWUL:2010', 'SABIC'], ['TADAWUL:2082', 'ACWA Power'], ['TADAWUL:1111', 'Tadawul Group']] },
+            { title: 'Telecom & consumer', symbols: [['TADAWUL:7010', 'STC Group'], ['TADAWUL:7020', 'Mobily'], ['TADAWUL:7030', 'Zain KSA'], ['TADAWUL:2280', 'Almarai'], ['TADAWUL:4300', 'Dar Alarkan']] },
+        ],
+        news: 'stock',
+    },
+    {
         id: 'crypto', name: 'Crypto', short: 'Crypto', timeZone: 'UTC', hours: '24/7', feed: 'Live',
         pulse: [
             { symbol: 'BINANCE:BTCUSDT', label: 'Bitcoin', finnhub: 'BINANCE:BTCUSDT' },
@@ -138,7 +157,7 @@ export const MARKET_COOKIE = 'openstock-market';
 
 export const getMarket = (id?: string | null) => MARKETS.find((m) => m.id === id) ?? MARKETS[0];
 
-const COUNTRY_MARKET: Record<string, MarketId> = { IN: 'in', DE: 'de', CA: 'ca', AU: 'au' };
+const COUNTRY_MARKET: Record<string, MarketId> = { IN: 'in', DE: 'de', CA: 'ca', AU: 'au', SA: 'sa' };
 export const marketForCountry = (country?: string | null): MarketId => COUNTRY_MARKET[country ?? ''] ?? DEFAULT_MARKET;
 
 // Finnhub free can price (and so alert on) US listings and Binance pairs only.
@@ -164,5 +183,5 @@ export function isMarketOpen(market: Market, date = new Date()) {
         if (day === 5) return minutes < hm(17);
         return true;
     }
-    return day >= 1 && day <= 5 && minutes >= market.hours.open && minutes < market.hours.close;
+    return (market.tradingDays ?? [1, 2, 3, 4, 5]).includes(day) && minutes >= market.hours.open && minutes < market.hours.close;
 }

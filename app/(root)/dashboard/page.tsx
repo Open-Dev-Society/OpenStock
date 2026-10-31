@@ -5,6 +5,7 @@ import Panel from "@/components/Panel";
 import IndexPulse, { PulseSkeleton } from "@/components/IndexPulse";
 import DataFreshness from "@/components/DataFreshness";
 import MarketSwitcher from "@/components/MarketSwitcher";
+import SaudiQuotesTable, { SaudiMovers } from "@/components/SaudiQuotes";
 import {
     CRYPTO_HEATMAP_CONFIG,
     STOCK_HEATMAP_CONFIG,
@@ -25,6 +26,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     const market = getMarket(requested ?? saved ?? marketForCountry((await getSession())?.user.country));
     const open = isMarketOpen(market);
     const native = market.pulse.some((p) => p.finnhub);
+    const pulseSub = native ? 'Our shared quotes via Finnhub' : market.yahoo ? 'Delayed quotes via Yahoo Finance' : `${market.feed} quotes via TradingView`;
     const heatmap = market.heatmap === 'stocks'
         ? { script: 'stock-heatmap.js', config: STOCK_HEATMAP_CONFIG, title: 'S&P 500 heatmap' }
         : market.heatmap === 'crypto'
@@ -46,7 +48,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                 <div className="section-head">
                     <div>
                         <h2 className="section-title">Pulse</h2>
-                        <p className="section-sub">{native ? 'Our shared quotes via Finnhub' : `${market.feed} quotes via TradingView`}</p>
+                        <p className="section-sub">{pulseSub}</p>
                     </div>
                     {native && <DataFreshness />}
                 </div>
@@ -58,16 +60,24 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
             <div key={market.id} className="flex flex-col gap-3">
                 <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-                    <Panel title="Leaders" sub="12-month trend by group">
-                        <TradingViewWidget scriptUrl={`${scriptUrl}market-overview.js`} config={marketOverviewConfig(market.groups)} height={560} />
-                    </Panel>
+                    {market.yahoo ? (
+                        <Panel title="Movers" sub="Biggest moves today">
+                            <SaudiMovers market={market} />
+                        </Panel>
+                    ) : (
+                        <Panel title="Leaders" sub="12-month trend by group">
+                            <TradingViewWidget scriptUrl={`${scriptUrl}market-overview.js`} config={marketOverviewConfig(market.groups)} height={560} />
+                        </Panel>
+                    )}
                     {heatmap ? (
                         <Panel title={heatmap.title} sub="Sized by market cap, coloured by today’s move">
                             <TradingViewWidget scriptUrl={`${scriptUrl}${heatmap.script}`} config={heatmap.config} height={560} allowExpand />
                         </Panel>
                     ) : (
                         <Panel title="Quotes" sub={`${market.name} leaders by group`}>
-                            <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(market.groups)} height={560} />
+                            {market.yahoo
+                                ? <SaudiQuotesTable market={market} />
+                                : <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(market.groups)} height={560} />}
                         </Panel>
                     )}
                 </div>

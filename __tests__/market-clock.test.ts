@@ -37,6 +37,7 @@ describe('markets', () => {
         expect(hasFinnhubQuotes('RELIANCE.NS')).toBe(false);
         expect(hasFinnhubQuotes('BARC.L')).toBe(false);
         expect(hasFinnhubQuotes('7203.T')).toBe(false);
+        expect(hasFinnhubQuotes('2222.SR')).toBe(false);
         expect(hasFinnhubQuotes('FX:EURUSD')).toBe(false);
     });
 
@@ -50,5 +51,9 @@ describe('markets', () => {
         expect(isMarketOpen(getMarket('crypto'), new Date('2026-09-26T10:00:00Z'))).toBe(true);
         // FX reopens Sunday 17:00 New York (21:00 UTC in September)
         expect(isMarketOpen(getMarket('fx'), new Date('2026-09-27T21:30:00Z'))).toBe(true);
+        // Tadawul trades Sunday to Thursday, 10:00-15:00 Riyadh (07:00-12:00 UTC)
+        expect(isMarketOpen(getMarket('sa'), new Date('2026-09-27T08:00:00Z'))).toBe(true);
+        expect(isMarketOpen(getMarket('sa'), new Date('2026-09-25T08:00:00Z'))).toBe(false);
+        expect(isMarketOpen(getMarket('sa'), new Date('2026-09-27T12:30:00Z'))).toBe(false);
     });
 });
