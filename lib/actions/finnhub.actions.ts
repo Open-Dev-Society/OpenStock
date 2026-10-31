@@ -262,9 +262,15 @@ export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> 
         if (FINNHUB_KEYS.length === 0) {
             throw new Error('FINNHUB API key is not configured');
         }
-        const cleanSymbols = (symbols || [])
+        const requested = (symbols || [])
             .map((s) => s?.trim().toUpperCase())
             .filter((s): s is string => Boolean(s));
+
+        // Finnhub's company-news endpoint has no Tadawul coverage: asking for a .SR ticker only
+        // spends a request that fails and logs an error. A list that holds only Saudi symbols has
+        // no news here, and saying so beats falling back to another market's stories.
+        const cleanSymbols = requested.filter((s) => !isTadawulSymbol(s));
+        if (requested.length > 0 && cleanSymbols.length === 0) return [];
 
         const maxArticles = 6;
 

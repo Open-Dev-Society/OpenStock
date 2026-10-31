@@ -107,7 +107,7 @@ const TabBar = ({ onMenu, lang }: { onMenu: () => void; lang: Lang }) => {
                             <Link href={path} aria-current={active ? 'page' : undefined} className="flex min-w-0 flex-1 items-center gap-2 before:absolute before:inset-0 before:content-['']">
                                 {path === '/dashboard' && <LayoutDashboard />}
                                 {path === '/watchlist' && <Star />}
-                                <span className={cn('tab-label', isStock && 'mono text-[13px]')}>{tabLabel(path, lang)}</span>
+                                <span dir={isStock ? 'ltr' : undefined} className={cn('tab-label', isStock && 'mono text-[13px]')}>{tabLabel(path, lang)}</span>
                             </Link>
                             {!pinned && (
                                 <button

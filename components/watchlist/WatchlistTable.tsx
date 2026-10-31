@@ -69,7 +69,7 @@ export default function WatchlistTable({ initialRows, lang }: { initialRows: Row
                                         <span className="logo-well is-empty">{row.symbol[0]}</span>
                                     )}
                                     <span className="min-w-0">
-                                        <span className="block truncate font-semibold text-foreground group-hover:text-brand-ink transition-colors" title={row.name}>{row.name}</span>
+                                        <span dir="auto" className="block truncate font-semibold text-foreground group-hover:text-brand-ink transition-colors" title={row.name}>{row.name}</span>
                                         <span dir="ltr" className="mono block text-[12px] text-faint">{row.symbol}</span>
                                     </span>
                                 </Link>

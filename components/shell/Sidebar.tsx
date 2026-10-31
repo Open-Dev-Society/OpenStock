@@ -39,7 +39,7 @@ const Sidebar = ({ user, watchlist, lang }: SidebarProps) => {
     return (
         <aside className="sidebar">
             <Link href="/dashboard" className="px-2 pt-1 pb-2" aria-label="OpenStock dashboard">
-                <Image src="/assets/images/logo.png" alt="OpenStock" width={150} height={38} priority />
+                <Image src="/assets/images/logo.png" alt="OpenStock" width={150} height={28} priority />
             </Link>
 
             <button type="button" onClick={openSearch} className="side-cta">
