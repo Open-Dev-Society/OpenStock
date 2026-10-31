@@ -1,21 +1,22 @@
 import type { StockSentimentInsights } from '@/lib/actions/adanos.helpers';
 import { cn } from '@/lib/utils';
-import { alignmentLabel, trendLabel, tx, type Lang } from '@/lib/i18n';
+import { alignmentLabel, arDigits, metricLabel, sourceLabel, trendLabel, tx, type Lang } from '@/lib/i18n';
 
 interface StockSentimentCardProps {
     insight: StockSentimentInsights | null;
 }
 
-function formatScore(value: number | null, suffix: string): string {
+function formatScore(value: number | null, suffix: string, lang: Lang): string {
     if (value === null) return '—';
-    return `${value.toFixed(1)}${suffix}`;
+    return arDigits(`${value.toFixed(1)}${suffix}`, lang);
 }
 
-function formatCompactNumber(value: number): string {
-    return new Intl.NumberFormat('en-US', {
+function formatCompactNumber(value: number, lang: Lang): string {
+    const compact = new Intl.NumberFormat('en-US', {
         notation: 'compact',
         maximumFractionDigits: 1,
     }).format(value);
+    return arDigits(compact, lang);
 }
 
 const TREND_CLASS: Record<string, string> = {
@@ -37,9 +38,9 @@ export default function StockSentimentCard({ insight, lang = 'en' }: StockSentim
     }
 
     const summary = [
-        { label: tx(lang, 'sentiment.avgBuzz'), value: formatScore(insight.averageBuzz, '/100') },
-        { label: tx(lang, 'sentiment.bullishAvg'), value: formatScore(insight.bullishAverage, '%') },
-        { label: tx(lang, 'sentiment.coverage'), value: tx(lang, 'sentiment.sources').replace('{n}', String(insight.availableSources)) },
+        { label: tx(lang, 'sentiment.avgBuzz'), value: formatScore(insight.averageBuzz, '/100', lang) },
+        { label: tx(lang, 'sentiment.bullishAvg'), value: formatScore(insight.bullishAverage, '%', lang) },
+        { label: tx(lang, 'sentiment.coverage'), value: tx(lang, 'sentiment.sources').replace('{n}', arDigits(insight.availableSources, lang)) },
     ];
 
     return (
@@ -60,18 +61,18 @@ export default function StockSentimentCard({ insight, lang = 'en' }: StockSentim
                 {insight.sources.map((source) => (
                     <li key={source.source} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3 py-2.5">
                         <div className="min-w-0">
-                            <p className="truncate font-semibold text-foreground">{source.label}</p>
+                            <p className="truncate font-semibold text-foreground">{sourceLabel(lang, source.label)}</p>
                             <p className="num truncate text-[12px] text-faint">
-                                {formatCompactNumber(source.metricValue)} {source.metricLabel.toLowerCase()}
+                                {formatCompactNumber(source.metricValue, lang)} {metricLabel(lang, source.metricLabel)}
                             </p>
                         </div>
-                        <div className="num text-right text-[12.5px]">
-                            <p className="font-semibold text-foreground">{formatScore(source.buzzScore, '')}</p>
+                        <div className="num text-end text-[12.5px]">
+                            <p className="font-semibold text-foreground">{formatScore(source.buzzScore, '', lang)}</p>
                             <p className="text-faint">{tx(lang, 'sentiment.buzz')}</p>
                         </div>
                         <span className={cn('pill w-[74px] justify-center capitalize', TREND_CLASS[source.trend ?? ''])}>
                             {source.bullishPct !== null
-                                ? tx(lang, 'sentiment.bull').replace('{n}', source.bullishPct.toFixed(0))
+                                ? tx(lang, 'sentiment.bull').replace('{n}', arDigits(source.bullishPct.toFixed(0), lang))
                                 : trendLabel(lang, source.trend)}
                         </span>
                     </li>

@@ -4,7 +4,7 @@ import ChangePill from '@/components/ChangePill';
 import { getYahooDailyQuotes } from '@/lib/actions/yahoo.actions';
 import { tadawulAppSymbol } from '@/lib/yahoo';
 import { saudiSymbolNameAr } from '@/lib/saudi-symbols';
-import { tx, type Lang } from '@/lib/i18n';
+import { sectorLabel, tx, type Lang } from '@/lib/i18n';
 import type { Market } from '@/lib/markets';
 import { arDigits } from "@/lib/i18n";
 
@@ -22,15 +22,15 @@ export default async function SaudiQuotesTable({ market, lang }: { market: Marke
                 <thead>
                     <tr className="text-start text-faint">
                         <th className="px-3 py-2 font-medium">{tx(lang, 'wl.company')}</th>
-                        <th className="px-3 py-2 text-right font-medium">{tx(lang, 'wl.price')}</th>
-                        <th className="px-3 py-2 text-right font-medium">{tx(lang, 'wl.change')}</th>
-                        <th className="px-3 py-2 text-right font-medium">{tx(lang, 'wl.chgpct')}</th>
+                        <th className="px-3 py-2 text-end font-medium">{tx(lang, 'wl.price')}</th>
+                        <th className="px-3 py-2 text-end font-medium">{tx(lang, 'wl.change')}</th>
+                        <th className="px-3 py-2 text-end font-medium">{tx(lang, 'wl.chgpct')}</th>
                     </tr>
                 </thead>
                 {market.groups.map((group) => (
                     <tbody key={group.title}>
                         <tr>
-                            <td colSpan={4} className="kicker px-3 pt-3 pb-1">{group.title}</td>
+                            <td colSpan={4} className="kicker px-3 pt-3 pb-1">{sectorLabel(lang, group.title)}</td>
                         </tr>
                         {group.symbols.map(([tvSymbol, name]) => {
                             const q = quotes[tvSymbol];
@@ -43,11 +43,11 @@ export default async function SaudiQuotesTable({ market, lang }: { market: Marke
                                             <span dir="ltr" className="mono text-[11px] text-faint">{appSymbol}</span>
                                         </Link>
                                     </td>
-                                    <td className="num px-3 py-2 text-right font-semibold">{q ? arDigits(fmt(q.price), lang) : '—'}</td>
-                                    <td className={`num px-3 py-2 text-right ${q && q.change < 0 ? 'text-down' : 'text-up'}`}>
+                                    <td className="num px-3 py-2 text-end font-semibold">{q ? arDigits(fmt(q.price), lang) : '—'}</td>
+                                    <td className={`num px-3 py-2 text-end ${q && q.change < 0 ? 'text-down' : 'text-up'}`}>
                                         {q ? <bdi>{`${q.change > 0 ? '+' : ''}${arDigits(fmt(q.change), lang)}`}</bdi> : '—'}
                                     </td>
-                                    <td className="px-3 py-2 text-right"><ChangePill value={q?.changePercent} lang={lang} /></td>
+                                    <td className="px-3 py-2 text-end"><ChangePill value={q?.changePercent} lang={lang} /></td>
                                 </tr>
                             );
                         })}
