@@ -41,7 +41,7 @@ export const RELEASES: Release[] = [
             {
                 title: 'Markets',
                 items: [
-                    'Saudi Arabia (Tadawul) joins the dashboard: TASI, Aramco, Al Rajhi and STC tiles, today’s movers and a quotes table, priced from Yahoo Finance because TradingView blocks Tadawul in embeds. Saudi stock pages and watchlist rows show the price too. #143',
+                    'Saudi Arabia (Tadawul) joins the dashboard: TASI, Aramco, Al Rajhi and STC tiles, today’s movers and a quotes table, priced from Yahoo Finance because TradingView blocks Tadawul in embeds. Saudi stock pages and watchlist rows show the price too. #145',
                 ],
             },
             {
