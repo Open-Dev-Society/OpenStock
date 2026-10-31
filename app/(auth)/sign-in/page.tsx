@@ -10,10 +10,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import OpenDevSocietyBranding from "@/components/OpenDevSocietyBranding";
 import SocialAuthButtons from "@/components/forms/SocialAuthButtons";
+import LangToggle, { useLang } from "@/components/LangToggle";
+import { tx } from "@/lib/i18n";
 import React from "react";
 
 const SignIn = () => {
     const router = useRouter()
+    const lang = useLang();
     const {
         register,
         handleSubmit,
@@ -46,15 +49,18 @@ const SignIn = () => {
 
     return (
         <>
-            <h1 className="form-title mb-2">Welcome back</h1>
-            <p className="mb-8 text-faint">Sign in to your watchlist and alerts.</p>
+            <div className="mb-2 flex items-center justify-between">
+                <h1 className="form-title">{tx(lang, 'auth.welcome')}</h1>
+                <LangToggle initial={lang} />
+            </div>
+            <p className="mb-8 text-faint">{tx(lang, 'auth.welcomeSub')}</p>
 
-            <SocialAuthButtons />
+            <SocialAuthButtons lang={lang} />
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <InputField
                     name="email"
-                    label="Email"
+                    label={tx(lang, 'auth.email')}
                     placeholder="opendevsociety@cc.cc"
                     register={register}
                     error={errors.email}
@@ -69,8 +75,8 @@ const SignIn = () => {
 
                 <InputField
                     name="password"
-                    label="Password"
-                    placeholder="Enter your password"
+                    label={tx(lang, 'auth.password')}
+                    placeholder={tx(lang, 'auth.password')}
                     type="password"
                     register={register}
                     error={errors.password}
@@ -79,15 +85,15 @@ const SignIn = () => {
 
                 <div className="flex justify-end">
                     <Link href="/forgot-password" className="footer-link text-sm">
-                        Forgot password?
+                        {tx(lang, 'auth.forgot')}
                     </Link>
                 </div>
 
                 <Button type="submit" disabled={isSubmitting} className="yellow-btn w-full mt-5">
-                    {isSubmitting ? 'Signing In' : 'Sign In'}
+                    {isSubmitting ? tx(lang, 'auth.submittingIn') : tx(lang, 'auth.submitIn')}
                 </Button>
 
-                <FooterLink text="Don't have an account?" linkText="Create an account" href="/sign-up" />
+                <FooterLink text={tx(lang, 'auth.noAccount')} linkText={tx(lang, 'auth.signUpLink')} href="/sign-up" />
                 <OpenDevSocietyBranding outerClassName="mt-10 flex justify-center" />
             </form>
         </>

@@ -5,17 +5,18 @@ import { getLiveQuotes } from "@/lib/actions/finnhub.actions";
 import { getYahooDailyQuotes } from "@/lib/actions/yahoo.actions";
 import { singleQuoteConfig } from "@/lib/constants";
 import { getMarket, type Market } from "@/lib/markets";
+import type { Lang } from "@/lib/i18n";
 
 const SINGLE_QUOTE = 'https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js';
 
 // Four headline tiles for a market. Markets Finnhub can price get native tiles from our shared quote cache;
 // the rest use TradingView's quote tile, which is free for those exchanges. Yahoo-priced markets (Tadawul) get our own tiles.
-export default async function IndexPulse({ market = getMarket('us') }: { market?: Market }) {
+export default async function IndexPulse({ market = getMarket('us'), lang = 'en' }: { market?: Market; lang?: Lang }) {
     if (market.yahoo) {
         const yahoo = await getYahooDailyQuotes(market.pulse.map((p) => p.symbol));
         return (
             <div className="bento">
-                {market.pulse.map((tile) => <SaudiPulseTile key={tile.symbol} tvSymbol={tile.symbol} label={tile.label} quote={yahoo[tile.symbol] ?? null} />)}
+                {market.pulse.map((tile) => <SaudiPulseTile key={tile.symbol} tvSymbol={tile.symbol} label={tile.label} quote={yahoo[tile.symbol] ?? null} lang={lang} />)}
             </div>
         );
     }
@@ -32,7 +33,7 @@ export default async function IndexPulse({ market = getMarket('us') }: { market?
                         </div>
                     );
                 }
-                return <PulseTile key={tile.symbol} symbol={tile.finnhub} label={tile.label} initial={quotes[tile.finnhub]} />;
+                return <PulseTile key={tile.symbol} symbol={tile.finnhub} label={tile.label} initial={quotes[tile.finnhub]} lang={lang} />;
             })}
         </div>
     );

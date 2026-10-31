@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import countryList from 'react-select-country-list';
+import { tx, type Lang } from '@/lib/i18n';
 
 const COUNTRY_LABEL_OVERRIDES: Record<string, string> = {
     TW: 'Taiwan',
@@ -32,6 +33,7 @@ const COUNTRY_OPTIONS = countryList().getData().map((country) => ({
 }));
 
 type CountrySelectProps = {
+    lang?: Lang;
     name: string;
     label: string;
     control: Control<any>;
@@ -42,9 +44,11 @@ type CountrySelectProps = {
 const CountrySelect = ({
                            value,
                            onChange,
+                           lang = 'en',
                        }: {
     value: string;
     onChange: (value: string) => void;
+    lang?: Lang;
 }) => {
     const [open, setOpen] = useState(false);
 
@@ -72,7 +76,7 @@ const CountrySelect = ({
               <span>{COUNTRY_OPTIONS.find((c) => c.value === value)?.label}</span>
             </span>
                     ) : (
-                        'Select your country...'
+                        tx(lang, 'country.select')
                     )}
                     <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
                 </Button>
@@ -83,11 +87,11 @@ const CountrySelect = ({
             >
                 <Command className='bg-gray-800 border-gray-600'>
                     <CommandInput
-                        placeholder='Search countries...'
+                        placeholder={tx(lang, 'country.search')}
                         className='country-select-input'
                     />
                     <CommandEmpty className='country-select-empty'>
-                        No country found.
+                        {tx(lang, 'country.empty')}
                     </CommandEmpty>
                     <CommandList className='max-h-60 bg-gray-800 scrollbar-hide-default'>
                         <CommandGroup className='bg-gray-800'>
@@ -127,6 +131,7 @@ export const CountrySelectField = ({
                                        control,
                                        error,
                                        required = false,
+                                       lang = 'en',
                                    }: CountrySelectProps) => {
     return (
         <div className='space-y-2'>
@@ -140,12 +145,12 @@ export const CountrySelectField = ({
                     required: required ? `Please select ${label.toLowerCase()}` : false,
                 }}
                 render={({ field }) => (
-                    <CountrySelect value={field.value} onChange={field.onChange} />
+                    <CountrySelect value={field.value} onChange={field.onChange} lang={lang} />
                 )}
             />
             {error && <p className='text-[13px] text-down'>{error.message}</p>}
             <p className='text-[12.5px] text-faint'>
-                Helps us show market data and news relevant to you.
+                {tx(lang, 'country.help')}
             </p>
         </div>
     );

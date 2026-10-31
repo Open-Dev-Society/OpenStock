@@ -5,6 +5,7 @@ import { Github } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { signInWithSocial } from "@/lib/actions/auth.actions";
+import { tx, type Lang } from "@/lib/i18n";
 
 const GoogleIcon = () => (
     <svg viewBox="0 0 24 24" aria-hidden="true" className="size-5">
@@ -29,7 +30,7 @@ export const SocialProvidersProvider = ({ enabled, children }: { enabled: Provid
     <EnabledProviders.Provider value={enabled}>{children}</EnabledProviders.Provider>
 );
 
-const SocialAuthButtons = () => {
+const SocialAuthButtons = ({ lang = 'en' }: { lang?: Lang }) => {
     const enabled = useContext(EnabledProviders);
     const [pending, setPending] = useState<string | null>(null);
     const providers = PROVIDERS.filter((p) => enabled.includes(p.id));
@@ -42,10 +43,10 @@ const SocialAuthButtons = () => {
                 window.location.href = result.url;
                 return;
             }
-            toast.error('Sign in failed', { description: result.error });
+            toast.error(tx(lang, 'auth.signInFailed'), { description: result.error });
         } catch {
             // Network failure or a stale action after a deploy
-            toast.error('Sign in failed', { description: 'Check your connection and try again.' });
+            toast.error(tx(lang, 'auth.signInFailed'), { description: tx(lang, 'auth.checkConnection') });
         }
         setPending(null);
     }
@@ -65,13 +66,13 @@ const SocialAuthButtons = () => {
                         className="h-12 border-gray-600 text-gray-400 text-base rounded-lg cursor-pointer"
                     >
                         {icon}
-                        {pending === id ? 'Redirecting' : label}
+                        {pending === id ? tx(lang, 'auth.redirecting') : label}
                     </Button>
                 ))}
             </div>
             <div className="flex items-center gap-3 text-sm text-gray-500">
                 <span className="h-px flex-1 bg-gray-600" />
-                or
+                {tx(lang, 'auth.or')}
                 <span className="h-px flex-1 bg-gray-600" />
             </div>
         </div>

@@ -4,8 +4,9 @@ import React from 'react';
 import { PASSWORD_RULES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { Check, X } from 'lucide-react';
+import { pwRuleLabel, type Lang } from '@/lib/i18n';
 
-const PasswordRequirements = ({ password }: { password: string }) => {
+const PasswordRequirements = ({ password, lang = 'en' }: { password: string; lang?: Lang }) => {
     return (
         <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5">
             {PASSWORD_RULES.map((rule) => {
@@ -26,7 +27,7 @@ const PasswordRequirements = ({ password }: { password: string }) => {
                                 passed ? 'text-green-500' : password.length > 0 && 'text-red-500',
                             )}
                         >
-                            {rule.label}
+                            {pwRuleLabel(lang, rule.label)}
                         </span>
                     </li>
                 );

@@ -3,6 +3,7 @@ import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import ChangePill from '@/components/ChangePill';
 import { getYahooDailyQuotes } from '@/lib/actions/yahoo.actions';
 import { tadawulAppSymbol } from '@/lib/yahoo';
+import { tx, type Lang } from '@/lib/i18n';
 import type { Market } from '@/lib/markets';
 
 const fmt = (v: number) => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -10,18 +11,18 @@ const fmt = (v: number) => v.toLocaleString('en-US', { minimumFractionDigits: 2,
 const symbolsOf = (market: Market) => [...new Set(market.groups.flatMap((g) => g.symbols.map(([s]) => s)))];
 
 // Our own quotes table for Tadawul (Yahoo daily quotes, SAR): TradingView's market-quotes widget shows no TADAWUL values in free embeds.
-export default async function SaudiQuotesTable({ market }: { market: Market }) {
+export default async function SaudiQuotesTable({ market, lang }: { market: Market; lang: Lang }) {
     const quotes = await getYahooDailyQuotes(symbolsOf(market));
 
     return (
         <div className="overflow-x-auto">
             <table className="w-full text-[13px]">
                 <thead>
-                    <tr className="text-left text-faint">
-                        <th className="px-3 py-2 font-medium">Company</th>
-                        <th className="px-3 py-2 text-right font-medium">Price</th>
-                        <th className="px-3 py-2 text-right font-medium">Change</th>
-                        <th className="px-3 py-2 text-right font-medium">Change %</th>
+                    <tr className="text-start text-faint">
+                        <th className="px-3 py-2 font-medium">{tx(lang, 'wl.company')}</th>
+                        <th className="px-3 py-2 text-right font-medium">{tx(lang, 'wl.price')}</th>
+                        <th className="px-3 py-2 text-right font-medium">{tx(lang, 'wl.change')}</th>
+                        <th className="px-3 py-2 text-right font-medium">{tx(lang, 'wl.chgpct')}</th>
                     </tr>
                 </thead>
                 {market.groups.map((group) => (
@@ -41,7 +42,7 @@ export default async function SaudiQuotesTable({ market }: { market: Market }) {
                                     </td>
                                     <td className="num px-3 py-2 text-right font-semibold">{q ? fmt(q.price) : '—'}</td>
                                     <td className={`num px-3 py-2 text-right ${q && q.change < 0 ? 'text-down' : 'text-up'}`}>
-                                        {q ? `${q.change > 0 ? '+' : ''}${fmt(q.change)}` : '—'}
+                                        {q ? <bdi>{`${q.change > 0 ? '+' : ''}${fmt(q.change)}`}</bdi> : '—'}
                                     </td>
                                     <td className="px-3 py-2 text-right"><ChangePill value={q?.changePercent} /></td>
                                 </tr>
@@ -50,13 +51,13 @@ export default async function SaudiQuotesTable({ market }: { market: Market }) {
                     </tbody>
                 ))}
             </table>
-            <p className="px-3 py-2 text-[11.5px] text-faint">Prices in SAR via Yahoo Finance, delayed about 15 minutes.</p>
+            <p className="px-3 py-2 text-[11.5px] text-faint">{tx(lang, 'wl.delayedFoot')}</p>
         </div>
     );
 }
 
 // Today's biggest movers across the same groups, ranked by day change %
-export async function SaudiMovers({ market, count = 8 }: { market: Market; count?: number }) {
+export async function SaudiMovers({ market, count = 8, lang }: { market: Market; count?: number; lang: Lang }) {
     const symbols = symbolsOf(market);
     const nameOf = Object.fromEntries(market.groups.flatMap((g) => g.symbols));
     const quotes = await getYahooDailyQuotes(symbols);
@@ -66,7 +67,7 @@ export async function SaudiMovers({ market, count = 8 }: { market: Market; count
         .slice(0, count);
     const max = Math.max(0.01, ...ranked.map((r) => Math.abs(r.quote.changePercent)));
 
-    if (ranked.length === 0) return <p className="search-list-indicator">Quotes unavailable right now.</p>;
+    if (ranked.length === 0) return <p className="search-list-indicator">{tx(lang, 'wl.noData')}</p>;
 
     return (
         <ul className="flex flex-col gap-1 p-1">

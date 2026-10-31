@@ -13,23 +13,25 @@ import {
 import { getStockSentimentInsights } from '@/lib/actions/adanos.actions';
 import { getStockMetrics } from '@/lib/actions/finnhub.actions';
 import { formatSymbolForTradingView, isChartEmbeddable, tradingViewSymbolUrl } from '@/lib/utils';
+import { getLang } from '@/lib/i18n-server';
+import { tx, type Lang } from '@/lib/i18n';
 
 const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
 
-async function Sentiment({ symbol }: { symbol: string }) {
+async function Sentiment({ symbol, lang }: { symbol: string; lang: Lang }) {
     const insight = await getStockSentimentInsights(symbol);
     if (!insight) return null;
     return (
-        <Panel title="Sentiment" sub="Reddit, X.com, news and Polymarket">
-            <StockSentimentCard insight={insight} />
+        <Panel title={tx(lang, 'stock.sentiment')} sub={tx(lang, 'stock.sentimentSub')}>
+            <StockSentimentCard insight={insight} lang={lang} />
         </Panel>
     );
 }
 
-async function DividendYield({ symbol }: { symbol: string }) {
+async function DividendYield({ symbol, lang }: { symbol: string; lang: Lang }) {
     const dividendYield = await getStockMetrics(symbol);
     return (
-        <Panel title="Dividend Yield">
+        <Panel title={tx(lang, 'stock.dividend')}>
             <p className="text-2xl font-semibold text-white">
                 {dividendYield !== null ? `${dividendYield.toFixed(2)}%` : "—"}
             </p>
@@ -42,33 +44,34 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
     const { symbol: rawSymbol } = await params;
     const symbol = decodeURIComponent(rawSymbol).toUpperCase();
     const tvSymbol = formatSymbolForTradingView(symbol);
+    const lang = await getLang();
 
     return (
         <>
             <Suspense fallback={<StockHeaderSkeleton />}>
-                <StockHeader symbol={symbol} />
+                <StockHeader symbol={symbol} lang={lang} />
             </Suspense>
 
             <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
                 <div className="flex min-w-0 flex-col gap-3">
                     {isChartEmbeddable(tvSymbol) ? (
-                        <StockChart tvSymbol={tvSymbol} scriptUrl={`${scriptUrl}advanced-chart.js`} />
+                        <StockChart tvSymbol={tvSymbol} scriptUrl={`${scriptUrl}advanced-chart.js`} lang={lang} />
                     ) : (
                         // TradingView refuses this exchange's chart in embeds; say so instead of showing its error
-                        <Panel title="Chart" sub="Only on TradingView for this exchange">
+                        <Panel title={tx(lang, 'stock.chart')} sub={tx(lang, 'stock.chartTVOnly')}>
                             <div className="empty-state py-14">
                                 <span className="empty-icon"><CandlestickChart className="size-5" /></span>
-                                <h3>Chart not available here</h3>
+                                <h3>{tx(lang, 'stock.chartUnavailable')}</h3>
                                 <p className="max-w-80 text-[13px]">
-                                    TradingView doesn’t license {tvSymbol.split(':')[0]} charts for other sites. Financials, technicals and the profile below still work.
+                                    {tx(lang, 'stock.chartBlocked').replace('{x}', tvSymbol.split(':')[0])}
                                 </p>
                                 <a href={tradingViewSymbolUrl(tvSymbol)} target="_blank" rel="noopener noreferrer" className="btn btn-ghost mt-2">
-                                    Open chart on TradingView
+                                    {tx(lang, 'stock.openTV')}
                                 </a>
                             </div>
                         </Panel>
                     )}
-                    <Panel title="Financials" sub="Income statement, balance sheet and ratios">
+                    <Panel title={tx(lang, 'stock.financials')} sub={tx(lang, 'stock.financialsSub')}>
                         <TradingViewWidget
                             scriptUrl={`${scriptUrl}financials.js`}
                             config={COMPANY_FINANCIALS_WIDGET_CONFIG(tvSymbol)}
@@ -78,7 +81,7 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                 </div>
 
                 <div className="flex min-w-0 flex-col gap-3">
-                    <Panel title="Technicals" sub="Oscillators and moving averages, 1h">
+                    <Panel title={tx(lang, 'stock.technicals')} sub={tx(lang, 'stock.technicalsSub')}>
                         <TradingViewWidget
                             scriptUrl={`${scriptUrl}technical-analysis.js`}
                             config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(tvSymbol)}
@@ -86,12 +89,12 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                         />
                     </Panel>
                     <Suspense fallback={null}>
-                        <DividendYield symbol={symbol} />
+                        <DividendYield symbol={symbol} lang={lang} />
                     </Suspense>
                     <Suspense fallback={null}>
-                        <Sentiment symbol={symbol} />
+                        <Sentiment symbol={symbol} lang={lang} />
                     </Suspense>
-                    <Panel title="Profile" sub="What the company does">
+                    <Panel title={tx(lang, 'stock.profile')} sub={tx(lang, 'stock.profileSub')}>
                         <TradingViewWidget
                             scriptUrl={`${scriptUrl}symbol-profile.js`}
                             config={COMPANY_PROFILE_WIDGET_CONFIG(tvSymbol)}

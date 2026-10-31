@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { deleteAlert } from "@/lib/actions/alert.actions";
 import { alertsEnabled } from "@/lib/market-data";
 import { formatPrice } from "@/lib/utils";
+import { tx, type Lang } from "@/lib/i18n";
 
 type AlertRow = {
     _id: string;
@@ -19,15 +20,15 @@ type AlertRow = {
     expiresAt?: string;
 };
 
-const statusOf = (alert: AlertRow) => {
-    if (alert.triggered) return { label: 'Triggered', className: 'pill is-brand' };
-    if (!alertsEnabled) return { label: 'Paused', className: 'pill' };
-    if (alert.expiresAt && new Date(alert.expiresAt) < new Date()) return { label: 'Expired', className: 'pill' };
-    if (alert.active === false) return { label: 'Paused', className: 'pill' };
-    return { label: 'Watching', className: 'pill is-up' };
+const statusOf = (alert: AlertRow, lang: Lang) => {
+    if (alert.triggered) return { label: tx(lang, 'alert.triggered'), className: 'pill is-brand' };
+    if (!alertsEnabled) return { label: tx(lang, 'alert.paused'), className: 'pill' };
+    if (alert.expiresAt && new Date(alert.expiresAt) < new Date()) return { label: tx(lang, 'alert.expired'), className: 'pill' };
+    if (alert.active === false) return { label: tx(lang, 'alert.paused'), className: 'pill' };
+    return { label: tx(lang, 'alert.watching'), className: 'pill is-up' };
 };
 
-export default function AlertsPanel({ alerts }: { alerts: AlertRow[] }) {
+export default function AlertsPanel({ alerts, lang }: { alerts: AlertRow[]; lang: Lang }) {
     const router = useRouter();
     const [pendingId, setPendingId] = useState<string | null>(null);
 
@@ -35,10 +36,10 @@ export default function AlertsPanel({ alerts }: { alerts: AlertRow[] }) {
         setPendingId(alert._id);
         try {
             await deleteAlert(alert._id);
-            toast.success(`Alert for ${alert.symbol} removed`);
+            toast.success(tx(lang, 'alert.removedMsg').replace('{s}', alert.symbol));
             router.refresh();
         } catch {
-            toast.error("Couldn’t remove the alert");
+            toast.error(tx(lang, 'alert.removeFail'));
         } finally {
             setPendingId(null);
         }
@@ -48,9 +49,9 @@ export default function AlertsPanel({ alerts }: { alerts: AlertRow[] }) {
         return (
             <div className="empty-state py-10">
                 <span className="empty-icon"><BellRing className="size-5" /></span>
-                <h3>Alerts come with Cloud</h3>
-                <p className="max-w-64 text-[13px]">Email price alerts are part of OpenStock Cloud, $5 a month and coming soon.</p>
-                <Link href="/#data" className="btn btn-ghost mt-2">See OpenStock Cloud</Link>
+                <h3>{tx(lang, 'alert.cloud')}</h3>
+                <p className="max-w-64 text-[13px]">{tx(lang, 'alert.cloudSub')}</p>
+                <Link href="/#data" className="btn btn-ghost mt-2">{tx(lang, 'alert.cloudBtn')}</Link>
             </div>
         );
     }
@@ -59,8 +60,8 @@ export default function AlertsPanel({ alerts }: { alerts: AlertRow[] }) {
         return (
             <div className="empty-state py-10">
                 <span className="empty-icon"><BellRing className="size-5" /></span>
-                <h3>No alerts yet</h3>
-                <p className="max-w-60 text-[13px]">Use the bell on any row, or “Set alert” on a stock page. We email you when it fires.</p>
+                <h3>{tx(lang, 'alert.none')}</h3>
+                <p className="max-w-60 text-[13px]">{tx(lang, 'alert.noneSub')}</p>
             </div>
         );
     }
@@ -69,19 +70,19 @@ export default function AlertsPanel({ alerts }: { alerts: AlertRow[] }) {
         <>
             {!alertsEnabled && (
                 <p className="px-3 pt-3 pb-1 text-[12.5px] text-faint">
-                    Alerts moved to <Link href="/#data" className="text-brand-ink hover:underline">OpenStock Cloud</Link>, so these are paused.
+                    {tx(lang, 'alert.pausedNote')}
                 </p>
             )}
             <ul className="row-list">
                 {alerts.map((alert) => {
-                    const status = statusOf(alert);
+                    const status = statusOf(alert, lang);
                     return (
                         <li key={alert._id} className="flex items-center gap-3 px-3 py-2.5">
                             <div className="min-w-0 flex-1">
                                 <p className="mono font-semibold text-foreground">{alert.symbol}</p>
                                 <p className="num truncate text-[12.5px] text-faint">
-                                    {alert.condition === 'ABOVE' ? 'Above' : 'Below'} {formatPrice(alert.targetPrice)}
-                                    {alert.expiresAt && !alert.triggered && ` · until ${new Date(alert.expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                                    {alert.condition === 'ABOVE' ? tx(lang, 'alert.above') : tx(lang, 'alert.below')} {formatPrice(alert.targetPrice)}
+                                    {alert.expiresAt && !alert.triggered && ` · ${tx(lang, 'alert.until').replace('{d}', new Date(alert.expiresAt).toLocaleDateString(lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-US', { month: 'short', day: 'numeric' }))}`}
                                 </p>
                             </div>
                             <span className={status.className}>{status.label}</span>
@@ -90,8 +91,8 @@ export default function AlertsPanel({ alerts }: { alerts: AlertRow[] }) {
                                 onClick={() => handleDelete(alert)}
                                 disabled={pendingId === alert._id}
                                 className="icon-btn is-danger"
-                                title="Remove alert"
-                                aria-label={`Remove alert for ${alert.symbol}`}
+                                title={tx(lang, 'alert.remove')}
+                                aria-label={`${tx(lang, 'alert.remove')} ${alert.symbol}`}
                             >
                                 <Trash2 />
                             </button>

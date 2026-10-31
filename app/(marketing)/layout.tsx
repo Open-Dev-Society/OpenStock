@@ -24,11 +24,13 @@ const FOOTER_LINKS = [
 ];
 
 export default async function MarketingLayout({ children }: { children: React.ReactNode }) {
+    // These pages are English only, so the subtree keeps English direction and typography
+    // (see the [lang="en"] rule in globals.css) even when the reader picked Arabic inside the app.
     const [session, repo] = await Promise.all([getSession(), getRepoStats()]);
     const signedIn = !!session?.user;
 
     return (
-        <div className="min-h-dvh bg-page">
+        <div lang="en" dir="ltr" className="min-h-dvh bg-page">
             <UpdateBanner className="mx-5 mt-3 xl:mx-auto xl:max-w-[1160px]" />
             <header className="sticky top-0 z-40 border-b border-transparent bg-page/80 backdrop-blur-md">
                 <div className="mx-auto flex h-16 max-w-[1200px] items-center gap-6 px-5">
@@ -43,7 +45,7 @@ export default async function MarketingLayout({ children }: { children: React.Re
                             <span className="live-dot" /> Sponsor
                         </Link>
                     </nav>
-                    <div className="ml-auto flex items-center gap-2">
+                    <div className="ms-auto flex items-center gap-2">
                         <a href={REPO_URL} target="_blank" rel="noreferrer" className="btn btn-ghost hidden h-9 px-3 sm:inline-flex" aria-label="OpenStock on GitHub">
                             <Github />
                             {repo && <span className="num">{formatCount(repo.stars)}</span>}

@@ -5,12 +5,17 @@ import {redirect} from "next/navigation";
 import {getSession} from "@/lib/better-auth/auth";
 import ProductPreview from "@/components/landing/ProductPreview";
 import { SocialProvidersProvider } from "@/components/forms/SocialAuthButtons";
+import { LangProvider } from "@/components/LangToggle";
+import { getLang } from "@/lib/i18n-server";
 
 const Layout = async ({ children }: { children : React.ReactNode }) => {
 
     const session = await getSession();
 
     if (session?.user) redirect('/dashboard')
+
+    // Read on the server so the first paint of the sign-in/sign-up forms is already translated.
+    const lang = await getLang();
 
     // Same condition that enables the providers in lib/better-auth/auth.ts
     const socialProviders = [
@@ -25,7 +30,9 @@ const Layout = async ({ children }: { children : React.ReactNode }) => {
                 </Link>
 
                 <div className="pb-6 lg:pb-8 flex-1">
-                    <SocialProvidersProvider enabled={socialProviders}>{children}</SocialProvidersProvider>
+                    <LangProvider lang={lang}>
+                        <SocialProvidersProvider enabled={socialProviders}>{children}</SocialProvidersProvider>
+                    </LangProvider>
                 </div>
             </section>
             <section className="auth-right-section">

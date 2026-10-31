@@ -6,6 +6,7 @@ import { ArrowUpRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { searchStocks } from "@/lib/actions/finnhub.actions";
 import { useDebounce } from "@/hooks/useDebounce";
+import { tx, type Lang } from "@/lib/i18n";
 
 const OPEN_SEARCH_EVENT = 'open-search';
 
@@ -16,7 +17,7 @@ export const SearchButton = ({ children, className }: { children: React.ReactNod
     <button type="button" onClick={openSearch} className={className}>{children}</button>
 );
 
-export default function SearchCommand({ initialStocks }: { initialStocks: StockWithWatchlistStatus[] }) {
+export default function SearchCommand({ initialStocks, lang }: { initialStocks: StockWithWatchlistStatus[]; lang: Lang }) {
     const [open, setOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
     const [loading, setLoading] = useState(false)
@@ -73,22 +74,29 @@ export default function SearchCommand({ initialStocks }: { initialStocks: StockW
     if (!mounted) return null;
 
     return (
-        <CommandDialog open={open} onOpenChange={setOpen} className="search-dialog">
+        <CommandDialog
+            open={open}
+            onOpenChange={setOpen}
+            className="search-dialog"
+            title={tx(lang, 'search.dialogTitle')}
+            description={tx(lang, 'search.dialogDesc')}
+            closeLabel={tx(lang, 'dialog.close')}
+        >
             <div className="search-field">
-                <CommandInput value={searchTerm} onValueChange={setSearchTerm} placeholder="Search by company or symbol" className="search-input" />
+                <CommandInput value={searchTerm} onValueChange={setSearchTerm} placeholder={tx(lang, 'search.placeholder')} className="search-input" />
                 {loading && <Loader2 className="search-loader" />}
             </div>
             <CommandList className="search-list">
                 {loading ? (
-                    <CommandEmpty className="search-list-empty">Searching</CommandEmpty>
+                    <CommandEmpty className="search-list-empty">{tx(lang, 'search.searching')}</CommandEmpty>
                 ) : displayStocks?.length === 0 ? (
                     <div className="search-list-indicator">
-                        {isSearchMode ? `Nothing matches “${searchTerm.trim()}”` : 'No stocks available'}
+                        {isSearchMode ? `${tx(lang, 'search.noMatch')} “${searchTerm.trim()}”` : tx(lang, 'search.empty')}
                     </div>
                 ) : (
                     <ul>
                         <li className="search-count">
-                            {isSearchMode ? 'Results' : 'Popular'}
+                            {isSearchMode ? tx(lang, 'search.results') : tx(lang, 'search.popular')}
                             <span className="num"> · {displayStocks?.length || 0}</span>
                         </li>
                         {displayStocks?.map((stock) => (

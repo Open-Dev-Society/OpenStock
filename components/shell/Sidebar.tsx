@@ -5,23 +5,27 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { BookOpen, Code2, Heart, Info, LayoutDashboard, LifeBuoy, LogOut, Search, Star } from "lucide-react";
 import { openSearch } from "@/components/SearchCommand";
+import LangToggle from "@/components/LangToggle";
 import { signOut } from "@/lib/actions/auth.actions";
 import { cn } from "@/lib/utils";
+import { tx, type Lang, type StringKey } from "@/lib/i18n";
 import { SIDEBAR_SPONSOR_SLOTS, sidebarSponsors } from "@/lib/sponsors";
 
 type SidebarProps = {
     user: User;
     watchlist: { symbol: string; company: string }[];
+    lang: Lang;
 };
 
-const RESOURCES = [
-    { href: '/help', label: 'Help', icon: LifeBuoy },
-    { href: '/api-docs', label: 'API docs', icon: Code2 },
-    { href: '/about', label: 'About', icon: Info },
-    { href: '/terms', label: 'Terms', icon: BookOpen },
+// Labels are keys, not text, so the same list renders in both languages.
+const RESOURCES: { href: string; labelKey: StringKey; icon: typeof LifeBuoy }[] = [
+    { href: '/help', labelKey: 'nav.help', icon: LifeBuoy },
+    { href: '/api-docs', labelKey: 'nav.apiDocs', icon: Code2 },
+    { href: '/about', labelKey: 'nav.about', icon: Info },
+    { href: '/terms', labelKey: 'nav.terms', icon: BookOpen },
 ];
 
-const Sidebar = ({ user, watchlist }: SidebarProps) => {
+const Sidebar = ({ user, watchlist, lang }: SidebarProps) => {
     const pathname = usePathname();
     const router = useRouter();
     const partners = sidebarSponsors();
@@ -40,24 +44,24 @@ const Sidebar = ({ user, watchlist }: SidebarProps) => {
 
             <button type="button" onClick={openSearch} className="side-cta">
                 <Search className="size-4" strokeWidth={2.5} />
-                <span className="flex-1 text-left">Search stocks</span>
+                <span className="flex-1 text-start">{tx(lang, 'nav.search')}</span>
                 <kbd className="kbd bg-on-brand/10">⌘K</kbd>
             </button>
 
             <nav className="flex flex-col gap-0.5">
                 <Link href="/dashboard" className={cn('side-item', pathname === '/dashboard' && 'is-active')}>
-                    <LayoutDashboard /> Overview
+                    <LayoutDashboard /> {tx(lang, 'nav.overview')}
                 </Link>
                 <Link href="/watchlist" className={cn('side-item', pathname === '/watchlist' && 'is-active')}>
-                    <Star /> <span className="flex-1">Watchlist</span>
+                    <Star /> <span className="flex-1">{tx(lang, 'nav.watchlist')}</span>
                     <span className="num text-xs text-faint">{watchlist.length}</span>
                 </Link>
             </nav>
 
             <div className="flex min-h-0 flex-col gap-1">
-                <p className="side-label shrink-0">Watching</p>
+                <p className="side-label shrink-0">{tx(lang, 'nav.watching')}</p>
                 {watchlist.length === 0 ? (
-                    <p className="px-2.5 text-[12.5px] text-faint">Star a stock to pin it here.</p>
+                    <p className="px-2.5 text-[12.5px] text-faint">{tx(lang, 'nav.watchingEmpty')}</p>
                 ) : (
                     <ul className="scrollbar-hide-default flex min-h-0 flex-col gap-0.5 overflow-y-auto">
                         {watchlist.map(({ symbol, company }) => (
@@ -77,18 +81,19 @@ const Sidebar = ({ user, watchlist }: SidebarProps) => {
             </div>
 
             <div className="mt-auto flex flex-col gap-0.5">
-                {RESOURCES.map(({ href, label, icon: Icon }) => (
+                {RESOURCES.map(({ href, labelKey, icon: Icon }) => (
                     <Link key={href} href={href} className={cn('side-item h-8', pathname === href && 'is-active')}>
-                        <Icon /> {label}
+                        <Icon /> {tx(lang, labelKey)}
                     </Link>
                 ))}
                 <button
                     type="button"
                     onClick={() => window.dispatchEvent(new CustomEvent('open-donate-popup'))}
-                    className="side-item h-8 text-left"
+                    className="side-item h-8 text-start"
                 >
-                    <Heart /> Support OpenStock
+                    <Heart /> {tx(lang, 'nav.support')}
                 </button>
+                <div className="px-2 py-1"><LangToggle initial={lang} /></div>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -96,15 +101,19 @@ const Sidebar = ({ user, watchlist }: SidebarProps) => {
                     <a key={sponsor.name} href={sponsor.url} target="_blank" rel="noreferrer" title={sponsor.name} className="flex h-11 items-center gap-2.5 rounded-[11px] px-3 shadow-[inset_0_0_0_1px_var(--line)] transition-colors hover:bg-white/5">
                         {sponsor.logo && <img src={sponsor.logo} alt={sponsor.iconOnly ? '' : sponsor.name} className="h-5 w-auto max-w-[120px]" />}
                         {(!sponsor.logo || sponsor.iconOnly) && <span className="truncate text-[13px] font-semibold text-muted-foreground">{sponsor.name}</span>}
-                        <span className="kicker ml-auto">Sponsor</span>
+                        <span className="kicker ms-auto">{tx(lang, 'sponsor.label')}</span>
                     </a>
                 ))}
                 {openSlots > 0 && (
                     <Link href="/sponsor#tiers" className="group flex flex-col gap-0.5 rounded-[11px] px-3 py-2.5 shadow-[inset_0_0_0_1px_var(--line)] transition-colors hover:bg-white/5">
                         <span className="kicker flex items-center gap-1.5 text-brand-ink">
-                            <span className="live-dot" /> {openSlots === SIDEBAR_SPONSOR_SLOTS ? 'Sponsor slots open' : `${openSlots} sponsor ${openSlots === 1 ? 'slot' : 'slots'} left`}
+                            <span className="live-dot" /> {openSlots === SIDEBAR_SPONSOR_SLOTS
+                                ? tx(lang, 'sponsor.slotsOpen')
+                                : openSlots === 1
+                                    ? tx(lang, 'sponsor.slotLeft')
+                                    : tx(lang, 'sponsor.slotsLeft').replace('{n}', String(openSlots))}
                         </span>
-                        <span className="text-[12.5px] text-faint transition-colors group-hover:text-muted-foreground">Put your company in front of every OpenStock user.</span>
+                        <span className="text-[12.5px] text-faint transition-colors group-hover:text-muted-foreground">{tx(lang, 'sponsor.pitch')}</span>
                     </Link>
                 )}
             </div>
@@ -119,7 +128,7 @@ const Sidebar = ({ user, watchlist }: SidebarProps) => {
                         <span className="block truncate text-[12px] text-faint">{user.email}</span>
                     </span>
                 </Link>
-                <button type="button" onClick={handleSignOut} className="icon-btn" title="Sign out" aria-label="Sign out">
+                <button type="button" onClick={handleSignOut} className="icon-btn" title={tx(lang, 'nav.signOut')} aria-label={tx(lang, 'nav.signOut')}>
                     <LogOut />
                 </button>
             </div>

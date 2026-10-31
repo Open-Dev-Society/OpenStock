@@ -1,13 +1,14 @@
 import { formatDistanceToNow } from "date-fns";
 import { ArrowUpRight, Newspaper } from "lucide-react";
+import { tx, type Lang } from "@/lib/i18n";
 
-export default function NewsList({ news }: { news: MarketNewsArticle[] }) {
+export default function NewsList({ news, lang }: { news: MarketNewsArticle[]; lang: Lang }) {
     if (news.length === 0) {
         return (
             <div className="empty-state">
                 <span className="empty-icon"><Newspaper className="size-5" /></span>
-                <h3>No recent news</h3>
-                <p>Nothing published in the last few days for these symbols.</p>
+                <h3>{tx(lang, 'news.empty')}</h3>
+                <p>{tx(lang, 'news.emptySub')}</p>
             </div>
         );
     }
