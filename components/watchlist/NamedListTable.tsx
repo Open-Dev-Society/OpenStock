@@ -3,7 +3,6 @@ import { Star } from 'lucide-react';
 import ChangePill from '@/components/ChangePill';
 import { getWatchlistData } from '@/lib/actions/finnhub.actions';
 import { formatNumber, formatPrice } from '@/lib/utils';
-import AddToListButton from './AddToListButton';
 import RemoveFromListButton from './RemoveFromListButton';
 
 // The stocks inside one named list. Rendered on the server, so the quotes come from the same
@@ -22,8 +21,7 @@ export default async function NamedListTable({
             <div className="empty-state py-12">
                 <span className="empty-icon"><Star className="size-5" /></span>
                 <h3>“{listName}” is empty</h3>
-                <p className="max-w-sm">Add a stock here, or use the list button on any row of your watchlist.</p>
-                <AddToListButton listId={listId} listName={listName} className="btn btn-primary mt-3" />
+                <p className="max-w-sm">Use “Add a stock” above, or the list button on any row of your watchlist.</p>
             </div>
         );
     }

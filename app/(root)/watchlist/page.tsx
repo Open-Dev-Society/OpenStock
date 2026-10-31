@@ -10,6 +10,7 @@ import AlertsPanel from '@/components/watchlist/AlertsPanel';
 import NewsList from '@/components/watchlist/NewsList';
 import NamedListTabs from '@/components/watchlist/NamedListTabs';
 import NamedListTable from '@/components/watchlist/NamedListTable';
+import AddToListButton from '@/components/watchlist/AddToListButton';
 import Panel from '@/components/Panel';
 import DataFreshness from '@/components/DataFreshness';
 import { SearchButton } from '@/components/SearchCommand';
@@ -60,7 +61,12 @@ export default async function WatchlistPage({ searchParams }: { searchParams: Pr
                 <SearchButton className="btn btn-primary"><Plus /> Add symbol</SearchButton>
             </header>
 
-            <Panel title="My lists" sub="Group the stocks you watch into named lists" className="mb-3">
+            <Panel
+                title="My lists"
+                sub="Group the stocks you watch into named lists"
+                action={active ? <AddToListButton listId={active.id} listName={active.name} /> : undefined}
+                className="mb-3"
+            >
                 <NamedListTabs lists={lists} activeId={active?.id ?? null} starredCount={symbols.length} />
                 {active && (
                     <Suspense fallback={<RowsSkeleton rows={Math.max(1, Math.min(active.count, 6))} />}>

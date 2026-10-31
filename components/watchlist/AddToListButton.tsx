@@ -21,7 +21,7 @@ export default function AddToListButton({
             title={`Add a stock to ${listName}`}
             onClick={() => openSearchForList(listId, listName)}
         >
-            <Plus /> Add symbol
+            <Plus /> Add a stock
         </button>
     );
 }
