@@ -117,7 +117,7 @@ const ResetPasswordForm = () => {
                 </Button>
 
                 <FooterLink text={tx(lang, 'auth.freshLink')} linkText={tx(lang, 'auth.requestAnother')} href="/forgot-password" />
-                <OpenDevSocietyBranding outerClassName="mt-10 flex justify-center" />
+                <OpenDevSocietyBranding outerClassName="mt-10 flex justify-center"  text={tx(lang, 'auth.brandCredit')} />
             </form>
         </>
     );

@@ -18,9 +18,15 @@ import {
 import { MARKETS, MARKET_COOKIE, getMarket, isMarketOpen, marketForCountry } from "@/lib/markets";
 import { getSession } from "@/lib/better-auth/auth";
 import { getLang } from "@/lib/i18n-server";
-import { feedLabel, feedWord, marketName, tx } from "@/lib/i18n";
+import { feedLabel, feedWord, marketName, tx, type Lang } from "@/lib/i18n";
+import NewsSkeleton from "@/components/watchlist/NewsSkeleton";
 
 const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
+
+// The Arabic feed is a network call; the rest of the dashboard should not wait behind it.
+async function MarketNews({ lang }: { lang: Lang }) {
+    return <NewsList news={await getSaudiMarketNews(6, lang)} lang={lang} />;
+}
 
 // Widgets come from TradingView (live, no Finnhub quota) and render immediately; the tiles stream in.
 export default async function Dashboard({ searchParams }: { searchParams: Promise<{ market?: string }> }) {
@@ -39,9 +45,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             ? tx(lang, 'dash.pulseYahoo')
             : tx(lang, 'dash.pulseTV').replace('{f}', feedWord(lang, market.feed));
     const heatmap = market.heatmap === 'stocks'
-        ? { script: 'stock-heatmap.js', config: STOCK_HEATMAP_CONFIG, title: 'S&P 500 heatmap' }
+        ? { script: 'stock-heatmap.js', config: STOCK_HEATMAP_CONFIG, title: tx(lang, 'dash.heatmapStocks') }
         : market.heatmap === 'crypto'
-            ? { script: 'crypto-coins-heatmap.js', config: CRYPTO_HEATMAP_CONFIG, title: 'Crypto heatmap' }
+            ? { script: 'crypto-coins-heatmap.js', config: CRYPTO_HEATMAP_CONFIG, title: tx(lang, 'dash.heatmapCrypto') }
             : null;
 
     return (
@@ -81,7 +87,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                         </Panel>
                     )}
                     {heatmap ? (
-                        <Panel title={heatmap.title} sub="Sized by market cap, coloured by today’s move">
+                        <Panel title={heatmap.title} sub={tx(lang, 'dash.heatmapSub')}>
                             <TradingViewWidget scriptUrl={`${scriptUrl}${heatmap.script}`} config={heatmap.config} height={560} allowExpand />
                         </Panel>
                     ) : (
@@ -105,7 +111,11 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                         className={heatmap ? '' : 'xl:col-span-2'}
                     >
                         {saudiNews
-                            ? <NewsList news={await getSaudiMarketNews(6)} lang={lang} />
+                            ? (
+                                <Suspense fallback={<NewsSkeleton />}>
+                                    <MarketNews lang={lang} />
+                                </Suspense>
+                            )
                             : <TradingViewWidget scriptUrl={`${scriptUrl}timeline.js`} config={timelineConfig(market.news)} height={560} />}
                     </Panel>
                 </div>

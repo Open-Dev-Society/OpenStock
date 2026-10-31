@@ -15,6 +15,11 @@ export default function UpdateBanner({ className, lang = 'en' }: { className?: s
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
 
+    // Arabic copy is optional; anything missing falls back to the English line rather than to blank.
+    const title = (lang === 'ar' && LATEST_RELEASE.titleAr) || LATEST_RELEASE.title;
+    const summary = (lang === 'ar' && LATEST_RELEASE.summaryAr) || LATEST_RELEASE.summary;
+    const highlights = (lang === 'ar' && LATEST_RELEASE.highlightsAr) || LATEST_RELEASE.highlights || [];
+
     const banner = (
         <button
             type="button"
@@ -25,8 +30,8 @@ export default function UpdateBanner({ className, lang = 'en' }: { className?: s
         >
             <span className="pill is-brand shrink-0">{tx(lang, 'banner.new')}</span>
             <span className="min-w-0 flex-1 truncate">
-                <span className="font-semibold text-foreground">{LATEST_RELEASE.title}:</span>{' '}
-                <span className="text-muted-foreground">{LATEST_RELEASE.summary}</span>
+                <span className="font-semibold text-foreground">{title}:</span>{' '}
+                <span className="text-muted-foreground">{summary}</span>
             </span>
             <span className="flex shrink-0 items-center gap-1 font-semibold text-brand-ink">
                 <span className="max-sm:hidden">{tx(lang, 'banner.see')}</span>
@@ -44,11 +49,11 @@ export default function UpdateBanner({ className, lang = 'en' }: { className?: s
             <DialogContent className="sm:max-w-md" closeLabel={tx(lang, 'dialog.close')}>
                 <div>
                     <p className="kicker text-brand-ink">{LATEST_RELEASE.date}</p>
-                    <DialogTitle className="mt-1.5 text-[22px] font-bold tracking-[-0.03em]">{LATEST_RELEASE.title}</DialogTitle>
-                    <DialogDescription className="mt-1 text-[14px] text-muted-foreground">{LATEST_RELEASE.summary}.</DialogDescription>
+                    <DialogTitle className="mt-1.5 text-[22px] font-bold tracking-[-0.03em]">{title}</DialogTitle>
+                    <DialogDescription className="mt-1 text-[14px] text-muted-foreground">{summary}.</DialogDescription>
                 </div>
                 <ul className="flex flex-col gap-2.5 text-[14px] leading-relaxed">
-                    {(LATEST_RELEASE.highlights ?? []).map((item) => (
+                    {highlights.map((item) => (
                         <li key={item} className="flex gap-2.5">
                             <Check className="mt-1 size-4 flex-none text-brand-ink" />
                             <span>{item}</span>

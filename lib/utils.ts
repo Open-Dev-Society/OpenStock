@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { arDigits } from '@/lib/i18n';
+import { arDigits, tx, type Lang, type StringKey } from '@/lib/i18n';
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -109,13 +109,20 @@ export const getChangeColorClass = (changePercent?: number) => {
     return changePercent > 0 ? 'text-green-500' : 'text-red-500';
 };
 
-export const formatPrice = (price: number, currency = 'USD', lang: 'en' | 'ar' = 'en') => {
-    const formatted = new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency,
-        minimumFractionDigits: 2,
-    }).format(price);
-    return lang === 'ar' ? arDigits(formatted, lang) : formatted;
+// Currencies whose Arabic short form matters in prose (alerts, toasts), where a drawn glyph
+// cannot go. Everything else keeps the formatter's own symbol.
+const CURRENCY_TEXT: Record<string, StringKey> = { SAR: 'currency.sarShort' };
+
+export const formatPrice = (price: number, currency = 'USD', lang: Lang = 'en') => {
+    const localized = CURRENCY_TEXT[currency];
+    const formatted = localized
+        ? `${tx(lang, localized)} ${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        : new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency,
+            minimumFractionDigits: 2,
+        }).format(price);
+    return arDigits(formatted, lang);
 };
 
 // Alias for consistency

@@ -8,10 +8,12 @@ import { getWatchlistNews } from '@/lib/actions/news.actions';
 import WatchlistTable from '@/components/watchlist/WatchlistTable';
 import AlertsPanel from '@/components/watchlist/AlertsPanel';
 import NewsList from '@/components/watchlist/NewsList';
+import NewsSkeleton from '@/components/watchlist/NewsSkeleton';
 import Panel from '@/components/Panel';
 import DataFreshness from '@/components/DataFreshness';
 import { SearchButton } from '@/components/SearchCommand';
 import { getLang } from '@/lib/i18n-server';
+import { arDigits } from '@/lib/i18n';
 import { tx, type Lang } from '@/lib/i18n';
 
 const RowsSkeleton = ({ rows = 4 }: { rows?: number }) => (
@@ -31,7 +33,7 @@ async function Symbols({ symbols, lang }: { symbols: string[]; lang: Lang }) {
 }
 
 async function News({ symbols, lang }: { symbols: string[]; lang: Lang }) {
-    return <NewsList news={await getWatchlistNews(symbols).catch(() => [] as MarketNewsArticle[])} lang={lang} />;
+    return <NewsList news={await getWatchlistNews(symbols, 8, lang).catch(() => [] as MarketNewsArticle[])} lang={lang} />;
 }
 
 // DB reads render first; everything from Finnhub streams in behind skeletons.
@@ -47,7 +49,7 @@ export default async function WatchlistPage() {
                 <div>
                     <h1 className="page-title">{tx(lang, 'wl.title')}</h1>
                     <p className="page-sub num flex flex-wrap items-center gap-x-2">
-                        {symbols.length} {tx(lang, 'wl.symbolsUnit')} <span aria-hidden>·</span> <DataFreshness lang={lang} />
+                        {arDigits(symbols.length, lang)} {tx(lang, 'wl.symbolsUnit')} <span aria-hidden>·</span> <DataFreshness lang={lang} />
                     </p>
                 </div>
                 <SearchButton className="btn btn-primary"><Plus /> {tx(lang, 'wl.addSymbol')}</SearchButton>
@@ -61,13 +63,13 @@ export default async function WatchlistPage() {
                         </Suspense>
                     </Panel>
                     <Panel title={tx(lang, 'wl.news')} sub={symbols.length ? tx(lang, 'wl.newsSub') : tx(lang, 'wl.newsGeneral')}>
-                        <Suspense fallback={<RowsSkeleton />}>
+                        <Suspense fallback={<NewsSkeleton />}>
                             <News symbols={symbols} lang={lang} />
                         </Suspense>
                     </Panel>
                 </div>
 
-                <Panel title={tx(lang, 'wl.alerts')} sub={alertsEnabled ? tx(lang, 'wl.alertsSub').replace('{n}', String(activeAlerts)) : tx(lang, 'wl.alertsCloud')} className="self-start">
+                <Panel title={tx(lang, 'wl.alerts')} sub={alertsEnabled ? tx(lang, 'wl.alertsSub').replace('{n}', arDigits(activeAlerts, lang)) : tx(lang, 'wl.alertsCloud')} className="self-start">
                     <AlertsPanel alerts={alerts} lang={lang} />
                 </Panel>
             </div>

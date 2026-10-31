@@ -6,6 +6,7 @@ import ChangePill from "@/components/ChangePill";
 import PriceFlash from "@/components/PriceFlash";
 import { useLiveQuotes, type LiveQuote } from "@/hooks/useLiveQuotes";
 import { tx, type Lang } from "@/lib/i18n";
+import { pulseLabel } from "@/lib/i18n";
 import { arDigits } from "@/lib/i18n";
 
 const formatAmount = (value: number) =>
@@ -22,12 +23,12 @@ export default function PulseTile({ symbol, label, initial, lang = 'en' }: { sym
         <Link href={`/stocks/${encodeURIComponent(symbol)}`} className="bento-tile transition-colors hover:bg-hover/60">
             <div className="bento-head">
                 <span className="bento-ico"><LineChart /></span>
-                <span className="truncate">{label}</span>
+                <span className="truncate">{pulseLabel(lang, label)}</span>
                 <span className="mono ms-auto text-xs text-faint">{symbol.replace('BINANCE:', '')}</span>
             </div>
             <PriceFlash value={quote?.c} className="bento-value self-start">
                 {quote?.c ? (
-                    isCrypto ? <>{formatAmount(quote.c)}<small> USDT</small></> : <><small>$</small>{formatAmount(quote.c)}</>
+                    isCrypto ? <>{arDigits(formatAmount(quote.c), lang)}<small> USDT</small></> : <><small>$</small>{arDigits(formatAmount(quote.c), lang)}</>
                 ) : '—'}
             </PriceFlash>
             <div className="bento-foot">

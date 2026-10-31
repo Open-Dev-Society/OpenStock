@@ -76,6 +76,7 @@ const en = {
     // Watchlist
     'wl.title': 'Watchlist',
     'wl.symbolsUnit': 'symbols',
+    'wl.actions': 'Actions',
     'wl.addSymbol': 'Add symbol',
     'wl.symbols': 'Symbols',
     'wl.symbolsSub': 'Click a row for charts, technicals and financials',
@@ -112,6 +113,17 @@ const en = {
     'pw.changedSub': 'Other devices were signed out.',
     'pw.failed': 'Password not changed',
     'news.empty': 'No recent news',
+    // Shared (a11y, boundary pages, currency text)
+    'common.loading': 'Loading',
+    'common.retry': 'Try again',
+    'currency.sar': 'Saudi riyal',
+    'currency.sarShort': 'SAR',
+    'notFound.title': 'This page could not be found',
+    'notFound.sub': 'The link may be old, or the symbol may have been removed.',
+    'notFound.home': 'Back to the dashboard',
+    'error.title': 'Something broke on this page',
+    'error.sub': 'The rest of the app still works. Try again, or head back to the dashboard.',
+    'error.home': 'Back to the dashboard',
     'wl.company': 'Company',
     'wl.price': 'Price',
     'wl.today': 'Today',
@@ -149,6 +161,9 @@ const en = {
     'profile.saveFail': 'Couldn’t save',
     'profile.upToDate': 'Up to date',
     // Auth
+    'auth.brandCredit': 'Initiative by',
+    'auth.quote': '\u201cFor me, OpenStock isn\u2019t just another stock app. It\u2019s about giving people clarity and control in the market, without barriers or subscriptions.\u201d',
+    'auth.founder': 'Founder @opendevsociety',
     'auth.create': 'Create your account',
     'auth.createSub': 'Free and open source. No card needed.',
     'auth.fullName': 'Full name',
@@ -196,6 +211,9 @@ const en = {
     'sponsor.slotLeft': '1 sponsor slot left',
     'dialog.close': 'Close',
     'sentiment.buzz': 'buzz',
+    'sentiment.mentions': 'mentions',
+    'sentiment.trades': 'trades',
+    'sentiment.sourceNews': 'News',
     'sentiment.bull': '{n}% bull',
     'sentiment.noTrend': 'No trend',
     'sentiment.trendRising': 'Rising',
@@ -206,6 +224,39 @@ const en = {
     'sentiment.alignDivergence': 'Wide divergence',
     'sentiment.alignMixed': 'Mixed',
     // Sentiment card, reset-password fallback, alert tooltips
+    // Dashboard vocabulary: heatmap captions, sector group titles and the pulse-tile labels that
+    // belong to us. Company names and TradingView widget chrome stay as the source sends them.
+    'dash.heatmapStocks': 'S&P 500 heatmap',
+    'dash.heatmapCrypto': 'Crypto heatmap',
+    'dash.heatmapSub': 'Sized by market cap, coloured by today\u2019s move',
+    'sector.banks': 'Banks',
+    'sector.financial': 'Financial',
+    'sector.finance': 'Finance',
+    'sector.technology': 'Technology',
+    'sector.consumer': 'Consumer',
+    'sector.consumerHealth': 'Consumer & health',
+    'sector.energy': 'Energy',
+    'sector.energyMaterials': 'Energy & materials',
+    'sector.growth': 'Growth',
+    'sector.industry': 'Industry',
+    'sector.resources': 'Resources',
+    'sector.telecomConsumer': 'Telecom & consumer',
+    'sector.majors': 'Majors',
+    'sector.commodityFx': 'Commodity FX',
+    'sector.more': 'More',
+    'mkt.sp500': 'S&P 500',
+    'mkt.nasdaq100': 'Nasdaq 100',
+    'mkt.dow30': 'Dow 30',
+    'mkt.russell2000': 'Russell 2000',
+    'mkt.sensex': 'Sensex',
+    'mkt.bitcoin': 'Bitcoin',
+    'mkt.ethereum': 'Ethereum',
+    'mkt.solana': 'Solana',
+    'mkt.bnb': 'BNB',
+    'mkt.audusd': 'AUD / USD',
+    'mkt.eurusd': 'EUR / USD',
+    'mkt.gbpusd': 'GBP / USD',
+    'mkt.usdjpy': 'USD / JPY',
     'sentiment.avgBuzz': 'Avg. buzz',
     'sentiment.bullishAvg': 'Bullish avg',
     'sentiment.coverage': 'Coverage',
@@ -395,6 +446,7 @@ const ar: Record<StringKey, string> = {
     'stock.setAlert': 'فعّل تنبيه',
     'wl.title': 'قائمة المتابعة',
     'wl.symbolsUnit': 'رمز',
+    'wl.actions': 'إجراءات',
     'wl.addSymbol': 'أضف رمز',
     'wl.symbols': 'الرموز',
     'wl.symbolsSub': 'اضغط الصف للشارت والتحليل والمالية',
@@ -402,13 +454,13 @@ const ar: Record<StringKey, string> = {
     'wl.newsSub': 'آخر أخبار رموزك',
     'wl.newsGeneral': 'أخبار السوق العامة',
     'wl.alerts': 'التنبيهات',
-    'wl.alertsSub': '{n} نشط · يُفحص كل 5 دقائق',
+    'wl.alertsSub': '{n} نشط · يُفحص كل ٥ دقائق',
     'wl.alertsCloud': 'ميزة OpenStock Cloud',
     'wl.empty': 'قائمتك فارغة',
     'wl.emptySub': 'ابحث عن شركة ونجّمها لتتبع سعرها هنا.',
     'wl.search': 'ابحث عن الأسهم',
     'alert.cloud': 'التنبيهات مع السحابة',
-    'alert.cloudSub': 'تنبيهات الأسعار بالبريد جزء من OpenStock Cloud، $5 شهرياً وقريباً.',
+    'alert.cloudSub': 'تنبيهات الأسعار بالبريد جزء من OpenStock Cloud، مقابل ٥ دولارات شهرياً وقريباً.',
     'alert.cloudBtn': 'شاهد OpenStock Cloud',
     'alert.none': 'لا تنبيهات بعد',
     'alert.noneSub': 'استخدم الجرس بأي صف، أو "فعّل تنبيه" بصفحة السهم. نراسلك عند تحققه.',
@@ -428,6 +480,16 @@ const ar: Record<StringKey, string> = {
     'pw.changedSub': 'تم تسجيل خروج الأجهزة الأخرى.',
     'pw.failed': 'لم تتغير كلمة المرور',
     'news.empty': 'لا أخبار حديثة',
+    'common.loading': 'جارٍ التحميل',
+    'common.retry': 'أعد المحاولة',
+    'currency.sar': 'ريال سعودي',
+    'currency.sarShort': 'ر.س',
+    'notFound.title': 'لم نجد هذه الصفحة',
+    'notFound.sub': 'قد يكون الرابط قديماً، أو يكون الرمز قد حُذف.',
+    'notFound.home': 'العودة إلى النظرة العامة',
+    'error.title': 'حدث خلل في هذه الصفحة',
+    'error.sub': 'باقي التطبيق يعمل. أعد المحاولة، أو ارجع إلى النظرة العامة.',
+    'error.home': 'العودة إلى النظرة العامة',
     'alert.removeFail': 'تعذر حذف التنبيه',
     'alert.remove': 'حذف التنبيه',
     'wl.company': 'الشركة',
@@ -465,6 +527,9 @@ const ar: Record<StringKey, string> = {
     'profile.saved': 'تم حفظ الملف',
     'profile.saveFail': 'تعذر الحفظ',
     'profile.upToDate': 'محدّث',
+    'auth.brandCredit': 'مبادرة من',
+    'auth.quote': 'بالنسبة لي، OpenStock ليس مجرد تطبيق أسهم آخر؛ إنه منح الناس وضوحاً وتحكّماً في السوق، بلا حواجز ولا اشتراكات.',
+    'auth.founder': 'المؤسس ‎@opendevsociety',
     'auth.create': 'أنشئ حسابك',
     'auth.createSub': 'مجاني ومفتوح المصدر. بدون بطاقة.',
     'auth.fullName': 'الاسم الكامل',
@@ -498,7 +563,7 @@ const ar: Record<StringKey, string> = {
     'auth.requestAnother': 'اطلب واحداً آخر',
     'nav.menu': 'افتح القائمة',
     'dash.leaders': 'القادة',
-    'dash.leadersSub': 'اتجاه 12 شهراً حسب المجموعة',
+    'dash.leadersSub': 'اتجاه ١٢ شهراً حسب المجموعة',
     'dash.byGroup': 'القادة حسب المجموعة',
     'stock.dividend': 'عائد التوزيعات',
     'stock.chartTVOnly': 'متاح على TradingView فقط لهذا السوق',
@@ -511,6 +576,9 @@ const ar: Record<StringKey, string> = {
     'sponsor.slotLeft': 'بقي مكان راعٍ واحد',
     'dialog.close': 'إغلاق',
     'sentiment.buzz': 'ضجيج',
+    'sentiment.mentions': 'إشارة',
+    'sentiment.trades': 'صفقة',
+    'sentiment.sourceNews': 'أخبار',
     'sentiment.bull': '{n}% تفاؤل',
     'sentiment.noTrend': 'لا اتجاه',
     'sentiment.trendRising': 'صاعد',
@@ -520,14 +588,45 @@ const ar: Record<StringKey, string> = {
     'sentiment.alignBearish': 'توافق هبوطي',
     'sentiment.alignDivergence': 'تباين واسع',
     'sentiment.alignMixed': 'مختلط',
+    'dash.heatmapStocks': 'خريطة مؤشر إس آند بي ٥٠٠',
+    'dash.heatmapCrypto': 'خريطة العملات الرقمية',
+    'dash.heatmapSub': 'بحجم القيمة السوقية، وبلون حركة اليوم',
+    'sector.banks': 'البنوك',
+    'sector.financial': 'الخدمات المالية',
+    'sector.finance': 'المالية',
+    'sector.technology': 'التقنية',
+    'sector.consumer': 'الاستهلاك',
+    'sector.consumerHealth': 'الاستهلاك والصحة',
+    'sector.energy': 'الطاقة',
+    'sector.energyMaterials': 'الطاقة والمواد',
+    'sector.growth': 'النمو',
+    'sector.industry': 'الصناعة',
+    'sector.resources': 'الموارد',
+    'sector.telecomConsumer': 'الاتصالات والاستهلاك',
+    'sector.majors': 'العملات الرئيسية',
+    'sector.commodityFx': 'عملات السلع',
+    'sector.more': 'المزيد',
+    'mkt.sp500': 'إس آند بي ٥٠٠',
+    'mkt.nasdaq100': 'ناسداك ١٠٠',
+    'mkt.dow30': 'داو جونز ٣٠',
+    'mkt.russell2000': 'راسل ٢٠٠٠',
+    'mkt.sensex': 'سنسكس',
+    'mkt.bitcoin': 'بيتكوين',
+    'mkt.ethereum': 'إيثيريوم',
+    'mkt.solana': 'سولانا',
+    'mkt.bnb': 'بي إن بي',
+    'mkt.audusd': 'الدولار الأسترالي / الدولار',
+    'mkt.eurusd': 'اليورو / الدولار',
+    'mkt.gbpusd': 'الجنيه الإسترليني / الدولار',
+    'mkt.usdjpy': 'الدولار / الين الياباني',
     'sentiment.avgBuzz': 'متوسط الضجيج',
     'sentiment.bullishAvg': 'متوسط التفاؤل',
     'sentiment.coverage': 'التغطية',
-    'sentiment.sources': '{n}/4 مصادر',
+    'sentiment.sources': '{n}/٤ مصادر',
     'sentiment.alignment': 'توافق المصادر:',
     'auth.loadingReset': 'جارٍ تحميل الاستعادة…',
     'signup.accountRegion': 'الحساب',
-    'alert.tooltipQuote': 'تنبيهات الأسعار تحتاج مصدر أسعار نتحقق منه كل 5 دقائق',
+    'alert.tooltipQuote': 'تنبيهات الأسعار تحتاج مصدر أسعار نتحقق منه كل ٥ دقائق',
     'alert.tooltipUsOnly': 'التنبيهات متاحة لأسهم الولايات المتحدة والعملات الرقمية',
     'stock.chartLive': 'مباشر من TradingView · غيّر الفترة والنمط من داخل الشارت',
     'chart.indicators': 'المؤشرات',
@@ -564,15 +663,15 @@ const ar: Record<StringKey, string> = {
     'banner.readAll': 'اقرأ سجل التغييرات كاملاً',
     'donate.kicker': 'الباب مفتوح للرعاة',
     'donate.title': 'خلّ OpenStock مجانياً',
-    'donate.body': 'دعمكم لـ OpenStock و‏Open Dev Society ساعدنا على النمو، ووصلنا الآن إلى حدود الطبقة المجانية في Vercel. ارعَنا من 5$ شهرياً، أو تبرّع مرة واحدة، أو تحدّث معنا عن شراكة.',
+    'donate.body': 'دعمكم لـ OpenStock و‏Open Dev Society ساعدنا على النمو، ووصلنا الآن إلى حدود الطبقة المجانية في Vercel. ارعَنا من ٥ دولارات شهرياً، أو تبرّع مرة واحدة، أو تحدّث معنا عن شراكة.',
     'donate.cta': 'كن راعياً',
     'donate.later': 'لاحقاً',
-    'fresh.live': 'مباشر · 15 ث',
+    'fresh.live': 'مباشر · ١٥ ث',
     'fresh.asOf': 'حتى {t}',
     'fresh.delayed': 'متأخر',
     'fresh.hourly': 'يُحدّث كل ساعة',
     'alert.until': 'حتى {d}',
-    'pw.rule8': '8 أحرف على الأقل',
+    'pw.rule8': '٨ أحرف على الأقل',
     'pw.ruleUpper': 'حرف كبير واحد على الأقل',
     'pw.ruleLower': 'حرف صغير واحد على الأقل',
     'pw.ruleNumber': 'رقم واحد على الأقل',
@@ -600,7 +699,7 @@ const ar: Record<StringKey, string> = {
     'country.empty': 'لا يوجد بلد مطابق.',
     'country.help': 'يساعدنا في عرض بيانات وأخبار السوق المناسبة لك.',
     'alertModal.kicker': 'تنبيه سعر',
-    'alertModal.desc': 'نرسل لك بريداً عندما يتجاوز السعر هدفك. يُفحص كل 5 دقائق، وينتهي بعد 90 يوماً.',
+    'alertModal.desc': 'نرسل لك بريداً عندما يتجاوز السعر هدفك. يُفحص كل ٥ دقائق، وينتهي بعد ٩٠ يوماً.',
     'alertModal.condition': 'الشرط',
     'alertModal.risesAbove': 'يصعد فوق',
     'alertModal.fallsBelow': 'يهبط تحت',
@@ -615,7 +714,7 @@ const ar: Record<StringKey, string> = {
     'alertModal.created': 'تم تعيين التنبيه: {s} {c}',
     'alertModal.failed': 'تعذّر إنشاء التنبيه',
     'alertModal.cloudTitle': 'تنبيهات الأسعار تأتي مع Cloud',
-    'alertModal.cloudBody': 'يضيف Cloud تنبيهات الأسعار بالبريد والأسعار المباشرة مقابل 5$ شهرياً، وهو قادم قريباً. أما الاستضافة الذاتية فتتضمن الميزتين اليوم.',
+    'alertModal.cloudBody': 'يضيف Cloud تنبيهات الأسعار بالبريد والأسعار المباشرة مقابل ٥ دولارات شهرياً، وهو قادم قريباً. أما الاستضافة الذاتية فتتضمن الميزتين اليوم.',
     'alertModal.cloudCta': 'تعرّف على OpenStock Cloud',
     'alertModal.selfHost': 'استضف بنفسك',
     'type.common': 'سهم عادي',
@@ -721,22 +820,17 @@ export const trendLabel = (lang: Lang, trend: string | null | undefined): string
 export const alignmentLabel = (lang: Lang, alignment: string): string =>
     ALIGNMENT_KEYS[alignment] ? tx(lang, ALIGNMENT_KEYS[alignment]) : alignment;
 
+const METRIC_KEYS: Record<string, StringKey> = { Mentions: 'sentiment.mentions', Trades: 'sentiment.trades' };
+const SOURCE_KEYS: Record<string, StringKey> = { News: 'sentiment.sourceNews' };
+/** "mentions" / "trades" under a sentiment source. */
+export const metricLabel = (lang: Lang, metric: string): string =>
+    METRIC_KEYS[metric] ? tx(lang, METRIC_KEYS[metric]) : metric.toLowerCase();
+/** Sentiment source names; Reddit, X and Polymarket are brands and stay as they are. */
+export const sourceLabel = (lang: Lang, source: string): string =>
+    SOURCE_KEYS[source] ? tx(lang, SOURCE_KEYS[source]) : source;
+
 // Security types arrive from the feeds in English ("Common Stock", "ETF"). Known values are
 // translated; anything new is shown exactly as the feed sent it.
-// Arabic-Indic digits for the Arabic interface. Applied at the very end of formatting, so the
-// separators, currency code and percent sign stay exactly where the en-US formatter put them.
-const AR_DIGITS = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-// Wrapped in a left-to-right isolate (U+2066 … U+2069): without it the RTL paragraph reorders
-// "٢٥.٩٢" into something that reads as a different price.
-export const arNumberDigits = (value: string | number, lang: Lang): string => {
-    const text = String(value);
-    return lang === 'ar' ? text.replace(/[0-9]/g, (digit) => AR_DIGITS[Number(digit)]) : text;
-};
-export const arDigits = (value: string | number, lang: Lang): string => {
-    const text = arNumberDigits(value, lang);
-    return lang === 'ar' ? `\u2066${text}\u2069` : text;
-};
-
 const TYPE_KEYS: Record<string, StringKey> = {
     'Common Stock': 'type.common',
     'ETF': 'type.etf',
@@ -756,3 +850,39 @@ const TYPE_KEYS: Record<string, StringKey> = {
 };
 export const typeLabel = (lang: Lang, type: string | null | undefined): string =>
     type ? (TYPE_KEYS[type] ? tx(lang, TYPE_KEYS[type]) : type) : '';
+
+// Dashboard vocabulary that lives in our code: the sector titles of lib/markets.ts and the
+// pulse-tile labels we render ourselves. Unrecognised labels (company names) pass through.
+const SECTOR_KEYS: Record<string, StringKey> = {
+    Banks: 'sector.banks', Financial: 'sector.financial', Finance: 'sector.finance',
+    Technology: 'sector.technology', Consumer: 'sector.consumer', 'Consumer & health': 'sector.consumerHealth',
+    Energy: 'sector.energy', 'Energy & materials': 'sector.energyMaterials', Growth: 'sector.growth',
+    Industry: 'sector.industry', Resources: 'sector.resources', 'Telecom & consumer': 'sector.telecomConsumer',
+    Majors: 'sector.majors', 'Commodity FX': 'sector.commodityFx', More: 'sector.more',
+};
+export const sectorLabel = (lang: Lang, title: string): string =>
+    SECTOR_KEYS[title] ? tx(lang, SECTOR_KEYS[title]) : title;
+
+const PULSE_KEYS: Record<string, StringKey> = {
+    'S&P 500': 'mkt.sp500', 'Nasdaq 100': 'mkt.nasdaq100', 'Dow 30': 'mkt.dow30', 'Russell 2000': 'mkt.russell2000',
+    Sensex: 'mkt.sensex', Bitcoin: 'mkt.bitcoin', Ethereum: 'mkt.ethereum', Solana: 'mkt.solana', BNB: 'mkt.bnb',
+    'AUD / USD': 'mkt.audusd', 'EUR / USD': 'mkt.eurusd', 'GBP / USD': 'mkt.gbpusd', 'USD / JPY': 'mkt.usdjpy',
+};
+export const pulseLabel = (lang: Lang, label: string): string =>
+    PULSE_KEYS[label] ? tx(lang, PULSE_KEYS[label]) : label;
+
+// Arabic-Indic digits for the Arabic interface. Applied at the very end of formatting, so the
+// separators, currency code and percent sign stay exactly where the en-US formatter put them.
+const AR_DIGITS = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+
+export const arNumberDigits = (value: string | number, lang: Lang): string => {
+    const text = String(value);
+    return lang === 'ar' ? text.replace(/[0-9]/g, (digit) => AR_DIGITS[Number(digit)]) : text;
+};
+
+// Wrapped in a left-to-right isolate (U+2066 … U+2069): without it the RTL paragraph reorders
+// "٢٥.٩٢" into something that reads as a different price.
+export const arDigits = (value: string | number, lang: Lang): string => {
+    const text = arNumberDigits(value, lang);
+    return lang === 'ar' ? `\u2066${text}\u2069` : text;
+};

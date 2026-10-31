@@ -10,6 +10,7 @@ import { getUserAlerts } from "@/lib/actions/alert.actions";
 import { alertsEnabled } from "@/lib/market-data";
 import { getLang } from "@/lib/i18n-server";
 import { methodLabel, tx, type Lang } from "@/lib/i18n";
+import { arNumberDigits } from '@/lib/i18n';
 
 export const generateMetadata = async () => {
     const lang = await getLang();
@@ -37,7 +38,7 @@ export default async function ProfilePage() {
     const linked = new Set(accounts.map((a: { providerId: string }) => a.providerId));
     const activeAlerts = alerts.filter((a: { triggered?: boolean }) => !a.triggered).length;
     const lang = await getLang();
-    const memberSince = new Date(user.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-US', { month: 'long', year: 'numeric' });
+    const memberSince = arNumberDigits(new Date(user.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-US', { month: 'long', year: 'numeric' }), lang);
 
     const stats = [
         { label: tx(lang, 'profile.watching'), value: watchlist.length, icon: Star },

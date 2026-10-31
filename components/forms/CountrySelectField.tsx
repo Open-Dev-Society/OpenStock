@@ -32,6 +32,21 @@ const COUNTRY_OPTIONS = countryList().getData().map((country) => ({
     label: COUNTRY_LABEL_OVERRIDES[country.value] ?? country.label,
 }));
 
+// Names of ~250 countries are a closed set the platform already knows, so the Arabic picker asks
+// Intl for them instead of carrying a translation table that would drift.
+let arabicRegions: Intl.DisplayNames | null | undefined;
+const countryLabel = (lang: Lang, country: { value: string; label: string }): string => {
+    if (lang !== 'ar') return country.label;
+    if (arabicRegions === undefined) {
+        try {
+            arabicRegions = new Intl.DisplayNames(['ar'], { type: 'region' });
+        } catch {
+            arabicRegions = null;
+        }
+    }
+    return arabicRegions?.of(country.value) ?? country.label;
+};
+
 type CountrySelectProps = {
     lang?: Lang;
     name: string;
@@ -73,12 +88,12 @@ const CountrySelect = ({
                     {value ? (
                         <span className='flex items-center gap-2'>
               <span>{getFlagEmoji(value)}</span>
-              <span>{COUNTRY_OPTIONS.find((c) => c.value === value)?.label}</span>
+              <span>{countryLabel(lang, COUNTRY_OPTIONS.find((c) => c.value === value) ?? { value, label: value })}</span>
             </span>
                     ) : (
                         tx(lang, 'country.select')
                     )}
-                    <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                    <ChevronsUpDown className='ms-2 h-4 w-4 shrink-0 opacity-50' />
                 </Button>
             </PopoverTrigger>
             <PopoverContent
@@ -98,7 +113,7 @@ const CountrySelect = ({
                             {COUNTRY_OPTIONS.map((country) => (
                                 <CommandItem
                                     key={country.value}
-                                    value={`${country.label} ${country.value}`}
+                                    value={`${countryLabel(lang, country)} ${country.value}`}
                                     onSelect={() => {
                                         onChange(country.value);
                                         setOpen(false);
@@ -107,13 +122,13 @@ const CountrySelect = ({
                                 >
                                     <Check
                                         className={cn(
-                                            'mr-2 h-4 w-4 text-teal-500',
+                                            'me-2 h-4 w-4 text-teal-500',
                                             value === country.value ? 'opacity-100' : 'opacity-0'
                                         )}
                                     />
                                     <span className='flex items-center gap-2'>
                     <span>{getFlagEmoji(country.value)}</span>
-                    <span>{country.label}</span>
+                    <span>{countryLabel(lang, country)}</span>
                   </span>
                                 </CommandItem>
                             ))}

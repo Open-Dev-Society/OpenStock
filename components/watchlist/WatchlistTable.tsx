@@ -58,7 +58,7 @@ export default function WatchlistTable({ initialRows, lang }: { initialRows: Row
                         <th className="is-num">{tx(lang, 'wl.today')}</th>
                         <th className="is-num">{tx(lang, 'wl.change')}</th>
                         <th className="is-num">{tx(lang, 'wl.mcap')}</th>
-                        <th className="w-[88px]"><span className="sr-only">Actions</span></th>
+                        <th className="w-[88px]"><span className="sr-only">{tx(lang, 'wl.actions')}</span></th>
                     </tr>
                 </thead>
                 <tbody>

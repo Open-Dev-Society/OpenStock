@@ -68,13 +68,13 @@ export default async function StockHeader({ symbol, lang }: { symbol: string; la
 
     const currency = profile?.currency || 'USD';
     const company = profile?.name || symbol;
-    const money = (value?: number) => (value ? formatPrice(value, currency) : '—');
+    const money = (value?: number) => (value ? formatPrice(value, currency, lang) : '—');
 
     const stats = [
         { label: tx(lang, 'stock.open'), icon: CalendarClock, value: money(quote?.o), hint: tx(lang, 'stock.hintOpen') },
         { label: tx(lang, 'stock.range'), icon: MoveVertical, value: quote?.l && quote?.h ? `${money(quote.l)} – ${money(quote.h)}` : '—', hint: tx(lang, 'stock.hintRange') },
         { label: tx(lang, 'stock.prevClose'), icon: Gauge, value: money(quote?.pc), hint: tx(lang, 'stock.hintPrevClose') },
-        { label: tx(lang, 'stock.mcap'), icon: Landmark, value: profile?.marketCapitalization ? formatNumber(profile.marketCapitalization) : '—', hint: currency },
+        { label: tx(lang, 'stock.mcap'), icon: Landmark, value: profile?.marketCapitalization ? formatNumber(profile.marketCapitalization, lang) : '—', hint: currency },
     ];
 
     return (

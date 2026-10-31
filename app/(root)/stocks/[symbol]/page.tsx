@@ -6,6 +6,7 @@ import StockSentimentCard from "@/components/stocks/StockSentimentCard";
 import StockChart from "@/components/stocks/StockChart";
 import Panel from "@/components/Panel";
 import NewsList from "@/components/watchlist/NewsList";
+import NewsSkeleton from "@/components/watchlist/NewsSkeleton";
 import { getCompanyNews } from "@/lib/actions/news.actions";
 import {
     TECHNICAL_ANALYSIS_WIDGET_CONFIG,
@@ -17,8 +18,13 @@ import { getStockMetrics } from '@/lib/actions/finnhub.actions';
 import { formatSymbolForTradingView, isChartEmbeddable, tradingViewSymbolUrl } from '@/lib/utils';
 import { getLang } from '@/lib/i18n-server';
 import { tx, type Lang } from '@/lib/i18n';
+import { arDigits } from "@/lib/i18n";
 
 const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
+
+async function CompanyNews({ symbol, lang }: { symbol: string; lang: Lang }) {
+    return <NewsList news={await getCompanyNews(symbol, 6, lang)} lang={lang} />;
+}
 
 async function Sentiment({ symbol, lang }: { symbol: string; lang: Lang }) {
     const insight = await getStockSentimentInsights(symbol);
@@ -35,7 +41,7 @@ async function DividendYield({ symbol, lang }: { symbol: string; lang: Lang }) {
     return (
         <Panel title={tx(lang, 'stock.dividend')}>
             <p className="text-2xl font-semibold text-white">
-                {dividendYield !== null ? `${dividendYield.toFixed(2)}%` : "—"}
+                {dividendYield !== null ? `${arDigits(dividendYield.toFixed(2), lang)}%` : "—"}
             </p>
         </Panel>
     );
@@ -97,7 +103,9 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                         <Sentiment symbol={symbol} lang={lang} />
                     </Suspense>
                     <Panel title={tx(lang, 'stock.news')} sub={tx(lang, 'stock.newsSub')}>
-                        <NewsList news={await getCompanyNews(symbol, 6)} lang={lang} />
+                        <Suspense fallback={<NewsSkeleton rows={3} />}>
+                            <CompanyNews symbol={symbol} lang={lang} />
+                        </Suspense>
                     </Panel>
                     <Panel title={tx(lang, 'stock.profile')} sub={tx(lang, 'stock.profileSub')}>
                         <TradingViewWidget

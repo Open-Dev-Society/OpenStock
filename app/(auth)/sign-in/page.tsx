@@ -94,7 +94,7 @@ const SignIn = () => {
                 </Button>
 
                 <FooterLink text={tx(lang, 'auth.noAccount')} linkText={tx(lang, 'auth.signUpLink')} href="/sign-up" />
-                <OpenDevSocietyBranding outerClassName="mt-10 flex justify-center" />
+                <OpenDevSocietyBranding outerClassName="mt-10 flex justify-center"  text={tx(lang, 'auth.brandCredit')} />
             </form>
         </>
     );

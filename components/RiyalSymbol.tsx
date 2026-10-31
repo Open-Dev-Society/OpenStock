@@ -1,11 +1,11 @@
 // The official Saudi riyal sign (U+20C1). The glyph is not in most shipped fonts yet, and the
 // interface prints prices as text, so it is drawn here as a vector instead of the letters "SAR".
 // Source: Saudi Central Bank (sama.gov.sa/ar-sa/Currency/Documents/Saudi_Riyal_Symbol-2.svg).
-const RiyalSymbol = ({ className = 'h-[0.8em] w-[0.716em]' }: { className?: string }) => (
+const RiyalSymbol = ({ className = 'h-[0.8em] w-[0.716em]', label = 'SAR' }: { className?: string; label?: string }) => (
     <svg
         viewBox="0 0 1124.14 1256.39"
         role="img"
-        aria-label="SAR"
+        aria-label={label}
         className={className}
         fill="currentColor"
     >

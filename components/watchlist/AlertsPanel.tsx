@@ -9,6 +9,7 @@ import { deleteAlert } from "@/lib/actions/alert.actions";
 import { alertsEnabled } from "@/lib/market-data";
 import { formatPrice } from "@/lib/utils";
 import { tx, type Lang } from "@/lib/i18n";
+import { arNumberDigits } from '@/lib/i18n';
 
 type AlertRow = {
     _id: string;
@@ -82,7 +83,7 @@ export default function AlertsPanel({ alerts, lang }: { alerts: AlertRow[]; lang
                                 <p className="mono font-semibold text-foreground">{alert.symbol}</p>
                                 <p className="num truncate text-[12.5px] text-faint">
                                     {alert.condition === 'ABOVE' ? tx(lang, 'alert.above') : tx(lang, 'alert.below')} {formatPrice(alert.targetPrice)}
-                                    {alert.expiresAt && !alert.triggered && ` · ${tx(lang, 'alert.until').replace('{d}', new Date(alert.expiresAt).toLocaleDateString(lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-US', { month: 'short', day: 'numeric' }))}`}
+                                    {alert.expiresAt && !alert.triggered && ` · ${tx(lang, 'alert.until').replace('{d}', arNumberDigits(new Date(alert.expiresAt).toLocaleDateString(lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-US', { month: 'short', day: 'numeric' }), lang))}`}
                                 </p>
                             </div>
                             <span className={status.className}>{status.label}</span>

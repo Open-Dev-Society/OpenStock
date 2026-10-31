@@ -78,7 +78,7 @@ const ForgotPasswordPage = () => {
                 </Button>
 
                 <FooterLink text={tx(lang, 'auth.remembered')} linkText={tx(lang, 'auth.signInLink')} href="/sign-in" />
-                <OpenDevSocietyBranding outerClassName="mt-10 flex justify-center" />
+                <OpenDevSocietyBranding outerClassName="mt-10 flex justify-center"  text={tx(lang, 'auth.brandCredit')} />
             </form>
         </>
     );
