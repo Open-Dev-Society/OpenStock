@@ -74,7 +74,13 @@ export default function SearchCommand({ initialStocks, lang }: { initialStocks: 
     if (!mounted) return null;
 
     return (
-        <CommandDialog open={open} onOpenChange={setOpen} className="search-dialog">
+        <CommandDialog
+            open={open}
+            onOpenChange={setOpen}
+            className="search-dialog"
+            title={tx(lang, 'search.dialogTitle')}
+            description={tx(lang, 'search.dialogDesc')}
+        >
             <div className="search-field">
                 <CommandInput value={searchTerm} onValueChange={setSearchTerm} placeholder={tx(lang, 'search.placeholder')} className="search-input" />
                 {loading && <Loader2 className="search-loader" />}

@@ -22,6 +22,8 @@ const en = {
     'nav.profile': 'Profile',
     // Search palette
     'search.placeholder': 'Search by company or symbol',
+    'search.dialogTitle': 'Search stocks',
+    'search.dialogDesc': 'Search for a company or a symbol',
     'search.searching': 'Searching',
     'search.popular': 'Popular',
     'search.results': 'Results',
@@ -34,6 +36,7 @@ const en = {
     'dash.pulse': 'Pulse',
     'dash.pulseFinnhub': 'Our shared quotes via Finnhub',
     'dash.pulseYahoo': 'Delayed quotes via Yahoo Finance',
+    'dash.pulseTV': '{f} quotes via TradingView',
     'dash.movers': 'Movers',
     'dash.moversSub': "Today's biggest moves",
     'dash.quotes': 'Quotes',
@@ -310,6 +313,8 @@ const ar: Record<StringKey, string> = {
     'nav.signOut': 'تسجيل الخروج',
     'nav.profile': 'الملف الشخصي',
     'search.placeholder': 'ابحث بالشركة أو الرقم',
+    'search.dialogTitle': 'ابحث عن الأسهم',
+    'search.dialogDesc': 'ابحث عن شركة أو رمز سهم',
     'search.searching': 'يبحث…',
     'search.popular': 'الأشهر',
     'search.results': 'النتائج',
@@ -321,6 +326,7 @@ const ar: Record<StringKey, string> = {
     'dash.pulse': 'النبض',
     'dash.pulseFinnhub': 'أسعارنا المشتركة عبر Finnhub',
     'dash.pulseYahoo': 'أسعار متأخرة عبر Yahoo Finance',
+    'dash.pulseTV': 'أسعار {f} عبر TradingView',
     'dash.movers': 'الأكثر تحركاً',
     'dash.moversSub': 'أكبر تحركات اليوم',
     'dash.quotes': 'الأسعار',
@@ -575,6 +581,15 @@ const FEED_KEYS: Record<string, StringKey> = { Live: 'feed.live', Delayed: 'feed
 
 export const marketName = (lang: Lang, id: string): string => tx(lang, MARKET_KEYS[id] ?? 'market.us');
 export const feedLabel = (lang: Lang, feed: string): string => tx(lang, FEED_KEYS[feed] ?? 'feed.live');
+
+// The bare adjective, for sentences like "Live quotes via TradingView".
+const FEED_WORDS: Record<string, { en: string; ar: string }> = {
+    Live: { en: 'Live', ar: 'مباشرة' },
+    Delayed: { en: 'Delayed', ar: 'متأخرة' },
+    'End of day': { en: 'End of day', ar: 'عند الإغلاق' },
+};
+export const feedWord = (lang: Lang, feed: string): string =>
+    (FEED_WORDS[feed] ?? FEED_WORDS.Live)[lang === 'ar' ? 'ar' : 'en'];
 
 // Option labels come from lib/constants.ts as English values, and the country list
 // is upstream data, so the lookups stay here rather than in each form.

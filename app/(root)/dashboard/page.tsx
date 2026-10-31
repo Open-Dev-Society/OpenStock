@@ -16,7 +16,7 @@ import {
 import { MARKETS, MARKET_COOKIE, getMarket, isMarketOpen, marketForCountry } from "@/lib/markets";
 import { getSession } from "@/lib/better-auth/auth";
 import { getLang } from "@/lib/i18n-server";
-import { feedLabel, marketName, tx } from "@/lib/i18n";
+import { feedLabel, feedWord, marketName, tx } from "@/lib/i18n";
 
 const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
 
@@ -31,7 +31,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     const native = market.pulse.some((p) => p.finnhub);
     const pulseSub = native
         ? tx(lang, 'dash.pulseFinnhub')
-        : market.yahoo ? tx(lang, 'dash.pulseYahoo') : `${market.feed} quotes via TradingView`;
+        : market.yahoo
+            ? tx(lang, 'dash.pulseYahoo')
+            : tx(lang, 'dash.pulseTV').replace('{f}', feedWord(lang, market.feed));
     const heatmap = market.heatmap === 'stocks'
         ? { script: 'stock-heatmap.js', config: STOCK_HEATMAP_CONFIG, title: 'S&P 500 heatmap' }
         : market.heatmap === 'crypto'
