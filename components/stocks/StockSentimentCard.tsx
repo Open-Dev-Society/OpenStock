@@ -1,6 +1,6 @@
 import type { StockSentimentInsights } from '@/lib/actions/adanos.helpers';
 import { cn } from '@/lib/utils';
-import { tx, type Lang } from '@/lib/i18n';
+import { alignmentLabel, trendLabel, tx, type Lang } from '@/lib/i18n';
 
 interface StockSentimentCardProps {
     insight: StockSentimentInsights | null;
@@ -53,7 +53,7 @@ export default function StockSentimentCard({ insight, lang = 'en' }: StockSentim
                 ))}
             </div>
             <p className="border-t border-line px-3 py-2.5 text-[12.5px] text-faint">
-                {tx(lang, 'sentiment.alignment')} <span className={cn('font-semibold', getAlignmentClass(insight.sourceAlignment))}>{insight.sourceAlignment}</span>
+                {tx(lang, 'sentiment.alignment')} <span className={cn('font-semibold', getAlignmentClass(insight.sourceAlignment))}>{alignmentLabel(lang, insight.sourceAlignment)}</span>
             </p>
 
             <ul className="row-list border-t border-line">
@@ -67,10 +67,12 @@ export default function StockSentimentCard({ insight, lang = 'en' }: StockSentim
                         </div>
                         <div className="num text-right text-[12.5px]">
                             <p className="font-semibold text-foreground">{formatScore(source.buzzScore, '')}</p>
-                            <p className="text-faint">buzz</p>
+                            <p className="text-faint">{tx(lang, 'sentiment.buzz')}</p>
                         </div>
                         <span className={cn('pill w-[74px] justify-center capitalize', TREND_CLASS[source.trend ?? ''])}>
-                            {source.bullishPct !== null ? `${source.bullishPct.toFixed(0)}% bull` : (source.trend ?? 'No trend')}
+                            {source.bullishPct !== null
+                                ? tx(lang, 'sentiment.bull').replace('{n}', source.bullishPct.toFixed(0))
+                                : trendLabel(lang, source.trend)}
                         </span>
                     </li>
                 ))}

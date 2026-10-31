@@ -28,7 +28,7 @@ export default function UpdateBanner({ className, lang = 'en' }: { className?: s
                 </span>
             </DialogTrigger>
 
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md" closeLabel={tx(lang, 'dialog.close')}>
                 <div>
                     <p className="kicker text-brand-ink">{LATEST_RELEASE.date}</p>
                     <DialogTitle className="mt-1.5 text-[22px] font-bold tracking-[-0.03em]">{LATEST_RELEASE.title}</DialogTitle>

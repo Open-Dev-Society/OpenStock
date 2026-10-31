@@ -59,7 +59,7 @@ export default function CreateAlertModal({ symbol, currentPrice, currency = 'USD
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-            <DialogContent className="sm:max-w-[420px] gap-5">
+            <DialogContent className="sm:max-w-[420px] gap-5" closeLabel={tx(lang, 'dialog.close')}>
                 {alertsEnabled ? (
                     <>
                         <div>

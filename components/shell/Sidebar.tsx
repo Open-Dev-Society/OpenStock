@@ -109,7 +109,9 @@ const Sidebar = ({ user, watchlist, lang }: SidebarProps) => {
                         <span className="kicker flex items-center gap-1.5 text-brand-ink">
                             <span className="live-dot" /> {openSlots === SIDEBAR_SPONSOR_SLOTS
                                 ? tx(lang, 'sponsor.slotsOpen')
-                                : tx(lang, 'sponsor.slotsLeft').replace('{n}', String(openSlots))}
+                                : openSlots === 1
+                                    ? tx(lang, 'sponsor.slotLeft')
+                                    : tx(lang, 'sponsor.slotsLeft').replace('{n}', String(openSlots))}
                         </span>
                         <span className="text-[12.5px] text-faint transition-colors group-hover:text-muted-foreground">{tx(lang, 'sponsor.pitch')}</span>
                     </Link>

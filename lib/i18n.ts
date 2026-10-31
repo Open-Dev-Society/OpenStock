@@ -189,6 +189,18 @@ const en = {
     'news.emptySub': 'Nothing published in the last few days for these symbols.',
     'tab.open': 'Open a stock',
     'tab.close': 'Close',
+    'sponsor.slotLeft': '1 sponsor slot left',
+    'dialog.close': 'Close',
+    'sentiment.buzz': 'buzz',
+    'sentiment.bull': '{n}% bull',
+    'sentiment.noTrend': 'No trend',
+    'sentiment.trendRising': 'Rising',
+    'sentiment.trendFalling': 'Falling',
+    'sentiment.trendStable': 'Stable',
+    'sentiment.alignBullish': 'Bullish alignment',
+    'sentiment.alignBearish': 'Bearish alignment',
+    'sentiment.alignDivergence': 'Wide divergence',
+    'sentiment.alignMixed': 'Mixed',
     // Sentiment card, reset-password fallback, alert tooltips
     'sentiment.avgBuzz': 'Avg. buzz',
     'sentiment.bullishAvg': 'Bullish avg',
@@ -472,6 +484,18 @@ const ar: Record<StringKey, string> = {
     'news.emptySub': 'لا يوجد شيء منشور في الأيام الأخيرة لهذه الرموز.',
     'tab.open': 'افتح سهماً',
     'tab.close': 'إغلاق',
+    'sponsor.slotLeft': 'بقي مكان راعٍ واحد',
+    'dialog.close': 'إغلاق',
+    'sentiment.buzz': 'ضجيج',
+    'sentiment.bull': '{n}% تفاؤل',
+    'sentiment.noTrend': 'لا اتجاه',
+    'sentiment.trendRising': 'صاعد',
+    'sentiment.trendFalling': 'هابط',
+    'sentiment.trendStable': 'مستقر',
+    'sentiment.alignBullish': 'توافق صعودي',
+    'sentiment.alignBearish': 'توافق هبوطي',
+    'sentiment.alignDivergence': 'تباين واسع',
+    'sentiment.alignMixed': 'مختلط',
     'sentiment.avgBuzz': 'متوسط الضجيج',
     'sentiment.bullishAvg': 'متوسط التفاؤل',
     'sentiment.coverage': 'التغطية',
@@ -641,3 +665,19 @@ const INDICATOR_KEYS: Record<string, StringKey> = {
 };
 export const indicatorLabel = (lang: Lang, id: string, fallback: string): string =>
     INDICATOR_KEYS[id] ? tx(lang, INDICATOR_KEYS[id]) : fallback;
+
+// The sentiment service answers in English, so its fixed vocabularies are looked up here and
+// anything unrecognised is shown as it arrived.
+const TREND_KEYS: Record<string, StringKey> = {
+    rising: 'sentiment.trendRising', falling: 'sentiment.trendFalling', stable: 'sentiment.trendStable',
+};
+const ALIGNMENT_KEYS: Record<string, StringKey> = {
+    'Bullish alignment': 'sentiment.alignBullish',
+    'Bearish alignment': 'sentiment.alignBearish',
+    'Wide divergence': 'sentiment.alignDivergence',
+    Mixed: 'sentiment.alignMixed',
+};
+export const trendLabel = (lang: Lang, trend: string | null | undefined): string =>
+    trend ? (TREND_KEYS[trend] ? tx(lang, TREND_KEYS[trend]) : trend) : tx(lang, 'sentiment.noTrend');
+export const alignmentLabel = (lang: Lang, alignment: string): string =>
+    ALIGNMENT_KEYS[alignment] ? tx(lang, ALIGNMENT_KEYS[alignment]) : alignment;

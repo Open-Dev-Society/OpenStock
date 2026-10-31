@@ -80,6 +80,7 @@ export default function SearchCommand({ initialStocks, lang }: { initialStocks: 
             className="search-dialog"
             title={tx(lang, 'search.dialogTitle')}
             description={tx(lang, 'search.dialogDesc')}
+            closeLabel={tx(lang, 'dialog.close')}
         >
             <div className="search-field">
                 <CommandInput value={searchTerm} onValueChange={setSearchTerm} placeholder={tx(lang, 'search.placeholder')} className="search-input" />
