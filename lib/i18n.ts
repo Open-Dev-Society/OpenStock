@@ -310,6 +310,22 @@ const en = {
     'alertModal.cloudBody': 'Cloud adds email price alerts and live quotes for $5 a month. It’s coming soon. Self-hosting includes both today.',
     'alertModal.cloudCta': 'See OpenStock Cloud',
     'alertModal.selfHost': 'Self-host',
+    // Security types: the feeds answer in English, so the palette translates the known ones
+    'type.common': 'Common Stock',
+    'type.etf': 'ETF',
+    'type.adr': 'ADR',
+    'type.reit': 'REIT',
+    'type.preferred': 'Preferred Stock',
+    'type.etp': 'ETP',
+    'type.fund': 'Fund',
+    'type.mutualFund': 'Mutual Fund',
+    'type.closedEnd': 'Closed-End Fund',
+    'type.unit': 'Unit',
+    'type.right': 'Right',
+    'type.warrant': 'Warrant',
+    'type.index': 'Index',
+    'type.crypto': 'Crypto',
+    'type.bond': 'Bond',
 };
 
 export type StringKey = keyof typeof en;
@@ -594,6 +610,21 @@ const ar: Record<StringKey, string> = {
     'alertModal.cloudBody': 'يضيف Cloud تنبيهات الأسعار بالبريد والأسعار المباشرة مقابل 5$ شهرياً، وهو قادم قريباً. أما الاستضافة الذاتية فتتضمن الميزتين اليوم.',
     'alertModal.cloudCta': 'تعرّف على OpenStock Cloud',
     'alertModal.selfHost': 'استضف بنفسك',
+    'type.common': 'سهم عادي',
+    'type.etf': 'صندوق مؤشر (ETF)',
+    'type.adr': 'شهادة إيداع أمريكية',
+    'type.reit': 'صندوق عقاري (ريت)',
+    'type.preferred': 'سهم ممتاز',
+    'type.etp': 'منتج متداول',
+    'type.fund': 'صندوق',
+    'type.mutualFund': 'صندوق استثمار',
+    'type.closedEnd': 'صندوق مغلق',
+    'type.unit': 'وحدة',
+    'type.right': 'حق اكتتاب',
+    'type.warrant': 'ضمان',
+    'type.index': 'مؤشر',
+    'type.crypto': 'عملة رقمية',
+    'type.bond': 'سند',
 };
 
 export const STRINGS: Record<Lang, Record<StringKey, string>> = { en, ar };
@@ -681,3 +712,25 @@ export const trendLabel = (lang: Lang, trend: string | null | undefined): string
     trend ? (TREND_KEYS[trend] ? tx(lang, TREND_KEYS[trend]) : trend) : tx(lang, 'sentiment.noTrend');
 export const alignmentLabel = (lang: Lang, alignment: string): string =>
     ALIGNMENT_KEYS[alignment] ? tx(lang, ALIGNMENT_KEYS[alignment]) : alignment;
+
+// Security types arrive from the feeds in English ("Common Stock", "ETF"). Known values are
+// translated; anything new is shown exactly as the feed sent it.
+const TYPE_KEYS: Record<string, StringKey> = {
+    'Common Stock': 'type.common',
+    'ETF': 'type.etf',
+    'ADR': 'type.adr',
+    'REIT': 'type.reit',
+    'Preferred Stock': 'type.preferred',
+    'ETP': 'type.etp',
+    'Fund': 'type.fund',
+    'Mutual Fund': 'type.mutualFund',
+    'Closed-End Fund': 'type.closedEnd',
+    'Unit': 'type.unit',
+    'Right': 'type.right',
+    'Warrant': 'type.warrant',
+    'Index': 'type.index',
+    'Crypto': 'type.crypto',
+    'Bond': 'type.bond',
+};
+export const typeLabel = (lang: Lang, type: string | null | undefined): string =>
+    type ? (TYPE_KEYS[type] ? tx(lang, TYPE_KEYS[type]) : type) : '';

@@ -8,6 +8,7 @@ import { searchStocks } from "@/lib/actions/finnhub.actions";
 import { useDebounce } from "@/hooks/useDebounce";
 import { tx, type Lang } from "@/lib/i18n";
 import { saudiSymbolNameAr } from "@/lib/saudi-symbols";
+import { typeLabel } from "@/lib/i18n";
 
 const OPEN_SEARCH_EVENT = 'open-search';
 
@@ -109,7 +110,7 @@ export default function SearchCommand({ initialStocks, lang }: { initialStocks: 
                                 >
                                     <span dir="ltr" className="mono w-20 shrink-0 text-[13px] font-semibold text-brand-ink truncate">{stock.symbol}</span>
                                     <span dir="auto" className="search-item-name flex-1">{(lang === 'ar' ? saudiSymbolNameAr(stock.symbol) : null) ?? stock.name}</span>
-                                    <span className="hidden sm:block text-xs text-faint truncate max-w-40">{[stock.exchange, stock.type].filter(Boolean).join(' · ')}</span>
+                                    <span className="hidden sm:block text-xs text-faint truncate max-w-40">{[stock.exchange, typeLabel(lang, stock.type)].filter(Boolean).join(' · ')}</span>
                                     <ArrowUpRight className="size-4 text-faint opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </Link>
                             </li>

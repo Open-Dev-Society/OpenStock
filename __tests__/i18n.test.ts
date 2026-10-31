@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { STRINGS, alignmentLabel, choiceLabel, feedWord, marketName, trendLabel, tx, type Lang } from '@/lib/i18n';
+import { STRINGS, alignmentLabel, choiceLabel, feedWord, marketName, trendLabel, tx, typeLabel, type Lang } from '@/lib/i18n';
 
 describe('i18n dictionaries', () => {
     const langs: Lang[] = ['en', 'ar'];
@@ -58,5 +58,15 @@ describe('value lookups', () => {
         expect(alignmentLabel('ar', 'Wide divergence')).toBe('تباين واسع');
         expect(alignmentLabel('en', 'Wide divergence')).toBe('Wide divergence');
         expect(alignmentLabel('ar', 'Something new')).toBe('Something new');
+    });
+
+    it('translates the security types the feeds send in English', () => {
+        expect(typeLabel('ar', 'Common Stock')).toBe('سهم عادي');
+        expect(typeLabel('ar', 'ETF')).toBe('صندوق مؤشر (ETF)');
+        expect(typeLabel('ar', 'REIT')).toBe('صندوق عقاري (ريت)');
+        expect(typeLabel('en', 'Common Stock')).toBe('Common Stock');
+        // A type we have never seen is shown exactly as it arrived, never blanked.
+        expect(typeLabel('ar', 'Carbon Credit')).toBe('Carbon Credit');
+        expect(typeLabel('ar', null)).toBe('');
     });
 });
