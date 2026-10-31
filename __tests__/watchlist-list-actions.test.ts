@@ -14,7 +14,7 @@ const findOne = vi.fn();
 const updateOne = vi.fn();
 const create = vi.fn();
 const countDocuments = vi.fn();
-const deleteMany = vi.fn();
+const deleteOne = vi.fn();
 const findOverflow = vi.fn();
 const init = vi.fn();
 vi.mock('@/database/models/watchlist-list.model', () => ({
@@ -24,12 +24,10 @@ vi.mock('@/database/models/watchlist-list.model', () => ({
         updateOne: (...args: unknown[]) => updateOne(...args),
         create: (...args: unknown[]) => create(...args),
         countDocuments: (...args: unknown[]) => countDocuments(...args),
-        deleteMany: (...args: unknown[]) => deleteMany(...args),
-        // The overflow query: find().sort().limit().select()
+        deleteOne: (...args: unknown[]) => deleteOne(...args),
+        // The rank query: find().sort().select()
         find: () => ({
-            sort: () => ({
-                limit: () => ({ select: () => findOverflow() }),
-            }),
+            sort: () => ({ select: () => findOverflow() }),
         }),
         init: (...args: unknown[]) => init(...args),
         exists: vi.fn().mockResolvedValue(false),
@@ -151,31 +149,41 @@ describe('createWatchlistList keeps the ten-list cap honest', () => {
     it('drops its own insert when a concurrent create pushed the user over the cap', async () => {
         // The pre-check saw 9, but by the time the insert lands another tab made it 11.
         countDocuments.mockResolvedValueOnce(9).mockResolvedValueOnce(MAX_LISTS + 1);
-        findOverflow.mockResolvedValueOnce([{ _id: LIST_ID }]);
+        // Sorted by _id: ours is the newest, so we are the row beyond the cap.
+        const ids = Array.from({ length: MAX_LISTS }, (_, i) => ({ _id: `older-${i}` }));
+        findOverflow.mockResolvedValueOnce([...ids, { _id: LIST_ID }]);
 
         await expect(createWatchlistList('Banks')).resolves.toEqual({
             error: `You can keep ${MAX_LISTS} lists. Delete one to make room.`,
         });
-        expect(deleteMany).toHaveBeenCalledWith({ _id: { $in: [LIST_ID] }, userId: USER });
+        expect(deleteOne).toHaveBeenCalledWith({ _id: LIST_ID, userId: USER });
     });
 
-    it('keeps the lists the user may keep and trims the newest rows when two creates race', async () => {
-        // Two inserts landed: the row deleted is the newest one, whoever created it, so the user
-        // ends at exactly ten rather than nine.
+    it('keeps its own row when the other tab is the one beyond the cap', async () => {
+        // Same race, ours landed first: the other request deletes itself, and we succeed.
         countDocuments.mockResolvedValueOnce(9).mockResolvedValueOnce(MAX_LISTS + 1);
-        findOverflow.mockResolvedValueOnce([{ _id: 'newer-row-of-the-other-tab' }]);
+        const ids = Array.from({ length: MAX_LISTS - 1 }, (_, i) => ({ _id: `older-${i}` }));
+        findOverflow.mockResolvedValueOnce([...ids, { _id: LIST_ID }, { _id: 'newer-of-the-other-tab' }]);
 
         await expect(createWatchlistList('Banks')).resolves.toMatchObject({ id: LIST_ID, name: 'Banks' });
-        expect(deleteMany).toHaveBeenCalledWith({
-            _id: { $in: ['newer-row-of-the-other-tab'] },
-            userId: USER,
-        });
+        // Only our own row may be removed: a shared cleanup would let two racers delete each
+        // other and drop the user to nine lists.
+        expect(deleteOne).not.toHaveBeenCalled();
     });
 
     it('keeps the list when the recount is still within the cap', async () => {
         countDocuments.mockResolvedValueOnce(9).mockResolvedValueOnce(MAX_LISTS);
 
         await expect(createWatchlistList('Banks')).resolves.toMatchObject({ id: LIST_ID, name: 'Banks' });
-        expect(deleteMany).not.toHaveBeenCalled();
+        expect(findOverflow).not.toHaveBeenCalled();
+        expect(deleteOne).not.toHaveBeenCalled();
+    });
+
+    it('removes its own row when the cap check fails after the insert', async () => {
+        // A transient database fault between the insert and the check must not leave a stranded row.
+        countDocuments.mockResolvedValueOnce(9).mockRejectedValueOnce(new Error('connection reset'));
+
+        await expect(createWatchlistList('Banks')).rejects.toThrow('Failed to create the list');
+        expect(deleteOne).toHaveBeenCalledWith({ _id: LIST_ID, userId: USER });
     });
 });

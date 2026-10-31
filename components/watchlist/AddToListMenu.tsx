@@ -53,8 +53,8 @@ export default function AddToListMenu({
         }
     };
 
-    // Create the list and file the symbol in one go. If the add fails the list stays, so the id is
-    // kept and a retry only re-runs the add. The error says what happened either way.
+    // Create the list and file the symbol in one go. The two steps fail differently and are
+    // reported separately: once the list exists, a failed add keeps it and offers "Retry add".
     const createAndAdd = async (e: React.FormEvent) => {
         e.preventDefault();
         if (busy) return;
@@ -63,19 +63,29 @@ export default function AddToListMenu({
             let listId = createdId;
             let listName = createdName;
             if (!listId) {
-                const created = await createWatchlistList(name);
-                if ('error' in created) {
-                    toast.error(created.error);
+                try {
+                    const created = await createWatchlistList(name);
+                    if ('error' in created) {
+                        toast.error(created.error);
+                        return;
+                    }
+                    listId = created.id;
+                    listName = created.name;
+                    setCreatedId(created.id);
+                    setCreatedName(created.name);
+                } catch {
+                    toast.error('Couldn’t create the list');
                     return;
                 }
-                listId = created.id;
-                listName = created.name;
-                setCreatedId(created.id);
-                setCreatedName(created.name);
             }
-            const added = await addSymbolToList(listId, symbol, company);
-            if ('error' in added) {
-                toast.error(added.error);
+            try {
+                const added = await addSymbolToList(listId, symbol, company);
+                if ('error' in added) {
+                    toast.error(added.error);
+                    return;
+                }
+            } catch {
+                toast.error(`Couldn’t add ${symbol} to “${listName}”`);
                 return;
             }
             toast.success(`Created “${listName}” and added ${symbol}`);
@@ -84,8 +94,6 @@ export default function AddToListMenu({
             setCreatedId(null);
             setCreatedName('');
             router.refresh();
-        } catch {
-            toast.error('Couldn’t create the list');
         } finally {
             setBusy(false);
         }

@@ -71,20 +71,23 @@ export async function createWatchlistList(name: string): Promise<{ error: string
             return { error: `You already have a list called “${clean}”.` };
         }
         const created = await WatchlistList.create({ userId, name: clean, symbols: [] });
-        // Two tabs can both pass the check above. The cap is then enforced on whichever rows are
-        // newest, by id order so both racers pick the same rows: the user keeps exactly ten, and
-        // the request whose row was trimmed returns the readable error.
-        const count = await WatchlistList.countDocuments({ userId });
-        if (count > MAX_LISTS) {
-            const overflow = await WatchlistList.find({ userId })
-                .sort({ createdAt: -1, _id: -1 })
-                .limit(count - MAX_LISTS)
-                .select('_id');
-            const ids = overflow.map((doc) => doc._id);
-            await WatchlistList.deleteMany({ _id: { $in: ids }, userId });
-            if (ids.some((id) => String(id) === String(created._id))) {
-                return { error: `You can keep ${MAX_LISTS} lists. Delete one to make room.` };
+        try {
+            // Two tabs can both pass the check above. The cap is enforced by rank, not by shared
+            // cleanup: only the request whose own row sits beyond the cap removes a row, so two
+            // racers can never delete each other and leave the user with nine lists.
+            const count = await WatchlistList.countDocuments({ userId });
+            if (count > MAX_LISTS) {
+                const ids = await WatchlistList.find({ userId }).sort({ _id: 1 }).select('_id');
+                const rank = ids.findIndex((doc) => String(doc._id) === String(created._id));
+                if (rank >= MAX_LISTS) {
+                    await WatchlistList.deleteOne({ _id: created._id, userId });
+                    return { error: `You can keep ${MAX_LISTS} lists. Delete one to make room.` };
+                }
             }
+        } catch (error) {
+            // The row is already persisted: remove it rather than throw with a stray list behind.
+            await WatchlistList.deleteOne({ _id: created._id, userId }).catch(() => {});
+            throw error;
         }
         revalidate();
         return toSummary(created);
