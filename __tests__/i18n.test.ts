@@ -53,6 +53,9 @@ describe('value lookups', () => {
         expect(trendLabel('ar', null)).toBe('لا اتجاه');
         expect(trendLabel('ar', 'sideways')).toBe('sideways');
         expect(alignmentLabel('ar', 'Mixed')).toBe('مختلط');
+        expect(alignmentLabel('ar', 'Bullish alignment')).toBe('توافق صعودي');
+        expect(alignmentLabel('ar', 'Bearish alignment')).toBe('توافق هبوطي');
+        expect(alignmentLabel('ar', 'Wide divergence')).toBe('تباين واسع');
         expect(alignmentLabel('en', 'Wide divergence')).toBe('Wide divergence');
         expect(alignmentLabel('ar', 'Something new')).toBe('Something new');
     });
