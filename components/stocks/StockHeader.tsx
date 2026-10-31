@@ -27,7 +27,7 @@ async function TradingViewHeader({ symbol, lang }: { symbol: string; lang: Lang 
         <section className="hatch">
             <div className="card flex flex-wrap items-center justify-between gap-4 p-4">
                 <div className="min-w-0">
-                    <h1 className="mono truncate text-xl font-bold tracking-[-0.02em]">{symbol}</h1>
+                    <h1 dir="ltr" className="mono truncate text-xl font-bold tracking-[-0.02em]">{symbol}</h1>
                     <p className="text-[12.5px] text-faint">
                         {[tvSymbol.split(':')[0], saudi?.name, tadawul ? tx(lang, 'stock.yahooQuote') : tx(lang, 'stock.tvQuote')].filter(Boolean).join(' · ')}
                     </p>

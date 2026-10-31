@@ -38,7 +38,7 @@ export default function WatchlistTable({ initialRows, lang }: { initialRows: Row
                 <SearchButton className="btn btn-primary mt-3"><Search /> {tx(lang, 'wl.search')}</SearchButton>
                 <div className="mt-4 flex flex-wrap justify-center gap-1.5">
                     {SUGGESTIONS.map((s) => (
-                        <Link key={s} href={`/stocks/${s}`} className="pill mono h-7 px-3 hover:bg-hover hover:text-foreground">{s}</Link>
+                        <Link key={s} href={`/stocks/${s}`} dir="ltr" className="pill mono h-7 px-3 hover:bg-hover hover:text-foreground">{s}</Link>
                     ))}
                 </div>
             </div>
@@ -70,7 +70,7 @@ export default function WatchlistTable({ initialRows, lang }: { initialRows: Row
                                     )}
                                     <span className="min-w-0">
                                         <span className="block truncate font-semibold text-foreground group-hover:text-brand-ink transition-colors" title={row.name}>{row.name}</span>
-                                        <span className="mono block text-[12px] text-faint">{row.symbol}</span>
+                                        <span dir="ltr" className="mono block text-[12px] text-faint">{row.symbol}</span>
                                     </span>
                                 </Link>
                             </td>

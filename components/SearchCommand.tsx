@@ -106,7 +106,7 @@ export default function SearchCommand({ initialStocks, lang }: { initialStocks: 
                                     onClick={handleSelectStock}
                                     className="search-item-link group"
                                 >
-                                    <span className="mono w-20 shrink-0 text-[13px] font-semibold text-brand-ink truncate">{stock.symbol}</span>
+                                    <span dir="ltr" className="mono w-20 shrink-0 text-[13px] font-semibold text-brand-ink truncate">{stock.symbol}</span>
                                     <span className="search-item-name flex-1">{stock.name}</span>
                                     <span className="hidden sm:block text-xs text-faint truncate max-w-40">{[stock.exchange, stock.type].filter(Boolean).join(' · ')}</span>
                                     <ArrowUpRight className="size-4 text-faint opacity-0 group-hover:opacity-100 transition-opacity" />
