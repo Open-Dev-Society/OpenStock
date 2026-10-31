@@ -183,6 +183,21 @@ const en = {
     'news.emptySub': 'Nothing published in the last few days for these symbols.',
     'tab.open': 'Open a stock',
     'tab.close': 'Close',
+    // Markets (ids come from lib/markets.ts) and the freshness of their data
+    'market.us': 'United States',
+    'market.in': 'India',
+    'market.de': 'Germany',
+    'market.ca': 'Canada',
+    'market.au': 'Australia',
+    'market.sa': 'Saudi Arabia',
+    'market.crypto': 'Crypto',
+    'market.fx': 'Forex',
+    'market.switcher': 'Markets',
+    'market.open': 'Open now',
+    'market.closed': 'Closed now',
+    'feed.live': 'live data',
+    'feed.delayed': 'delayed data',
+    'feed.eod': 'end-of-day data',
 };
 
 export type StringKey = keyof typeof en;
@@ -351,9 +366,34 @@ const ar: Record<StringKey, string> = {
     'news.emptySub': 'لا يوجد شيء منشور في الأيام الأخيرة لهذه الرموز.',
     'tab.open': 'افتح سهماً',
     'tab.close': 'إغلاق',
+    'market.us': 'الولايات المتحدة',
+    'market.in': 'الهند',
+    'market.de': 'ألمانيا',
+    'market.ca': 'كندا',
+    'market.au': 'أستراليا',
+    'market.sa': 'السعودية',
+    'market.crypto': 'العملات الرقمية',
+    'market.fx': 'الفوركس',
+    'market.switcher': 'الأسواق',
+    'market.open': 'مفتوح الآن',
+    'market.closed': 'مغلق الآن',
+    'feed.live': 'بيانات مباشرة',
+    'feed.delayed': 'بيانات متأخرة',
+    'feed.eod': 'بيانات إغلاق اليوم',
 };
 
 export const STRINGS: Record<Lang, Record<StringKey, string>> = { en, ar };
 
 export const tx = (lang: Lang, key: StringKey): string =>
     STRINGS[isLang(lang) ? lang : 'en']?.[key] ?? STRINGS.en[key] ?? key;
+
+// Market ids and feed labels are data, not prose, so the strings live here and the
+// callers stay free of any i18n lookup of their own.
+const MARKET_KEYS: Record<string, StringKey> = {
+    us: 'market.us', in: 'market.in', de: 'market.de', ca: 'market.ca',
+    au: 'market.au', sa: 'market.sa', crypto: 'market.crypto', fx: 'market.fx',
+};
+const FEED_KEYS: Record<string, StringKey> = { Live: 'feed.live', Delayed: 'feed.delayed', 'End of day': 'feed.eod' };
+
+export const marketName = (lang: Lang, id: string): string => tx(lang, MARKET_KEYS[id] ?? 'market.us');
+export const feedLabel = (lang: Lang, feed: string): string => tx(lang, FEED_KEYS[feed] ?? 'feed.live');

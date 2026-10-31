@@ -16,7 +16,7 @@ import {
 import { MARKETS, MARKET_COOKIE, getMarket, isMarketOpen, marketForCountry } from "@/lib/markets";
 import { getSession } from "@/lib/better-auth/auth";
 import { getLang } from "@/lib/i18n-server";
-import { tx } from "@/lib/i18n";
+import { feedLabel, marketName, tx } from "@/lib/i18n";
 
 const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
 
@@ -43,11 +43,11 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             <header className="page-head">
                 <div>
                     <h1 className="page-title">{tx(lang, 'dash.title')}</h1>
-                    <p className="page-sub">{market.name} · {open ? tx(lang, 'dash.openNow') : tx(lang, 'dash.closedNow')} · {market.feed.toLowerCase()} data</p>
+                    <p className="page-sub">{marketName(lang, market.id)} · {open ? tx(lang, 'dash.openNow') : tx(lang, 'dash.closedNow')} · {feedLabel(lang, market.feed)}</p>
                 </div>
             </header>
 
-            <MarketSwitcher active={market.id} openIds={MARKETS.filter((m) => isMarketOpen(m)).map((m) => m.id)} />
+            <MarketSwitcher lang={lang} active={market.id} openIds={MARKETS.filter((m) => isMarketOpen(m)).map((m) => m.id)} />
 
             <section className="hatch">
                 <div className="section-head">
@@ -79,7 +79,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                             <TradingViewWidget scriptUrl={`${scriptUrl}${heatmap.script}`} config={heatmap.config} height={560} allowExpand />
                         </Panel>
                     ) : (
-                        <Panel title={tx(lang, 'dash.quotes')} sub={`${market.name} · ${tx(lang, 'dash.byGroup')}`}>
+                        <Panel title={tx(lang, 'dash.quotes')} sub={`${marketName(lang, market.id)} · ${tx(lang, 'dash.byGroup')}`}>
                             {market.yahoo
                                 ? <SaudiQuotesTable market={market} lang={lang} />
                                 : <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(market.groups)} height={560} />}
@@ -89,7 +89,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
                 <div className="grid gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                     {heatmap && (
-                        <Panel title={tx(lang, 'dash.quotes')} sub={`${market.name} · ${tx(lang, 'dash.byGroup')}`}>
+                        <Panel title={tx(lang, 'dash.quotes')} sub={`${marketName(lang, market.id)} · ${tx(lang, 'dash.byGroup')}`}>
                             <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(market.groups)} height={560} />
                         </Panel>
                     )}
