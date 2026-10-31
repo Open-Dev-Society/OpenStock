@@ -101,7 +101,7 @@ const TabBar = ({ onMenu, lang }: { onMenu: () => void; lang: Lang }) => {
                         <div
                             key={path}
                             ref={(el) => { if (el) tabRefs.current.set(path, el); else tabRefs.current.delete(path); }}
-                            className={cn('tab', active && 'is-active', pinned && 'pr-4')}
+                            className={cn('tab', active && 'is-active', pinned && 'pe-4')}
                         >
                             {/* Stretched link: the whole tab navigates, while the close button stays a real, focusable button */}
                             <Link href={path} aria-current={active ? 'page' : undefined} className="flex min-w-0 flex-1 items-center gap-2 before:absolute before:inset-0 before:content-['']">

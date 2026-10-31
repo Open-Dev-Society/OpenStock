@@ -768,7 +768,7 @@
         @apply !bg-card border-b border-line relative;
     }
     .search-input {
-        @apply !bg-card border-0 text-foreground placeholder:text-faint focus:ring-0 text-base h-14 pr-10;
+        @apply !bg-card border-0 text-foreground placeholder:text-faint focus:ring-0 text-base h-14 pe-10;
     }
     .search-loader {
         @apply absolute right-12 top-1/2 -translate-y-1/2 h-4 w-4 text-faint animate-spin;
