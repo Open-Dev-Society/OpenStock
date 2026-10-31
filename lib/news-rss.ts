@@ -106,7 +106,9 @@ export function parseGoogleNewsRss(xml: string, related = 'MKT'): RssNewsItem[] 
         const rawSource = tag(block, 'source');
         const source = cleanSource(rawSource);
         const headline = stripSourceSuffix(tag(block, 'title'), rawSource).slice(0, MAX_HEADLINE);
-        if (!headline) continue;
+        // Google sometimes hands back the outlet's own channel card ("ارقام : ... - تاسي - ارقام : ..."),
+        // which is a feed entry, not a story.
+        if (!headline || headline === rawSource.trim() || headline === source) continue;
 
         const published = Date.parse(tag(block, 'pubDate'));
         items.push({

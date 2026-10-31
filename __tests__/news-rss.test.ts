@@ -146,6 +146,16 @@ describe('parseGoogleNewsRss', () => {
         expect(parseGoogleNewsRss(withAttrs)).toHaveLength(1);
     });
 
+    it('drops the outlet channel card Google returns as a story', () => {
+        const source = 'ارقام : اخبار ومعلومات سوق الأسهم السعودي - تاسي';
+        const channelCard = `<rss><item>
+            <title>${source} - ${source}</title>
+            <link>https://example.com/card</link>
+            <source url="https://www.argaam.com">${source}</source>
+        </item></rss>`;
+        expect(parseGoogleNewsRss(channelCard)).toEqual([]);
+    });
+
     it('caps an absurdly long headline', () => {
         const long = 'خ'.repeat(900);
         const feed = `<rss><item><title>${long}</title><link>https://example.com/a</link></item></rss>`;
