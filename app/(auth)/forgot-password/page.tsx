@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import InputField from '@/components/forms/InputField';
 import FooterLink from '@/components/forms/FooterLink';
 import OpenDevSocietyBranding from '@/components/OpenDevSocietyBranding';
+import LangToggle, { useLang } from '@/components/LangToggle';
+import { tx } from '@/lib/i18n';
 import { requestPasswordResetEmail } from '@/lib/actions/auth.actions';
 
 type ForgotPasswordFormData = {
@@ -14,6 +16,7 @@ type ForgotPasswordFormData = {
 };
 
 const ForgotPasswordPage = () => {
+    const lang = useLang();
     const {
         register,
         handleSubmit,
@@ -30,7 +33,7 @@ const ForgotPasswordPage = () => {
             const result = await requestPasswordResetEmail(data);
 
             if (result.success) {
-                toast.success('If an account exists for that email, a reset link has been sent.');
+                toast.success(tx(lang, 'auth.resetSent'));
                 return;
             }
 
@@ -46,15 +49,18 @@ const ForgotPasswordPage = () => {
 
     return (
         <>
-            <h1 className="form-title">Forgot your password?</h1>
+            <div className="mb-2 flex items-center justify-between">
+                <h1 className="form-title">{tx(lang, 'auth.forgotTitle')}</h1>
+                <LangToggle initial={lang} />
+            </div>
             <p className="text-sm text-gray-400 mb-6">
-                Enter your email address and we&apos;ll send you a password reset link.
+                {tx(lang, 'auth.forgotSub')}
             </p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <InputField
                     name="email"
-                    label="Email"
+                    label={tx(lang, 'auth.email')}
                     placeholder="opendevsociety@cc.cc"
                     register={register}
                     error={errors.email}
@@ -68,10 +74,10 @@ const ForgotPasswordPage = () => {
                 />
 
                 <Button type="submit" disabled={isSubmitting} className="yellow-btn w-full mt-5">
-                    {isSubmitting ? 'Sending reset link' : 'Send reset link'}
+                    {isSubmitting ? tx(lang, 'auth.sendingLink') : tx(lang, 'auth.sendLink')}
                 </Button>
 
-                <FooterLink text="Remembered it?" linkText="Sign in" href="/sign-in" />
+                <FooterLink text={tx(lang, 'auth.remembered')} linkText={tx(lang, 'auth.signInLink')} href="/sign-in" />
                 <OpenDevSocietyBranding outerClassName="mt-10 flex justify-center" />
             </form>
         </>

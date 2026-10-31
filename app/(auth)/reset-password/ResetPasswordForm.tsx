@@ -12,6 +12,8 @@ import OpenDevSocietyBranding from '@/components/OpenDevSocietyBranding';
 import { Button } from '@/components/ui/button';
 import { resetPasswordWithToken } from '@/lib/actions/auth.actions';
 import { PASSWORD_VALIDATION } from '@/lib/constants';
+import LangToggle, { useLang } from '@/components/LangToggle';
+import { tx } from '@/lib/i18n';
 
 type ResetPasswordFormData = {
     newPassword: string;
@@ -20,6 +22,7 @@ type ResetPasswordFormData = {
 
 const ResetPasswordForm = () => {
     const router = useRouter();
+    const lang = useLang();
     const searchParams = useSearchParams();
     const token = searchParams.get('token') ?? '';
     const error = searchParams.get('error');
@@ -75,16 +78,19 @@ const ResetPasswordForm = () => {
 
     return (
         <>
-            <h1 className="form-title">Choose a new password</h1>
+            <div className="mb-2 flex items-center justify-between">
+                <h1 className="form-title">{tx(lang, 'auth.newTitle')}</h1>
+                <LangToggle initial={lang} />
+            </div>
             <p className="text-sm text-gray-400 mb-6">
-                Enter a new password for your account.
+                {tx(lang, 'auth.newSub')}
             </p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <InputField
                     name="newPassword"
-                    label="New Password"
-                    placeholder="Enter a new password"
+                    label={tx(lang, 'pw.new')}
+                    placeholder={tx(lang, 'pw.new')}
                     type="password"
                     register={register}
                     error={errors.newPassword}
@@ -94,8 +100,8 @@ const ResetPasswordForm = () => {
 
                 <InputField
                     name="confirmPassword"
-                    label="Confirm Password"
-                    placeholder="Confirm your new password"
+                    label={tx(lang, 'auth.confirm')}
+                    placeholder={tx(lang, 'auth.confirm')}
                     type="password"
                     register={register}
                     error={errors.confirmPassword}
@@ -107,10 +113,10 @@ const ResetPasswordForm = () => {
                 />
 
                 <Button type="submit" disabled={isSubmitting} className="yellow-btn w-full mt-5">
-                    {isSubmitting ? 'Resetting password' : 'Reset password'}
+                    {isSubmitting ? tx(lang, 'auth.resetting') : tx(lang, 'auth.reset')}
                 </Button>
 
-                <FooterLink text="Need a fresh link?" linkText="Request another one" href="/forgot-password" />
+                <FooterLink text={tx(lang, 'auth.freshLink')} linkText={tx(lang, 'auth.requestAnother')} href="/forgot-password" />
                 <OpenDevSocietyBranding outerClassName="mt-10 flex justify-center" />
             </form>
         </>
