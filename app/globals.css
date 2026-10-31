@@ -148,11 +148,6 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
     }
-    /* Arabic UI: the Latin display face has no Arabic glyphs, so switch to Plex Arabic. */
-    html[lang="ar"] body {
-        font-family: var(--font-arabic), var(--font-jakarta), system-ui, sans-serif;
-        letter-spacing: 0;
-    }
     h1, h2, h3 {
         text-wrap: balance;
         letter-spacing: -0.02em;
@@ -854,4 +849,16 @@
     --tweet-body-font-size: 15px;
     --tweet-body-line-height: 1.5;
     max-width: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Arabic UI
+   The Latin display face has no Arabic glyphs, so Arabic switches to Plex Sans
+   Arabic. This sits outside every @layer on purpose: `body` carries Tailwind's
+   `font-sans` utility, and in Tailwind v4 the utilities layer beats @layer base,
+   so a rule inside the base layer would lose. Unlayered CSS always wins.
+--------------------------------------------------------------------------- */
+html[lang="ar"] body {
+    font-family: var(--font-arabic), var(--font-jakarta), system-ui, sans-serif;
+    letter-spacing: 0;
 }
