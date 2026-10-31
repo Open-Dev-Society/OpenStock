@@ -3,6 +3,7 @@ import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import ChangePill from '@/components/ChangePill';
 import { getYahooDailyQuotes } from '@/lib/actions/yahoo.actions';
 import { tadawulAppSymbol } from '@/lib/yahoo';
+import { saudiSymbolNameAr } from '@/lib/saudi-symbols';
 import { tx, type Lang } from '@/lib/i18n';
 import type { Market } from '@/lib/markets';
 
@@ -37,7 +38,8 @@ export default async function SaudiQuotesTable({ market, lang }: { market: Marke
                                 <tr key={tvSymbol} className="border-t border-line/60 transition-colors hover:bg-hover/40">
                                     <td className="px-3 py-2">
                                         <Link href={`/stocks/${appSymbol}`} className="font-semibold hover:text-brand-ink">
-                                            {name} <span className="mono text-[11px] text-faint">{appSymbol}</span>
+                                            {(lang === 'ar' && appSymbol ? saudiSymbolNameAr(appSymbol) : null) ?? name}{' '}
+                                            <span dir="ltr" className="mono text-[11px] text-faint">{appSymbol}</span>
                                         </Link>
                                     </td>
                                     <td className="num px-3 py-2 text-right font-semibold">{q ? fmt(q.price) : '—'}</td>
@@ -80,7 +82,9 @@ export async function SaudiMovers({ market, count = 8, lang }: { market: Market;
                                 {up ? <ArrowUpRight className="size-4" /> : <ArrowDownRight className="size-4" />}
                             </span>
                             <span className="min-w-0 flex-1">
-                                <span className="block truncate text-[13.5px] font-semibold">{name}</span>
+                                <span dir="auto" className="block truncate text-[13.5px] font-semibold">
+                                    {(lang === 'ar' ? saudiSymbolNameAr(tadawulAppSymbol(symbol) ?? '') : null) ?? name}
+                                </span>
                                 <span dir="ltr" className="mono block text-[11.5px] text-faint">{symbol.replace('TADAWUL:', '')}</span>
                             </span>
                             <span className="relative h-1.5 w-20 overflow-hidden rounded-full bg-hover">

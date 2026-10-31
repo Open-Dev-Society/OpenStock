@@ -3,6 +3,7 @@ import { LineChart } from 'lucide-react';
 import ChangePill from '@/components/ChangePill';
 import { tadawulAppSymbol, type YahooDailyQuote } from '@/lib/yahoo';
 import { tx, type Lang } from '@/lib/i18n';
+import { saudiSymbolNameAr } from '@/lib/saudi-symbols';
 
 const formatAmount = (value: number) =>
     value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -10,11 +11,13 @@ const formatAmount = (value: number) =>
 // Pulse tile priced from Yahoo daily quotes (SAR). Used for Tadawul, whose TradingView quote widgets are blocked in free embeds.
 export default function SaudiPulseTile({ tvSymbol, label, quote, lang }: { tvSymbol: string; label: string; quote: YahooDailyQuote | null; lang: Lang }) {
     const appSymbol = tadawulAppSymbol(tvSymbol);
+    // The Arabic table names the company the way the Arabic press does; the market config is English.
+    const title = (lang === 'ar' && appSymbol ? saudiSymbolNameAr(appSymbol) : null) ?? label;
     const body = (
         <>
             <div className="bento-head">
                 <span className="bento-ico"><LineChart /></span>
-                <span className="truncate">{label}</span>
+                <span className="truncate">{title}</span>
                 <span className="mono ms-auto text-xs text-faint">{tvSymbol.replace('TADAWUL:', '')}</span>
             </div>
             <p className="bento-value self-start num">

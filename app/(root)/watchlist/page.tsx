@@ -3,7 +3,8 @@ import { Plus } from 'lucide-react';
 import { getUserWatchlist } from '@/lib/actions/watchlist.actions';
 import { getUserAlerts } from '@/lib/actions/alert.actions';
 import { alertsEnabled } from '@/lib/market-data';
-import { getNews, getWatchlistData } from '@/lib/actions/finnhub.actions';
+import { getWatchlistData } from '@/lib/actions/finnhub.actions';
+import { getWatchlistNews } from '@/lib/actions/news.actions';
 import WatchlistTable from '@/components/watchlist/WatchlistTable';
 import AlertsPanel from '@/components/watchlist/AlertsPanel';
 import NewsList from '@/components/watchlist/NewsList';
@@ -30,7 +31,7 @@ async function Symbols({ symbols, lang }: { symbols: string[]; lang: Lang }) {
 }
 
 async function News({ symbols, lang }: { symbols: string[]; lang: Lang }) {
-    return <NewsList news={await getNews(symbols).catch(() => [] as MarketNewsArticle[])} lang={lang} />;
+    return <NewsList news={await getWatchlistNews(symbols).catch(() => [] as MarketNewsArticle[])} lang={lang} />;
 }
 
 // DB reads render first; everything from Finnhub streams in behind skeletons.

@@ -5,6 +5,8 @@ import StockHeader, { StockHeaderSkeleton } from "@/components/stocks/StockHeade
 import StockSentimentCard from "@/components/stocks/StockSentimentCard";
 import StockChart from "@/components/stocks/StockChart";
 import Panel from "@/components/Panel";
+import NewsList from "@/components/watchlist/NewsList";
+import { getCompanyNews } from "@/lib/actions/news.actions";
 import {
     TECHNICAL_ANALYSIS_WIDGET_CONFIG,
     COMPANY_PROFILE_WIDGET_CONFIG,
@@ -94,6 +96,9 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                     <Suspense fallback={null}>
                         <Sentiment symbol={symbol} lang={lang} />
                     </Suspense>
+                    <Panel title={tx(lang, 'stock.news')} sub={tx(lang, 'stock.newsSub')}>
+                        <NewsList news={await getCompanyNews(symbol, 6)} lang={lang} />
+                    </Panel>
                     <Panel title={tx(lang, 'stock.profile')} sub={tx(lang, 'stock.profileSub')}>
                         <TradingViewWidget
                             scriptUrl={`${scriptUrl}symbol-profile.js`}

@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { cookies } from "next/headers";
 import TradingViewWidget from "@/components/TradingViewWidget";
 import Panel from "@/components/Panel";
+import NewsList from "@/components/watchlist/NewsList";
+import { getSaudiMarketNews } from "@/lib/actions/news.actions";
 import IndexPulse, { PulseSkeleton } from "@/components/IndexPulse";
 import DataFreshness from "@/components/DataFreshness";
 import MarketSwitcher from "@/components/MarketSwitcher";
@@ -27,6 +29,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     const saved = (await cookies()).get(MARKET_COOKIE)?.value;
     const market = getMarket(requested ?? saved ?? marketForCountry((await getSession())?.user.country));
     const lang = await getLang();
+    // The Arabic feed is only useful to a reader who reads Arabic; other languages keep TradingView.
+    const saudiNews = market.yahoo && lang === 'ar';
     const open = isMarketOpen(market);
     const native = market.pulse.some((p) => p.finnhub);
     const pulseSub = native
@@ -95,8 +99,14 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                             <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(market.groups)} height={560} />
                         </Panel>
                     )}
-                    <Panel title={tx(lang, 'dash.stories')} sub={tx(lang, 'dash.storiesSub')} className={heatmap ? '' : 'xl:col-span-2'}>
-                        <TradingViewWidget scriptUrl={`${scriptUrl}timeline.js`} config={timelineConfig(market.news)} height={560} />
+                    <Panel
+                        title={tx(lang, saudiNews ? 'dash.news' : 'dash.stories')}
+                        sub={tx(lang, saudiNews ? 'dash.newsSub' : 'dash.storiesSub')}
+                        className={heatmap ? '' : 'xl:col-span-2'}
+                    >
+                        {saudiNews
+                            ? <NewsList news={await getSaudiMarketNews(6)} lang={lang} />
+                            : <TradingViewWidget scriptUrl={`${scriptUrl}timeline.js`} config={timelineConfig(market.news)} height={560} />}
                     </Panel>
                 </div>
             </div>
