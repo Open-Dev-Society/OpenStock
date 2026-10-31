@@ -69,9 +69,9 @@ export default async function StockHeader({ symbol, lang }: { symbol: string; la
     const money = (value?: number) => (value ? formatPrice(value, currency) : '—');
 
     const stats = [
-        { label: tx(lang, 'stock.open'), icon: CalendarClock, value: money(quote?.o), hint: 'First trade of the session' },
-        { label: tx(lang, 'stock.range'), icon: MoveVertical, value: quote?.l && quote?.h ? `${money(quote.l)} – ${money(quote.h)}` : '—', hint: 'Low to high' },
-        { label: tx(lang, 'stock.prevClose'), icon: Gauge, value: money(quote?.pc), hint: 'Last session' },
+        { label: tx(lang, 'stock.open'), icon: CalendarClock, value: money(quote?.o), hint: tx(lang, 'stock.hintOpen') },
+        { label: tx(lang, 'stock.range'), icon: MoveVertical, value: quote?.l && quote?.h ? `${money(quote.l)} – ${money(quote.h)}` : '—', hint: tx(lang, 'stock.hintRange') },
+        { label: tx(lang, 'stock.prevClose'), icon: Gauge, value: money(quote?.pc), hint: tx(lang, 'stock.hintPrevClose') },
         { label: tx(lang, 'stock.mcap'), icon: Landmark, value: profile?.marketCapitalization ? formatNumber(profile.marketCapitalization) : '—', hint: currency },
     ];
 
@@ -92,7 +92,7 @@ export default async function StockHeader({ symbol, lang }: { symbol: string; la
                     </div>
                 </div>
 
-                <StockLivePrice symbol={symbol} initial={quote} currency={currency} />
+                <StockLivePrice symbol={symbol} initial={quote} currency={currency} lang={lang} />
 
                 <div className="flex items-center gap-2">
                     <WatchlistButton symbol={symbol} company={company} isInWatchlist={isInWatchlist} lang={lang} />

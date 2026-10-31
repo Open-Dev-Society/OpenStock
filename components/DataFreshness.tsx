@@ -11,9 +11,9 @@ const DataFreshness = ({ tradeTime, lang = 'en' }: { tradeTime?: number; lang?: 
 
     useEffect(() => {
         setAsOf(tradeTime
-            ? new Date(tradeTime * 1000).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+            ? new Date(tradeTime * 1000).toLocaleString(lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
             : null);
-    }, [tradeTime]);
+    }, [tradeTime, lang]);
 
     if (isRealtime) {
         return <span className="inline-flex items-center gap-1.5 text-[12px] text-faint"><span className="live-dot" /> {tx(lang, 'fresh.live')}</span>;

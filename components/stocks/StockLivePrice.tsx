@@ -5,8 +5,9 @@ import DataFreshness from "@/components/DataFreshness";
 import PriceFlash from "@/components/PriceFlash";
 import { useLiveQuotes, type LiveQuote } from "@/hooks/useLiveQuotes";
 import { formatPrice } from "@/lib/utils";
+import type { Lang } from "@/lib/i18n";
 
-const StockLivePrice = ({ symbol, initial, currency }: { symbol: string; initial: LiveQuote | null; currency: string }) => {
+const StockLivePrice = ({ symbol, initial, currency, lang = 'en' }: { symbol: string; initial: LiveQuote | null; currency: string; lang?: Lang }) => {
     const live = useLiveQuotes([symbol]);
     const quote = live[symbol] ?? initial;
 
@@ -19,10 +20,10 @@ const StockLivePrice = ({ symbol, initial, currency }: { symbol: string; initial
                 <span className="flex items-center gap-2">
                     <ChangePill value={quote?.dp} />
                     <span className="num text-[12px] text-faint">
-                        {quote?.d != null ? `${quote.d > 0 ? '+' : ''}${quote.d.toFixed(2)}` : ''}
+                        {quote?.d != null ? <bdi>{`${quote.d > 0 ? '+' : ''}${quote.d.toFixed(2)}`}</bdi> : null}
                     </span>
                 </span>
-                <DataFreshness tradeTime={quote?.t} />
+                <DataFreshness tradeTime={quote?.t} lang={lang} />
             </div>
         </div>
     );

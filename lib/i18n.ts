@@ -61,6 +61,9 @@ const en = {
     'stock.range': 'Day range',
     'stock.prevClose': 'Prev close',
     'stock.mcap': 'Market cap',
+    'stock.hintOpen': 'First trade of the session',
+    'stock.hintRange': 'Low to high',
+    'stock.hintPrevClose': 'Last session',
     'stock.setAlert': 'Set alert',
     // Tadawul chart
     // Companies
@@ -350,6 +353,9 @@ const ar: Record<StringKey, string> = {
     'stock.range': 'نطاق اليوم',
     'stock.prevClose': 'الإغلاق السابق',
     'stock.mcap': 'القيمة السوقية',
+    'stock.hintOpen': 'أول تداول في الجلسة',
+    'stock.hintRange': 'من الأدنى إلى الأعلى',
+    'stock.hintPrevClose': 'الجلسة السابقة',
     'stock.setAlert': 'فعّل تنبيه',
     'wl.title': 'قائمة المتابعة',
     'wl.symbolsUnit': 'رمز',
