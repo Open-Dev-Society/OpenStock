@@ -11,12 +11,13 @@ import { useLiveQuotes } from "@/hooks/useLiveQuotes";
 import { SearchButton } from "@/components/SearchCommand";
 import { formatNumber, formatPrice } from "@/lib/utils";
 import { hasFinnhubQuotes } from "@/lib/markets";
+import { tx, type Lang } from "@/lib/i18n";
 import type { getWatchlistData } from "@/lib/actions/finnhub.actions";
 
 type Row = Awaited<ReturnType<typeof getWatchlistData>>[number];
 const SUGGESTIONS = ['AAPL', 'NVDA', 'MSFT', 'TSLA', 'AMZN'];
 
-export default function WatchlistTable({ initialRows }: { initialRows: Row[] }) {
+export default function WatchlistTable({ initialRows, lang }: { initialRows: Row[]; lang: Lang }) {
     const [baseRows, setBaseRows] = useState(initialRows);
     const live = useLiveQuotes(baseRows.map((r) => r.symbol));
 
@@ -32,9 +33,9 @@ export default function WatchlistTable({ initialRows }: { initialRows: Row[] }) 
         return (
             <div className="empty-state">
                 <span className="empty-icon"><Star className="size-5" /></span>
-                <h3>Nothing on your watchlist yet</h3>
-                <p className="max-w-sm">Search for a company and star it to track its price here and set alerts.</p>
-                <SearchButton className="btn btn-primary mt-3"><Search /> Search stocks</SearchButton>
+                <h3>{tx(lang, 'wl.empty')}</h3>
+                <p className="max-w-sm">{tx(lang, 'wl.emptySub')}</p>
+                <SearchButton className="btn btn-primary mt-3"><Search /> {tx(lang, 'wl.search')}</SearchButton>
                 <div className="mt-4 flex flex-wrap justify-center gap-1.5">
                     {SUGGESTIONS.map((s) => (
                         <Link key={s} href={`/stocks/${s}`} className="pill mono h-7 px-3 hover:bg-hover hover:text-foreground">{s}</Link>
@@ -49,11 +50,11 @@ export default function WatchlistTable({ initialRows }: { initialRows: Row[] }) 
             <table className="data-table">
                 <thead>
                     <tr>
-                        <th>Company</th>
-                        <th className="is-num">Price</th>
-                        <th className="is-num">Today</th>
-                        <th className="is-num">Change</th>
-                        <th className="is-num">Market cap</th>
+                        <th>{tx(lang, 'wl.company')}</th>
+                        <th className="is-num">{tx(lang, 'wl.price')}</th>
+                        <th className="is-num">{tx(lang, 'wl.today')}</th>
+                        <th className="is-num">{tx(lang, 'wl.change')}</th>
+                        <th className="is-num">{tx(lang, 'wl.mcap')}</th>
                         <th className="w-[88px]"><span className="sr-only">Actions</span></th>
                     </tr>
                 </thead>
@@ -95,6 +96,7 @@ export default function WatchlistTable({ initialRows }: { initialRows: Row[] }) 
                                         company={row.name}
                                         isInWatchlist
                                         variant="icon"
+                                        lang={lang}
                                         onWatchlistChange={(sym, added) => {
                                             if (!added) setBaseRows((current) => current.filter((r) => r.symbol !== sym));
                                         }}

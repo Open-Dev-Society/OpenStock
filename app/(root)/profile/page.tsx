@@ -8,6 +8,8 @@ import { auth, getSession } from "@/lib/better-auth/auth";
 import { getUserWatchlist } from "@/lib/actions/watchlist.actions";
 import { getUserAlerts } from "@/lib/actions/alert.actions";
 import { alertsEnabled } from "@/lib/market-data";
+import { getLang } from "@/lib/i18n-server";
+import { tx } from "@/lib/i18n";
 
 export const metadata = { title: 'Profile | OpenStock' };
 
@@ -30,11 +32,12 @@ export default async function ProfilePage() {
     const linked = new Set(accounts.map((a: { providerId: string }) => a.providerId));
     const activeAlerts = alerts.filter((a: { triggered?: boolean }) => !a.triggered).length;
     const memberSince = new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const lang = await getLang();
 
     const stats = [
-        { label: 'Watching', value: watchlist.length, icon: Star },
-        { label: alertsEnabled ? 'Active alerts' : 'Paused alerts', value: activeAlerts, icon: Bell },
-        { label: 'Sign-in methods', value: linked.size, icon: ShieldCheck },
+        { label: tx(lang, 'profile.watching'), value: watchlist.length, icon: Star },
+        { label: alertsEnabled ? tx(lang, 'profile.alerts') : tx(lang, 'profile.alertsPaused'), value: activeAlerts, icon: Bell },
+        { label: tx(lang, 'profile.methods'), value: linked.size, icon: ShieldCheck },
     ];
 
     return (
@@ -60,8 +63,9 @@ export default async function ProfilePage() {
             </section>
 
             <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
-                <Panel title="Details" sub="Your name and what your welcome email is tailored to">
+                <Panel title={tx(lang, 'profile.details')} sub={tx(lang, 'profile.detailsSub')}>
                     <ProfileForm
+                        lang={lang}
                         initial={{
                             name: user.name,
                             country: user.country ?? 'US',
@@ -73,21 +77,21 @@ export default async function ProfilePage() {
                 </Panel>
 
                 <div className="flex min-w-0 flex-col gap-3">
-                    <Panel title="Sign-in methods" sub="Ways you can get into this account">
+                    <Panel title={tx(lang, 'profile.signin')} sub={tx(lang, 'profile.signinSub')}>
                         <ul className="row-list">
                             {[...linked].map((id) => (
                                 <li key={id} className="flex items-center gap-3 px-3.5 py-3">
                                     <span className="bento-ico"><KeyRound /></span>
                                     <span className="flex-1 font-semibold">{METHOD_LABELS[id] ?? id}</span>
-                                    <span className="pill is-up">Connected</span>
+                                    <span className="pill is-up">{tx(lang, 'profile.connected')}</span>
                                 </li>
                             ))}
                         </ul>
                     </Panel>
 
                     {linked.has('credential') && (
-                        <Panel title="Password" sub="Changing it signs out your other devices">
-                            <PasswordForm />
+                        <Panel title={tx(lang, 'profile.password')} sub={tx(lang, 'profile.passwordSub')}>
+                            <PasswordForm lang={lang} />
                         </Panel>
                     )}
                 </div>

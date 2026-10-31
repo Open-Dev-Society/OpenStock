@@ -6,16 +6,18 @@ import { Star } from "lucide-react";
 import { toast } from "sonner";
 import { addToWatchlist, removeFromWatchlist } from "@/lib/actions/watchlist.actions";
 import { cn } from "@/lib/utils";
+import { tx, type Lang } from "@/lib/i18n";
 
 interface WatchlistButtonProps {
     symbol: string;
     company: string;
     isInWatchlist: boolean;
     variant?: "button" | "icon";
+    lang?: Lang;
     onWatchlistChange?: (symbol: string, added: boolean) => void;
 }
 
-const WatchlistButton = ({ symbol, company, isInWatchlist, variant = "button", onWatchlistChange }: WatchlistButtonProps) => {
+const WatchlistButton = ({ symbol, company, isInWatchlist, variant = "button", lang = "en", onWatchlistChange }: WatchlistButtonProps) => {
     const router = useRouter();
     const [added, setAdded] = useState(isInWatchlist);
     const [loading, setLoading] = useState(false);
@@ -35,19 +37,19 @@ const WatchlistButton = ({ symbol, company, isInWatchlist, variant = "button", o
                     return;
                 }
             } else await removeFromWatchlist(symbol);
-            toast.success(next ? `${symbol} added to watchlist` : `${symbol} removed from watchlist`);
+            toast.success(`${symbol} ${next ? tx(lang, 'wl.added') : tx(lang, 'wl.removed')}`);
             onWatchlistChange?.(symbol, next);
             router.refresh(); // sidebar lists the watchlist from the layout
         } catch (error) {
             console.error("Watchlist action failed:", error);
             setAdded(!next);
-            toast.error("Couldn’t update your watchlist");
+            toast.error(tx(lang, 'wl.failed'));
         } finally {
             setLoading(false);
         }
     };
 
-    const label = added ? `Remove ${symbol} from watchlist` : `Add ${symbol} to watchlist`;
+    const label = added ? `${tx(lang, 'stock.watching')} ${symbol}` : `${tx(lang, 'stock.watch')} ${symbol}`;
 
     if (variant === "icon") {
         return (
@@ -60,7 +62,7 @@ const WatchlistButton = ({ symbol, company, isInWatchlist, variant = "button", o
     return (
         <button type="button" onClick={handleClick} disabled={loading} className={cn('btn btn-ghost', added && 'is-on')} aria-pressed={added}>
             <Star fill={added ? 'currentColor' : 'none'} />
-            {added ? 'Watching' : 'Watch'}
+            {added ? tx(lang, 'stock.watching') : tx(lang, 'stock.watch')}
         </button>
     );
 };

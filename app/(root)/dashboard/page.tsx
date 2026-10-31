@@ -15,6 +15,8 @@ import {
 } from "@/lib/constants";
 import { MARKETS, MARKET_COOKIE, getMarket, isMarketOpen, marketForCountry } from "@/lib/markets";
 import { getSession } from "@/lib/better-auth/auth";
+import { getLang } from "@/lib/i18n-server";
+import { tx } from "@/lib/i18n";
 
 const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
 
@@ -24,9 +26,12 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     // Explicit choice, then the remembered one, then the market of the user's country
     const saved = (await cookies()).get(MARKET_COOKIE)?.value;
     const market = getMarket(requested ?? saved ?? marketForCountry((await getSession())?.user.country));
+    const lang = await getLang();
     const open = isMarketOpen(market);
     const native = market.pulse.some((p) => p.finnhub);
-    const pulseSub = native ? 'Our shared quotes via Finnhub' : market.yahoo ? 'Delayed quotes via Yahoo Finance' : `${market.feed} quotes via TradingView`;
+    const pulseSub = native
+        ? tx(lang, 'dash.pulseFinnhub')
+        : market.yahoo ? tx(lang, 'dash.pulseYahoo') : `${market.feed} quotes via TradingView`;
     const heatmap = market.heatmap === 'stocks'
         ? { script: 'stock-heatmap.js', config: STOCK_HEATMAP_CONFIG, title: 'S&P 500 heatmap' }
         : market.heatmap === 'crypto'
@@ -37,8 +42,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         <>
             <header className="page-head">
                 <div>
-                    <h1 className="page-title">Markets</h1>
-                    <p className="page-sub">{market.name} · {open ? 'open now' : 'closed now'} · {market.feed.toLowerCase()} data</p>
+                    <h1 className="page-title">{tx(lang, 'dash.title')}</h1>
+                    <p className="page-sub">{market.name} · {open ? tx(lang, 'dash.openNow') : tx(lang, 'dash.closedNow')} · {market.feed.toLowerCase()} data</p>
                 </div>
             </header>
 
@@ -47,25 +52,25 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             <section className="hatch">
                 <div className="section-head">
                     <div>
-                        <h2 className="section-title">Pulse</h2>
+                        <h2 className="section-title">{tx(lang, 'dash.pulse')}</h2>
                         <p className="section-sub">{pulseSub}</p>
                     </div>
                     {native && <DataFreshness />}
                 </div>
                 {/* Keyed so switching markets swaps the tiles instead of reusing old widgets */}
                 <Suspense key={market.id} fallback={<PulseSkeleton />}>
-                    <IndexPulse market={market} />
+                    <IndexPulse market={market} lang={lang} />
                 </Suspense>
             </section>
 
             <div key={market.id} className="flex flex-col gap-3">
                 <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
                     {market.yahoo ? (
-                        <Panel title="Movers" sub="Biggest moves today">
-                            <SaudiMovers market={market} />
+                        <Panel title={tx(lang, 'dash.movers')} sub={tx(lang, 'dash.moversSub')}>
+                            <SaudiMovers market={market} lang={lang} />
                         </Panel>
                     ) : (
-                        <Panel title="Leaders" sub="12-month trend by group">
+                        <Panel title={tx(lang, 'dash.leaders')} sub={tx(lang, 'dash.leadersSub')}>
                             <TradingViewWidget scriptUrl={`${scriptUrl}market-overview.js`} config={marketOverviewConfig(market.groups)} height={560} />
                         </Panel>
                     )}
@@ -74,9 +79,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                             <TradingViewWidget scriptUrl={`${scriptUrl}${heatmap.script}`} config={heatmap.config} height={560} allowExpand />
                         </Panel>
                     ) : (
-                        <Panel title="Quotes" sub={`${market.name} leaders by group`}>
+                        <Panel title={tx(lang, 'dash.quotes')} sub={`${market.name} · ${tx(lang, 'dash.byGroup')}`}>
                             {market.yahoo
-                                ? <SaudiQuotesTable market={market} />
+                                ? <SaudiQuotesTable market={market} lang={lang} />
                                 : <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(market.groups)} height={560} />}
                         </Panel>
                     )}
@@ -84,11 +89,11 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
                 <div className="grid gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                     {heatmap && (
-                        <Panel title="Quotes" sub={`${market.name} leaders by group`}>
+                        <Panel title={tx(lang, 'dash.quotes')} sub={`${market.name} · ${tx(lang, 'dash.byGroup')}`}>
                             <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(market.groups)} height={560} />
                         </Panel>
                     )}
-                    <Panel title="Top stories" sub="Newest first" className={heatmap ? '' : 'xl:col-span-2'}>
+                    <Panel title={tx(lang, 'dash.stories')} sub={tx(lang, 'dash.storiesSub')} className={heatmap ? '' : 'xl:col-span-2'}>
                         <TradingViewWidget scriptUrl={`${scriptUrl}timeline.js`} config={timelineConfig(market.news)} height={560} />
                     </Panel>
                 </div>
