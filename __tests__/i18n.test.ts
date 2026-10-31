@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { STRINGS, alignmentLabel, arDigits, arNumberDigits, choiceLabel, feedWord, marketName, trendLabel, tx, typeLabel, type Lang } from '@/lib/i18n';
+import { STRINGS, alignmentLabel, arDigits, arNumberDigits, choiceLabel, feedWord, marketName, metricLabel, pulseLabel, sectorLabel, sourceLabel, trendLabel, tx, typeLabel, type Lang } from '@/lib/i18n';
 
 describe('i18n dictionaries', () => {
     const langs: Lang[] = ['en', 'ar'];
@@ -84,5 +84,34 @@ describe('Arabic digits', () => {
     it('isolates a formatted amount so the RTL paragraph cannot reorder it', () => {
         // U+2066 LRI … U+2069 PDI: without the pair "25.92" can render as "92.25"-looking text.
         expect(arDigits('25.92', 'ar')).toBe('\u2066٢٥.٩٢\u2069');
+    });
+});
+
+describe('dashboard vocabulary', () => {
+    it('translates the sector titles of lib/markets.ts', () => {
+        expect(sectorLabel('en', 'Banks')).toBe('Banks');
+        expect(sectorLabel('ar', 'Banks')).toBe('البنوك');
+        expect(sectorLabel('ar', 'Energy & materials')).toBe('الطاقة والمواد');
+    });
+
+    it('translates the pulse labels we render, and passes company names through', () => {
+        expect(pulseLabel('en', 'Dow 30')).toBe('Dow 30');
+        expect(pulseLabel('ar', 'Dow 30')).toBe('داو جونز ٣٠');
+        expect(pulseLabel('ar', 'Bitcoin')).toBe('بيتكوين');
+        // Company names are data, not vocabulary: they stay exactly as the market config sends them.
+        expect(pulseLabel('ar', 'Siemens')).toBe('Siemens');
+        expect(sectorLabel('ar', 'SomethingNew')).toBe('SomethingNew');
+    });
+
+    it('translates the sentiment metric words, and lowercases anything unknown', () => {
+        expect(metricLabel('en', 'Mentions')).toBe('mentions');
+        expect(metricLabel('ar', 'Mentions')).toBe('إشارة');
+        expect(metricLabel('ar', 'Trades')).toBe('صفقة');
+        expect(metricLabel('en', 'Reactions')).toBe('reactions');
+    });
+
+    it('translates the news source name but leaves the brands alone', () => {
+        expect(sourceLabel('ar', 'News')).toBe('أخبار');
+        expect(sourceLabel('ar', 'Reddit')).toBe('Reddit');
     });
 });
