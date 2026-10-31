@@ -17,6 +17,7 @@ const countDocuments = vi.fn();
 const deleteOne = vi.fn();
 const findOverflow = vi.fn();
 const init = vi.fn();
+const sortCalls: unknown[] = [];
 vi.mock('@/database/models/watchlist-list.model', () => ({
     WatchlistList: {
         findOneAndUpdate: (...args: unknown[]) => findOneAndUpdate(...args),
@@ -25,16 +26,25 @@ vi.mock('@/database/models/watchlist-list.model', () => ({
         create: (...args: unknown[]) => create(...args),
         countDocuments: (...args: unknown[]) => countDocuments(...args),
         deleteOne: (...args: unknown[]) => deleteOne(...args),
-        // The rank query: find().sort().select()
+        // The rank query: find().sort().select(). The sort argument is recorded so a
+        // regression in the ordering cannot pass silently.
         find: () => ({
-            sort: () => ({ select: () => findOverflow() }),
+            sort: (arg: unknown) => {
+                sortCalls.push(arg);
+                return { select: () => findOverflow() };
+            },
         }),
         init: (...args: unknown[]) => init(...args),
         exists: vi.fn().mockResolvedValue(false),
     },
 }));
 
-import { addSymbolToList, createWatchlistList, removeSymbolFromList } from '@/lib/actions/watchlist-lists.actions';
+import {
+    addSymbolToList,
+    createWatchlistList,
+    removeSymbolFromList,
+    type WatchlistListSummary,
+} from '@/lib/actions/watchlist-lists.actions';
 import { MAX_LIST_SYMBOLS, MAX_LISTS } from '@/lib/watchlist-lists';
 
 const LIST_ID = '6ae5ddcacd4956020465901d';
@@ -157,6 +167,8 @@ describe('createWatchlistList keeps the ten-list cap honest', () => {
             error: `You can keep ${MAX_LISTS} lists. Delete one to make room.`,
         });
         expect(deleteOne).toHaveBeenCalledWith({ _id: LIST_ID, userId: USER });
+        // The rank depends on this ordering: oldest first, so the newest row is the one trimmed.
+        expect(sortCalls.at(-1)).toEqual({ _id: 1 });
     });
 
     it('keeps its own row when the other tab is the one beyond the cap', async () => {
@@ -185,5 +197,59 @@ describe('createWatchlistList keeps the ten-list cap honest', () => {
 
         await expect(createWatchlistList('Banks')).rejects.toThrow('Failed to create the list');
         expect(deleteOne).toHaveBeenCalledWith({ _id: LIST_ID, userId: USER });
+    });
+});
+
+describe('two creates that overlap', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        requireUserId.mockResolvedValue(USER);
+    });
+
+    it('never lets one request delete a row the other reported as created', async () => {
+        // A shared in-memory fixture. Old ids sort before new ones, the way ObjectIds do.
+        const rows = Array.from({ length: MAX_LISTS - 1 }, (_, i) => ({
+            _id: `a${String(i).padStart(2, '0')}`,
+            name: `Old ${i}`,
+        }));
+        let inserts = 0;
+        let release: () => void = () => {};
+        const bothInserted = new Promise<void>((resolve) => {
+            release = resolve;
+        });
+
+        countDocuments.mockImplementation(async () => rows.length);
+        create.mockImplementation(async (doc: { name: string }) => {
+            const row = { _id: `b${++inserts}`, name: doc.name, symbols: [] };
+            rows.push(row);
+            if (inserts === 2) release();
+            await bothInserted; // neither recount runs before both rows exist
+            return row;
+        });
+        let snapshots = 0;
+        findOverflow.mockImplementation(async () => {
+            snapshots += 1;
+            if (snapshots === 2) {
+                // The second request reads only after the first has finished its cleanup: this is
+                // the ordering in which a shared deletion used to remove the other tab's row.
+                await new Promise((resolve) => setTimeout(resolve, 10));
+            }
+            return [...rows].sort((a, b) => (a._id < b._id ? -1 : 1)).map((row) => ({ _id: row._id }));
+        });
+        deleteOne.mockImplementation(async (filter: { _id: string }) => {
+            const at = rows.findIndex((row) => row._id === filter._id);
+            if (at >= 0) rows.splice(at, 1);
+        });
+
+        const results = await Promise.all([createWatchlistList('First'), createWatchlistList('Second')]);
+
+        // The cap held: eleven candidates, ten survivors.
+        expect(rows).toHaveLength(MAX_LISTS);
+        const created = results.filter((result): result is WatchlistListSummary => 'id' in result);
+        const refused = results.filter((result) => 'error' in result);
+        expect(created).toHaveLength(1);
+        expect(refused).toHaveLength(1);
+        // A success must never point at a row another request deleted on its way out.
+        expect(rows.some((row) => row._id === created[0].id)).toBe(true);
     });
 });
