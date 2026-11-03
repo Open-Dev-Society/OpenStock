@@ -19,7 +19,7 @@ export default function PasswordForm({ lang }: { lang: Lang }) {
     const onSubmit = async (values: PasswordInput) => {
         const result = await changePassword(values);
         if (!result.success) {
-            toast.error(tx(lang, 'pw.failed'), { description: result.error });
+            toast.error(tx(lang, 'pw.failed'), { description: tx(lang, result.code) });
             return;
         }
         toast.success(tx(lang, 'pw.changed'), { description: tx(lang, 'pw.changedSub') });

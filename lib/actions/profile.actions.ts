@@ -45,7 +45,10 @@ export async function updateProfile(input: ProfileInput) {
     }
 }
 
-export async function changePassword({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) {
+// The failure is a dictionary key, not prose: the form renders it in the reader's language.
+export type ChangePasswordResult = { success: true } | { success: false; code: 'pw.badCurrent' };
+
+export async function changePassword({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }): Promise<ChangePasswordResult> {
     try {
         await auth.api.changePassword({
             headers: await headers(),
@@ -54,6 +57,6 @@ export async function changePassword({ currentPassword, newPassword }: { current
         return { success: true };
     } catch (e) {
         console.error('Password change failed', e);
-        return { success: false, error: 'Current password is incorrect, or the new one is too short.' };
+        return { success: false, code: 'pw.badCurrent' };
     }
 }
