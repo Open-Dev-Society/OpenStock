@@ -42,11 +42,17 @@ export const MAX_FEED_BYTES = 512 * 1024;
 /** Stories older than this are noise on a "what moved today" page. */
 export const MAX_ITEM_AGE_DAYS = 14;
 
+// A numeric reference can name a code point outside Unicode (a broken feed). `String.fromCodePoint`
+// throws on those, and the throw would abort the whole parse and drop every valid story beside it,
+// so an out-of-range value is left as the text the feed typed.
+const codePoint = (value: number, fallback: string): string =>
+    Number.isInteger(value) && value >= 0 && value <= 0x10ffff ? String.fromCodePoint(value) : fallback;
+
 export const decodeEntities = (value: string): string =>
     value
         .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
-        .replace(/&#x([0-9a-f]+);/gi, (_, code: string) => String.fromCodePoint(Number.parseInt(code, 16)))
-        .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
+        .replace(/&#x([0-9a-f]+);/gi, (entity, code: string) => codePoint(Number.parseInt(code, 16), entity))
+        .replace(/&#(\d+);/g, (entity, code: string) => codePoint(Number(code), entity))
         .replace(/&[a-z#0-9]+;/gi, (entity) => ENTITIES[entity.toLowerCase()] ?? entity)
         .trim();
 
@@ -142,8 +148,14 @@ export function buildNewsQuery({ ticker, name, lang }: { ticker: string; name?: 
     return label ? `"${label}" stock` : null;
 }
 
-const isFresh = (item: RssNewsItem, now: number, days = MAX_ITEM_AGE_DAYS): boolean =>
-    !item.datetime || (now - item.datetime) / 86_400 <= days;
+/** Allow small publisher clock skew. A timestamp further ahead is a bad feed value, not news. */
+const MAX_FUTURE_SKEW_SECONDS = 60 * 60;
+
+const isFresh = (item: RssNewsItem, now: number, days = MAX_ITEM_AGE_DAYS): boolean => {
+    if (!item.datetime) return true;
+    const age = now - item.datetime;
+    return age >= -MAX_FUTURE_SKEW_SECONDS && age / 86_400 <= days;
+};
 
 const dedupe = (items: RssNewsItem[]): RssNewsItem[] => {
     const seen = new Set<string>();
@@ -159,7 +171,10 @@ const dedupe = (items: RssNewsItem[]): RssNewsItem[] => {
 /** Dedupe, drop stale stories, sort newest first and keep at most `max`. */
 export function mergeNews(items: RssNewsItem[], max: number, now = Date.now()): RssNewsItem[] {
     const nowSeconds = Math.floor(now / 1000);
-    return dedupe(items.filter((item) => isFresh(item, nowSeconds)))
-        .sort((a, b) => b.datetime - a.datetime)
-        .slice(0, max);
+    // Sort before dedupe: the kept copy of a repeated headline is then the newest one rather than
+    // whichever feed happened to answer first.
+    const newestFirst = items
+        .filter((item) => isFresh(item, nowSeconds))
+        .sort((a, b) => b.datetime - a.datetime);
+    return dedupe(newestFirst).slice(0, max);
 }

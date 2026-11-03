@@ -8,7 +8,7 @@ import { hasFinnhubQuotes } from '@/lib/markets';
 import { getYahooDailyQuotes } from '@/lib/actions/yahoo.actions';
 import { isTadawulSymbol } from '@/lib/yahoo';
 import { getSession } from '@/lib/better-auth/auth';
-import { searchSaudiSymbols } from '@/lib/saudi-symbols';
+import { searchSaudiSymbols, saudiSecurityType } from '@/lib/saudi-symbols';
 
 const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
 // Key pool: each free key has its own 60 req/min, so N keys = N x the quota. Rotated per request.
@@ -343,11 +343,11 @@ export const searchStocks = cache(async (query?: string): Promise<StockWithWatch
 
         // Arabic names never reach Finnhub: its index is Latin-only. The local table answers them
         // first, so a reader who types "أرامكو" does not have to know the ticker.
-        const local: SearchStockCandidate[] = searchSaudiSymbols(trimmed).map(({ symbol, name }) => ({
-            symbol,
-            description: name,
-            displaySymbol: symbol,
-            type: 'Common Stock',
+        const local: SearchStockCandidate[] = searchSaudiSymbols(trimmed).map((entry) => ({
+            symbol: entry.symbol,
+            description: entry.name,
+            displaySymbol: entry.symbol,
+            type: saudiSecurityType(entry),
             __exchange: 'SR',
         }));
 

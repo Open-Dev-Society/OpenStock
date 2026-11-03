@@ -8,7 +8,7 @@ import { alertsEnabled } from "@/lib/market-data";
 import { formatPrice } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { tx, type Lang } from "@/lib/i18n";
+import { tx, arDigits, type Lang } from "@/lib/i18n";
 
 interface CreateAlertModalProps {
     symbol: string;
@@ -111,8 +111,8 @@ export default function CreateAlertModal({ symbol, currentPrice, currency = 'USD
                                         : alreadyMet
                                             ? tx(lang, condition === 'ABOVE' ? 'alertModal.alreadyAbove' : 'alertModal.alreadyBelow')
                                             : [
-                                                tx(lang, 'alertModal.now').replace('{p}', formatPrice(currentPrice!, currency)),
-                                                ...(distance === null ? [] : [tx(lang, 'alertModal.away').replace('{n}', `${distance > 0 ? '+' : ''}${distance.toFixed(2)}`)]),
+                                                tx(lang, 'alertModal.now').replace('{p}', formatPrice(currentPrice!, currency, lang)),
+                                                ...(distance === null ? [] : [tx(lang, 'alertModal.away').replace('{n}', arDigits(`${distance > 0 ? '+' : ''}${distance.toFixed(2)}`, lang))]),
                                             ].join(' · ')}
                                 </span>
                             </label>

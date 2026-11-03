@@ -39,6 +39,11 @@ describe('decodeEntities', () => {
     it('leaves an unknown entity alone instead of dropping the text', () => {
         expect(decodeEntities('100&fake;')).toBe('100&fake;');
     });
+
+    it('leaves an out-of-range numeric reference as text instead of throwing', () => {
+        expect(decodeEntities('a&#9999999999;b')).toBe('a&#9999999999;b');
+        expect(decodeEntities('a&#x110000;b')).toBe('a&#x110000;b');
+    });
 });
 
 describe('safeUrl', () => {
@@ -191,5 +196,20 @@ describe('mergeNews', () => {
     it('keeps an item with no date instead of guessing', () => {
         const undated = { ...at(1, 'بلا تاريخ'), datetime: 0 };
         expect(mergeNews([undated], 8)).toHaveLength(1);
+    });
+
+    it('keeps the newest copy when the same headline arrives twice', () => {
+        const older = at(3, 'قصة مكررة');
+        const newer = at(1, 'قصة مكررة');
+        const merged = mergeNews([older, newer], 5);
+        expect(merged).toHaveLength(1);
+        expect(merged[0].datetime).toBe(newer.datetime);
+    });
+
+    it('drops a timestamp too far in the future instead of sorting it first', () => {
+        const future = { ...at(1, 'مستقبلي'), datetime: Math.floor(Date.now() / 1000) + 86_400 };
+        const skew = { ...at(1, 'انحراف'), datetime: Math.floor(Date.now() / 1000) + 60 };
+        const merged = mergeNews([future, skew], 8);
+        expect(merged.map((i) => i.headline)).toEqual(['انحراف']);
     });
 });

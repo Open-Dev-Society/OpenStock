@@ -79,15 +79,19 @@ const newsSymbols = (symbols: string[]): string[] => [
 
 /** One feed per symbol, in the requested language. */
 async function feedNews(symbols: string[], max: number, lang: Lang): Promise<MarketNewsArticle[]> {
-    const wanted = newsSymbols(symbols).slice(0, MAX_SYMBOLS);
-    if (wanted.length === 0) return [];
+    // Build the queries first: symbols without one (Latin tickers in Arabic are fine, but an English
+    // query is null without a name) must not spend a slot in the per-symbol cap.
+    const searches = newsSymbols(symbols)
+        .map((symbol) => {
+            const name = lang === 'ar' ? saudiSymbolNameAr(symbol) : saudiSymbolName(symbol);
+            return { symbol, query: buildNewsQuery({ ticker: symbol, name, lang }) };
+        })
+        .filter((search): search is { symbol: string; query: string } => search.query !== null)
+        .slice(0, MAX_SYMBOLS);
+    if (searches.length === 0) return [];
 
     const feeds = await Promise.all(
-        wanted.map((symbol) => {
-            const name = lang === 'ar' ? saudiSymbolNameAr(symbol) : saudiSymbolName(symbol);
-            const query = buildNewsQuery({ ticker: symbol, name, lang });
-            return query ? fetchFeed(query, symbol, PER_SYMBOL, lang) : Promise.resolve([] as RssNewsItem[]);
-        })
+        searches.map(({ symbol, query }) => fetchFeed(query, symbol, PER_SYMBOL, lang))
     );
 
     return mergeNews(feeds.flat(), max).map(toArticle);
@@ -95,7 +99,9 @@ async function feedNews(symbols: string[], max: number, lang: Lang): Promise<Mar
 
 /** Finnhub's wire, for the symbols it actually covers. */
 async function wireNews(symbols: string[], max: number): Promise<MarketNewsArticle[]> {
-    const known = newsSymbols(symbols).filter(hasFinnhubQuotes);
+    // One `company-news` request per symbol, and this runs from a public server action, so the list
+    // is capped the same way `feedNews` caps its feeds.
+    const known = newsSymbols(symbols).filter(hasFinnhubQuotes).slice(0, MAX_SYMBOLS);
     if (known.length === 0) return [];
     const articles = await getNews(known).catch(() => [] as MarketNewsArticle[]);
     return articles.slice(0, max);
@@ -124,5 +130,9 @@ export async function getWatchlistNews(symbols: string[], max = 8, lang: Lang = 
 
 /** One stock page. */
 export async function getCompanyNews(symbol: string, max = 6, lang: Lang = 'en'): Promise<MarketNewsArticle[]> {
-    return getWatchlistNews([symbol], max, lang);
+    const ticker = symbol.trim().toUpperCase();
+    const news = await getWatchlistNews([ticker], max, lang);
+    // When Finnhub has no company news for the ticker it answers with general market headlines;
+    // the stock page wants this company's stories or none.
+    return news.filter((article) => article.related === ticker);
 }

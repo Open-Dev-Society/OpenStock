@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import {Toaster} from "@/components/ui/sonner";
 import OntoLaunchCard from "@/components/OntoLaunchCard";
 import { getLang } from "@/lib/i18n-server";
+import { LangProvider } from "@/components/shell/LangProvider";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -39,7 +40,7 @@ export default async function RootLayout({
             <body
                 className={`${jakarta.variable} ${arabic.variable} ${plexMono.variable} font-sans antialiased`}
             >
-                {children}
+                <LangProvider lang={lang}>{children}</LangProvider>
                 <Toaster/>
                 <OntoLaunchCard />
                 <Analytics />

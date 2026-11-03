@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
     SAUDI_SYMBOLS,
+    saudiSecurityType,
     searchSaudiSymbols,
     normalizeArabic,
     saudiSymbolName,
@@ -21,6 +22,10 @@ describe('normalizeArabic', () => {
         expect(normalizeArabic('أَرَامْكُو')).toBe('ارامكو');
         expect(normalizeArabic('ســـابك')).toBe('سابك');
         expect(normalizeArabic('  سابك!  ')).toBe('سابك');
+    });
+
+    it('folds the Persian yeh so a typed Arabic yeh still matches', () => {
+        expect(normalizeArabic('حدید')).toBe(normalizeArabic('حديد'));
     });
 });
 
@@ -62,6 +67,20 @@ describe('searchSaudiSymbols', () => {
 
     it('caps the list', () => {
         expect(searchSaudiSymbols('ال', 3).length).toBeLessThanOrEqual(3);
+    });
+
+    it('does not match a short name inside a longer, unrelated word', () => {
+        // "صدر" (Sadr) must not surface for "مصدر", which merely contains those letters.
+        expect(searchSaudiSymbols('مصدر').some((entry) => entry.symbol === '1832.SR')).toBe(false);
+        expect(searchSaudiSymbols('مصدر الطاقة').some((entry) => entry.symbol === '1832.SR')).toBe(false);
+    });
+
+    it('still matches a name carrying an attached prefix, like بالراجحي', () => {
+        expect(searchSaudiSymbols('بالراجحي')[0]?.symbol).toBe('1120.SR');
+    });
+
+    it('finds a listing whose stored name uses the Persian yeh', () => {
+        expect(searchSaudiSymbols('حديد وطني')[0]?.symbol).toBe('1325.SR');
     });
 });
 
@@ -105,5 +124,14 @@ describe('the Saudi table itself', () => {
         expect(searchSaudiSymbols('فش فاش')[0]?.symbol).toBe('9515.SR');
         expect(searchSaudiSymbols('إنمار')[0]?.symbol).toBe('9521.SR');
         expect(searchSaudiSymbols('الناقول')[0]?.symbol).toBe('9514.SR');
+    });
+});
+
+describe('saudiSecurityType', () => {
+    it('labels a REIT fund as REIT and everything else as a common stock', () => {
+        expect(saudiSecurityType({ name: 'Riyad REIT', nameAr: 'الرياض ريت' })).toBe('REIT');
+        expect(saudiSecurityType({ name: 'Saudi Arabian Oil Co.', nameAr: 'أرامكو السعودية' })).toBe('Common Stock');
+        // "Retal" contains the letters but is not a REIT.
+        expect(saudiSecurityType({ name: 'Retal Urban Development Company', nameAr: 'رتال' })).toBe('Common Stock');
     });
 });

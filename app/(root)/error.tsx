@@ -1,20 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AlertTriangle } from 'lucide-react';
-import { LANG_COOKIE, isLang, tx, type Lang } from '@/lib/i18n';
+import { tx } from '@/lib/i18n';
+import { useLang } from '@/components/shell/LangProvider';
 
 // Keeps the shell (and the navigation the user was in) alive when a page throws, and answers in the
-// interface language. The boundary is a client component, so the language comes from the cookie the
-// server already wrote instead of a round trip.
+// interface language. The language comes from the provider the root layout fills with the cookie
+// the server already read, so the first render is already in the reader's language.
 export default function Error({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
-    const [lang, setLang] = useState<Lang>('en');
-
-    useEffect(() => {
-        const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${LANG_COOKIE}=([^;]*)`));
-        if (isLang(match?.[1])) setLang(match[1]);
-    }, []);
+    const lang = useLang();
 
     return (
         <div className="card hatch p-6 text-center">

@@ -10,7 +10,7 @@ import { getUserAlerts } from "@/lib/actions/alert.actions";
 import { alertsEnabled } from "@/lib/market-data";
 import { getLang } from "@/lib/i18n-server";
 import { methodLabel, tx, type Lang } from "@/lib/i18n";
-import { arNumberDigits } from '@/lib/i18n';
+import { arDigits, arNumberDigits } from '@/lib/i18n';
 
 export const generateMetadata = async () => {
     const lang = await getLang();
@@ -62,7 +62,7 @@ export default async function ProfilePage() {
                     {stats.map(({ label, value, icon: Icon }) => (
                         <div key={label} className="bento-tile col-span-4 gap-2.5 max-lg:col-span-12">
                             <div className="bento-head"><span className="bento-ico"><Icon /></span>{label}</div>
-                            <p className="bento-value text-[26px]">{value}</p>
+                            <p className="bento-value text-[26px]">{arDigits(value, lang)}</p>
                         </div>
                     ))}
                 </div>

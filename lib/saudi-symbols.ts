@@ -431,6 +431,14 @@ export const saudiSymbolName = (symbol: string): string | null =>
 export const saudiSymbolNameAr = (symbol: string): string | null =>
     BY_SYMBOL.get((symbol || '').trim().toUpperCase())?.nameAr ?? null;
 
+/**
+ * The security type for a search result. The table carries no per-row type, so a REIT fund is
+ * recognised by its name — "Riyad REIT", "الرياض ريت" — and everything else is a common stock.
+ * Without this, every Arabic result was labelled "Common Stock", REITs included.
+ */
+export const saudiSecurityType = (entry: Pick<SaudiSymbol, 'name' | 'nameAr'>): string =>
+    /\breit\b|ريت/i.test(`${entry.name} ${entry.nameAr}`) ? 'REIT' : 'Common Stock';
+
 type IndexEntry = { entry: SaudiSymbol; keys: string[] };
 
 const INDEX: IndexEntry[] = SAUDI_SYMBOLS.map((entry) => ({
@@ -446,6 +454,7 @@ export function normalizeArabic(value: string): string {
         .replace(MARKS, '')
         .replace(/[أإآٱ]/g, 'ا')
         .replace(/ى/g, 'ي')
+        .replace(/ی/g, 'ي')
         .replace(/ؤ/g, 'و')
         .replace(/ئ/g, 'ي')
         .replace(/ة/g, 'ه')
@@ -454,6 +463,19 @@ export function normalizeArabic(value: string): string {
         .trim();
 }
 
+// The clitic letters a reader attaches to a word ("بالراجحي", "والراجحي").
+const CLITIC = '[وفبكل]';
+
+/**
+ * True when `key` lines up with a whole word of the (longer) query, allowing one attached clitic
+ * letter. This keeps "شركة صدر" and "بالراجحي" matching while a short name like "صدر" no longer
+ * fires on an unrelated word that merely contains it, such as "مصدر".
+ */
+const containsAsWord = (query: string, key: string): boolean => {
+    const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`(?:^|\\s)${CLITIC}?${escaped}(?:\\s|$)`).test(query);
+};
+
 // A longer query that still matches is a more specific match, so length breaks ties.
 const score = (key: string, query: string): number => {
     if (key === query) return 100;
@@ -461,7 +483,7 @@ const score = (key: string, query: string): number => {
     if (key.includes(` ${query}`)) return 50 + query.length;
     if (key.includes(query)) return 30 + query.length;
     // The reader typed more than the stored name, e.g. "شركة الاتصالات السعودية".
-    if (query.includes(key)) return 20 + key.length;
+    if (containsAsWord(query, key)) return 20 + key.length;
     return 0;
 };
 

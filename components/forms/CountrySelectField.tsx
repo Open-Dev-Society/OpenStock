@@ -114,6 +114,7 @@ const CountrySelect = ({
                                 <CommandItem
                                     key={country.value}
                                     value={`${countryLabel(lang, country)} ${country.value}`}
+                                    keywords={[country.label]}
                                     onSelect={() => {
                                         onChange(country.value);
                                         setOpen(false);
