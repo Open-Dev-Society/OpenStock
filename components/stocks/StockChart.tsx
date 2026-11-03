@@ -6,7 +6,7 @@ import TradingViewWidget from "@/components/TradingViewWidget";
 import Panel from "@/components/Panel";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CANDLE_CHART_WIDGET_CONFIG } from "@/lib/constants";
-import { indicatorLabel, tx, type Lang } from "@/lib/i18n";
+import { indicatorLabel, tvLocale, tx, type Lang } from "@/lib/i18n";
 
 // The free embed can't save indicators added inside it, so the ones picked here are kept per browser and
 // passed in as `studies` on every chart. Each id was checked on a live advanced-chart embed.
@@ -63,7 +63,7 @@ export default function StockChart({ tvSymbol, scriptUrl, lang = 'en' }: { tvSym
     return (
         <Panel title={tx(lang, 'stock.chart')} sub={tx(lang, 'stock.chartLive')} action={menu}>
             {studies ? (
-                <TradingViewWidget scriptUrl={scriptUrl} config={{ ...CANDLE_CHART_WIDGET_CONFIG(tvSymbol), studies }} height={CHART_HEIGHT} allowExpand />
+                <TradingViewWidget scriptUrl={scriptUrl} config={{ ...CANDLE_CHART_WIDGET_CONFIG(tvSymbol, tvLocale(lang)), studies }} height={CHART_HEIGHT} allowExpand />
             ) : (
                 <div className="tv-frame" style={{ height: CHART_HEIGHT }} />
             )}

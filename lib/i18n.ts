@@ -112,6 +112,7 @@ const en = {
     'pw.changed': 'Password changed',
     'pw.changedSub': 'Other devices were signed out.',
     'pw.failed': 'Password not changed',
+    'pw.badCurrent': 'That current password is wrong, or the new one is too short.',
     'news.empty': 'No recent news',
     // Shared (a11y, boundary pages, currency text)
     'common.loading': 'Loading',
@@ -479,6 +480,7 @@ const ar: Record<StringKey, string> = {
     'pw.changed': 'تم تغيير كلمة المرور',
     'pw.changedSub': 'تم تسجيل خروج الأجهزة الأخرى.',
     'pw.failed': 'لم تتغير كلمة المرور',
+    'pw.badCurrent': 'كلمة المرور الحالية غير صحيحة، أو الجديدة أقصر من المسموح.',
     'news.empty': 'لا أخبار حديثة',
     'common.loading': 'جارٍ التحميل',
     'common.retry': 'أعد المحاولة',
@@ -787,8 +789,8 @@ export const pwRuleLabel = (lang: Lang, label: string): string =>
 export const methodLabel = (lang: Lang, id: string, fallback: string): string =>
     METHOD_KEYS[id] ? tx(lang, METHOD_KEYS[id]) : fallback;
 
-// TradingView's own widget chrome (menus, tooltips inside the iframe) stays English on
-// purpose: asking the embeds for ar_AE makes them request a fallback support URL that 403s.
+/** The locale the TradingView embeds take: they spell Arabic `ar_AE`, not `ar`. */
+export const tvLocale = (lang: Lang): string => (lang === 'ar' ? 'ar_AE' : 'en');
 
 /** TradingView indicator ids, labelled in the dictionary. */
 const INDICATOR_KEYS: Record<string, StringKey> = {

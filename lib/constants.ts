@@ -45,10 +45,11 @@ export const CONDITION_OPTIONS = [
 // TradingView widgets, built per market from lib/markets.ts groups
 type SymbolGroup = { title: string; symbols: [symbol: string, name: string][] };
 
-export const marketOverviewConfig = (groups: SymbolGroup[]) => ({
+// `locale` is the page language, spelled the way TradingView spells it (see tvLocale in lib/i18n.ts)
+export const marketOverviewConfig = (groups: SymbolGroup[], locale = 'en') => ({
     colorTheme: 'dark',
     dateRange: '12M',
-    locale: 'en',
+    locale,
     largeChartUrl: '',
     isTransparent: true,
     showFloatingTooltip: true,
@@ -67,8 +68,8 @@ export const marketOverviewConfig = (groups: SymbolGroup[]) => ({
     showChart: true,
 });
 
-export const marketQuotesConfig = (groups: SymbolGroup[]) => ({
-    locale: 'en',
+export const marketQuotesConfig = (groups: SymbolGroup[], locale = 'en') => ({
+    locale,
     showSymbolLogo: true,
     colorTheme: 'dark',
     isTransparent: true,
@@ -107,31 +108,31 @@ export const CRYPTO_HEATMAP_CONFIG = {
     isTransparent: true,
 };
 
-export const timelineConfig = (market: 'stock' | 'crypto' | 'forex') => ({
+export const timelineConfig = (market: 'stock' | 'crypto' | 'forex', locale = 'en') => ({
     displayMode: 'regular',
     feedMode: 'market',
     colorTheme: 'dark',
     isTransparent: true,
-    locale: 'en',
+    locale,
     market,
 });
 
-export const symbolInfoConfig = (symbol: string) => ({
+export const symbolInfoConfig = (symbol: string, locale = 'en') => ({
     symbol,
     colorTheme: 'dark',
     isTransparent: true,
-    locale: 'en',
+    locale,
     width: '100%',
 });
 
-export const singleQuoteConfig = (symbol: string) => ({
+export const singleQuoteConfig = (symbol: string, locale = 'en') => ({
     symbol,
     colorTheme: 'dark',
     isTransparent: true,
-    locale: 'en',
+    locale,
 });
 
-export const CANDLE_CHART_WIDGET_CONFIG = (symbol: string) => ({
+export const CANDLE_CHART_WIDGET_CONFIG = (symbol: string, locale = 'en') => ({
     allow_symbol_change: false,
     calendar: false,
     details: true,
@@ -141,10 +142,12 @@ export const CANDLE_CHART_WIDGET_CONFIG = (symbol: string) => ({
     hide_volume: false,
     hotlist: false,
     interval: 'D',
-    locale: 'en',
+    locale,
     save_image: false,
     style: 1,
     symbol: symbol.toUpperCase(),
+    // Without this the embed asks the page's own origin for /support/... and logs a 403 on every load
+    support_host: 'https://www.tradingview.com',
     theme: 'dark',
     timezone: 'exchange',
     backgroundColor: '#1f1e1a', // --card
@@ -157,11 +160,11 @@ export const CANDLE_CHART_WIDGET_CONFIG = (symbol: string) => ({
     height: 600,
 });
 
-export const TECHNICAL_ANALYSIS_WIDGET_CONFIG = (symbol: string) => ({
+export const TECHNICAL_ANALYSIS_WIDGET_CONFIG = (symbol: string, locale = 'en') => ({
     symbol: symbol.toUpperCase(),
     colorTheme: 'dark',
     isTransparent: true,
-    locale: 'en',
+    locale,
     width: '100%',
     height: 400,
     interval: '1h',
@@ -169,20 +172,20 @@ export const TECHNICAL_ANALYSIS_WIDGET_CONFIG = (symbol: string) => ({
 });
 
 // embed-widget-company-profile.js was retired by TradingView (403); symbol-profile.js takes the same config
-export const COMPANY_PROFILE_WIDGET_CONFIG = (symbol: string) => ({
+export const COMPANY_PROFILE_WIDGET_CONFIG = (symbol: string, locale = 'en') => ({
     symbol: symbol.toUpperCase(),
     colorTheme: 'dark',
     isTransparent: true,
-    locale: 'en',
+    locale,
     width: '100%',
     height: 440,
 });
 
-export const COMPANY_FINANCIALS_WIDGET_CONFIG = (symbol: string) => ({
+export const COMPANY_FINANCIALS_WIDGET_CONFIG = (symbol: string, locale = 'en') => ({
     symbol: symbol.toUpperCase(),
     colorTheme: 'dark',
     isTransparent: true,
-    locale: 'en',
+    locale,
     width: '100%',
     height: 464,
     displayMode: 'regular',

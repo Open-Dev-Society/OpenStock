@@ -7,7 +7,7 @@ import { getCompanyProfile, getLiveQuotes } from "@/lib/actions/finnhub.actions"
 import { formatNumber, formatPrice, formatSymbolForTradingView } from "@/lib/utils";
 import { hasFinnhubQuotes } from "@/lib/markets";
 import { symbolInfoConfig } from "@/lib/constants";
-import { tx, type Lang } from "@/lib/i18n";
+import { tvLocale, tx, type Lang } from "@/lib/i18n";
 import TradingViewWidget from "@/components/TradingViewWidget";
 import ChangePill from "@/components/ChangePill";
 import { getYahooDailyQuotes } from "@/lib/actions/yahoo.actions";
@@ -49,7 +49,7 @@ async function TradingViewHeader({ symbol, lang }: { symbol: string; lang: Lang 
             </div>
             {!tadawul && (
                 <div className="card mt-[3px] p-1">
-                    <TradingViewWidget scriptUrl="https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js" config={symbolInfoConfig(tvSymbol)} height={180} />
+                    <TradingViewWidget scriptUrl="https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js" config={symbolInfoConfig(tvSymbol, tvLocale(lang))} height={180} />
                 </div>
             )}
         </section>

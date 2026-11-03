@@ -18,7 +18,7 @@ import {
 import { MARKETS, MARKET_COOKIE, getMarket, isMarketOpen, marketForCountry } from "@/lib/markets";
 import { getSession } from "@/lib/better-auth/auth";
 import { getLang } from "@/lib/i18n-server";
-import { feedLabel, feedWord, marketName, tx, type Lang } from "@/lib/i18n";
+import { feedLabel, feedWord, marketName, tvLocale, tx, type Lang } from "@/lib/i18n";
 import NewsSkeleton from "@/components/watchlist/NewsSkeleton";
 
 const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
@@ -45,9 +45,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             ? tx(lang, 'dash.pulseYahoo')
             : tx(lang, 'dash.pulseTV').replace('{f}', feedWord(lang, market.feed));
     const heatmap = market.heatmap === 'stocks'
-        ? { script: 'stock-heatmap.js', config: STOCK_HEATMAP_CONFIG, title: tx(lang, 'dash.heatmapStocks') }
+        ? { script: 'stock-heatmap.js', config: { ...STOCK_HEATMAP_CONFIG, locale: tvLocale(lang) }, title: tx(lang, 'dash.heatmapStocks') }
         : market.heatmap === 'crypto'
-            ? { script: 'crypto-coins-heatmap.js', config: CRYPTO_HEATMAP_CONFIG, title: tx(lang, 'dash.heatmapCrypto') }
+            ? { script: 'crypto-coins-heatmap.js', config: { ...CRYPTO_HEATMAP_CONFIG, locale: tvLocale(lang) }, title: tx(lang, 'dash.heatmapCrypto') }
             : null;
 
     return (
@@ -83,7 +83,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                         </Panel>
                     ) : (
                         <Panel title={tx(lang, 'dash.leaders')} sub={tx(lang, 'dash.leadersSub')}>
-                            <TradingViewWidget scriptUrl={`${scriptUrl}market-overview.js`} config={marketOverviewConfig(market.groups)} height={560} />
+                            <TradingViewWidget scriptUrl={`${scriptUrl}market-overview.js`} config={marketOverviewConfig(market.groups, tvLocale(lang))} height={560} />
                         </Panel>
                     )}
                     {heatmap ? (
@@ -94,7 +94,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                         <Panel title={tx(lang, 'dash.quotes')} sub={`${marketName(lang, market.id)} · ${tx(lang, 'dash.byGroup')}`}>
                             {market.yahoo
                                 ? <SaudiQuotesTable market={market} lang={lang} />
-                                : <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(market.groups)} height={560} />}
+                                : <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(market.groups, tvLocale(lang))} height={560} />}
                         </Panel>
                     )}
                 </div>
@@ -102,7 +102,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                 <div className="grid gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                     {heatmap && (
                         <Panel title={tx(lang, 'dash.quotes')} sub={`${marketName(lang, market.id)} · ${tx(lang, 'dash.byGroup')}`}>
-                            <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(market.groups)} height={560} />
+                            <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(market.groups, tvLocale(lang))} height={560} />
                         </Panel>
                     )}
                     <Panel
@@ -116,7 +116,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                                     <MarketNews lang={lang} />
                                 </Suspense>
                             )
-                            : <TradingViewWidget scriptUrl={`${scriptUrl}timeline.js`} config={timelineConfig(market.news)} height={560} />}
+                            : <TradingViewWidget scriptUrl={`${scriptUrl}timeline.js`} config={timelineConfig(market.news, tvLocale(lang))} height={560} />}
                     </Panel>
                 </div>
             </div>

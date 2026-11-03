@@ -17,7 +17,7 @@ import { getStockSentimentInsights } from '@/lib/actions/adanos.actions';
 import { getStockMetrics } from '@/lib/actions/finnhub.actions';
 import { formatSymbolForTradingView, isChartEmbeddable, tradingViewSymbolUrl } from '@/lib/utils';
 import { getLang } from '@/lib/i18n-server';
-import { tx, type Lang } from '@/lib/i18n';
+import { tvLocale, tx, type Lang } from '@/lib/i18n';
 import { arDigits } from "@/lib/i18n";
 
 const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
@@ -82,7 +82,7 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                     <Panel title={tx(lang, 'stock.financials')} sub={tx(lang, 'stock.financialsSub')}>
                         <TradingViewWidget
                             scriptUrl={`${scriptUrl}financials.js`}
-                            config={COMPANY_FINANCIALS_WIDGET_CONFIG(tvSymbol)}
+                            config={COMPANY_FINANCIALS_WIDGET_CONFIG(tvSymbol, tvLocale(lang))}
                             height={500}
                         />
                     </Panel>
@@ -92,7 +92,7 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                     <Panel title={tx(lang, 'stock.technicals')} sub={tx(lang, 'stock.technicalsSub')}>
                         <TradingViewWidget
                             scriptUrl={`${scriptUrl}technical-analysis.js`}
-                            config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(tvSymbol)}
+                            config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(tvSymbol, tvLocale(lang))}
                             height={400}
                         />
                     </Panel>
@@ -110,7 +110,7 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                     <Panel title={tx(lang, 'stock.profile')} sub={tx(lang, 'stock.profileSub')}>
                         <TradingViewWidget
                             scriptUrl={`${scriptUrl}symbol-profile.js`}
-                            config={COMPANY_PROFILE_WIDGET_CONFIG(tvSymbol)}
+                            config={COMPANY_PROFILE_WIDGET_CONFIG(tvSymbol, tvLocale(lang))}
                             height={440}
                         />
                     </Panel>
