@@ -1,25 +1,19 @@
-import { AsyncLocalStorage } from 'node:async_hooks';
 import type { Connection, Model, Schema } from 'mongoose';
+import { isWorkersRuntime } from '@/database/mongoose';
 
-// One Mongoose connection per Workers request. Empty on Node/Vercel.
-export const requestConnection = new AsyncLocalStorage<Connection>();
+// What connectToDatabase() returns: the mongoose module on Node, or `{ connection }` on Workers.
+export type DbHandle = { connection: Connection };
 
 // Compiled outside the generic so tsc does not expand Connection#model.
-function modelOn(conn: Connection, name: string, schema: Schema): object {
+function bind(conn: Connection, name: string, schema: Schema): object {
     const models = conn.models as Record<string, object | undefined>;
     const compile = conn.model as (name: string, schema: Schema) => object;
     return models[name] ?? compile(name, schema);
 }
 
-// Queries use the request connection when connectToDatabase() opened one.
-// Otherwise this is the default model, which is what Node/Vercel already use.
-export function requestModel<T>(name: string, schema: Schema, fallback: Model<T>): Model<T> {
-    return new Proxy(fallback, {
-        get(_target, prop) {
-            const conn = requestConnection.getStore();
-            const model = conn ? modelOn(conn, name, schema) : fallback;
-            const value = Reflect.get(model, prop, model);
-            return typeof value === 'function' ? (value as (...args: unknown[]) => unknown).bind(model) : value;
-        },
-    }) as Model<T>;
+// On Workers, queries must use the connection opened for this request.
+// On Node/Vercel, `fallback` is the model already compiled on the shared connection.
+export function modelOn<T>(db: DbHandle, name: string, schema: Schema, fallback: Model<T>): Model<T> {
+    if (!isWorkersRuntime()) return fallback;
+    return bind(db.connection, name, schema) as Model<T>;
 }

@@ -1,5 +1,4 @@
 import mongoose, { type Connection } from "mongoose";
-import { requestConnection } from "@/database/request-connection";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -89,7 +88,6 @@ export const connectToDatabase = async () => {
 
     if (isWorkersRuntime()) {
         const conn = await connectForThisRequest();
-        requestConnection.enterWith(conn);
         return { connection: conn } as typeof mongoose;
     }
 

@@ -1,5 +1,5 @@
 import { Schema, model, models, type Document, type Model } from 'mongoose';
-import { requestModel } from '@/database/request-connection';
+import { modelOn, type DbHandle } from '@/database/request-connection';
 
 export interface IAlert extends Document {
     userId: string;
@@ -31,4 +31,8 @@ const AlertSchema = new Schema<IAlert>(
 
 const compiledAlert: Model<IAlert> = (models?.Alert as Model<IAlert>) || model<IAlert>('Alert', AlertSchema);
 
-export const Alert: Model<IAlert> = requestModel('Alert', AlertSchema, compiledAlert);
+export const Alert: Model<IAlert> = compiledAlert;
+
+export function alertModel(db: DbHandle): Model<IAlert> {
+    return modelOn(db, 'Alert', AlertSchema, compiledAlert);
+}

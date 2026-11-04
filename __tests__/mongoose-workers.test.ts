@@ -137,28 +137,47 @@ describe('connectToDatabase', () => {
     });
 });
 
-describe('requestModel', () => {
-    it('uses the request connection on Workers and the default model otherwise', async () => {
-        vi.resetModules();
-        const { requestConnection, requestModel } = await import('@/database/request-connection');
-        const fallback = { find: () => 'default' } as unknown as Model<unknown>;
-        const bound = { find: () => 'request' };
+describe('modelOn', () => {
+    function handle(bound: { find: () => string }) {
         const models: Record<string, unknown> = {};
-        const conn = {
+        const connection = {
             models,
             model: vi.fn((name: string) => {
                 models[name] = bound;
                 return bound;
             }),
         };
-        const Model = requestModel('Alert', {} as Schema, fallback) as unknown as { find: () => string };
+        return { connection, models };
+    }
 
-        expect(Model.find()).toBe('default');
-        await requestConnection.run(conn as unknown as Connection, async () => {
-            expect(Model.find()).toBe('request');
-            expect(Model.find()).toBe('request');
-        });
-        expect(conn.model).toHaveBeenCalledTimes(1);
-        expect(Model.find()).toBe('default');
+    it('binds the model to the given Workers connection and reuses it', async () => {
+        vi.stubGlobal('navigator', { userAgent: 'Cloudflare-Workers' });
+        vi.resetModules();
+        const { modelOn } = await import('@/database/request-connection');
+        const fallback = { find: () => 'default' } as unknown as Model<unknown>;
+        const firstBound = { find: () => 'one' };
+        const secondBound = { find: () => 'two' };
+        const first = handle(firstBound);
+        const second = handle(secondBound);
+
+        const a = modelOn({ connection: first.connection as unknown as Connection }, 'Alert', {} as Schema, fallback);
+        const again = modelOn({ connection: first.connection as unknown as Connection }, 'Alert', {} as Schema, fallback);
+        const b = modelOn({ connection: second.connection as unknown as Connection }, 'Alert', {} as Schema, fallback);
+
+        expect(a).toBe(firstBound);
+        expect(again).toBe(firstBound);
+        expect(b).toBe(secondBound);
+        expect(first.connection.model).toHaveBeenCalledTimes(1);
+        expect(second.connection.model).toHaveBeenCalledTimes(1);
+        vi.unstubAllGlobals();
+    });
+
+    it('returns the default model on Node', async () => {
+        vi.resetModules();
+        const { modelOn } = await import('@/database/request-connection');
+        const fallback = { find: () => 'default' } as unknown as Model<unknown>;
+        const db = handle({ find: () => 'request' });
+        expect(modelOn({ connection: db.connection as unknown as Connection }, 'Alert', {} as Schema, fallback)).toBe(fallback);
+        expect(db.connection.model).not.toHaveBeenCalled();
     });
 });

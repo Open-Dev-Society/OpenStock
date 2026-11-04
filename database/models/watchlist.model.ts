@@ -1,5 +1,5 @@
 import { Schema, model, models, type Document, type Model } from 'mongoose';
-import { requestModel } from '@/database/request-connection';
+import { modelOn, type DbHandle } from '@/database/request-connection';
 
 export interface WatchlistItem extends Document {
     userId: string;
@@ -24,4 +24,8 @@ WatchlistSchema.index({ userId: 1, symbol: 1 }, { unique: true });
 const compiledWatchlist: Model<WatchlistItem> =
     (models?.Watchlist as Model<WatchlistItem>) || model<WatchlistItem>('Watchlist', WatchlistSchema);
 
-export const Watchlist: Model<WatchlistItem> = requestModel('Watchlist', WatchlistSchema, compiledWatchlist);
+export const Watchlist: Model<WatchlistItem> = compiledWatchlist;
+
+export function watchlistModel(db: DbHandle): Model<WatchlistItem> {
+    return modelOn(db, 'Watchlist', WatchlistSchema, compiledWatchlist);
+}
