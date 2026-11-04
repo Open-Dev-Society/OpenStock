@@ -80,8 +80,8 @@ const createAuth = (database: MongoDb) => betterAuth({
 let authInstance: ReturnType<typeof createAuth> | null = null;
 
 export const getAuth = async () => {
-    // The auth instance closes over the Db from connectToDatabase(). On Workers that
-    // client belongs to one request; reuse it on the next and sign-in hangs (1101).
+    // Better Auth keeps the Db it was given. On Workers that Db is this request's
+    // createConnection; caching the instance would point a later request at dead sockets.
     if (!isWorkersRuntime() && authInstance) return authInstance;
 
     // Without a secret better-auth falls back to a public default anyone could forge sessions with (1.7 refuses it in

@@ -1,4 +1,5 @@
 import { Schema, model, models, type Document, type Model } from 'mongoose';
+import { requestModel } from '@/database/request-connection';
 
 export interface WatchlistItem extends Document {
     userId: string;
@@ -20,5 +21,7 @@ const WatchlistSchema = new Schema<WatchlistItem>(
 // Prevent duplicate symbols per user
 WatchlistSchema.index({ userId: 1, symbol: 1 }, { unique: true });
 
-export const Watchlist: Model<WatchlistItem> =
+const compiledWatchlist: Model<WatchlistItem> =
     (models?.Watchlist as Model<WatchlistItem>) || model<WatchlistItem>('Watchlist', WatchlistSchema);
+
+export const Watchlist: Model<WatchlistItem> = requestModel('Watchlist', WatchlistSchema, compiledWatchlist);

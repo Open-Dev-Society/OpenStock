@@ -1,43 +1,71 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Connection, Model, Schema } from 'mongoose';
 
 const connect = vi.fn();
-const disconnect = vi.fn();
-const nodeConnection = { connection: { db: { databaseName: 'openstock' } } };
-let readyState = 0;
+const createConnection = vi.fn();
+const scheduled: Array<() => Promise<unknown> | unknown> = [];
 let ray: string | null = 'ray-1';
+const rays: string[] = [];
 
 vi.mock('mongoose', () => ({
     default: {
         connect: (...args: unknown[]) => connect(...args),
-        disconnect: () => disconnect(),
-        connection: {
-            get readyState() {
-                return readyState;
-            },
-        },
+        createConnection: (...args: unknown[]) => createConnection(...args),
+        connection: { readyState: 0 },
     },
 }));
 
 vi.mock('next/headers', () => ({
     headers: async () => ({
-        get: (name: string) => (name === 'cf-ray' ? ray : null),
+        get: (name: string) => {
+            if (name !== 'cf-ray') return null;
+            return rays.length ? rays.shift()! : ray;
+        },
     }),
 }));
+
+vi.mock('next/server', () => ({
+    after: (task: () => unknown) => {
+        scheduled.push(task);
+    },
+}));
+
+interface FakeConn {
+    db: { id: number };
+    models: Record<string, unknown>;
+    model: ReturnType<typeof vi.fn>;
+    asPromise: ReturnType<typeof vi.fn>;
+    close: ReturnType<typeof vi.fn>;
+}
+
+function fakeConnection(id: number): FakeConn {
+    const conn: FakeConn = {
+        db: { id },
+        models: {},
+        model: vi.fn((name: string) => {
+            const compiled = { name, find: vi.fn() };
+            conn.models[name] = compiled;
+            return compiled;
+        }),
+        asPromise: vi.fn(async () => conn),
+        close: vi.fn(async () => {}),
+    };
+    return conn;
+}
+
+const nodeConnection = { connection: { db: { databaseName: 'openstock' } } };
 
 describe('connectToDatabase', () => {
     beforeEach(() => {
         vi.resetModules();
-        readyState = 0;
         ray = 'ray-1';
+        rays.length = 0;
+        scheduled.length = 0;
         connect.mockReset();
-        disconnect.mockReset();
-        connect.mockImplementation(async () => {
-            readyState = 1;
-            return nodeConnection;
-        });
-        disconnect.mockImplementation(async () => {
-            readyState = 0;
-        });
+        createConnection.mockReset();
+        let nextId = 0;
+        connect.mockImplementation(async () => nodeConnection);
+        createConnection.mockImplementation(() => fakeConnection(++nextId));
         delete (global as { mongooseCache?: unknown }).mongooseCache;
         process.env.MONGODB_URI = 'mongodb://user:pass@a.example.net:27017,b.example.net:27017,c.example.net:27017/openstock';
     });
@@ -47,32 +75,53 @@ describe('connectToDatabase', () => {
         delete process.env.MONGODB_URI;
     });
 
-    it('reuses one connection per Workers request and opens a new one for the next', async () => {
+    it('reuses one Workers connection per request and closes it when the response finishes', async () => {
         vi.stubGlobal('navigator', { userAgent: 'Cloudflare-Workers' });
         const { connectToDatabase } = await import('@/database/mongoose');
 
-        await connectToDatabase();
-        await connectToDatabase();
-        expect(connect).toHaveBeenCalledTimes(1);
-        expect(disconnect).not.toHaveBeenCalled();
+        const first = await connectToDatabase();
+        const second = await connectToDatabase();
+        expect(second.connection).toBe(first.connection);
+        expect(createConnection).toHaveBeenCalledTimes(1);
+        expect(createConnection).toHaveBeenCalledWith(process.env.MONGODB_URI, { bufferCommands: false, family: 4 });
+        expect(connect).not.toHaveBeenCalled();
+        expect(scheduled).toHaveLength(1);
 
-        ray = 'ray-2';
-        readyState = 1;
-        await connectToDatabase();
-        expect(disconnect).toHaveBeenCalledTimes(1);
-        expect(connect).toHaveBeenCalledTimes(2);
-        expect(connect).toHaveBeenLastCalledWith(process.env.MONGODB_URI, { bufferCommands: false, family: 4 });
+        const close = (first.connection as unknown as FakeConn).close;
+        expect(close).not.toHaveBeenCalled();
+        await scheduled[0]!();
+        expect(close).toHaveBeenCalledTimes(1);
+    });
+
+    it('gives concurrent Workers requests separate connections', async () => {
+        vi.stubGlobal('navigator', { userAgent: 'Cloudflare-Workers' });
+        rays.push('ray-1', 'ray-2');
+        const { connectToDatabase } = await import('@/database/mongoose');
+
+        const [first, second] = await Promise.all([connectToDatabase(), connectToDatabase()]);
+        expect(first.connection).not.toBe(second.connection);
+        expect(createConnection).toHaveBeenCalledTimes(2);
+        expect(scheduled).toHaveLength(2);
+
+        await scheduled[0]!();
+        expect((first.connection as unknown as FakeConn).close).toHaveBeenCalledTimes(1);
+        expect((second.connection as unknown as FakeConn).close).not.toHaveBeenCalled();
     });
 
     it('retries a Workers connect after a failure on the same request', async () => {
         vi.stubGlobal('navigator', { userAgent: 'Cloudflare-Workers' });
-        connect.mockRejectedValueOnce(new Error('down'));
+        createConnection.mockImplementationOnce(() => {
+            const conn = fakeConnection(1);
+            conn.asPromise.mockRejectedValueOnce(new Error('down'));
+            return conn;
+        });
         const { connectToDatabase } = await import('@/database/mongoose');
 
         await expect(connectToDatabase()).rejects.toThrow('down');
-        await connectToDatabase();
-        expect(connect).toHaveBeenCalledTimes(2);
-        expect(disconnect).not.toHaveBeenCalled();
+        const connected = await connectToDatabase();
+        expect(createConnection).toHaveBeenCalledTimes(2);
+        expect(connected.connection.db).toBeTruthy();
+        expect(scheduled).toHaveLength(1);
     });
 
     it('keeps the Node connection cached across calls', async () => {
@@ -82,7 +131,34 @@ describe('connectToDatabase', () => {
         const second = await connectToDatabase();
         expect(second).toBe(first);
         expect(connect).toHaveBeenCalledTimes(1);
-        expect(disconnect).not.toHaveBeenCalled();
         expect(connect).toHaveBeenCalledWith(process.env.MONGODB_URI, { bufferCommands: false, family: 4 });
+        expect(createConnection).not.toHaveBeenCalled();
+        expect(scheduled).toHaveLength(0);
+    });
+});
+
+describe('requestModel', () => {
+    it('uses the request connection on Workers and the default model otherwise', async () => {
+        vi.resetModules();
+        const { requestConnection, requestModel } = await import('@/database/request-connection');
+        const fallback = { find: () => 'default' } as unknown as Model<unknown>;
+        const bound = { find: () => 'request' };
+        const models: Record<string, unknown> = {};
+        const conn = {
+            models,
+            model: vi.fn((name: string) => {
+                models[name] = bound;
+                return bound;
+            }),
+        };
+        const Model = requestModel('Alert', {} as Schema, fallback) as unknown as { find: () => string };
+
+        expect(Model.find()).toBe('default');
+        await requestConnection.run(conn as unknown as Connection, async () => {
+            expect(Model.find()).toBe('request');
+            expect(Model.find()).toBe('request');
+        });
+        expect(conn.model).toHaveBeenCalledTimes(1);
+        expect(Model.find()).toBe('default');
     });
 });

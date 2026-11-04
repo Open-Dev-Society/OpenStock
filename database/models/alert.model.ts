@@ -1,4 +1,5 @@
 import { Schema, model, models, type Document, type Model } from 'mongoose';
+import { requestModel } from '@/database/request-connection';
 
 export interface IAlert extends Document {
     userId: string;
@@ -28,4 +29,6 @@ const AlertSchema = new Schema<IAlert>(
     { timestamps: true }
 );
 
-export const Alert: Model<IAlert> = (models?.Alert as Model<IAlert>) || model<IAlert>('Alert', AlertSchema);
+const compiledAlert: Model<IAlert> = (models?.Alert as Model<IAlert>) || model<IAlert>('Alert', AlertSchema);
+
+export const Alert: Model<IAlert> = requestModel('Alert', AlertSchema, compiledAlert);
