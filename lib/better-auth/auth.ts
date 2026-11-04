@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import {mongodbAdapter} from "better-auth/adapters/mongodb";
-import {connectToDatabase} from "@/database/mongoose";
+import {connectToDatabase, isWorkersRuntime} from "@/database/mongoose";
 import {nextCookies} from "better-auth/next-js";
 import { headers } from "next/headers";
 import { cache } from "react";
@@ -67,13 +67,22 @@ const createAuth = (database: MongoDb) => betterAuth({
                 clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
             },
         },
+        // cf-connecting-ip is a single trusted client address. x-forwarded-for stays
+        // so Node/Vercel (no Cloudflare header) still rate-limits as before.
+        advanced: {
+            ipAddress: {
+                ipAddressHeaders: ["cf-connecting-ip", "x-forwarded-for"],
+            },
+        },
         plugins: [nextCookies()],
 });
 
 let authInstance: ReturnType<typeof createAuth> | null = null;
 
 export const getAuth = async () => {
-    if (authInstance) return authInstance;
+    // The auth instance closes over the Db from connectToDatabase(). On Workers that
+    // client belongs to one request; reuse it on the next and sign-in hangs (1101).
+    if (!isWorkersRuntime() && authInstance) return authInstance;
 
     // Without a secret better-auth falls back to a public default anyone could forge sessions with (1.7 refuses it in
     // production too); fail here first, before connecting. Checked on first use, not at import, so `next build` needs no secrets.
@@ -87,8 +96,9 @@ export const getAuth = async () => {
         throw new Error("MongoDB connection not found!");
     }
 
-    authInstance = createAuth(database);
-    return authInstance;
+    const instance = createAuth(database);
+    if (!isWorkersRuntime()) authInstance = instance;
+    return instance;
 }
 
 type Auth = ReturnType<typeof createAuth>;
