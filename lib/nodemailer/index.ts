@@ -17,29 +17,46 @@ if (!hasEmailConfig) {
     console.warn('⚠️ Email credentials are not configured. Welcome and news summary emails are disabled until NODEMAILER_EMAIL and NODEMAILER_PASSWORD are set.');
 }
 
-export const transporter = hasEmailConfig
-    ? nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.NODEMAILER_EMAIL!,
-            pass: process.env.NODEMAILER_PASSWORD!,
-        },
-        // Keep the pool small because email volume is low in this app.
-        pool: true,
-        maxConnections: 1,
-        maxMessages: 3,
-    })
-    : null;
+// The transporter is created lazily on first use. Creating the SMTP pool (and
+// calling verify) at module scope uses setImmediate/network I/O during global
+// scope evaluation, which Cloudflare Workers rejects when the script is
+// uploaded. Node/Vercel behaviour is unchanged.
+type Transporter = ReturnType<typeof nodemailer.createTransport>;
+let transporterInstance: Transporter | null = null;
 
-if (transporter) {
-    transporter.verify((error) => {
-        if (error) {
-            console.error('❌ Nodemailer transporter verification failed:', error);
-        } else {
-            console.log('✅ Nodemailer transporter is ready to send emails');
-        }
-    });
+function getTransporter(): Transporter {
+    if (!transporterInstance) {
+        transporterInstance = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.NODEMAILER_EMAIL!,
+                pass: process.env.NODEMAILER_PASSWORD!,
+            },
+            // Keep the pool small because email volume is low in this app.
+            pool: true,
+            maxConnections: 1,
+            maxMessages: 3,
+        });
+        transporterInstance.verify((error) => {
+            if (error) {
+                console.error('❌ Nodemailer transporter verification failed:', error);
+            } else {
+                console.log('✅ Nodemailer transporter is ready to send emails');
+            }
+        });
+    }
+    return transporterInstance;
 }
+
+export const transporter: Transporter | null = hasEmailConfig
+    ? (new Proxy({} as Transporter, {
+        get(_target, prop) {
+            const instance = getTransporter();
+            const value = Reflect.get(instance, prop, instance);
+            return typeof value === 'function' ? value.bind(instance) : value;
+        },
+    }))
+    : null;
 
 export const sendWelcomeEmail = async ({ email, name, intro }: WelcomeEmailData) => {
     try {
