@@ -188,6 +188,9 @@ export const sendWeeklyNewsSummary = inngest.createFunction(
 
             console.log(`📢 Sending Weekly News Broadcast to all subscribers`);
             const broadcastResult = await kit.sendBroadcast(subject, content);
+            if (broadcastResult?.success === false || broadcastResult?.status === 'draft') {
+                throw new Error(broadcastResult.message || 'Kit did not confirm that the weekly broadcast was sent.');
+            }
             console.log("👉 Kit API Response:", JSON.stringify(broadcastResult, null, 2));
             return { success: true, kitResponse: broadcastResult };
         })
