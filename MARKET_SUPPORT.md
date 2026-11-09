@@ -10,6 +10,7 @@ What OpenStock can show depends on two free data sources. This table was tested 
 | 🇨🇦 Canada (TSX) | Delayed | No |
 | 🇦🇺 Australia (ASX) | Delayed | No |
 | 🇸🇦 Saudi Arabia (Tadawul, `.SR`) | Blocked in embeds; quotes come from Yahoo Finance (delayed) | No (Yahoo prices the dashboard, stock header and watchlist) |
+| 🇵🇱 Poland (GPW Warsaw, `.WA`; WIG20, WIG, mWIG40, sWIG80) | End of day, charts included; quotes come from Yahoo Finance (delayed) | No (Yahoo prices the dashboard, stock header and watchlist) |
 | 🇮🇳 India, through BSE (`.BO`; `.NS` symbols are charted on BSE) | End of day | No |
 | 🇩🇪 Germany (Xetra) | End of day | No |
 | India NSE (charted on BSE instead) | Blocked in embeds | No |
@@ -18,7 +19,7 @@ What OpenStock can show depends on two free data sources. This table was tested 
 
 ## What that means in the app
 
-- **Dashboard:** pick a market (US, India, Germany, Canada, Australia, Saudi Arabia, Crypto, Forex). US and crypto tiles use our own cached quotes; Saudi tiles, movers and quotes use delayed Yahoo Finance quotes, because TradingView blocks Tadawul in embeds; the others use TradingView quote tiles.
+- **Dashboard:** pick a market (US, India, Germany, Canada, Australia, Saudi Arabia, Poland, Crypto, Forex). US and crypto tiles use our own cached quotes; Saudi and Polish tiles, movers and quotes use delayed Yahoo Finance quotes, because TradingView blocks Tadawul in embeds and has Warsaw only end of day; the others use TradingView quote tiles.
 - **Stock pages:** symbols Finnhub can price get the full header (live price, day range, market cap). Others get TradingView's quote panel.
 - **Alerts:** an OpenStock Cloud feature (or self-hosted in realtime mode). US stocks and crypto only, because the alert checker needs a quote source it can call every five minutes.
 - **Search:** Finnhub search returns listings worldwide. On exchanges whose chart is blocked, the stock page links to the chart on TradingView instead (the list is `CHART_BLOCKED_EXCHANGES` in `lib/utils.ts`, each confirmed with two tickers).

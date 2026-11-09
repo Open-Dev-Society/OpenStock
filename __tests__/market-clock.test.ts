@@ -27,7 +27,7 @@ describe('NYSE session', () => {
     });
 });
 
-import { getMarket, hasFinnhubQuotes, isMarketOpen } from '@/lib/markets';
+import { getMarket, hasFinnhubCompanyData, hasFinnhubQuotes, isMarketOpen } from '@/lib/markets';
 
 describe('markets', () => {
     it('knows which symbols Finnhub free can price', () => {
@@ -38,7 +38,14 @@ describe('markets', () => {
         expect(hasFinnhubQuotes('BARC.L')).toBe(false);
         expect(hasFinnhubQuotes('7203.T')).toBe(false);
         expect(hasFinnhubQuotes('2222.SR')).toBe(false);
-        expect(hasFinnhubQuotes('FX:EURUSD')).toBe(false);
+        expect(hasFinnhubQuotes('PKN.WA')).toBe(false);
+        expect(hasFinnhubQuotes('FX:EURUSD')).toBe(false);    });
+
+    it('asks Finnhub for company data only where it has some', () => {
+        expect(hasFinnhubCompanyData('AAPL')).toBe(true);
+        expect(hasFinnhubCompanyData('BINANCE:BTCUSDT')).toBe(false);
+        expect(hasFinnhubCompanyData('2222.SR')).toBe(false);
+        expect(hasFinnhubCompanyData('PKN.WA')).toBe(false);
     });
 
     it('opens each market in its own time zone', () => {
@@ -55,5 +62,9 @@ describe('markets', () => {
         expect(isMarketOpen(getMarket('sa'), new Date('2026-09-27T08:00:00Z'))).toBe(true);
         expect(isMarketOpen(getMarket('sa'), new Date('2026-09-25T08:00:00Z'))).toBe(false);
         expect(isMarketOpen(getMarket('sa'), new Date('2026-09-27T12:30:00Z'))).toBe(false);
+        // GPW trades Monday to Friday, 09:00-17:00 Warsaw (07:00-15:00 UTC in September)
+        expect(isMarketOpen(getMarket('pl'), new Date('2026-09-23T08:00:00Z'))).toBe(true);
+        expect(isMarketOpen(getMarket('pl'), new Date('2026-09-23T15:30:00Z'))).toBe(false);
+        expect(isMarketOpen(getMarket('pl'), new Date('2026-09-26T10:00:00Z'))).toBe(false);
     });
 });
