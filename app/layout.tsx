@@ -16,6 +16,8 @@ const arabic = IBM_Plex_Sans_Arabic({
   variable: "--font-arabic",
   subsets: ["arabic"],
   weight: ["400", "500", "600", "700"],
+  // Only Arabic pages use it; English pages should not download it up front.
+  preload: false,
 });
 
 const plexMono = IBM_Plex_Mono({
