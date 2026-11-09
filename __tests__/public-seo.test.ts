@@ -46,9 +46,8 @@ describe('middleware', () => {
         expect(response.headers.get('location')).toBeNull();
     });
 
-    it('excludes crawler files from the matcher so they cannot be gated later by accident', () => {
-        expect(config.matcher[0]).toContain('robots.txt');
-        expect(config.matcher[0]).toContain('sitemap.xml');
+    it('runs only on the signed-in app, so public pages, prefetches and crawler files never pay for it', () => {
+        expect(config.matcher).toEqual(['/dashboard/:path*', '/watchlist/:path*', '/profile/:path*', '/stocks/:path*']);
     });
 });
 

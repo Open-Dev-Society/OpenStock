@@ -4,7 +4,6 @@ import { MarketDial, MarketStatus } from "@/components/landing/MarketClock";
 import ProductPreview from "@/components/landing/ProductPreview";
 import SectionHead from "@/components/marketing/SectionHead";
 import IconCard from "@/components/marketing/IconCard";
-import { getSession } from "@/lib/better-auth/auth";
 import { formatCount, getRepoStats } from "@/lib/github";
 import { cn } from "@/lib/utils";
 import { sidebarSponsors } from "@/lib/sponsors";
@@ -90,8 +89,8 @@ const SponsorBanner = () => {
 };
 
 export default async function LandingPage() {
-    const [session, repo] = await Promise.all([getSession(), getRepoStats()]);
-    const start = session?.user ? { href: '/dashboard', label: 'Open dashboard' } : { href: '/sign-up', label: 'Get started free' };
+    const repo = await getRepoStats();
+    const start = { href: '/sign-up', label: 'Get started free' };
 
     return (
         <>

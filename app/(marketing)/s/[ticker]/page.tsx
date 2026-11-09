@@ -5,7 +5,6 @@ import { ChevronDown } from 'lucide-react';
 import JsonLd from '@/components/seo/JsonLd';
 import SignUpCta from '@/components/seo/SignUpCta';
 import TradingViewEmbed from '@/components/seo/TradingViewEmbed';
-import { getSession } from '@/lib/better-auth/auth';
 import { CANDLE_CHART_WIDGET_CONFIG, symbolInfoConfig } from '@/lib/constants';
 import { companyBrowseUrl, formatFilingDate, getEdgarCompany, type EdgarFiling } from '@/lib/seo/edgar';
 import { GUIDES } from '@/lib/seo/comparisons';
@@ -17,7 +16,14 @@ const WIDGET = 'https://s3.tradingview.com/external-embedding/embed-widget-';
 
 // Public company page. Charts are TradingView widgets. Facts are SEC EDGAR submissions.
 // The signed-in stock page (/stocks/[symbol]) is a different route and is unchanged.
-export const dynamic = 'force-dynamic';
+// ISR, rendered on first visit and kept a day: a crawl of all 518 pages is one render (and one EDGAR call) per
+// company per day instead of a function call per hit. No session read, so the CTA is the same for everyone.
+export const revalidate = 86400;
+
+// Empty list: nothing is built ahead (the build can't reach EDGAR), each page is cached on its first visit.
+export function generateStaticParams(): Params[] {
+    return [];
+}
 
 type Params = { ticker: string };
 
@@ -61,17 +67,13 @@ export default async function PublicTickerPage({ params }: { params: Promise<Par
     const ticker = findTicker(raw);
     if (!ticker) notFound();
 
-    const [edgar, session] = await Promise.all([
-        getEdgarCompany(ticker.cik),
-        getSession(),
-    ]);
+    const edgar = await getEdgarCompany(ticker.cik);
 
     const origin = siteUrl();
     const path = tickerPath(ticker.symbol);
     const url = `${origin}${path}`;
     const tvSymbol = formatSymbolForTradingView(ticker.symbol);
     const tvHref = tradingViewSymbolUrl(tvSymbol);
-    const signedIn = !!session?.user;
     const peers = relatedTickers(ticker);
     const { prev, next } = adjacentTickers(ticker);
     const title = `${ticker.name} (${ticker.symbol}) stock chart and SEC filings`;
@@ -98,8 +100,8 @@ export default async function PublicTickerPage({ params }: { params: Promise<Par
             </header>
 
             <div className="mt-8 flex flex-wrap gap-2">
-                <Link href={signedIn ? `/stocks/${encodeURIComponent(ticker.symbol)}` : '/sign-up'} className="btn btn-primary h-11 px-5 text-[15px]">
-                    {signedIn ? `Open ${ticker.symbol} in the app` : `Track ${ticker.symbol} free`}
+                <Link href="/sign-up" className="btn btn-primary h-11 px-5 text-[15px]">
+                    {`Track ${ticker.symbol} free`}
                 </Link>
                 <a href={tvHref} target="_blank" rel="noopener nofollow" className="btn btn-ghost h-11 px-5 text-[15px]">View on TradingView</a>
             </div>
@@ -230,8 +232,8 @@ export default async function PublicTickerPage({ params }: { params: Promise<Par
                 <SignUpCta
                     title={`Track ${ticker.symbol} free on OpenStock`}
                     body="Save it to a watchlist, keep the chart open in a tab, and read the filings from one place. OpenStock is not a broker, and nothing here is investment advice."
-                    href={signedIn ? `/stocks/${encodeURIComponent(ticker.symbol)}` : '/sign-up'}
-                    label={signedIn ? `Open ${ticker.symbol}` : `Track ${ticker.symbol} free`}
+                    href="/sign-up"
+                    label={`Track ${ticker.symbol} free`}
                 />
             </div>
         </article>
