@@ -49,6 +49,7 @@ export const RELEASES: Release[] = [
                     'Docker and Railway self-hosters can switch on realtime mode again: the data mode is passed in at build time. #134',
                     'MiniMax uses MiniMax-M3.1-Flash unless you pick another model. #140',
                     'better-auth 1.7.10 and nodemailer 10.1.2, with 81 fewer packages to install. #132 #133',
+                    'The weekly news email no longer reports success when Kit only saved it as a draft, and doesn’t retry into more drafts. #151',
                 ],
             },
             {
@@ -66,6 +67,8 @@ export const RELEASES: Release[] = [
             { login: 'octo-patch', prs: [140] },
             { login: 'pawisoon', prs: [147] },
             { login: 'samki6576', prs: [137] },
+            { login: 'dajiaohuang', prs: [151] },
+            { login: 'soarkit', issues: [149] },
         ],
     },
     {
