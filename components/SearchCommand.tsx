@@ -52,6 +52,8 @@ export default function SearchCommand({ initialStocks }: { initialStocks: StockW
         const onKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
                 e.preventDefault()
+                // The shortcut is always a plain search; it bypasses onOpenChange, so clear the target here.
+                setListTarget(null)
                 setOpen(v => !v)
             }
         }
