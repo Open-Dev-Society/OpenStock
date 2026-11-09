@@ -130,8 +130,9 @@ const en = {
     'wl.today': 'Today',
     'wl.change': 'Change',
     'wl.mcap': 'Market cap',
-    'wl.chgpct': 'Chg%',
-    'wl.delayedFoot': 'Delayed quotes via Yahoo Finance',
+    'wl.chgpct': 'Change %',
+    'quotes.footIn': 'Prices in {c} via Yahoo Finance, delayed about 15 minutes.',
+    'quotes.foot': 'Prices via Yahoo Finance, delayed about 15 minutes.',
     'wl.noData': 'No data here yet',
     'wl.added': 'added to watchlist',
     'wl.removed': 'removed from watchlist',
@@ -242,6 +243,9 @@ const en = {
     'sector.industry': 'Industry',
     'sector.resources': 'Resources',
     'sector.telecomConsumer': 'Telecom & consumer',
+    'sector.banksInsurance': 'Banks & insurance',
+    'sector.energyIndustry': 'Energy & industry',
+    'sector.consumerTech': 'Consumer & tech',
     'sector.majors': 'Majors',
     'sector.commodityFx': 'Commodity FX',
     'sector.more': 'More',
@@ -286,6 +290,7 @@ const en = {
     'market.ca': 'Canada',
     'market.au': 'Australia',
     'market.sa': 'Saudi Arabia',
+    'market.pl': 'Poland',
     'market.crypto': 'Crypto',
     'market.fx': 'Forex',
     'market.switcher': 'Markets',
@@ -500,7 +505,8 @@ const ar: Record<StringKey, string> = {
     'wl.change': 'التغير',
     'wl.mcap': 'القيمة السوقية',
     'wl.chgpct': '٪ التغير',
-    'wl.delayedFoot': 'أسعار متأخرة عبر Yahoo Finance',
+    'quotes.footIn': 'الأسعار بعملة {c} عبر Yahoo Finance، متأخرة نحو ١٥ دقيقة.',
+    'quotes.foot': 'الأسعار عبر Yahoo Finance، متأخرة نحو ١٥ دقيقة.',
     'wl.noData': 'لا بيانات بعد',
     'wl.added': 'أُضيفت لقائمة المتابعة',
     'wl.removed': 'أُزيلت من قائمة المتابعة',
@@ -605,6 +611,9 @@ const ar: Record<StringKey, string> = {
     'sector.industry': 'الصناعة',
     'sector.resources': 'الموارد',
     'sector.telecomConsumer': 'الاتصالات والاستهلاك',
+    'sector.banksInsurance': 'البنوك والتأمين',
+    'sector.energyIndustry': 'الطاقة والصناعة',
+    'sector.consumerTech': 'الاستهلاك والتقنية',
     'sector.majors': 'العملات الرئيسية',
     'sector.commodityFx': 'عملات السلع',
     'sector.more': 'المزيد',
@@ -647,6 +656,7 @@ const ar: Record<StringKey, string> = {
     'market.ca': 'كندا',
     'market.au': 'أستراليا',
     'market.sa': 'السعودية',
+    'market.pl': 'بولندا',
     'market.crypto': 'العملات الرقمية',
     'market.fx': 'الفوركس',
     'market.switcher': 'الأسواق',
@@ -745,7 +755,7 @@ export const tx = (lang: Lang, key: StringKey): string =>
 // callers stay free of any i18n lookup of their own.
 const MARKET_KEYS: Record<string, StringKey> = {
     us: 'market.us', in: 'market.in', de: 'market.de', ca: 'market.ca',
-    au: 'market.au', sa: 'market.sa', crypto: 'market.crypto', fx: 'market.fx',
+    au: 'market.au', sa: 'market.sa', pl: 'market.pl', crypto: 'market.crypto', fx: 'market.fx',
 };
 const FEED_KEYS: Record<string, StringKey> = { Live: 'feed.live', Delayed: 'feed.delayed', 'End of day': 'feed.eod' };
 
@@ -860,6 +870,7 @@ const SECTOR_KEYS: Record<string, StringKey> = {
     Technology: 'sector.technology', Consumer: 'sector.consumer', 'Consumer & health': 'sector.consumerHealth',
     Energy: 'sector.energy', 'Energy & materials': 'sector.energyMaterials', Growth: 'sector.growth',
     Industry: 'sector.industry', Resources: 'sector.resources', 'Telecom & consumer': 'sector.telecomConsumer',
+    'Banks & insurance': 'sector.banksInsurance', 'Energy & industry': 'sector.energyIndustry', 'Consumer & tech': 'sector.consumerTech',
     Majors: 'sector.majors', 'Commodity FX': 'sector.commodityFx', More: 'sector.more',
 };
 export const sectorLabel = (lang: Lang, title: string): string =>

@@ -15,6 +15,7 @@ import {
 } from "@/lib/constants";
 import { getStockSentimentInsights } from '@/lib/actions/adanos.actions';
 import { getStockMetrics } from '@/lib/actions/finnhub.actions';
+import { hasFinnhubCompanyData } from '@/lib/markets';
 import { formatSymbolForTradingView, isChartEmbeddable, tradingViewSymbolUrl } from '@/lib/utils';
 import { getLang } from '@/lib/i18n-server';
 import { tvLocale, tx, type Lang } from '@/lib/i18n';
@@ -37,6 +38,8 @@ async function Sentiment({ symbol, lang }: { symbol: string; lang: Lang }) {
 }
 
 async function DividendYield({ symbol, lang }: { symbol: string; lang: Lang }) {
+    // Outside the US we can't tell "no dividend" from "no data", so show nothing rather than a misleading dash
+    if (!hasFinnhubCompanyData(symbol)) return null;
     const dividendYield = await getStockMetrics(symbol);
     return (
         <Panel title={tx(lang, 'stock.dividend')}>

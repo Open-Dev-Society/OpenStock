@@ -7,7 +7,7 @@ import { getSaudiMarketNews } from "@/lib/actions/news.actions";
 import IndexPulse, { PulseSkeleton } from "@/components/IndexPulse";
 import DataFreshness from "@/components/DataFreshness";
 import MarketSwitcher from "@/components/MarketSwitcher";
-import SaudiQuotesTable, { SaudiMovers } from "@/components/SaudiQuotes";
+import YahooQuotesTable, { YahooMovers } from "@/components/YahooQuotes";
 import {
     CRYPTO_HEATMAP_CONFIG,
     STOCK_HEATMAP_CONFIG,
@@ -79,7 +79,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                 <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
                     {market.yahoo ? (
                         <Panel title={tx(lang, 'dash.movers')} sub={tx(lang, 'dash.moversSub')}>
-                            <SaudiMovers market={market} lang={lang} />
+                            <YahooMovers market={market} lang={lang} />
                         </Panel>
                     ) : (
                         <Panel title={tx(lang, 'dash.leaders')} sub={tx(lang, 'dash.leadersSub')}>
@@ -93,7 +93,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                     ) : (
                         <Panel title={tx(lang, 'dash.quotes')} sub={`${marketName(lang, market.id)} · ${tx(lang, 'dash.byGroup')}`}>
                             {market.yahoo
-                                ? <SaudiQuotesTable market={market} lang={lang} />
+                                ? <YahooQuotesTable market={market} lang={lang} />
                                 : <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(market.groups, tvLocale(lang))} height={560} />}
                         </Panel>
                     )}

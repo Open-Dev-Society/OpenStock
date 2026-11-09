@@ -25,7 +25,7 @@ const FAQS = [
     },
     {
         question: 'Which markets are supported?',
-        answer: 'US stocks, crypto and forex live; Canada and Australia delayed; Saudi Arabia delayed through Yahoo Finance; India (through BSE) and Germany end of day. Alerts work for US stocks and crypto.',
+        answer: 'US stocks, crypto and forex live; Canada and Australia delayed; Saudi Arabia and Poland delayed through Yahoo Finance; India (through BSE) and Germany end of day. Alerts work for US stocks and crypto.',
     },
     {
         question: 'My alert hasn’t fired.',

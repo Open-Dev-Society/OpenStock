@@ -4,50 +4,53 @@ import CreateAlertModal from "@/components/watchlist/CreateAlertModal";
 import StockLivePrice from "@/components/stocks/StockLivePrice";
 import { isStockInWatchlist } from "@/lib/actions/watchlist.actions";
 import { getCompanyProfile, getLiveQuotes } from "@/lib/actions/finnhub.actions";
-import { formatNumber, formatPrice, formatSymbolForTradingView } from "@/lib/utils";
+import { formatNumber, formatPrice, formatSymbolForTradingView, isChartEmbeddable } from "@/lib/utils";
 import { hasFinnhubQuotes } from "@/lib/markets";
 import { symbolInfoConfig } from "@/lib/constants";
 import { tvLocale, tx, type Lang } from "@/lib/i18n";
 import TradingViewWidget from "@/components/TradingViewWidget";
 import ChangePill from "@/components/ChangePill";
 import { getYahooDailyQuotes } from "@/lib/actions/yahoo.actions";
-import { isTadawulSymbol } from "@/lib/yahoo";
+import { isYahooSymbol } from "@/lib/yahoo";
 import { saudiSymbolNameAr } from "@/lib/saudi-symbols";
 import Price from "@/components/Price";
 
 // Symbols Finnhub's free plan can't price (most non-US listings) use TradingView's quote panel instead.
-// TradingView blocks Tadawul quotes in embeds, so those show a delayed Yahoo price.
+// TradingView blocks Tadawul quotes in embeds and has Warsaw only end of day, so those show a delayed Yahoo price
+// and skip TradingView's panel, which would show a second, older price for Warsaw. If Yahoo has no quote,
+// Warsaw falls back to that panel; Tadawul's is blocked either way.
 async function TradingViewHeader({ symbol, lang }: { symbol: string; lang: Lang }) {
-    const tadawul = isTadawulSymbol(symbol);
+    const yahooPriced = isYahooSymbol(symbol);
     const [isInWatchlist, yahoo] = await Promise.all([
         isStockInWatchlist(symbol),
-        tadawul ? getYahooDailyQuotes([symbol]) : null,
+        yahooPriced ? getYahooDailyQuotes([symbol]) : null,
     ]);
-    const saudi = yahoo?.[symbol];
+    const quote = yahoo?.[symbol];
     const tvSymbol = formatSymbolForTradingView(symbol);
+    const hidePanel = quote || (yahooPriced && !isChartEmbeddable(tvSymbol));
     return (
         <section className="hatch">
             <div className="card flex flex-wrap items-center justify-between gap-4 p-4">
                 <div className="min-w-0">
                     <h1 dir="ltr" className="mono truncate text-xl font-bold tracking-[-0.02em]">{symbol}</h1>
                     <p className="text-[12.5px] text-faint">
-                        {[tvSymbol.split(':')[0], (lang === 'ar' ? saudiSymbolNameAr(symbol) : null) ?? saudi?.name, tadawul ? tx(lang, 'stock.yahooQuote') : tx(lang, 'stock.tvQuote')].filter(Boolean).join(' · ')}
+                        {[tvSymbol.split(':')[0], (lang === 'ar' ? saudiSymbolNameAr(symbol) : null) ?? quote?.name, yahooPriced ? tx(lang, 'stock.yahooQuote') : tx(lang, 'stock.tvQuote')].filter(Boolean).join(' · ')}
                     </p>
                 </div>
-                {saudi && (
+                {quote && (
                     <div className="flex items-center gap-3">
-                        <p className="num text-2xl font-bold tracking-[-0.03em]"><Price value={saudi.price} currency={saudi.currency} lang={lang} /></p>
-                        <ChangePill value={saudi.changePercent} lang={lang} />
+                        <p className="num text-2xl font-bold tracking-[-0.03em]"><Price value={quote.price} currency={quote.currency} lang={lang} /></p>
+                        <ChangePill value={quote.changePercent} lang={lang} />
                     </div>
                 )}
                 <div className="flex items-center gap-2">
-                    <WatchlistButton symbol={symbol} company={saudi?.name || symbol} isInWatchlist={isInWatchlist} lang={lang} />
+                    <WatchlistButton symbol={symbol} company={quote?.name || symbol} isInWatchlist={isInWatchlist} lang={lang} />
                     <span className="pill h-9 px-3" title={tx(lang, 'alert.tooltipQuote')}>
                         <Bell /> {tx(lang, 'stock.alertsTV')}
                     </span>
                 </div>
             </div>
-            {!tadawul && (
+            {!hidePanel && (
                 <div className="card mt-[3px] p-1">
                     <TradingViewWidget scriptUrl="https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js" config={symbolInfoConfig(tvSymbol, tvLocale(lang))} height={180} />
                 </div>

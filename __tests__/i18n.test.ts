@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { MARKETS } from '@/lib/markets';
 import { STRINGS, alignmentLabel, arDigits, arNumberDigits, choiceLabel, feedWord, marketName, metricLabel, pulseLabel, sectorLabel, sourceLabel, trendLabel, tx, typeLabel, type Lang } from '@/lib/i18n';
 
 describe('i18n dictionaries', () => {
@@ -34,6 +35,16 @@ describe('value lookups', () => {
         expect(marketName('en', 'sa')).toBe('Saudi Arabia');
         expect(marketName('ar', 'sa')).toBe('السعودية');
         expect(marketName('ar', 'crypto')).toBe('العملات الرقمية');
+    });
+
+    it('names every market and sector exactly as lib/markets.ts does in English', () => {
+        for (const market of MARKETS) {
+            expect(marketName('en', market.id)).toBe(market.name);
+            for (const group of market.groups) {
+                expect(sectorLabel('en', group.title)).toBe(group.title);
+                expect(sectorLabel('ar', group.title), group.title).not.toBe(group.title);
+            }
+        }
     });
 
     it('keeps the feed adjective natural in a sentence', () => {
