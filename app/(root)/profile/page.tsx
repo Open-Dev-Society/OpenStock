@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Bell, KeyRound, ShieldCheck, Star } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
 import Panel from "@/components/Panel";
 import ProfileForm from "@/components/profile/ProfileForm";
 import PasswordForm from "@/components/profile/PasswordForm";
@@ -9,18 +10,23 @@ import { getUserWatchlist } from "@/lib/actions/watchlist.actions";
 import { getUserAlerts } from "@/lib/actions/alert.actions";
 import { alertsEnabled } from "@/lib/market-data";
 
-export const metadata = { title: 'Profile | OpenStock' };
-
-const METHOD_LABELS: Record<string, string> = {
-    credential: 'Email and password',
-    google: 'Google',
-    github: 'GitHub',
-};
+export async function generateMetadata() {
+    const t = await getTranslations('ProfilePage');
+    return { title: `${t('metaTitle')} | OpenStock` };
+}
 
 export default async function ProfilePage() {
     const session = await getSession();
     if (!session?.user) redirect('/sign-in');
     const { user } = session;
+    const t = await getTranslations('ProfilePage');
+    const locale = await getLocale();
+
+    const methodLabels: Record<string, string> = {
+        credential: t('methodCredential'),
+        google: 'Google',
+        github: 'GitHub',
+    };
 
     const [accounts, watchlist, alerts] = await Promise.all([
         auth.api.listUserAccounts({ headers: await headers() }).catch(() => []),
@@ -29,12 +35,12 @@ export default async function ProfilePage() {
     ]);
     const linked = new Set(accounts.map((a: { providerId: string }) => a.providerId));
     const activeAlerts = alerts.filter((a: { triggered?: boolean }) => !a.triggered).length;
-    const memberSince = new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const memberSince = new Date(user.createdAt).toLocaleDateString(locale, { month: 'long', year: 'numeric' });
 
     const stats = [
-        { label: 'Watching', value: watchlist.length, icon: Star },
-        { label: alertsEnabled ? 'Active alerts' : 'Paused alerts', value: activeAlerts, icon: Bell },
-        { label: 'Sign-in methods', value: linked.size, icon: ShieldCheck },
+        { label: t('statWatching'), value: watchlist.length, icon: Star },
+        { label: alertsEnabled ? t('statActiveAlerts') : t('statPausedAlerts'), value: activeAlerts, icon: Bell },
+        { label: t('statSignInMethods'), value: linked.size, icon: ShieldCheck },
     ];
 
     return (
@@ -46,7 +52,7 @@ export default async function ProfilePage() {
                     </span>
                     <div className="min-w-0 flex-1">
                         <h1 className="truncate text-[22px] font-bold tracking-[-0.03em]">{user.name}</h1>
-                        <p className="truncate text-faint">{user.email} · member since {memberSince}</p>
+                        <p className="truncate text-faint">{user.email} · {t('memberSince', { date: memberSince })}</p>
                     </div>
                 </div>
                 <div className="bento mt-[3px]">
@@ -60,7 +66,7 @@ export default async function ProfilePage() {
             </section>
 
             <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
-                <Panel title="Details" sub="Your name and what your welcome email is tailored to">
+                <Panel title={t('detailsTitle')} sub={t('detailsSub')}>
                     <ProfileForm
                         initial={{
                             name: user.name,
@@ -73,20 +79,20 @@ export default async function ProfilePage() {
                 </Panel>
 
                 <div className="flex min-w-0 flex-col gap-3">
-                    <Panel title="Sign-in methods" sub="Ways you can get into this account">
+                    <Panel title={t('signInMethodsTitle')} sub={t('signInMethodsSub')}>
                         <ul className="row-list">
                             {[...linked].map((id) => (
                                 <li key={id} className="flex items-center gap-3 px-3.5 py-3">
                                     <span className="bento-ico"><KeyRound /></span>
-                                    <span className="flex-1 font-semibold">{METHOD_LABELS[id] ?? id}</span>
-                                    <span className="pill is-up">Connected</span>
+                                    <span className="flex-1 font-semibold">{methodLabels[id] ?? id}</span>
+                                    <span className="pill is-up">{t('connected')}</span>
                                 </li>
                             ))}
                         </ul>
                     </Panel>
 
                     {linked.has('credential') && (
-                        <Panel title="Password" sub="Changing it signs out your other devices">
+                        <Panel title={t('passwordTitle')} sub={t('passwordSub')}>
                             <PasswordForm />
                         </Panel>
                     )}

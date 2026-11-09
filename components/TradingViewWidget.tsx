@@ -11,10 +11,14 @@ interface TradingViewWidgetProps {
     height?: number;
     className?: string;
     allowExpand?: boolean;
+    // Expand button text; translated pages pass the TradingViewWidget namespace, the marketing pages keep English
+    labels?: { fullScreen: string; exitFullScreen: string; exitFullScreenHint: string };
 }
 
+const ENGLISH = { fullScreen: 'Full screen', exitFullScreen: 'Exit full screen', exitFullScreenHint: 'Exit full screen (Esc)' };
+
 // Fullscreen resizes the same element in place: moving or re-creating the embed would reset the chart.
-const TradingViewWidget = ({ scriptUrl, config, height = 600, className, allowExpand = false }: TradingViewWidgetProps) => {
+const TradingViewWidget = ({ scriptUrl, config, height = 600, className, allowExpand = false, labels = ENGLISH }: TradingViewWidgetProps) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
     useEffect(() => {
@@ -43,8 +47,8 @@ const TradingViewWidget = ({ scriptUrl, config, height = 600, className, allowEx
                         type="button"
                         onClick={() => setIsExpanded(!isExpanded)}
                         className={cn("icon-btn absolute top-2 right-2 z-10 bg-card/80", !isExpanded && "opacity-0 group-hover:opacity-100 focus-visible:opacity-100")}
-                        aria-label={isExpanded ? "Exit full screen" : "Full screen"}
-                        title={isExpanded ? "Exit full screen (Esc)" : "Full screen"}
+                        aria-label={isExpanded ? labels.exitFullScreen : labels.fullScreen}
+                        title={isExpanded ? labels.exitFullScreenHint : labels.fullScreen}
                     >
                         {isExpanded ? <Minimize2 /> : <Maximize2 />}
                     </button>

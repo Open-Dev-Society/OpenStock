@@ -7,6 +7,7 @@ import { getAllUsersForNewsEmail, getWatchlistSymbolsByEmail } from "@/lib/actio
 import { getNews } from "@/lib/actions/finnhub.actions";
 import { getFormattedTodayDate } from "@/lib/utils";
 import { callAIProviderWithFallback } from "@/lib/ai-provider";
+import { getEmailTranslator } from "@/lib/nodemailer/i18n";
 
 export const sendSignUpEmail = inngest.createFunction(
     { id: 'sign-up-email', triggers: [{ event: 'app/user.created' }] },
@@ -18,7 +19,10 @@ export const sendSignUpEmail = inngest.createFunction(
             - Preferred industry: ${event.data.preferredIndustry}
         `
 
+        // Sign-up sends the locale it was made in; older events have none and stay English
+        const { lang, t } = await getEmailTranslator(event.data.locale);
         const prompt = PERSONALIZED_WELCOME_EMAIL_PROMPT.replace('{{userProfile}}', userProfile)
+            + (lang === 'pl' ? '\n\nWrite the intro in Polish.' : '')
 
 
         const introText = await step.run('generate-welcome-intro', async () => {
@@ -26,7 +30,7 @@ export const sendSignUpEmail = inngest.createFunction(
                 return await callAIProviderWithFallback(prompt);
             } catch (error) {
                 console.error("⚠️ All AI providers failed for welcome email", error);
-                return 'Thanks for joining Openstock. You now have the tools to track markets and make smarter moves.';
+                return t('welcome.fallbackIntro');
             }
         });
 
@@ -37,7 +41,7 @@ export const sendSignUpEmail = inngest.createFunction(
                 // introText is already a plain string from the AI provider
 
                 console.log(`📧 Attempting to send welcome email to: ${email}`);
-                const result = await sendWelcomeEmail({ email, name, intro: introText });
+                const result = await sendWelcomeEmail({ email, name, intro: introText, locale: lang });
                 if (result.status !== 'sent') {
                     console.log(`Welcome email skipped for: ${email}`);
                     return result;

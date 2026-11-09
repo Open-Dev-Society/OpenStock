@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Control, Controller, FieldError } from 'react-hook-form';
 import {
     Popover,
@@ -46,7 +47,18 @@ const CountrySelect = ({
     value: string;
     onChange: (value: string) => void;
 }) => {
+    const t = useTranslations('CountrySelect');
+    const locale = useLocale();
     const [open, setOpen] = useState(false);
+
+    // English keeps the library's names; other locales get the browser's localized region names
+    const countryOptions = useMemo(() => {
+        if (locale === 'en') return COUNTRY_OPTIONS;
+        const names = new Intl.DisplayNames([locale], { type: 'region', fallback: 'none' });
+        return COUNTRY_OPTIONS
+            .map((country) => ({ ...country, label: names.of(country.value) ?? country.label }))
+            .sort((a, b) => a.label.localeCompare(b.label, locale));
+    }, [locale]);
 
     // Helper function to get flag emoji
     const getFlagEmoji = (countryCode: string) => {
@@ -69,10 +81,10 @@ const CountrySelect = ({
                     {value ? (
                         <span className='flex items-center gap-2'>
               <span>{getFlagEmoji(value)}</span>
-              <span>{COUNTRY_OPTIONS.find((c) => c.value === value)?.label}</span>
+              <span>{countryOptions.find((c) => c.value === value)?.label}</span>
             </span>
                     ) : (
-                        'Select your country...'
+                        t('placeholder')
                     )}
                     <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
                 </Button>
@@ -83,15 +95,15 @@ const CountrySelect = ({
             >
                 <Command className='bg-gray-800 border-gray-600'>
                     <CommandInput
-                        placeholder='Search countries...'
+                        placeholder={t('searchPlaceholder')}
                         className='country-select-input'
                     />
                     <CommandEmpty className='country-select-empty'>
-                        No country found.
+                        {t('empty')}
                     </CommandEmpty>
                     <CommandList className='max-h-60 bg-gray-800 scrollbar-hide-default'>
                         <CommandGroup className='bg-gray-800'>
-                            {COUNTRY_OPTIONS.map((country) => (
+                            {countryOptions.map((country) => (
                                 <CommandItem
                                     key={country.value}
                                     value={`${country.label} ${country.value}`}
@@ -128,6 +140,7 @@ export const CountrySelectField = ({
                                        error,
                                        required = false,
                                    }: CountrySelectProps) => {
+    const t = useTranslations('CountrySelect');
     return (
         <div className='space-y-2'>
             <Label htmlFor={name} className='form-label'>
@@ -137,7 +150,7 @@ export const CountrySelectField = ({
                 name={name}
                 control={control}
                 rules={{
-                    required: required ? `Please select ${label.toLowerCase()}` : false,
+                    required: required ? t('required', { field: label.toLowerCase() }) : false,
                 }}
                 render={({ field }) => (
                     <CountrySelect value={field.value} onChange={field.onChange} />
@@ -145,7 +158,7 @@ export const CountrySelectField = ({
             />
             {error && <p className='text-[13px] text-down'>{error.message}</p>}
             <p className='text-[12.5px] text-faint'>
-                Helps us show market data and news relevant to you.
+                {t('hint')}
             </p>
         </div>
     );

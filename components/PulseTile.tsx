@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { LineChart } from "lucide-react";
+import { useTranslations } from "next-intl";
 import ChangePill from "@/components/ChangePill";
 import PriceFlash from "@/components/PriceFlash";
 import { useLiveQuotes, type LiveQuote } from "@/hooks/useLiveQuotes";
@@ -9,9 +10,15 @@ import { useLiveQuotes, type LiveQuote } from "@/hooks/useLiveQuotes";
 const formatAmount = (value: number) =>
     value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: value < 1 ? 4 : 2 });
 
+type PulseTileProps = { symbol: string; label: string; initial: LiveQuote | null };
+type PulseTileLabels = { vsPrevClose: (change: string) => string; unavailable: string };
+
+// English for the marketing preview, which renders outside NextIntlClientProvider
+const ENGLISH: PulseTileLabels = { vsPrevClose: (change) => `${change} vs prev close`, unavailable: 'Quote unavailable' };
+
 // A pulse tile priced from our own quote cache. In realtime mode it refreshes on screen,
 // so the "Live · 15s" label is true; in cached mode it shows the server-rendered quote.
-export default function PulseTile({ symbol, label, initial }: { symbol: string; label: string; initial: LiveQuote | null }) {
+export default function PulseTile({ symbol, label, initial, labels = ENGLISH }: PulseTileProps & { labels?: PulseTileLabels }) {
     const live = useLiveQuotes([symbol]);
     const quote = live[symbol] ?? initial;
     const isCrypto = symbol.startsWith('BINANCE:');
@@ -32,12 +39,18 @@ export default function PulseTile({ symbol, label, initial }: { symbol: string; 
                 {quote?.c ? (
                     <>
                         <ChangePill value={quote.dp} />
-                        <span className="num truncate">{(quote.d ?? 0) > 0 ? '+' : ''}{formatAmount(quote.d ?? 0)} vs prev close</span>
+                        <span className="num truncate">{labels.vsPrevClose(`${(quote.d ?? 0) > 0 ? '+' : ''}${formatAmount(quote.d ?? 0)}`)}</span>
                     </>
                 ) : (
-                    <span>Quote unavailable</span>
+                    <span>{labels.unavailable}</span>
                 )}
             </div>
         </Link>
     );
+}
+
+// The same tile in the viewer's language, for pages inside NextIntlClientProvider
+export function LocalizedPulseTile(props: PulseTileProps) {
+    const t = useTranslations('PulseTile');
+    return <PulseTile {...props} labels={{ vsPrevClose: (change) => t('vsPrevClose', { change }), unavailable: t('unavailable') }} />;
 }

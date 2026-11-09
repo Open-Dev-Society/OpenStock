@@ -1,7 +1,7 @@
 'use client';
 
 import ChangePill from "@/components/ChangePill";
-import DataFreshness from "@/components/DataFreshness";
+import { LocalizedDataFreshness } from "@/components/DataFreshness";
 import PriceFlash from "@/components/PriceFlash";
 import { useLiveQuotes, type LiveQuote } from "@/hooks/useLiveQuotes";
 import { formatPrice } from "@/lib/utils";
@@ -22,7 +22,7 @@ const StockLivePrice = ({ symbol, initial, currency }: { symbol: string; initial
                         {quote?.d != null ? `${quote.d > 0 ? '+' : ''}${quote.d.toFixed(2)}` : ''}
                     </span>
                 </span>
-                <DataFreshness tradeTime={quote?.t} />
+                <LocalizedDataFreshness tradeTime={quote?.t} />
             </div>
         </div>
     );

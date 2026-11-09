@@ -12,6 +12,7 @@ import {
     normalizeListName,
     normalizeSymbol,
 } from '@/lib/watchlist-lists';
+import { getErrorTranslator } from '@/i18n/errors';
 
 export type WatchlistListSummary = {
     id: string;
@@ -41,7 +42,7 @@ const toSummary = (doc: {
 
 const isDuplicateKey = (error: unknown): boolean => (error as { code?: number })?.code === 11000;
 
-const NOT_FOUND = { error: 'That list no longer exists.' };
+const notFound = async () => ({ error: (await getErrorTranslator())('listNotFound') });
 
 export async function getWatchlistLists(): Promise<WatchlistListSummary[]> {
     const userId = await requireUserId();
@@ -58,17 +59,17 @@ export async function getWatchlistLists(): Promise<WatchlistListSummary[]> {
 export async function createWatchlistList(name: string): Promise<{ error: string } | WatchlistListSummary> {
     const userId = await requireUserId();
     const clean = normalizeListName(name);
-    if (!clean) return { error: 'Give the list a name of up to 60 characters.' };
+    if (!clean) return { error: (await getErrorTranslator())('listNameInvalid') };
     try {
         const WatchlistList = watchlistListModel(await connectToDatabase());
         // The duplicate-name handler below only works if the unique index exists, which is not
         // guaranteed on a fresh deployment: init() builds it once per process, before any write.
         await WatchlistList.init();
         if (!canAddList(await WatchlistList.countDocuments({ userId }))) {
-            return { error: `You can keep ${MAX_LISTS} lists. Delete one to make room.` };
+            return { error: (await getErrorTranslator())('listLimit', { max: MAX_LISTS }) };
         }
         if (await WatchlistList.exists({ userId, name: clean })) {
-            return { error: `You already have a list called “${clean}”.` };
+            return { error: (await getErrorTranslator())('listExists', { name: clean }) };
         }
         const created = await WatchlistList.create({ userId, name: clean, symbols: [] });
         try {
@@ -81,7 +82,7 @@ export async function createWatchlistList(name: string): Promise<{ error: string
                 const rank = ids.findIndex((doc) => String(doc._id) === String(created._id));
                 if (rank >= MAX_LISTS) {
                     await WatchlistList.deleteOne({ _id: created._id, userId });
-                    return { error: `You can keep ${MAX_LISTS} lists. Delete one to make room.` };
+                    return { error: (await getErrorTranslator())('listLimit', { max: MAX_LISTS }) };
                 }
             }
         } catch (error) {
@@ -93,7 +94,7 @@ export async function createWatchlistList(name: string): Promise<{ error: string
         return toSummary(created);
     } catch (error) {
         // Two tabs creating the same name at once still land on the unique index.
-        if (isDuplicateKey(error)) return { error: `You already have a list called “${clean}”.` };
+        if (isDuplicateKey(error)) return { error: (await getErrorTranslator())('listExists', { name: clean }) };
         console.error('Error creating a named list:', error);
         throw new Error('Failed to create the list');
     }
@@ -106,10 +107,10 @@ export async function addSymbolToList(
 ): Promise<{ error: string } | { success: true }> {
     const userId = await requireUserId();
     const ticker = normalizeSymbol(symbol);
-    if (!ticker) return { error: 'That is not a symbol we can look up.' };
+    if (!ticker) return { error: (await getErrorTranslator())('symbolInvalid') };
     try {
         const WatchlistList = watchlistListModel(await connectToDatabase());
-        if (!isObjectId(listId)) return NOT_FOUND;
+        if (!isObjectId(listId)) return notFound();
 
         const entry = {
             symbol: ticker,
@@ -148,8 +149,8 @@ export async function addSymbolToList(
         }
 
         const exists = await WatchlistList.findOne({ _id: listId, userId });
-        if (!exists) return NOT_FOUND;
-        return { error: `A list holds up to ${MAX_LIST_SYMBOLS} symbols.` };
+        if (!exists) return notFound();
+        return { error: (await getErrorTranslator())('listFull', { max: MAX_LIST_SYMBOLS }) };
     } catch (error) {
         console.error('Error adding a symbol to a named list:', error);
         throw new Error('Failed to add the symbol');
@@ -162,10 +163,10 @@ export async function removeSymbolFromList(
 ): Promise<{ error: string } | { success: true }> {
     const userId = await requireUserId();
     const ticker = normalizeSymbol(symbol);
-    if (!ticker) return { error: 'That is not a symbol we can look up.' };
+    if (!ticker) return { error: (await getErrorTranslator())('symbolInvalid') };
     try {
         const WatchlistList = watchlistListModel(await connectToDatabase());
-        if (!isObjectId(listId)) return NOT_FOUND;
+        if (!isObjectId(listId)) return notFound();
 
         // $pull is idempotent and atomic; removing a symbol that is already gone is not an error.
         const updated = await WatchlistList.findOneAndUpdate(
@@ -173,7 +174,7 @@ export async function removeSymbolFromList(
             { $pull: { symbols: { symbol: ticker } } },
             { new: true }
         );
-        if (!updated) return NOT_FOUND;
+        if (!updated) return notFound();
         revalidate();
         return { success: true };
     } catch (error) {
@@ -186,9 +187,9 @@ export async function deleteWatchlistList(listId: string): Promise<{ error: stri
     const userId = await requireUserId();
     try {
         const WatchlistList = watchlistListModel(await connectToDatabase());
-        if (!isObjectId(listId)) return NOT_FOUND;
+        if (!isObjectId(listId)) return notFound();
         const deleted = await WatchlistList.findOneAndDelete({ _id: listId, userId });
-        if (!deleted) return NOT_FOUND;
+        if (!deleted) return notFound();
         revalidate();
         return { success: true };
     } catch (error) {

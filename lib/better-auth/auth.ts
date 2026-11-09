@@ -5,6 +5,7 @@ import {nextCookies} from "better-auth/next-js";
 import { headers } from "next/headers";
 import { cache } from "react";
 import { sendPasswordResetEmail } from "@/lib/nodemailer/reset-password";
+import { resolveLocale } from "@/i18n/locale";
 
 
 type MongoDb = Parameters<typeof mongodbAdapter>[0];
@@ -33,10 +34,13 @@ const createAuth = (database: MongoDb) => betterAuth({
             // A reset is how a victim takes an account back: sign out every other session (off by default)
             revokeSessionsOnPasswordReset: true,
             sendResetPassword: async ({ user, url }) => {
+                // Read the cookie now, while the user's request is still in scope
+                const locale = await resolveLocale().catch(() => undefined);
                 void sendPasswordResetEmail({
                     email: user.email,
                     name: user.name,
                     resetUrl: url,
+                    locale,
                 }).catch((error) => {
                     console.error('Failed to queue password reset email:', error);
                 });
