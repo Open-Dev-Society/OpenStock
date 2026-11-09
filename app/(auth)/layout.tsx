@@ -5,7 +5,6 @@ import {redirect} from "next/navigation";
 import {getSession} from "@/lib/better-auth/auth";
 import ProductPreview from "@/components/landing/ProductPreview";
 import { SocialProvidersProvider } from "@/components/forms/SocialAuthButtons";
-import { LangProvider } from "@/components/LangToggle";
 import { getLang } from "@/lib/i18n-server";
 import { tx } from "@/lib/i18n";
 
@@ -31,9 +30,7 @@ const Layout = async ({ children }: { children : React.ReactNode }) => {
                 </Link>
 
                 <div className="pb-6 lg:pb-8 flex-1">
-                    <LangProvider lang={lang}>
-                        <SocialProvidersProvider enabled={socialProviders}>{children}</SocialProvidersProvider>
-                    </LangProvider>
+                    <SocialProvidersProvider enabled={socialProviders}>{children}</SocialProvidersProvider>
                 </div>
             </section>
             <section className="auth-right-section">

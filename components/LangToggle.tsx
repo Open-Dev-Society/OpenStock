@@ -1,19 +1,11 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LANG_COOKIE, isLang, type Lang } from '@/lib/i18n';
 
-// The server layouts already read the cookie, so they hand the language down here and the
-// first paint is in the right language. Client pages read it with useLang() instead of
-// waiting for a round trip of their own.
-const LangContext = createContext<Lang>('en');
-
-export const LangProvider = ({ lang, children }: { lang: Lang; children: React.ReactNode }) => (
-    <LangContext.Provider value={lang}>{children}</LangContext.Provider>
-);
-
-export const useLang = (): Lang => useContext(LangContext);
+// The root layout provides the language; client pages read it with useLang().
+export { useLang } from '@/components/shell/LangProvider';
 
 // AR ⇄ EN toggle. Persists in a cookie so server components render the same language.
 export default function LangToggle({ initial }: { initial: Lang }) {
