@@ -83,16 +83,12 @@ export const kit = {
                 // Handle specific case where broadcast is saved as draft despite unconfirmed email
                 if (error.message && error.message.includes('saved as a draft')) {
                     console.warn("⚠️ Kit Alert: Broadcast saved as DRAFT because sender address is unconfirmed.");
-                    return { success: true, status: 'draft', message: error.message };
+                    throw new Error(`Kit saved the broadcast as a draft: ${error.message}`);
                 }
                 throw new Error(JSON.stringify(error));
             }
             return await response.json();
         } catch (error: any) {
-            // Double check if error was thrown above or network error
-            if (error.message && error.message.includes('saved as a draft')) {
-                return { success: true, status: 'draft', message: error.message };
-            }
             console.error("Kit API Error (sendBroadcast):", error);
             throw error;
         }
