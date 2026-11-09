@@ -1,4 +1,5 @@
 import { NonRetriableError } from "inngest";
+import mongoose from "mongoose";
 import { inngest } from "@/lib/inngest/client";
 import { NEWS_SUMMARY_EMAIL_PROMPT, PERSONALIZED_WELCOME_EMAIL_PROMPT } from "@/lib/inngest/prompts";
 import { sendNewsSummaryEmail, sendStockAlertEmail, sendWelcomeEmail } from "@/lib/nodemailer";
@@ -208,9 +209,9 @@ export const checkStockAlerts = inngest.createFunction(
         const activeAlerts = await step.run('fetch-active-alerts', async () => {
             // Dynamic import to avoid circular dep issues if any, or just standard import
             const { connectToDatabase } = await import("@/database/mongoose");
-            const { Alert } = await import("@/database/models/alert.model");
+            const { alertModel } = await import("@/database/models/alert.model");
 
-            await connectToDatabase();
+            const Alert = alertModel(await connectToDatabase());
             const now = new Date();
 
             return await Alert.find({
@@ -271,10 +272,11 @@ export const checkStockAlerts = inngest.createFunction(
         if (triggeredAlerts.length > 0) {
             await step.run('process-triggered-alerts', async () => {
                 const { connectToDatabase } = await import("@/database/mongoose");
-                const { Alert } = await import("@/database/models/alert.model");
-                const mongoose = await connectToDatabase();
-                const db = mongoose.connection.db;
+                const { alertModel } = await import("@/database/models/alert.model");
+                const handle = await connectToDatabase();
+                const db = handle.connection.db;
                 if (!db) throw new Error("No DB Connection");
+                const Alert = alertModel(handle);
 
                 for (const { alert, currentPrice } of triggeredAlerts) {
                     // Claim the alert atomically before emailing. Inngest's concurrency limits steps, not

@@ -1,5 +1,6 @@
 import { Schema, model, models, type Document, type Model } from 'mongoose';
 import { MAX_LIST_NAME } from '@/lib/watchlist-lists';
+import { modelOn, type DbHandle } from '@/database/request-connection';
 
 export interface NamedListSymbol {
     symbol: string;
@@ -36,3 +37,7 @@ WatchlistListSchema.index({ userId: 1, name: 1 }, { unique: true });
 
 export const WatchlistList: Model<WatchlistList> =
     (models?.WatchlistList as Model<WatchlistList>) || model<WatchlistList>('WatchlistList', WatchlistListSchema);
+
+export function watchlistListModel(db: DbHandle): Model<WatchlistList> {
+    return modelOn(db, 'WatchlistList', WatchlistListSchema, WatchlistList);
+}

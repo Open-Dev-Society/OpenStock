@@ -19,7 +19,7 @@ const findOverflow = vi.fn();
 const init = vi.fn();
 const sortCalls: unknown[] = [];
 vi.mock('@/database/models/watchlist-list.model', () => ({
-    WatchlistList: {
+    watchlistListModel: () => ({
         findOneAndUpdate: (...args: unknown[]) => findOneAndUpdate(...args),
         findOne: (...args: unknown[]) => findOne(...args),
         updateOne: (...args: unknown[]) => updateOne(...args),
@@ -36,7 +36,7 @@ vi.mock('@/database/models/watchlist-list.model', () => ({
         }),
         init: (...args: unknown[]) => init(...args),
         exists: vi.fn().mockResolvedValue(false),
-    },
+    }),
 }));
 
 import {

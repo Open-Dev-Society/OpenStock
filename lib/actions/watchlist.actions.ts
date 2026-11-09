@@ -1,7 +1,7 @@
 'use server';
 
 import { connectToDatabase } from '@/database/mongoose';
-import { Watchlist } from '@/database/models/watchlist.model';
+import { watchlistModel } from '@/database/models/watchlist.model';
 import { revalidatePath } from 'next/cache';
 import { requireUserId } from '@/lib/better-auth/auth';
 
@@ -18,7 +18,7 @@ export async function addToWatchlist(symbol: string, company: string) {
     if (!SYMBOL_PATTERN.test(ticker)) throw new Error('Invalid symbol');
     const name = String(company ?? '').trim().slice(0, 120);
     try {
-        await connectToDatabase();
+        const Watchlist = watchlistModel(await connectToDatabase());
 
         if (!(await Watchlist.exists({ userId, symbol: ticker })) && (await Watchlist.countDocuments({ userId })) >= MAX_WATCHLIST) {
             return { error: `Your watchlist is full (${MAX_WATCHLIST} stocks). Remove one to add another.` };
@@ -47,8 +47,7 @@ export async function addToWatchlist(symbol: string, company: string) {
 export async function removeFromWatchlist(symbol: string) {
     const userId = await requireUserId();
     try {
-        await connectToDatabase();
-        await Watchlist.findOneAndDelete({ userId, symbol: symbol.toUpperCase() });
+        await watchlistModel(await connectToDatabase()).findOneAndDelete({ userId, symbol: symbol.toUpperCase() });
         revalidatePath('/', 'layout'); // sidebar lists the watchlist on every page
         return { success: true };
     } catch (error) {
@@ -60,8 +59,7 @@ export async function removeFromWatchlist(symbol: string) {
 export async function getUserWatchlist() {
     const userId = await requireUserId();
     try {
-        await connectToDatabase();
-        const watchlist = await Watchlist.find({ userId }).sort({ addedAt: -1 });
+        const watchlist = await watchlistModel(await connectToDatabase()).find({ userId }).sort({ addedAt: -1 });
         return JSON.parse(JSON.stringify(watchlist));
     } catch (error) {
         console.error('Error fetching watchlist:', error);
@@ -73,8 +71,7 @@ export async function getUserWatchlist() {
 export async function isStockInWatchlist(symbol: string) {
     const userId = await requireUserId();
     try {
-        await connectToDatabase();
-        const item = await Watchlist.findOne({ userId, symbol: symbol.toUpperCase() });
+        const item = await watchlistModel(await connectToDatabase()).findOne({ userId, symbol: symbol.toUpperCase() });
         return !!item;
     } catch (error) {
         console.error('Error checking watchlist status:', error);

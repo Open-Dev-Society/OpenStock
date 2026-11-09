@@ -61,6 +61,7 @@ export const RELEASES: Release[] = [
                     'MiniMax uses MiniMax-M3.1-Flash unless you pick another model. #140',
                     'better-auth 1.7.10 and nodemailer 10.1.2, with 81 fewer packages to install. #132 #133',
                     'The weekly news email no longer reports success when Kit only saved it as a draft, and doesn’t retry into more drafts. #151',
+                    'OpenStock can also run on Cloudflare Workers (experimental), with a database connection per request and a rate limiter that only trusts Cloudflare’s client address there. The hosted site stays on Vercel. #150',
                 ],
             },
             {
@@ -73,7 +74,7 @@ export const RELEASES: Release[] = [
             },
         ],
         credits: [
-            { login: 'ravixalgorithm', prs: [131, 132, 133, 134, 135, 136, 138, 139, 141, 145] },
+            { login: 'ravixalgorithm', prs: [131, 132, 133, 134, 135, 136, 138, 139, 141, 145, 150] },
             { login: 'ahmaddirar-ios', prs: [142, 148] },
             { login: 'octo-patch', prs: [140] },
             { login: 'pawisoon', prs: [147] },

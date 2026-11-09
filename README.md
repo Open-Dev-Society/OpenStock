@@ -3,10 +3,6 @@
 <p align="center"><sub><a href="#sponsors">SPONSORED BY</a></sub></p>
 
 <p align="center">
-  <a href="https://www.rapidproxy.io/?ref=openstock"><img src="public/assets/images/rapidproxy-banner.png" alt="RapidProxy: try for free, 90M+ clean residential IPs" width="420"></a>
-</p>
-
-<p align="center">
   <a href="https://github.com/diip3sh/orbit"><picture><source media="(prefers-color-scheme: dark)" srcset="public/assets/icons/orbit.png"><img src="public/assets/icons/orbit-black.png" alt="" height="20"></picture></a> <a href="https://github.com/diip3sh/orbit"><b>Orbit</b></a>. Free, open-source macOS screen recorder, screenshot tool and video editor: auto-zoom, smooth cursor, backgrounds, web recordings and AI agent recording.
 </p>
 
@@ -215,6 +211,17 @@ OpenStock ships a [`railway.json`](railway.json) that builds the `Dockerfile`, c
 
 For background jobs, add your Railway domain as an app in the [Inngest dashboard](https://app.inngest.com), pointing to `https://<your-domain>/api/inngest`. To turn on realtime mode, also set `NEXT_PUBLIC_OPENSTOCK_DATA_MODE=realtime`; Railway passes it to the build.
 
+### Cloudflare Workers (experimental)
+
+OpenStock can also run on [Cloudflare Workers](https://developers.cloudflare.com/workers/) through [vinext](https://github.com/cloudflare/vinext). The hosted site still runs on Vercel; Workers is for self-hosters who want it.
+
+1. Set the runtime variables as Worker secrets (`npx wrangler secret put MONGODB_URI`, and the same for `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `FINNHUB_API_KEY`, the email, Inngest and AI keys). `BETTER_AUTH_URL` is your Worker's URL. `NEXT_PUBLIC_*` values are read at build time, so set them before building.
+2. Allow Cloudflare's addresses in your database's network access (on Atlas, `0.0.0.0/0` with a strong password).
+3. Add `https://<your-worker>/api/auth/callback/google` and `.../github` to your OAuth apps if you use social sign-in, and point Inngest at `https://<your-worker>/api/inngest`.
+4. Build and deploy: `npm run build:vinext && npm run deploy:vinext`. `npm run dev:vinext` runs it locally on port 3001.
+
+Each request on Workers opens its own MongoDB connection and closes it when the response is done; Node, Docker and Vercel keep one shared connection.
+
 ### Vercel
 
 Import the repository, set the variables above for Production, and connect Inngest (its Vercel integration sets both keys). [`vercel.json`](vercel.json) pins functions to Mumbai (`bom1`), next to the hosted database; change it to the region nearest yours.
@@ -305,7 +312,7 @@ OpenStock is built by everyone below: the people who wrote the code and the peop
 <!-- Generated from the credits in lib/changelog.ts: update both together. -->
 <table>
   <tr>
-    <td align="center" width="16%"><a href="https://github.com/ravixalgorithm"><img src="https://github.com/ravixalgorithm.png?size=96" width="56" height="56" alt="ravixalgorithm"/><br/><sub><b>ravixalgorithm</b></sub></a><br/><sub>Maintainer · 46 PRs</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/ravixalgorithm"><img src="https://github.com/ravixalgorithm.png?size=96" width="56" height="56" alt="ravixalgorithm"/><br/><sub><b>ravixalgorithm</b></sub></a><br/><sub>Maintainer · 47 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/keshav-005"><img src="https://github.com/keshav-005.png?size=96" width="56" height="56" alt="keshav-005"/><br/><sub><b>keshav-005</b></sub></a><br/><sub>7 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/octo-patch"><img src="https://github.com/octo-patch.png?size=96" width="56" height="56" alt="octo-patch"/><br/><sub><b>octo-patch</b></sub></a><br/><sub>3 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/ahmaddirar-ios"><img src="https://github.com/ahmaddirar-ios.png?size=96" width="56" height="56" alt="ahmaddirar-ios"/><br/><sub><b>ahmaddirar-ios</b></sub></a><br/><sub>2 PRs</sub></td>
@@ -420,5 +427,5 @@ Sponsorships are paid through GitHub Sponsors to [@ravixalgorithm](https://githu
 
 Can't sponsor right now? Pick a [good first issue](https://github.com/Open-Dev-Society/OpenStock/issues?q=is%3Aopen+label%3A%22good+first+issue%22), star the repo, or share OpenStock with someone who pays too much for a terminal.
 
-**Current sponsors** are shown at the [top of this README](#readme): [RapidProxy](https://www.rapidproxy.io/?ref=openstock) · [Orbit](https://github.com/diip3sh/orbit)
-**Previously backed by:** [Atlas Cloud](https://www.atlascloud.ai) · [Siray.ai](https://www.siray.ai/) (2026)
+**Current sponsors** are shown at the [top of this README](#readme): [Orbit](https://github.com/diip3sh/orbit)
+**Previously backed by:** [Atlas Cloud](https://www.atlascloud.ai) · [Siray.ai](https://www.siray.ai/) (2026) · [RapidProxy](https://www.rapidproxy.io) (2026)
