@@ -32,7 +32,7 @@ export default function LanguageSwitcher({ className }: { className?: string }) 
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger disabled={pending} className={cn('side-item h-8 w-full text-left outline-none', className)}>
+            <DropdownMenuTrigger disabled={pending} className={cn('side-item h-8 w-full text-start outline-none', className)}>
                 {pending ? <Loader2 className="animate-spin" /> : <Languages />}
                 <span className="flex-1">{t('label')}</span>
                 <span className="text-xs text-faint" lang={locale}>{LOCALE_NAMES[locale]}</span>

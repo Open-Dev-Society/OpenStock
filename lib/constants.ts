@@ -46,12 +46,15 @@ export const CONDITION_OPTIONS = [
 
 // TradingView widgets, built per market from lib/markets.ts groups. `locale` is the widget UI language
 // (TradingView ships "pl"); callers outside the translated app keep the English default.
+// TradingView spells Arabic "ar_AE"; English and Polish are the same code as ours.
+const tvLocale = (locale: Locale) => (locale === 'ar' ? 'ar_AE' : locale);
+
 type SymbolGroup = { title: string; symbols: [symbol: string, name: string][] };
 
 export const marketOverviewConfig = (groups: SymbolGroup[], locale: Locale = 'en') => ({
     colorTheme: 'dark',
     dateRange: '12M',
-    locale,
+    locale: tvLocale(locale),
     largeChartUrl: '',
     isTransparent: true,
     showFloatingTooltip: true,
@@ -71,7 +74,7 @@ export const marketOverviewConfig = (groups: SymbolGroup[], locale: Locale = 'en
 });
 
 export const marketQuotesConfig = (groups: SymbolGroup[], locale: Locale = 'en') => ({
-    locale,
+    locale: tvLocale(locale),
     showSymbolLogo: true,
     colorTheme: 'dark',
     isTransparent: true,
@@ -115,7 +118,7 @@ export const timelineConfig = (market: 'stock' | 'crypto' | 'forex', locale: Loc
     feedMode: 'market',
     colorTheme: 'dark',
     isTransparent: true,
-    locale,
+    locale: tvLocale(locale),
     market,
 });
 
@@ -123,7 +126,7 @@ export const symbolInfoConfig = (symbol: string, locale: Locale = 'en') => ({
     symbol,
     colorTheme: 'dark',
     isTransparent: true,
-    locale,
+    locale: tvLocale(locale),
     width: '100%',
 });
 
@@ -131,7 +134,7 @@ export const singleQuoteConfig = (symbol: string, locale: Locale = 'en') => ({
     symbol,
     colorTheme: 'dark',
     isTransparent: true,
-    locale,
+    locale: tvLocale(locale),
 });
 
 export const CANDLE_CHART_WIDGET_CONFIG = (symbol: string, locale: Locale = 'en') => ({
@@ -144,7 +147,7 @@ export const CANDLE_CHART_WIDGET_CONFIG = (symbol: string, locale: Locale = 'en'
     hide_volume: false,
     hotlist: false,
     interval: 'D',
-    locale,
+    locale: tvLocale(locale),
     save_image: false,
     style: 1,
     symbol: symbol.toUpperCase(),
@@ -164,7 +167,7 @@ export const TECHNICAL_ANALYSIS_WIDGET_CONFIG = (symbol: string, locale: Locale 
     symbol: symbol.toUpperCase(),
     colorTheme: 'dark',
     isTransparent: true,
-    locale,
+    locale: tvLocale(locale),
     width: '100%',
     height: 400,
     interval: '1h',
@@ -176,7 +179,7 @@ export const COMPANY_PROFILE_WIDGET_CONFIG = (symbol: string, locale: Locale = '
     symbol: symbol.toUpperCase(),
     colorTheme: 'dark',
     isTransparent: true,
-    locale,
+    locale: tvLocale(locale),
     width: '100%',
     height: 440,
 });
@@ -185,7 +188,7 @@ export const COMPANY_FINANCIALS_WIDGET_CONFIG = (symbol: string, locale: Locale 
     symbol: symbol.toUpperCase(),
     colorTheme: 'dark',
     isTransparent: true,
-    locale,
+    locale: tvLocale(locale),
     width: '100%',
     height: 464,
     displayMode: 'regular',

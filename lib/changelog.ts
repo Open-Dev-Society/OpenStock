@@ -53,6 +53,7 @@ export const RELEASES: Release[] = [
                 title: 'Languages',
                 items: [
                     'OpenStock in Polish: the app, sign-in pages, error messages and the welcome and password reset emails, in your browser’s language or the one you pick from the new Language menu in the sidebar. #157',
+                    'OpenStock in Arabic: the app, sign-in pages, error messages and emails, with the app laid out right to left in IBM Plex Sans Arabic and the menu drawer opening from the right. #146',
                 ],
             },
             {
@@ -76,7 +77,7 @@ export const RELEASES: Release[] = [
         ],
         credits: [
             { login: 'ravixalgorithm', prs: [131, 132, 133, 134, 135, 136, 138, 139, 141, 145, 150] },
-            { login: 'ahmaddirar-ios', prs: [142, 148] },
+            { login: 'ahmaddirar-ios', prs: [142, 146, 148] },
             { login: 'octo-patch', prs: [140] },
             { login: 'pawisoon', prs: [147, 157] },
             { login: 'samki6576', prs: [137] },

@@ -22,7 +22,7 @@ export const sendSignUpEmail = inngest.createFunction(
         // Sign-up sends the locale it was made in; older events have none and stay English
         const { lang, t } = await getEmailTranslator(event.data.locale);
         const prompt = PERSONALIZED_WELCOME_EMAIL_PROMPT.replace('{{userProfile}}', userProfile)
-            + (lang === 'pl' ? '\n\nWrite the intro in Polish.' : '')
+            + (lang === 'pl' ? '\n\nWrite the intro in Polish.' : lang === 'ar' ? '\n\nWrite the intro in Arabic.' : '')
 
 
         const introText = await step.run('generate-welcome-intro', async () => {

@@ -43,7 +43,7 @@ const Sidebar = ({ user, watchlist }: SidebarProps) => {
 
             <button type="button" onClick={openSearch} className="side-cta">
                 <Search className="size-4" strokeWidth={2.5} />
-                <span className="flex-1 text-left">{t('searchStocks')}</span>
+                <span className="flex-1 text-start">{t('searchStocks')}</span>
                 <kbd className="kbd bg-on-brand/10">⌘K</kbd>
             </button>
 
@@ -88,7 +88,7 @@ const Sidebar = ({ user, watchlist }: SidebarProps) => {
                 <button
                     type="button"
                     onClick={() => window.dispatchEvent(new CustomEvent('open-donate-popup'))}
-                    className="side-item h-8 text-left"
+                    className="side-item h-8 text-start"
                 >
                     <Heart /> {t('support')}
                 </button>
@@ -100,7 +100,7 @@ const Sidebar = ({ user, watchlist }: SidebarProps) => {
                     <a key={sponsor.name} href={sponsor.url} target="_blank" rel="noreferrer" title={sponsor.name} className="flex h-11 items-center gap-2.5 rounded-[11px] px-3 shadow-[inset_0_0_0_1px_var(--line)] transition-colors hover:bg-white/5">
                         {sponsor.logo && <img src={sponsor.logo} alt={sponsor.iconOnly ? '' : sponsor.name} className="h-5 w-auto max-w-[120px]" />}
                         {(!sponsor.logo || sponsor.iconOnly) && <span className="truncate text-[13px] font-semibold text-muted-foreground">{sponsor.name}</span>}
-                        <span className="kicker ml-auto">{t('sponsor')}</span>
+                        <span className="kicker ms-auto">{t('sponsor')}</span>
                     </a>
                 ))}
                 {openSlots > 0 && (
