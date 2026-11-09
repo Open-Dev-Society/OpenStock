@@ -49,7 +49,7 @@ const WatchlistButton = ({ symbol, company, isInWatchlist, variant = "button", l
         }
     };
 
-    const label = added ? `${tx(lang, 'stock.watching')} ${symbol}` : `${tx(lang, 'stock.watch')} ${symbol}`;
+    const label = tx(lang, added ? 'wl.removeAria' : 'wl.addAria').replace('{s}', symbol);
 
     if (variant === "icon") {
         return (

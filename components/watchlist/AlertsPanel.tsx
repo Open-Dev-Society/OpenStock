@@ -71,7 +71,7 @@ export default function AlertsPanel({ alerts, lang }: { alerts: AlertRow[]; lang
         <>
             {!alertsEnabled && (
                 <p className="px-3 pt-3 pb-1 text-[12.5px] text-faint">
-                    {tx(lang, 'alert.pausedNote')}
+                    {tx(lang, 'alert.pausedBefore')} <Link href="/#data" className="text-brand-ink hover:underline">OpenStock Cloud</Link>{tx(lang, 'alert.pausedAfter')}
                 </p>
             )}
             <ul className="row-list">
@@ -93,7 +93,7 @@ export default function AlertsPanel({ alerts, lang }: { alerts: AlertRow[]; lang
                                 disabled={pendingId === alert._id}
                                 className="icon-btn is-danger"
                                 title={tx(lang, 'alert.remove')}
-                                aria-label={`${tx(lang, 'alert.remove')} ${alert.symbol}`}
+                                aria-label={tx(lang, 'alert.removeFor').replace('{s}', alert.symbol)}
                             >
                                 <Trash2 />
                             </button>

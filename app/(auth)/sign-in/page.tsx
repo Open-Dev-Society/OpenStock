@@ -76,7 +76,7 @@ const SignIn = () => {
                 <InputField
                     name="password"
                     label={tx(lang, 'auth.password')}
-                    placeholder={tx(lang, 'auth.password')}
+                    placeholder={tx(lang, 'auth.passwordPh')}
                     type="password"
                     register={register}
                     error={errors.password}

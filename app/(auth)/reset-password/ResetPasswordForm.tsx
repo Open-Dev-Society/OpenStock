@@ -89,8 +89,8 @@ const ResetPasswordForm = () => {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <InputField
                     name="newPassword"
-                    label={tx(lang, 'pw.new')}
-                    placeholder={tx(lang, 'pw.new')}
+                    label={tx(lang, 'auth.newPassword')}
+                    placeholder={tx(lang, 'auth.newPasswordPh')}
                     type="password"
                     register={register}
                     error={errors.newPassword}
@@ -101,7 +101,7 @@ const ResetPasswordForm = () => {
                 <InputField
                     name="confirmPassword"
                     label={tx(lang, 'auth.confirm')}
-                    placeholder={tx(lang, 'auth.confirm')}
+                    placeholder={tx(lang, 'auth.confirmPh')}
                     type="password"
                     register={register}
                     error={errors.confirmPassword}

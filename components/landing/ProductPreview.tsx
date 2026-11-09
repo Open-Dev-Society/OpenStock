@@ -32,8 +32,8 @@ export default function ProductPreview({ lang = 'en' }: { lang?: Lang }) {
                 <section className="hatch">
                     <div className="section-head">
                         <div>
-                            <h3 className="section-title">{tx(lang, 'dash.pulse')}</h3>
-                            <p className="section-sub">{tx(lang, 'dash.pulseFinnhub')}</p>
+                            <h3 className="section-title">{tx(lang, 'preview.pulse')}</h3>
+                            <p className="section-sub">{tx(lang, 'preview.pulseSub')}</p>
                         </div>
                         <DataFreshness lang={lang} />
                     </div>

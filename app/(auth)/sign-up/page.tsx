@@ -74,7 +74,7 @@ const SignUp = () => {
                     <InputField
                         name="fullName"
                         label={tx(lang, 'auth.fullName')}
-                        placeholder={tx(lang, 'auth.fullName')}
+                        placeholder={tx(lang, 'auth.namePh')}
                         register={register}
                         error={errors.fullName}
                         validation={{ required: 'Full name is required', minLength: 2 }}
@@ -97,7 +97,7 @@ const SignUp = () => {
                         <InputField
                             name="password"
                             label={tx(lang, 'auth.password')}
-                            placeholder={tx(lang, 'auth.password')}
+                            placeholder={tx(lang, 'auth.passwordHint')}
                             type="password"
                             register={register}
                             error={errors.password}

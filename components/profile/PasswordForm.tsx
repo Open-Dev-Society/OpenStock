@@ -31,7 +31,7 @@ export default function PasswordForm({ lang }: { lang: Lang }) {
             <InputField
                 name="currentPassword"
                 label={tx(lang, 'pw.current')}
-                placeholder={tx(lang, 'pw.current')}
+                placeholder={tx(lang, 'pw.currentPh')}
                 type="password"
                 register={register}
                 error={errors.currentPassword}
@@ -41,7 +41,7 @@ export default function PasswordForm({ lang }: { lang: Lang }) {
                 <InputField
                     name="newPassword"
                     label={tx(lang, 'pw.new')}
-                    placeholder={tx(lang, 'pw.new')}
+                    placeholder={tx(lang, 'auth.passwordHint')}
                     type="password"
                     register={register}
                     error={errors.newPassword}

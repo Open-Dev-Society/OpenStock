@@ -91,7 +91,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                             <TradingViewWidget scriptUrl={`${scriptUrl}${heatmap.script}`} config={heatmap.config} height={560} allowExpand />
                         </Panel>
                     ) : (
-                        <Panel title={tx(lang, 'dash.quotes')} sub={`${marketName(lang, market.id)} · ${tx(lang, 'dash.byGroup')}`}>
+                        <Panel title={tx(lang, 'dash.quotes')} sub={tx(lang, 'dash.quotesSub').replace('{m}', marketName(lang, market.id))}>
                             {market.yahoo
                                 ? <YahooQuotesTable market={market} lang={lang} />
                                 : <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(market.groups, tvLocale(lang))} height={560} />}
@@ -101,7 +101,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
                 <div className="grid gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                     {heatmap && (
-                        <Panel title={tx(lang, 'dash.quotes')} sub={`${marketName(lang, market.id)} · ${tx(lang, 'dash.byGroup')}`}>
+                        <Panel title={tx(lang, 'dash.quotes')} sub={tx(lang, 'dash.quotesSub').replace('{m}', marketName(lang, market.id))}>
                             <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(market.groups, tvLocale(lang))} height={560} />
                         </Panel>
                     )}
