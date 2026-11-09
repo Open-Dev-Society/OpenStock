@@ -15,11 +15,11 @@ const findOneAndDelete = vi.fn();
 const create = vi.fn();
 const countDocuments = vi.fn().mockResolvedValue(0);
 vi.mock('@/database/models/alert.model', () => ({
-    Alert: {
+    alertModel: () => ({
         findOneAndDelete: (...args: unknown[]) => findOneAndDelete(...args),
         create: (...args: unknown[]) => create(...args),
         countDocuments: (...args: unknown[]) => countDocuments(...args),
-    },
+    }),
 }));
 
 import { createAlert, deleteAlert } from '@/lib/actions/alert.actions';

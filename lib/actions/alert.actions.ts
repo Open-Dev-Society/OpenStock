@@ -1,7 +1,7 @@
 'use server';
 
 import { connectToDatabase } from '@/database/mongoose';
-import { Alert } from '@/database/models/alert.model';
+import { alertModel } from '@/database/models/alert.model';
 import { revalidatePath } from 'next/cache';
 import { requireUserId } from '@/lib/better-auth/auth';
 import { hasFinnhubQuotes } from '@/lib/markets';
@@ -32,7 +32,8 @@ export async function createAlert(params: {
     if (!hasFinnhubQuotes(symbol)) throw new Error('Alerts are available for US stocks and crypto');
     if (!Number.isFinite(targetPrice) || targetPrice <= 0) throw new Error('Target price must be a positive number');
 
-    await connectToDatabase();
+    const db = await connectToDatabase();
+    const Alert = alertModel(db);
     if (await Alert.countDocuments({ userId, active: true }) >= MAX_ACTIVE_ALERTS) {
         throw new Error(`You can have up to ${MAX_ACTIVE_ALERTS} active alerts`);
     }
@@ -52,8 +53,7 @@ export async function createAlert(params: {
 export async function getUserAlerts() {
     const userId = await requireUserId();
     try {
-        await connectToDatabase();
-        const alerts = await Alert.find({ userId }).sort({ createdAt: -1 });
+        const alerts = await alertModel(await connectToDatabase()).find({ userId }).sort({ createdAt: -1 });
         return JSON.parse(JSON.stringify(alerts));
     } catch (error) {
         console.error('Error fetching alerts:', error);
@@ -65,8 +65,7 @@ export async function getUserAlerts() {
 export async function deleteAlert(alertId: string) {
     const userId = await requireUserId();
     try {
-        await connectToDatabase();
-        await Alert.findOneAndDelete({ _id: alertId, userId });
+        await alertModel(await connectToDatabase()).findOneAndDelete({ _id: alertId, userId });
         revalidatePath('/watchlist');
         return { success: true };
     } catch (error) {

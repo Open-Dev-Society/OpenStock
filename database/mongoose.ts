@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { type Connection } from "mongoose";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -28,9 +28,67 @@ if (!cached) {
     cached = global.mongooseCache = { conn: null, promise: null };
 }
 
+// Workers isolates keep this module alive, but a socket opened for one request
+// cannot be used by the next one (error 1101). Concurrent requests each get
+// their own createConnection. Node and Vercel keep the cache below.
+export function isWorkersRuntime(): boolean {
+    return typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers";
+}
+
+const workersConnections = new Map<string, Promise<Connection>>();
+
+async function workersRequestKey(): Promise<string | undefined> {
+    try {
+        const { headers } = await import("next/headers");
+        return (await headers()).get("cf-ray") || undefined;
+    } catch {
+        return undefined;
+    }
+}
+
+async function openWorkersConnection(key: string | undefined): Promise<Connection> {
+    const conn = mongoose.createConnection(MONGODB_URI!, { bufferCommands: false, family: 4 });
+    try {
+        await conn.asPromise();
+    } catch (error) {
+        await conn.close().catch(() => {});
+        throw error;
+    }
+
+    const { after } = await import("next/server");
+    after(async () => {
+        if (key) workersConnections.delete(key);
+        await conn.close();
+    });
+    console.log(`MongoDB Connected ${MONGODB_URI!.replace(/\/\/[^@]*@/, '//***@')} in ${process.env.NODE_ENV}`);
+    return conn;
+}
+
+async function connectForThisRequest(): Promise<Connection> {
+    const key = await workersRequestKey();
+    if (key) {
+        const existing = workersConnections.get(key);
+        if (existing) return existing;
+    }
+
+    const ready = openWorkersConnection(key);
+    if (key) {
+        workersConnections.set(key, ready);
+        ready.catch(() => {
+            if (workersConnections.get(key) === ready) workersConnections.delete(key);
+        });
+    }
+    return ready;
+}
+
 export const connectToDatabase = async () => {
     if (!MONGODB_URI) {
         throw new Error("MongoDB URI is missing");
+    }
+
+    if (isWorkersRuntime()) {
+        const conn = await connectForThisRequest();
+        return { connection: conn } as typeof mongoose;
     }
 
     if (cached.conn) return cached.conn;
