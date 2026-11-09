@@ -4,7 +4,7 @@ import { getDateRange, validateArticle, formatArticle } from '@/lib/utils';
 import { POPULAR_STOCKS } from '@/lib/constants';
 import { cache } from 'react';
 import { QUOTE_TTL_SECONDS } from '@/lib/market-data';
-import { hasFinnhubQuotes } from '@/lib/markets';
+import { hasFinnhubCompanyData, hasFinnhubQuotes } from '@/lib/markets';
 import { getYahooDailyQuotes } from '@/lib/actions/yahoo.actions';
 import { isYahooSymbol } from '@/lib/yahoo';
 import { getSession } from '@/lib/better-auth/auth';
@@ -193,7 +193,7 @@ export async function getLiveQuotes(symbols: string[]) {
 
 export async function getCompanyProfile(symbol: string) {
     // Profiles exist for stocks Finnhub free covers; crypto pairs and non-US listings have none
-    if (symbol.includes(':') || !hasFinnhubQuotes(symbol)) return null;
+    if (!hasFinnhubCompanyData(symbol)) return null;
     try {
         const url = `${FINNHUB_BASE_URL}/stock/profile2?symbol=${encodeURIComponent(symbol)}`;
         // Cache profile for 24 hours
@@ -205,6 +205,7 @@ export async function getCompanyProfile(symbol: string) {
 }
 
 export async function getStockMetrics(symbol: string): Promise<number | null> {
+    if (!hasFinnhubCompanyData(symbol)) return null;
     if (FINNHUB_KEYS.length === 0) {
         console.error('FINNHUB API key is not configured');
         return null;
@@ -263,7 +264,7 @@ export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> 
         }
         const cleanSymbols = (symbols || [])
             .map((s) => s?.trim().toUpperCase())
-            .filter((s): s is string => Boolean(s));
+            .filter((s): s is string => Boolean(s) && hasFinnhubCompanyData(s));
 
         const maxArticles = 6;
 

@@ -184,6 +184,9 @@ export const hasFinnhubQuotes = (symbol: string) => {
     return !upper.includes(':') && !isInternationalSymbol(upper);
 };
 
+// Company data (profile, metrics, company news) on Finnhub free: US listings only, not crypto pairs; elsewhere it answers 403
+export const hasFinnhubCompanyData = (symbol: string) => !symbol.includes(':') && hasFinnhubQuotes(symbol);
+
 // Is the market trading right now, in its own time zone? Holidays aren't modelled.
 export function isMarketOpen(market: Market, date = new Date()) {
     if (market.hours === '24/7') return true;
