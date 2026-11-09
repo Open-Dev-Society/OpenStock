@@ -6,6 +6,7 @@ import {
     STOCK_ALERT_LOWER_EMAIL_TEMPLATE,
 } from "@/lib/nodemailer/templates";
 import { escapeHtml, formatPrice, sanitizeEmailIntro } from "@/lib/utils";
+import { isWorkersRuntime } from "@/database/mongoose";
 
 type EmailSendResult =
     | { status: 'skipped' }
@@ -25,6 +26,14 @@ type Transporter = ReturnType<typeof nodemailer.createTransport>;
 let transporterInstance: Transporter | null = null;
 
 function getTransporter(): Transporter {
+    // A Workers socket belongs to the request that opened it, so a pool cached for the next
+    // request would fail there: open one plain SMTP connection per send instead.
+    if (isWorkersRuntime()) {
+        return nodemailer.createTransport({
+            service: 'gmail',
+            auth: { user: process.env.NODEMAILER_EMAIL!, pass: process.env.NODEMAILER_PASSWORD! },
+        });
+    }
     if (!transporterInstance) {
         transporterInstance = nodemailer.createTransport({
             service: 'gmail',
