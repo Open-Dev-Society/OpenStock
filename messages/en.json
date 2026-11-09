@@ -89,13 +89,10 @@
   "WatchlistTable": {
     "headers": {
       "company": "Company",
-      "symbol": "Symbol",
       "price": "Price",
       "change": "Change",
-      "marketCap": "Market Cap",
-      "peRatio": "P/E Ratio",
-      "alert": "Alert",
-      "action": "Action"
+      "marketCap": "Market cap",
+      "action": "Actions"
     }
   },
   "AuthLayout": {

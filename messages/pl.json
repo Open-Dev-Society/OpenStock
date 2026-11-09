@@ -89,12 +89,9 @@
   "WatchlistTable": {
     "headers": {
       "company": "Firma",
-      "symbol": "Symbol",
       "price": "Cena",
       "change": "Zmiana",
       "marketCap": "Kapitalizacja rynkowa",
-      "peRatio": "C/Z",
-      "alert": "Alert",
       "action": "Działania"
     }
   },
