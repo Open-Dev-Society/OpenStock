@@ -44,7 +44,7 @@ async function TradingViewHeader({ symbol, lang }: { symbol: string; lang: Lang 
                     </div>
                 )}
                 <div className="flex items-center gap-2">
-                    <WatchlistButton symbol={symbol} company={quote?.name || symbol} isInWatchlist={isInWatchlist} lang={lang} />
+                    <WatchlistButton symbol={symbol} company={symbol} isInWatchlist={isInWatchlist} lang={lang} />
                     <span className="pill h-9 px-3" title={tx(lang, 'alert.tooltipQuote')}>
                         <Bell /> {tx(lang, 'stock.alertsTV')}
                     </span>

@@ -10,7 +10,7 @@ import { signOut } from "@/lib/actions/auth.actions";
 import { cn } from "@/lib/utils";
 import { arDigits, tx, type Lang, type StringKey } from "@/lib/i18n";
 import { SIDEBAR_SPONSOR_SLOTS, sidebarSponsors } from "@/lib/sponsors";
-import { saudiSymbolName, saudiSymbolNameAr } from "@/lib/saudi-symbols";
+import { saudiSymbolNameAr } from "@/lib/saudi-symbols";
 
 type SidebarProps = {
     user: User;
@@ -40,7 +40,7 @@ const Sidebar = ({ user, watchlist, lang }: SidebarProps) => {
     return (
         <aside className="sidebar">
             <Link href="/dashboard" className="px-2 pt-1 pb-2" aria-label="OpenStock dashboard">
-                <Image src="/assets/images/logo.png" alt="OpenStock" width={150} height={28} priority />
+                <Image src="/assets/images/logo.png" alt="OpenStock" width={150} height={38} priority />
             </Link>
 
             <button type="button" onClick={openSearch} className="side-cta">
@@ -66,13 +66,12 @@ const Sidebar = ({ user, watchlist, lang }: SidebarProps) => {
                 ) : (
                     <ul className="scrollbar-hide-default flex min-h-0 flex-col gap-0.5 overflow-y-auto">
                         {watchlist.map(({ symbol, company }) => {
-                            // Old rows stored the ticker as the company name; the Saudi table knows better.
-                            const name = (lang === 'ar' ? saudiSymbolNameAr(symbol) : null) ?? (company !== symbol ? company : saudiSymbolName(symbol));
+                            const name = (lang === 'ar' ? saudiSymbolNameAr(symbol) : null) ?? (company !== symbol ? company : null);
                             return (
                             <li key={symbol}>
                                 <Link
                                     href={`/stocks/${symbol}`}
-                                    title={name || symbol}
+                                    title={name || company}
                                     className={cn('side-item h-8 font-medium', pathname === `/stocks/${symbol}` && 'is-active')}
                                 >
                                     <span dir="ltr" className="mono w-14 shrink-0 text-[12.5px] font-semibold text-foreground">{symbol}</span>
