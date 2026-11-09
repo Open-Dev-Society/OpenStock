@@ -251,7 +251,7 @@
     "closedNow": "مغلق الآن"
   },
   "PulseTile": {
-    "vsPrevClose": "{change} عن الإغلاق السابق",
+    "vsPrevClose": "⁦{change}⁩ عن الإغلاق السابق",
     "unavailable": "لا سعر متاح"
   },
   "DataFreshness": {
@@ -329,10 +329,10 @@
       "text": "أعد تعيين كلمة المرور: {url}"
     },
     "stockAlert": {
-      "subjectAbove": "🔔 تنبيه سعر: {symbol} فوق {target}",
-      "subjectBelow": "🔔 تنبيه سعر: {symbol} تحت {target}",
-      "textAbove": "{symbol} الآن عند {price}، فوق هدفك {target}.",
-      "textBelow": "{symbol} الآن عند {price}، تحت هدفك {target}.",
+      "subjectAbove": "🔔 تنبيه سعر: {symbol} فوق ⁦{target}⁩",
+      "subjectBelow": "🔔 تنبيه سعر: {symbol} تحت ⁦{target}⁩",
+      "textAbove": "{symbol} الآن عند ⁦{price}⁩، فوق هدفك ⁦{target}⁩.",
+      "textBelow": "{symbol} الآن عند ⁦{price}⁩، تحت هدفك ⁦{target}⁩.",
       "titleAbove": "تنبيه سعر: {symbol} بلغ الهدف الأعلى",
       "titleBelow": "تنبيه سعر: {symbol} بلغ الهدف الأدنى",
       "headingAbove": "📈 تجاوز السعر الهدف",
@@ -341,8 +341,8 @@
       "details": "تفاصيل التنبيه",
       "targetPriceLabel": "السعر المستهدف:",
       "triggerLabel": "سبب التنبيه:",
-      "triggerAbove": "تجاوز السعر حدك الأعلى {target}",
-      "triggerBelow": "نزل السعر تحت حدك الأدنى {target}",
+      "triggerAbove": "تجاوز السعر حدك الأعلى ⁦{target}⁩",
+      "triggerBelow": "نزل السعر تحت حدك الأدنى ⁦{target}⁩",
       "calloutTitleAbove": "فرصة!",
       "calloutBodyAbove": "بلغ {symbol} سعرك المستهدف! قد يكون وقتًا مناسبًا لمراجعة مركزك والتفكير في جني الأرباح أو تعديل خطتك.",
       "calloutTitleBelow": "انخفض السعر",
@@ -536,8 +536,8 @@
     "emptyTitle": "لا تنبيهات بعد",
     "emptyBody": "استخدم الجرس بأي صف، أو \"فعّل تنبيه\" بصفحة السهم. نراسلك عند تحققه.",
     "movedNotice": "انتقلت التنبيهات إلى <link>OpenStock Cloud</link>، لذا أُوقفت مؤقتًا.",
-    "above": "فوق {price}",
-    "below": "تحت {price}",
+    "above": "فوق ⁦{price}⁩",
+    "below": "تحت ⁦{price}⁩",
     "until": "حتى {date}",
     "removeTitle": "حذف التنبيه",
     "removeLabel": "احذف تنبيه {symbol}"
@@ -545,7 +545,7 @@
   "CreateAlertModal": {
     "risesAbove": "يصعد فوق",
     "fallsBelow": "يهبط تحت",
-    "created": "ضُبط التنبيه: {symbol} {condition, select, ABOVE {فوق} other {تحت}} {price}",
+    "created": "ضُبط التنبيه: {symbol} {condition, select, ABOVE {فوق} other {تحت}} ⁦{price}⁩",
     "createFailed": "تعذّر إنشاء التنبيه",
     "kicker": "تنبيه سعر",
     "description": "نرسل لك بريداً عندما يتجاوز السعر هدفك. يُفحص كل ٥ دقائق، وينتهي بعد ٩٠ يوماً.",
@@ -553,8 +553,8 @@
     "targetPrice": "السعر المستهدف",
     "priceUnavailable": "السعر الحالي غير متاح",
     "alreadyMet": "السعر {condition, select, ABOVE {فوق} other {تحت}} هذا الحد بالفعل، وسيُطلق التنبيه في الفحص التالي",
-    "now": "الآن {price}",
-    "nowWithDistance": "الآن {price} · يبعد {distance}٪",
+    "now": "الآن ⁦{price}⁩",
+    "nowWithDistance": "الآن ⁦{price}⁩ · يبعد ⁦{distance}⁩٪",
     "setting": "جارٍ التعيين…",
     "setAlert": "فعّل تنبيه",
     "cloudTitle": "تنبيهات الأسعار تأتي مع Cloud",
