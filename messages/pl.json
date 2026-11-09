@@ -383,7 +383,8 @@
     "openStockHint": "Otwórz akcję (⌘K)"
   },
   "SearchCommand": {
-    "title": "Szukaj akcji",
+    "dialogTitle": "Szukaj akcji",
+    "dialogDescription": "Szukaj po nazwie firmy lub symbolu",
     "placeholder": "Szukaj po nazwie firmy lub symbolu",
     "searching": "Szukanie…",
     "noMatch": "Brak wyników dla „{query}”",

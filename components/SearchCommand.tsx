@@ -127,8 +127,8 @@ export default function SearchCommand({ initialStocks }: { initialStocks: StockW
                 setOpen(next);
                 if (!next) setListTarget(null);
             }}
-            title={t('title')}
-            description={t('placeholder')}
+            title={t('dialogTitle')}
+            description={t('dialogDescription')}
             className="search-dialog"
         >
             <div className="search-field">

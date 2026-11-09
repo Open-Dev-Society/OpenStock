@@ -383,7 +383,8 @@
     "openStockHint": "Open a stock (⌘K)"
   },
   "SearchCommand": {
-    "title": "Search stocks",
+    "dialogTitle": "Command Palette",
+    "dialogDescription": "Search for a command to run...",
     "placeholder": "Search by company or symbol",
     "searching": "Searching",
     "noMatch": "Nothing matches “{query}”",
