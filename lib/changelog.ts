@@ -27,6 +27,15 @@ export const RELEASES: Release[] = [
         date: '9 Nov 2026',
         title: 'November update',
         summary: 'Saudi Arabia and Poland on the dashboard, dividend yield, and public stock pages',
+        titleAr: 'تحديث نوفمبر',
+        summaryAr: 'السعودية وبولندا في لوحة الأسواق، وعائد التوزيعات، وصفحات أسهم عامة',
+        highlightsAr: [
+            'سوقان جديدتان: السعودية (تداول) وبولندا (وارسو)، بأسعار متأخرة.',
+            'صفحات الأسهم تعرض عائد التوزيعات.',
+            'صفحات شركات ومقارنات يفتحها أي أحد، مسجّلًا أو لا.',
+            'من يستضيف OpenStock عبر Docker يستطيع تشغيل الوضع اللحظي من جديد.',
+            'واجهة عربية كاملة من اليمين إلى اليسار.',
+        ],
         highlights: [
             'Two new markets: Saudi Arabia (Tadawul) and Poland (Warsaw), with delayed prices.',
             'Stock pages show the dividend yield.',
@@ -55,6 +64,12 @@ export const RELEASES: Release[] = [
                 ],
             },
             {
+                title: 'Languages',
+                items: [
+                    'An Arabic interface with a full right-to-left layout: a language toggle in the sidebar and on the sign-in pages, and the dashboard, stock pages, watchlist, profile and sign-in screens in Arabic, with Arabic digits and the IBM Plex Sans Arabic face. #146',
+                ],
+            },
+            {
                 title: 'Self-hosting',
                 items: [
                     'Docker and Railway self-hosters can switch on realtime mode again: the data mode is passed in at build time. #134',
@@ -75,7 +90,7 @@ export const RELEASES: Release[] = [
         ],
         credits: [
             { login: 'ravixalgorithm', prs: [131, 132, 133, 134, 135, 136, 138, 139, 141, 145, 150] },
-            { login: 'ahmaddirar-ios', prs: [142, 148] },
+            { login: 'ahmaddirar-ios', prs: [142, 146, 148] },
             { login: 'octo-patch', prs: [140] },
             { login: 'pawisoon', prs: [147] },
             { login: 'samki6576', prs: [137] },
