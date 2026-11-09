@@ -67,11 +67,11 @@ const createAuth = (database: MongoDb) => betterAuth({
                 clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
             },
         },
-        // cf-connecting-ip is a single trusted client address. x-forwarded-for stays
-        // so Node/Vercel (no Cloudflare header) still rate-limits as before.
+        // Only Cloudflare overwrites cf-connecting-ip; anywhere else a client can send its own and dodge the
+        // rate limiter. On Workers x-forwarded-for keeps whatever the client sent first, so it is not trusted there.
         advanced: {
             ipAddress: {
-                ipAddressHeaders: ["cf-connecting-ip", "x-forwarded-for"],
+                ipAddressHeaders: isWorkersRuntime() ? ["cf-connecting-ip"] : ["x-forwarded-for"],
             },
         },
         plugins: [nextCookies()],
