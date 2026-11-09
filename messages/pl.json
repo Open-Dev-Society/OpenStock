@@ -4,12 +4,10 @@
     "close": "Zamknij",
     "cancel": "Anuluj",
     "save": "Zapisz",
-    "loading": "Ładowanie…",
-    "somethingWentWrong": "Coś poszło nie tak. Spróbuj jeszcze raz."
+    "loading": "Ładowanie…"
   },
   "Language": {
-    "label": "Język",
-    "changed": "Zmieniono język"
+    "label": "Język"
   },
   "Options": {
     "investmentGoals": {

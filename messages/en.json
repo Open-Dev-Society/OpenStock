@@ -4,12 +4,10 @@
     "close": "Close",
     "cancel": "Cancel",
     "save": "Save",
-    "loading": "Loading…",
-    "somethingWentWrong": "Something went wrong. Please try again."
+    "loading": "Loading"
   },
   "Language": {
-    "label": "Language",
-    "changed": "Language changed"
+    "label": "Language"
   },
   "Options": {
     "investmentGoals": {
@@ -411,7 +409,7 @@
   "DonatePopup": {
     "kicker": "Open for sponsors",
     "title": "Keep OpenStock free",
-    "description": "Your love for OpenStock and Open Dev Society has helped us grow, and we’re now hitting Vercel’s free tier limits. Sponsor from $5 a month, give once, or talk with us about a partnership.",
+    "description": "Your love for OpenStock and Open Dev Society has helped us grow, and we're now hitting Vercel's free tier limits. Sponsor from $5 a month, give once, or talk with us about a partnership.",
     "becomeSponsor": "Become a sponsor",
     "maybeLater": "Maybe later"
   },
@@ -480,8 +478,8 @@
       "mixed": "Mixed"
     },
     "metric": {
-      "mentions": "{value} {count, plural, one {mention} other {mentions}}",
-      "trades": "{value} {count, plural, one {trade} other {trades}}"
+      "mentions": "{value} mentions",
+      "trades": "{value} trades"
     },
     "newsSource": "News",
     "buzz": "buzz",
