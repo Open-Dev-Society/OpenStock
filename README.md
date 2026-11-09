@@ -308,8 +308,8 @@ OpenStock is built by everyone below: the people who wrote the code and the peop
     <td align="center" width="16%"><a href="https://github.com/ravixalgorithm"><img src="https://github.com/ravixalgorithm.png?size=96" width="56" height="56" alt="ravixalgorithm"/><br/><sub><b>ravixalgorithm</b></sub></a><br/><sub>Maintainer · 46 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/keshav-005"><img src="https://github.com/keshav-005.png?size=96" width="56" height="56" alt="keshav-005"/><br/><sub><b>keshav-005</b></sub></a><br/><sub>7 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/octo-patch"><img src="https://github.com/octo-patch.png?size=96" width="56" height="56" alt="octo-patch"/><br/><sub><b>octo-patch</b></sub></a><br/><sub>3 PRs</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/ahmaddirar-ios"><img src="https://github.com/ahmaddirar-ios.png?size=96" width="56" height="56" alt="ahmaddirar-ios"/><br/><sub><b>ahmaddirar-ios</b></sub></a><br/><sub>2 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/akoweicollinxx"><img src="https://github.com/akoweicollinxx.png?size=96" width="56" height="56" alt="akoweicollinxx"/><br/><sub><b>akoweicollinxx</b></sub></a><br/><sub>2 PRs</sub></td>
-    <td align="center" width="16%"><a href="https://github.com/ahmaddirar-ios"><img src="https://github.com/ahmaddirar-ios.png?size=96" width="56" height="56" alt="ahmaddirar-ios"/><br/><sub><b>ahmaddirar-ios</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/alexander-schneider"><img src="https://github.com/alexander-schneider.png?size=96" width="56" height="56" alt="alexander-schneider"/><br/><sub><b>alexander-schneider</b></sub></a><br/><sub>1 PR</sub></td>
   </tr>
   <tr>

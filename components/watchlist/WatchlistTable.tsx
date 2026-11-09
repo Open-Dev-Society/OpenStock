@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell, Search, Star } from "lucide-react";
 import CreateAlertModal from "./CreateAlertModal";
+import AddToListMenu from "./AddToListMenu";
 import WatchlistButton from "@/components/WatchlistButton";
 import ChangePill from "@/components/ChangePill";
 import PriceFlash from "@/components/PriceFlash";
@@ -16,7 +17,7 @@ import type { getWatchlistData } from "@/lib/actions/finnhub.actions";
 type Row = Awaited<ReturnType<typeof getWatchlistData>>[number];
 const SUGGESTIONS = ['AAPL', 'NVDA', 'MSFT', 'TSLA', 'AMZN'];
 
-export default function WatchlistTable({ initialRows }: { initialRows: Row[] }) {
+export default function WatchlistTable({ initialRows, lists = [] }: { initialRows: Row[]; lists?: { id: string; name: string }[] }) {
     const [baseRows, setBaseRows] = useState(initialRows);
     const live = useLiveQuotes(baseRows.map((r) => r.symbol));
 
@@ -81,6 +82,7 @@ export default function WatchlistTable({ initialRows }: { initialRows: Row[] }) 
                             <td className="is-num text-muted-foreground">{row.marketCap ? formatNumber(row.marketCap) : '—'}</td>
                             <td>
                                 <div className="flex items-center justify-end gap-1">
+                                    <AddToListMenu symbol={row.symbol} company={row.name} lists={lists} />
                                     {hasFinnhubQuotes(row.symbol) ? (
                                         <CreateAlertModal symbol={row.symbol} currentPrice={row.price} currency={row.currency}>
                                             <button type="button" className="icon-btn" title={`Set a price alert for ${row.symbol}`} aria-label={`Set a price alert for ${row.symbol}`}>
