@@ -3,8 +3,6 @@ import { Plus_Jakarta_Sans, IBM_Plex_Mono, IBM_Plex_Sans_Arabic } from "next/fon
 import { Analytics } from "@vercel/analytics/next";
 import {Toaster} from "@/components/ui/sonner";
 import OntoLaunchCard from "@/components/OntoLaunchCard";
-import { getLang } from "@/lib/i18n-server";
-import { LangProvider } from "@/components/shell/LangProvider";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -31,18 +29,19 @@ export const metadata: Metadata = {
   description: "OpenStock is an open-source alternative to expensive market platforms. Track real-time prices, set personalized alerts, and explore detailed company insights — built openly, for everyone, forever free.",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
                                        children,
                                    }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const lang = await getLang();
+    // Static on purpose: (root) and (auth) set lang/dir for the reader (HtmlLang); a cookie read here
+    // would make every page dynamic, public ones included.
     return (
-        <html lang={lang} dir={lang === 'ar' ? 'rtl' : 'ltr'} className="dark" suppressHydrationWarning>
+        <html lang="en" className="dark" suppressHydrationWarning>
             <body
                 className={`${jakarta.variable} ${arabic.variable} ${plexMono.variable} font-sans antialiased`}
             >
-                <LangProvider lang={lang}>{children}</LangProvider>
+                {children}
                 <Toaster/>
                 <OntoLaunchCard />
                 <Analytics />

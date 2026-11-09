@@ -5,6 +5,7 @@ import DonatePopup from "@/components/DonatePopup";
 import { searchStocks } from "@/lib/actions/finnhub.actions";
 import { getUserWatchlist } from "@/lib/actions/watchlist.actions";
 import { getLang } from "@/lib/i18n-server";
+import { HtmlLang, LangProvider } from "@/components/shell/LangProvider";
 
 const Layout = async ({ children }: { children: React.ReactNode }) => {
     const session = await getSession();
@@ -24,7 +25,8 @@ const Layout = async ({ children }: { children: React.ReactNode }) => {
     const lang = await getLang();
 
     return (
-        <>
+        <LangProvider lang={lang}>
+            <HtmlLang lang={lang} />
             <AppShell
                 user={user}
                 watchlist={watchlist.map(({ symbol, company }: { symbol: string; company: string }) => ({ symbol, company }))}
@@ -34,7 +36,7 @@ const Layout = async ({ children }: { children: React.ReactNode }) => {
                 {children}
             </AppShell>
             <DonatePopup lang={lang} />
-        </>
+        </LangProvider>
     )
 }
 export default Layout
