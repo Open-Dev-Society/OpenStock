@@ -1,7 +1,7 @@
 'use server';
 
 import { connectToDatabase } from '@/database/mongoose';
-import { WatchlistList } from '@/database/models/watchlist-list.model';
+import { watchlistListModel } from '@/database/models/watchlist-list.model';
 import { revalidatePath } from 'next/cache';
 import { requireUserId } from '@/lib/better-auth/auth';
 import {
@@ -47,7 +47,7 @@ const notFound = async () => ({ error: (await getErrorTranslator())('listNotFoun
 export async function getWatchlistLists(): Promise<WatchlistListSummary[]> {
     const userId = await requireUserId();
     try {
-        await connectToDatabase();
+        const WatchlistList = watchlistListModel(await connectToDatabase());
         const lists = await WatchlistList.find({ userId }).sort({ createdAt: -1 });
         return lists.map(toSummary);
     } catch (error) {
@@ -61,7 +61,7 @@ export async function createWatchlistList(name: string): Promise<{ error: string
     const clean = normalizeListName(name);
     if (!clean) return { error: (await getErrorTranslator())('listNameInvalid') };
     try {
-        await connectToDatabase();
+        const WatchlistList = watchlistListModel(await connectToDatabase());
         // The duplicate-name handler below only works if the unique index exists, which is not
         // guaranteed on a fresh deployment: init() builds it once per process, before any write.
         await WatchlistList.init();
@@ -109,7 +109,7 @@ export async function addSymbolToList(
     const ticker = normalizeSymbol(symbol);
     if (!ticker) return { error: (await getErrorTranslator())('symbolInvalid') };
     try {
-        await connectToDatabase();
+        const WatchlistList = watchlistListModel(await connectToDatabase());
         if (!isObjectId(listId)) return notFound();
 
         const entry = {
@@ -165,7 +165,7 @@ export async function removeSymbolFromList(
     const ticker = normalizeSymbol(symbol);
     if (!ticker) return { error: (await getErrorTranslator())('symbolInvalid') };
     try {
-        await connectToDatabase();
+        const WatchlistList = watchlistListModel(await connectToDatabase());
         if (!isObjectId(listId)) return notFound();
 
         // $pull is idempotent and atomic; removing a symbol that is already gone is not an error.
@@ -186,7 +186,7 @@ export async function removeSymbolFromList(
 export async function deleteWatchlistList(listId: string): Promise<{ error: string } | { success: true }> {
     const userId = await requireUserId();
     try {
-        await connectToDatabase();
+        const WatchlistList = watchlistListModel(await connectToDatabase());
         if (!isObjectId(listId)) return notFound();
         const deleted = await WatchlistList.findOneAndDelete({ _id: listId, userId });
         if (!deleted) return notFound();

@@ -2,7 +2,7 @@
 // every user's email and watchlist, so they must never be callable from a browser.
 
 import {connectToDatabase} from "@/database/mongoose";
-import { Watchlist } from "@/database/models/watchlist.model";
+import { watchlistModel } from "@/database/models/watchlist.model";
 
 export const getAllUsersForNewsEmail = async () => {
     try {
@@ -42,7 +42,7 @@ export async function getWatchlistSymbolsByEmail(email: string): Promise<string[
         const userId = (user.id as string) || String(user._id || '');
         if (!userId) return [];
 
-        const items = await Watchlist.find({ userId }, { symbol: 1 }).lean();
+        const items = await watchlistModel(mongoose).find({ userId }, { symbol: 1 }).lean();
         return items.map((i) => String(i.symbol));
     } catch (err) {
         console.error('getWatchlistSymbolsByEmail error:', err);

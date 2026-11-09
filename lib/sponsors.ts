@@ -11,6 +11,7 @@ export type Sponsor = {
     blurb?: string;      // one line for the floating banner on the landing page
     tier?: SponsorTierId;
     period?: string;     // e.g. "2026"
+    hideInFooter?: true; // past sponsor kept off the footer band (still on /love and in the README)
 };
 
 export type SponsorTierId = 'backer' | 'supporter' | 'company' | 'partner';
@@ -63,12 +64,12 @@ export const SPONSOR_TIERS: {
 
 export const ACTIVE_SPONSORS: Sponsor[] = [
     { name: 'Orbit', url: 'https://github.com/diip3sh/orbit', logo: '/assets/icons/orbit.png', iconOnly: true, tier: 'partner', blurb: 'Free, open-source screen recorder and video editor for macOS.' },
-    { name: 'RapidProxy', url: 'https://www.rapidproxy.io/?ref=openstock', logo: '/assets/icons/rapidproxy.png', banner: '/assets/images/rapidproxy-banner.png', tier: 'company' },
 ];
 
 export const PREVIOUS_SPONSORS: Sponsor[] = [
     { name: 'Atlas Cloud', url: 'https://www.atlascloud.ai', logo: '/assets/icons/atlascloud.svg', tier: 'partner' },
     { name: 'Siray.ai', url: 'https://www.siray.ai', logo: '/assets/icons/siray.svg', tier: 'partner', period: '2026' },
+    { name: 'RapidProxy', url: 'https://www.rapidproxy.io', logo: '/assets/icons/rapidproxy.png', tier: 'company', period: '2026', hideInFooter: true },
 ];
 
 // People who sponsored publicly on GitHub (private sponsors stay anonymous). Avatars come from GitHub.
