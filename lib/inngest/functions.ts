@@ -1,3 +1,4 @@
+import { NonRetriableError } from "inngest";
 import { inngest } from "@/lib/inngest/client";
 import { NEWS_SUMMARY_EMAIL_PROMPT, PERSONALIZED_WELCOME_EMAIL_PROMPT } from "@/lib/inngest/prompts";
 import { sendNewsSummaryEmail, sendStockAlertEmail, sendWelcomeEmail } from "@/lib/nodemailer";
@@ -187,10 +188,11 @@ export const sendWeeklyNewsSummary = inngest.createFunction(
             `;
 
             console.log(`📢 Sending Weekly News Broadcast to all subscribers`);
-            const broadcastResult = await kit.sendBroadcast(subject, content);
-            if (broadcastResult?.success === false || broadcastResult?.status === 'draft') {
-                throw new Error(broadcastResult.message || 'Kit did not confirm that the weekly broadcast was sent.');
-            }
+            const broadcastResult = await kit.sendBroadcast(subject, content).catch((e) => {
+                // A retry would only save another draft until the sender address is confirmed in Kit
+                if (e instanceof Error && e.message.includes('saved as a draft')) throw new NonRetriableError(e.message);
+                throw e;
+            });
             console.log("👉 Kit API Response:", JSON.stringify(broadcastResult, null, 2));
             return { success: true, kitResponse: broadcastResult };
         })
