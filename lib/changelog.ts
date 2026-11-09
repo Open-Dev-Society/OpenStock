@@ -44,6 +44,12 @@ export const RELEASES: Release[] = [
                 ],
             },
             {
+                title: 'Watchlist',
+                items: [
+                    'Named watchlists: group the stocks you watch into up to 10 lists of 50, and file a stock into one from any watchlist row or straight from search. #148',
+                ],
+            },
+            {
                 title: 'Self-hosting',
                 items: [
                     'Docker and Railway self-hosters can switch on realtime mode again: the data mode is passed in at build time. #134',
@@ -63,7 +69,7 @@ export const RELEASES: Release[] = [
         ],
         credits: [
             { login: 'ravixalgorithm', prs: [131, 132, 133, 134, 135, 136, 138, 139, 141, 145] },
-            { login: 'ahmaddirar-ios', prs: [142] },
+            { login: 'ahmaddirar-ios', prs: [142, 148] },
             { login: 'octo-patch', prs: [140] },
             { login: 'pawisoon', prs: [147] },
             { login: 'samki6576', prs: [137] },
