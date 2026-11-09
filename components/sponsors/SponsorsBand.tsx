@@ -57,7 +57,7 @@ export default function SponsorsBand() {
     });
     // Past sponsors without a recorded tier sit with the partners rather than disappearing
     const previous = (['partner', 'company'] as const)
-        .map((id) => ({ id, sponsors: PREVIOUS_SPONSORS.filter((s) => (s.tier ?? 'partner') === id) }))
+        .map((id) => ({ id, sponsors: PREVIOUS_SPONSORS.filter((s) => !s.hideInFooter && (s.tier ?? 'partner') === id) }))
         .filter((g) => g.sponsors.length > 0);
 
     return (
