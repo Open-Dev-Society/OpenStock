@@ -114,7 +114,7 @@ export const getChangeColorClass = (changePercent?: number) => {
 const CURRENCY_TEXT: Record<string, StringKey> = { SAR: 'currency.sarShort' };
 
 export const formatPrice = (price: number, currency = 'USD', lang: Lang = 'en') => {
-    const localized = CURRENCY_TEXT[currency];
+    const localized = lang === 'ar' ? CURRENCY_TEXT[currency] : undefined;
     const formatted = localized
         ? `${tx(lang, localized)} ${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
         : new Intl.NumberFormat('en-US', {

@@ -2,8 +2,8 @@ import RiyalSymbol from '@/components/RiyalSymbol';
 import { arDigits, tx, type Lang } from '@/lib/i18n';
 import { cn, formatPrice } from '@/lib/utils';
 
-// Amount with its currency. The riyal has an official sign, so Saudi prices print the sign instead
-// of the ISO code; every other currency keeps the formatter's own output.
+// Amount with its currency. The riyal has an official sign, so Saudi prices in the Arabic interface
+// print the sign instead of the ISO code; English and every other currency keep the formatter's output.
 export default function Price({
     value,
     currency = 'USD',
@@ -15,7 +15,7 @@ export default function Price({
     lang?: Lang;
     className?: string;
 }) {
-    if (currency !== 'SAR') {
+    if (currency !== 'SAR' || lang !== 'ar') {
         return <>{formatPrice(value, currency, lang)}</>;
     }
 

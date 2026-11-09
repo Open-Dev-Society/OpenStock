@@ -7,8 +7,8 @@ describe('formatPrice', () => {
         expect(formatPrice(1234.5, 'EUR', 'en')).toBe('€1,234.50');
     });
 
-    it('spells the riyal the way the Arabic press writes it', () => {
-        expect(formatPrice(25.92, 'SAR', 'en')).toBe('SAR 25.92');
+    it('spells the riyal the way the Arabic press writes it, and leaves English as it was', () => {
+        expect(formatPrice(25.92, 'SAR', 'en')).toBe('SAR\u00a025.92');
         expect(formatPrice(25.92, 'SAR', 'ar')).toBe('\u2066ر.س ٢٥.٩٢\u2069');
     });
 
