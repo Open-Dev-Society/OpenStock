@@ -18,7 +18,7 @@ const COVERAGE = [
     ['US stocks, crypto', 'Live', 'Yes'],
     ['Forex', 'Live', 'No'],
     ['Canada, Australia', 'Delayed', 'No'],
-    ['Saudi Arabia (Yahoo Finance)', 'Delayed', 'No'],
+    ['Saudi Arabia, Poland (Yahoo Finance)', 'Delayed', 'No'],
     ['India (BSE), Germany', 'End of day', 'No'],
 ];
 

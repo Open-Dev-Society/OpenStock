@@ -18,6 +18,57 @@ export const MAINTAINER = 'ravixalgorithm';
 
 export const RELEASES: Release[] = [
     {
+        id: '2026-11-09',
+        date: '9 Nov 2026',
+        title: 'November update',
+        summary: 'Saudi Arabia and Poland on the dashboard, dividend yield, and public stock pages',
+        highlights: [
+            'Two new markets: Saudi Arabia (Tadawul) and Poland (Warsaw), with delayed prices.',
+            'Stock pages show the dividend yield.',
+            'Company and comparison pages anyone can open, signed in or not.',
+            'Docker self-hosters can switch on realtime mode again.',
+        ],
+        sections: [
+            {
+                title: 'Markets',
+                items: [
+                    'Saudi Arabia (Tadawul) joins the dashboard: TASI, Aramco, Al Rajhi and STC tiles, today’s movers and a quotes table, priced from Yahoo Finance because TradingView blocks Tadawul in embeds. Saudi stock pages and watchlist rows show the price too. #145',
+                    'Poland (GPW Warsaw) joins the dashboard: WIG20, WIG, mWIG40 and sWIG80 tiles, today’s movers and a quotes table of blue chips, priced from Yahoo Finance (delayed) because TradingView embeds have Warsaw only end of day. Polish stock pages and watchlist rows show the price too. #147',
+                ],
+            },
+            {
+                title: 'Stock pages',
+                items: [
+                    'A dividend yield card, from Finnhub’s real data, with a dash for stocks and crypto that don’t pay one. #137',
+                    'Public company and comparison pages that work without signing in, and robots.txt and sitemap.xml that search engines can read. #136',
+                ],
+            },
+            {
+                title: 'Self-hosting',
+                items: [
+                    'Docker and Railway self-hosters can switch on realtime mode again: the data mode is passed in at build time. #134',
+                    'MiniMax uses MiniMax-M3.1-Flash unless you pick another model. #140',
+                    'better-auth 1.7.10 and nodemailer 10.1.2, with 81 fewer packages to install. #132 #133',
+                ],
+            },
+            {
+                title: 'Community',
+                items: [
+                    'Every release on this page credits the people who made it, and everyone who has built OpenStock is listed at the bottom. #131',
+                    'A README rewritten for how OpenStock works today, with a latest-release badge. #135 #141',
+                    'A Code of Conduct (Contributor Covenant 2.1) and a FLOSS/fund funding manifest. #139 #138',
+                ],
+            },
+        ],
+        credits: [
+            { login: 'ravixalgorithm', prs: [131, 132, 133, 134, 135, 136, 138, 139, 141, 145] },
+            { login: 'ahmaddirar-ios', prs: [142] },
+            { login: 'octo-patch', prs: [140] },
+            { login: 'pawisoon', prs: [147] },
+            { login: 'samki6576', prs: [137] },
+        ],
+    },
+    {
         id: '2026-10-18',
         date: '18 Oct 2026',
         title: 'October update',
@@ -36,12 +87,6 @@ export const RELEASES: Release[] = [
                     'Draw on the stock chart: trend lines, horizontal lines, Fibonacci, shapes and text. #118',
                     'The indicators you pick (SMA, EMA, Bollinger Bands, VWAP, RSI, MACD, Stochastic, ATR) stay on every chart, after a reload and in fullscreen. #119',
                     'Tickers with a - or & now chart correctly: M&M and Bajaj-Auto in India, Ericsson B in Stockholm, Novo Nordisk B in Copenhagen. #117',
-                ],
-            },
-            {
-                title: 'Markets',
-                items: [
-                    'Saudi Arabia (Tadawul) joins the dashboard: TASI, Aramco, Al Rajhi and STC tiles, today’s movers and a quotes table, priced from Yahoo Finance because TradingView blocks Tadawul in embeds. Saudi stock pages and watchlist rows show the price too. #145',
                 ],
             },
             {
@@ -84,7 +129,6 @@ export const RELEASES: Release[] = [
             { login: 'Yi-111-a', prs: [110] },
             { login: 'cosark', prs: [111] },
             { login: 'muskanbandta23', prs: [115] },
-            { login: 'ahmaddirar-ios', prs: [142] },
             { login: 'nexitpl', issues: [47, 54] },
             { login: 'brainistry10', issues: [113] },
             { login: 'Greatz08', issues: [83] },
