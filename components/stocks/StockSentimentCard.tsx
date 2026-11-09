@@ -74,7 +74,7 @@ export default function StockSentimentCard({ insight }: StockSentimentCardProps)
                                 {t(`metric.${toMessageKey(source.metricLabel) as MetricKey}`, { value: formatCompactNumber(source.metricValue), count: source.metricValue })}
                             </p>
                         </div>
-                        <div className="num text-right text-[12.5px]">
+                        <div className="num text-end text-[12.5px]">
                             <p className="font-semibold text-foreground">{formatScore(source.buzzScore, '')}</p>
                             <p className="text-faint">{t('buzz')}</p>
                         </div>

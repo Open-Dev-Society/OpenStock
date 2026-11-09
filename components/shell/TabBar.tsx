@@ -78,7 +78,7 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
                 <Menu />
             </button>
 
-            <div className="tabs pl-3 pr-3">
+            <div className="tabs ps-3 pe-3">
                 <div
                     className={cn('tab-glider', glider && 'is-ready')}
                     style={glider ? { transform: `translateX(${glider.x}px)`, width: glider.w } : undefined}
@@ -97,7 +97,7 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
                         <div
                             key={path}
                             ref={(el) => { if (el) tabRefs.current.set(path, el); else tabRefs.current.delete(path); }}
-                            className={cn('tab', active && 'is-active', pinned && 'pr-4')}
+                            className={cn('tab', active && 'is-active', pinned && 'pe-4')}
                         >
                             {/* Stretched link: the whole tab navigates, while the close button stays a real, focusable button */}
                             <Link href={path} aria-current={active ? 'page' : undefined} className="flex min-w-0 flex-1 items-center gap-2 before:absolute before:inset-0 before:content-['']">
@@ -120,7 +120,7 @@ const TabBar = ({ onMenu }: { onMenu: () => void }) => {
                 })}
             </div>
 
-            <button type="button" onClick={openSearch} className="chrome-btn -ml-2" aria-label={t('openStock')} title={t('openStockHint')}>
+            <button type="button" onClick={openSearch} className="chrome-btn -ms-2" aria-label={t('openStock')} title={t('openStockHint')}>
                 <Plus />
             </button>
         </div>

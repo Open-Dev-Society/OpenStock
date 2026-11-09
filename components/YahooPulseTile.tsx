@@ -19,7 +19,7 @@ export default function YahooPulseTile({ tvSymbol, label, quote, labels = ENGLIS
             <div className="bento-head">
                 <span className="bento-ico"><LineChart /></span>
                 <span className="truncate">{label}</span>
-                <span className="mono ml-auto text-xs text-faint">{tvSymbol.split(':').pop()}</span>
+                <span className="mono ms-auto text-xs text-faint">{tvSymbol.split(':').pop()}</span>
             </div>
             <p className="bento-value self-start num">
                 {/* Indices are in points, not a currency */}

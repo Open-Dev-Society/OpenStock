@@ -130,7 +130,7 @@ export function StockHeaderSkeleton() {
                     <span className="h-5 w-48 animate-pulse rounded-md bg-hover" />
                     <span className="h-3 w-32 animate-pulse rounded-md bg-hover" />
                 </span>
-                <span className="ml-auto h-8 w-36 animate-pulse rounded-md bg-hover" />
+                <span className="ms-auto h-8 w-36 animate-pulse rounded-md bg-hover" />
             </div>
             <div className="bento mt-[3px]">
                 {[0, 1, 2, 3].map((i) => (

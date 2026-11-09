@@ -156,7 +156,7 @@ export default function SearchCommand({ initialStocks }: { initialStocks: StockW
                             <span className="num"> · {displayStocks?.length || 0}</span>
                         </li>
                         {displayStocks?.map((stock) => (
-                            <li key={stock.symbol} className={cn('search-item', listTarget && 'flex items-center gap-1 pr-2')}>
+                            <li key={stock.symbol} className={cn('search-item', listTarget && 'flex items-center gap-1 pe-2')}>
                                 <Link
                                     href={`/stocks/${stock.symbol}`}
                                     onClick={(e) => {

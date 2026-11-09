@@ -203,11 +203,11 @@
         overscroll-behavior: contain;
         background: var(--canvas);
         border-radius: 12px 12px 0 0;
-        transition: border-top-left-radius 180ms var(--tab-ease);
+        transition: border-start-start-radius 180ms var(--tab-ease);
         scrollbar-width: thin;
         scrollbar-color: var(--line-strong) transparent;
     }
-    .workspace.is-first-tab { border-top-left-radius: 0; }
+    .workspace.is-first-tab { border-start-start-radius: 0; }
 
     .workspace-inner {
         display: flex;
@@ -768,10 +768,10 @@
         @apply !bg-card border-b border-line relative;
     }
     .search-input {
-        @apply !bg-card border-0 text-foreground placeholder:text-faint focus:ring-0 text-base h-14 pr-10;
+        @apply !bg-card border-0 text-foreground placeholder:text-faint focus:ring-0 text-base h-14 pe-10;
     }
     .search-loader {
-        @apply absolute right-12 top-1/2 -translate-y-1/2 h-4 w-4 text-faint animate-spin;
+        @apply absolute end-12 top-1/2 -translate-y-1/2 h-4 w-4 text-faint animate-spin;
     }
     .search-list {
         @apply !bg-card max-h-[420px] p-1.5;
@@ -849,4 +849,21 @@
     --tweet-body-font-size: 15px;
     --tweet-body-line-height: 1.5;
     max-width: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Arabic (right to left)
+   The Latin display face has no Arabic glyphs, so Arabic switches to Plex Sans
+   Arabic and drops the negative tracking. Unlayered on purpose: `body` carries
+   Tailwind's `font-sans` utility, and the utilities layer beats @layer base.
+--------------------------------------------------------------------------- */
+html[lang="ar"] body {
+    font-family: var(--font-arabic), var(--font-jakarta), system-ui, sans-serif;
+    letter-spacing: 0;
+}
+
+/* Numbers keep their own order in a right-to-left line: "-0.08" must not render as "0.08-". */
+html[dir="rtl"] .num,
+html[dir="rtl"] .mono {
+    unicode-bidi: plaintext;
 }

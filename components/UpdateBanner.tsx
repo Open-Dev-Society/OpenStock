@@ -15,7 +15,7 @@ export default function UpdateBanner({ className, labels = DEFAULT_LABELS }: { c
         <Dialog>
             <DialogTrigger
                 className={cn(
-                    'group flex w-full items-center gap-2.5 rounded-[12px] bg-brand-soft/50 py-1.5 pl-2 pr-3 text-left text-[13px] shadow-[inset_0_0_0_1px_oklch(0.8_0.13_176/0.25)] transition-colors hover:bg-brand-soft/80',
+                    'group flex w-full items-center gap-2.5 rounded-[12px] bg-brand-soft/50 py-1.5 ps-2 pe-3 text-start text-[13px] shadow-[inset_0_0_0_1px_oklch(0.8_0.13_176/0.25)] transition-colors hover:bg-brand-soft/80',
                     className,
                 )}
             >

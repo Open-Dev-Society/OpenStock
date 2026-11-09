@@ -32,8 +32,9 @@ const AppShell = ({ user, watchlist, initialStocks, children }: AppShellProps) =
         <div className="shell">
             <div
                 className={cn(
-                    'min-h-0 max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-50 max-lg:w-[272px] max-lg:transition-transform max-lg:duration-200',
-                    navOpen ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full',
+                    // The drawer slides in from the reading side: the right in Arabic
+                    'min-h-0 max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:rtl:left-auto max-lg:rtl:right-0 max-lg:z-50 max-lg:w-[272px] max-lg:transition-transform max-lg:duration-200',
+                    navOpen ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full max-lg:rtl:translate-x-full',
                 )}
             >
                 <Sidebar user={user} watchlist={watchlist} />

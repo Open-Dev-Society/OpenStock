@@ -29,11 +29,11 @@ export default async function YahooQuotesTable({ market }: { market: Market }) {
         <div className="overflow-x-auto">
             <table className="w-full text-[13px]">
                 <thead>
-                    <tr className="text-left text-faint">
+                    <tr className="text-start text-faint">
                         <th className="px-3 py-2 font-medium">{th('company')}</th>
-                        <th className="px-3 py-2 text-right font-medium">{th('price')}</th>
-                        <th className="px-3 py-2 text-right font-medium">{th('change')}</th>
-                        <th className="px-3 py-2 text-right font-medium">{t('changePercent')}</th>
+                        <th className="px-3 py-2 text-end font-medium">{th('price')}</th>
+                        <th className="px-3 py-2 text-end font-medium">{th('change')}</th>
+                        <th className="px-3 py-2 text-end font-medium">{t('changePercent')}</th>
                     </tr>
                 </thead>
                 {market.groups.map((group) => (
@@ -51,11 +51,11 @@ export default async function YahooQuotesTable({ market }: { market: Market }) {
                                             {name} <span className="mono text-[11px] text-faint">{appSymbol}</span>
                                         </Link>
                                     </td>
-                                    <td className="num px-3 py-2 text-right font-semibold">{q ? fmt(q.price) : '—'}</td>
-                                    <td className={`num px-3 py-2 text-right ${q && q.change < 0 ? 'text-down' : 'text-up'}`}>
+                                    <td className="num px-3 py-2 text-end font-semibold">{q ? fmt(q.price) : '—'}</td>
+                                    <td className={`num px-3 py-2 text-end ${q && q.change < 0 ? 'text-down' : 'text-up'}`}>
                                         {q ? `${q.change > 0 ? '+' : ''}${fmt(q.change)}` : '—'}
                                     </td>
-                                    <td className="px-3 py-2 text-right"><ChangePill value={q?.changePercent} /></td>
+                                    <td className="px-3 py-2 text-end"><ChangePill value={q?.changePercent} /></td>
                                 </tr>
                             );
                         })}
