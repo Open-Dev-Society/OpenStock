@@ -1,23 +1,26 @@
+import { useTranslations, type Messages } from 'next-intl';
 import type { StockSentimentInsights } from '@/lib/actions/adanos.helpers';
 import { cn } from '@/lib/utils';
-import { alignmentLabel, arDigits, metricLabel, sourceLabel, trendLabel, tx, type Lang } from '@/lib/i18n';
+import { toMessageKey } from '@/i18n/config';
 
 interface StockSentimentCardProps {
     insight: StockSentimentInsights | null;
 }
 
-function formatScore(value: number | null, suffix: string, lang: Lang): string {
+function formatScore(value: number | null, suffix: string): string {
     if (value === null) return '—';
-    return arDigits(`${value.toFixed(1)}${suffix}`, lang);
+    return `${value.toFixed(1)}${suffix}`;
 }
 
-function formatCompactNumber(value: number, lang: Lang): string {
-    const compact = new Intl.NumberFormat('en-US', {
+function formatCompactNumber(value: number): string {
+    return new Intl.NumberFormat('en-US', {
         notation: 'compact',
         maximumFractionDigits: 1,
     }).format(value);
-    return arDigits(compact, lang);
 }
+
+type AlignmentKey = keyof Messages['StockSentiment']['alignment'];
+type MetricKey = keyof Messages['StockSentiment']['metric'];
 
 const TREND_CLASS: Record<string, string> = {
     rising: 'is-up',
@@ -32,15 +35,16 @@ function getAlignmentClass(alignment: string): string {
     return 'text-muted-foreground';
 }
 
-export default function StockSentimentCard({ insight, lang = 'en' }: StockSentimentCardProps & { lang?: Lang }) {
+export default function StockSentimentCard({ insight }: StockSentimentCardProps) {
+    const t = useTranslations('StockSentiment');
     if (!insight) {
         return null;
     }
 
     const summary = [
-        { label: tx(lang, 'sentiment.avgBuzz'), value: formatScore(insight.averageBuzz, '/100', lang) },
-        { label: tx(lang, 'sentiment.bullishAvg'), value: formatScore(insight.bullishAverage, '%', lang) },
-        { label: tx(lang, 'sentiment.coverage'), value: tx(lang, 'sentiment.sources').replace('{n}', arDigits(insight.availableSources, lang)) },
+        { label: t('avgBuzz'), value: formatScore(insight.averageBuzz, '/100') },
+        { label: t('bullishAvg'), value: formatScore(insight.bullishAverage, '%') },
+        { label: t('coverage'), value: t('coverageValue', { count: insight.availableSources, total: 4 }) },
     ];
 
     return (
@@ -54,26 +58,28 @@ export default function StockSentimentCard({ insight, lang = 'en' }: StockSentim
                 ))}
             </div>
             <p className="border-t border-line px-3 py-2.5 text-[12.5px] text-faint">
-                {tx(lang, 'sentiment.alignment')} <span className={cn('font-semibold', getAlignmentClass(insight.sourceAlignment))}>{alignmentLabel(lang, insight.sourceAlignment)}</span>
+                {t.rich('sourceAlignment', {
+                    // Alignment text comes from lib/actions/adanos.helpers ("Bullish alignment" -> alignment.bullishAlignment)
+                    alignment: t(`alignment.${toMessageKey(insight.sourceAlignment) as AlignmentKey}`),
+                    value: (chunks) => <span className={cn('font-semibold', getAlignmentClass(insight.sourceAlignment))}>{chunks}</span>,
+                })}
             </p>
 
             <ul className="row-list border-t border-line">
                 {insight.sources.map((source) => (
                     <li key={source.source} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-3 py-2.5">
                         <div className="min-w-0">
-                            <p className="truncate font-semibold text-foreground">{sourceLabel(lang, source.label)}</p>
+                            <p className="truncate font-semibold text-foreground">{source.source === 'news' ? t('newsSource') : source.label}</p>
                             <p className="num truncate text-[12px] text-faint">
-                                {formatCompactNumber(source.metricValue, lang)} {metricLabel(lang, source.metricLabel)}
+                                {t(`metric.${toMessageKey(source.metricLabel) as MetricKey}`, { value: formatCompactNumber(source.metricValue), count: source.metricValue })}
                             </p>
                         </div>
-                        <div className="num text-end text-[12.5px]">
-                            <p className="font-semibold text-foreground">{formatScore(source.buzzScore, '', lang)}</p>
-                            <p className="text-faint">{tx(lang, 'sentiment.buzz')}</p>
+                        <div className="num text-right text-[12.5px]">
+                            <p className="font-semibold text-foreground">{formatScore(source.buzzScore, '')}</p>
+                            <p className="text-faint">{t('buzz')}</p>
                         </div>
                         <span className={cn('pill w-[74px] justify-center capitalize', TREND_CLASS[source.trend ?? ''])}>
-                            {source.bullishPct !== null
-                                ? tx(lang, 'sentiment.bull').replace('{n}', arDigits(source.bullishPct.toFixed(0), lang))
-                                : trendLabel(lang, source.trend)}
+                            {source.bullishPct !== null ? t('bullPct', { pct: source.bullishPct.toFixed(0) }) : (source.trend ? t(`trend.${source.trend}`) : t('noTrend'))}
                         </span>
                     </li>
                 ))}

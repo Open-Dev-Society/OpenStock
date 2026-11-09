@@ -3,21 +3,21 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Star } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { addToWatchlist, removeFromWatchlist } from "@/lib/actions/watchlist.actions";
 import { cn } from "@/lib/utils";
-import { tx, type Lang } from "@/lib/i18n";
 
 interface WatchlistButtonProps {
     symbol: string;
     company: string;
     isInWatchlist: boolean;
     variant?: "button" | "icon";
-    lang?: Lang;
     onWatchlistChange?: (symbol: string, added: boolean) => void;
 }
 
-const WatchlistButton = ({ symbol, company, isInWatchlist, variant = "button", lang = "en", onWatchlistChange }: WatchlistButtonProps) => {
+const WatchlistButton = ({ symbol, company, isInWatchlist, variant = "button", onWatchlistChange }: WatchlistButtonProps) => {
+    const t = useTranslations('WatchlistButton');
     const router = useRouter();
     const [added, setAdded] = useState(isInWatchlist);
     const [loading, setLoading] = useState(false);
@@ -37,19 +37,19 @@ const WatchlistButton = ({ symbol, company, isInWatchlist, variant = "button", l
                     return;
                 }
             } else await removeFromWatchlist(symbol);
-            toast.success(`${symbol} ${next ? tx(lang, 'wl.added') : tx(lang, 'wl.removed')}`);
+            toast.success(next ? t('added', { symbol }) : t('removed', { symbol }));
             onWatchlistChange?.(symbol, next);
             router.refresh(); // sidebar lists the watchlist from the layout
         } catch (error) {
             console.error("Watchlist action failed:", error);
             setAdded(!next);
-            toast.error(tx(lang, 'wl.failed'));
+            toast.error(t('updateFailed'));
         } finally {
             setLoading(false);
         }
     };
 
-    const label = tx(lang, added ? 'wl.removeAria' : 'wl.addAria').replace('{s}', symbol);
+    const label = added ? t('removeLabel', { symbol }) : t('addLabel', { symbol });
 
     if (variant === "icon") {
         return (
@@ -62,7 +62,7 @@ const WatchlistButton = ({ symbol, company, isInWatchlist, variant = "button", l
     return (
         <button type="button" onClick={handleClick} disabled={loading} className={cn('btn btn-ghost', added && 'is-on')} aria-pressed={added}>
             <Star fill={added ? 'currentColor' : 'none'} />
-            {added ? tx(lang, 'stock.watching') : tx(lang, 'stock.watch')}
+            {added ? t('watching') : t('watch')}
         </button>
     );
 };

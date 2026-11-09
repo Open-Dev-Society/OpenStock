@@ -1,0 +1,601 @@
+{
+  "Common": {
+    "notAvailable": "b.d.",
+    "close": "Zamknij",
+    "cancel": "Anuluj",
+    "save": "Zapisz",
+    "loading": "Ładowanie…"
+  },
+  "Language": {
+    "label": "Język"
+  },
+  "Options": {
+    "investmentGoals": {
+      "growth": "Wzrost",
+      "income": "Dochód",
+      "balanced": "Zrównoważony",
+      "conservative": "Konserwatywny"
+    },
+    "riskTolerance": {
+      "low": "Niski",
+      "medium": "Średni",
+      "high": "Wysoki"
+    },
+    "industries": {
+      "technology": "Technologia",
+      "healthcare": "Opieka zdrowotna",
+      "finance": "Finanse",
+      "energy": "Energia",
+      "consumerGoods": "Towary konsumpcyjne"
+    },
+    "alertType": {
+      "upper": "Górny",
+      "lower": "Dolny"
+    },
+    "condition": {
+      "greater": "Większe niż (>)",
+      "less": "Mniejsze niż (<)"
+    }
+  },
+  "Password": {
+    "rules": {
+      "min8": "Co najmniej 8 znaków",
+      "upper": "Co najmniej 1 wielka litera",
+      "lower": "Co najmniej 1 mała litera",
+      "number": "Co najmniej 1 cyfra"
+    },
+    "required": "Hasło jest wymagane",
+    "minLength": "Hasło musi mieć co najmniej 8 znaków",
+    "pattern": "Hasło musi zawierać wielką literę, małą literę i cyfrę"
+  },
+  "Markets": {
+    "names": {
+      "us": "Stany Zjednoczone",
+      "in": "Indie",
+      "de": "Niemcy",
+      "ca": "Kanada",
+      "au": "Australia",
+      "sa": "Arabia Saudyjska",
+      "crypto": "Kryptowaluty",
+      "fx": "Forex",
+      "pl": "Polska"
+    },
+    "feed": {
+      "live": "Na żywo",
+      "delayed": "Opóźnione",
+      "endOfDay": "Na koniec dnia"
+    },
+    "groups": {
+      "financial": "Finanse",
+      "technology": "Technologia",
+      "consumer": "Konsumpcja",
+      "banks": "Banki",
+      "industry": "Przemysł",
+      "finance": "Finanse",
+      "energy": "Energia",
+      "growth": "Wzrost",
+      "resources": "Surowce",
+      "consumerHealth": "Konsumpcja i zdrowie",
+      "energyMaterials": "Energetyka i surowce",
+      "telecomConsumer": "Telekomunikacja i konsumpcja",
+      "majors": "Główne",
+      "more": "Więcej",
+      "commodityFX": "Waluty surowcowe",
+      "banksInsurance": "Banki i ubezpieczenia",
+      "energyIndustry": "Energetyka i przemysł",
+      "consumerTech": "Konsumpcja i technologie"
+    }
+  },
+  "WatchlistTable": {
+    "headers": {
+      "company": "Firma",
+      "price": "Cena",
+      "change": "Zmiana",
+      "marketCap": "Kapitalizacja rynkowa",
+      "action": "Działania"
+    }
+  },
+  "AuthLayout": {
+    "testimonialQuote": "„Dla mnie OpenStock to nie tylko kolejna aplikacja giełdowa. Chodzi o to, żeby dać ludziom przejrzystość i kontrolę na rynku, bez żadnych barier ani abonamentów.”",
+    "founderRole": "Założyciel {org}",
+    "starAlt": "gwiazdka"
+  },
+  "AuthFields": {
+    "email": "E-mail",
+    "emailRequired": "Adres e-mail jest obowiązkowy",
+    "emailInvalid": "Wpisz poprawny adres e-mail"
+  },
+  "PreferenceFields": {
+    "country": "Kraj",
+    "investmentGoal": "Cel inwestycyjny",
+    "riskTolerance": "Tolerancja ryzyka",
+    "preferredIndustry": "Preferowana branża"
+  },
+  "SignIn": {
+    "title": "Witaj z powrotem",
+    "subtitle": "Zaloguj się, żeby przejrzeć swoją listę obserwowanych i alerty.",
+    "passwordLabel": "Hasło",
+    "passwordPlaceholder": "Wpisz swoje hasło",
+    "forgotPassword": "Nie pamiętasz hasła?",
+    "submit": "Zaloguj się",
+    "submitting": "Logowanie…",
+    "noAccount": "Nie masz jeszcze konta?",
+    "createAccount": "Załóż konto",
+    "failed": "Nie udało się zalogować",
+    "invalidCredentials": "Nieprawidłowy adres e-mail lub hasło.",
+    "failedGeneric": "Nie udało się zalogować."
+  },
+  "SignUp": {
+    "title": "Załóż konto",
+    "subtitle": "Darmowe i open source. Nie potrzebujesz karty.",
+    "accountSection": "Konto",
+    "fullNameLabel": "Imię i nazwisko",
+    "fullNamePlaceholder": "Twoje imię",
+    "fullNameRequired": "Imię i nazwisko są wymagane",
+    "passwordLabel": "Hasło",
+    "passwordPlaceholder": "Co najmniej 8 znaków",
+    "personalize": "Spersonalizuj",
+    "personalizeHint": "Służy do spersonalizowania e-maila powitalnego.",
+    "submit": "Załóż konto",
+    "submitting": "Tworzenie konta…",
+    "haveAccount": "Masz już konto?",
+    "signIn": "Zaloguj się",
+    "failed": "Rejestracja nie powiodła się",
+    "couldNotCreate": "Nie udało nam się utworzyć twojego konta.",
+    "failedGeneric": "Nie udało się utworzyć konta."
+  },
+  "ForgotPassword": {
+    "title": "Nie pamiętasz hasła?",
+    "subtitle": "Wpisz swój adres e-mail, a wyślemy ci link do zresetowania hasła.",
+    "submit": "Wyślij link do resetowania",
+    "submitting": "Wysyłanie linku…",
+    "remembered": "Pamiętasz hasło?",
+    "signIn": "Zaloguj się",
+    "sent": "Jeśli istnieje konto z tym adresem e-mail, wysłaliśmy na nie link do resetowania hasła.",
+    "unavailable": "Nie można zresetować hasła",
+    "unableToStart": "Nie można rozpocząć resetowania hasła."
+  },
+  "ResetPassword": {
+    "loading": "Ładowanie formularza…",
+    "title": "Wybierz nowe hasło",
+    "subtitle": "Wprowadź nowe hasło do swojego konta.",
+    "newPasswordLabel": "Nowe hasło",
+    "newPasswordPlaceholder": "Wprowadź nowe hasło",
+    "confirmPasswordLabel": "Potwierdź hasło",
+    "confirmPasswordPlaceholder": "Potwierdź nowe hasło",
+    "confirmRequired": "Potwierdź swoje nowe hasło",
+    "mismatch": "Hasła się nie zgadzają",
+    "submit": "Zresetuj hasło",
+    "submitting": "Resetowanie hasła…",
+    "needFreshLink": "Potrzebujesz nowego linku?",
+    "requestAnother": "Poproś o nowy link",
+    "invalidLink": "Link do resetowania jest nieprawidłowy lub wygasł.",
+    "updated": "Hasło zostało zaktualizowane. Możesz się teraz zalogować.",
+    "failed": "Nie udało się zresetować hasła",
+    "unableToReset": "Nie udało się zresetować hasła."
+  },
+  "SocialAuth": {
+    "signInFailed": "Nie udało się zalogować",
+    "connectionError": "Sprawdź połączenie i spróbuj jeszcze raz.",
+    "redirecting": "Przekierowywanie…",
+    "or": "lub"
+  },
+  "CountrySelect": {
+    "placeholder": "Wybierz kraj…",
+    "searchPlaceholder": "Szukaj kraju…",
+    "empty": "Nie znaleziono kraju.",
+    "required": "Wybierz {field}",
+    "hint": "Dzięki temu pokażemy ci dane rynkowe i wiadomości, które mogą cię zainteresować."
+  },
+  "ProfilePage": {
+    "metaTitle": "Profil",
+    "memberSince": "konto od: {date}",
+    "statWatching": "Obserwowane",
+    "statActiveAlerts": "Aktywne alerty",
+    "statPausedAlerts": "Wstrzymane alerty",
+    "statSignInMethods": "Metody logowania",
+    "detailsTitle": "Szczegóły",
+    "detailsSub": "Twoje imię i to, pod co dopasowujemy e-mail powitalny",
+    "signInMethodsTitle": "Metody logowania",
+    "signInMethodsSub": "Jak możesz zalogować się na to konto",
+    "methodCredential": "Adres e-mail i hasło",
+    "connected": "Połączone",
+    "passwordTitle": "Hasło",
+    "passwordSub": "Zmiana hasła wyloguje cię na pozostałych urządzeniach"
+  },
+  "ProfileForm": {
+    "nameLabel": "Imię",
+    "namePlaceholder": "Twoje imię",
+    "nameRequired": "Imię jest wymagane",
+    "nameMinLength": "Co najmniej 2 znaki",
+    "saveFailed": "Nie udało się zapisać",
+    "saved": "Profil zapisany",
+    "submit": "Zapisz zmiany",
+    "submitting": "Zapisywanie…",
+    "upToDate": "Wszystko zapisane"
+  },
+  "PasswordForm": {
+    "currentLabel": "Aktualne hasło",
+    "currentPlaceholder": "Twoje obecne hasło",
+    "currentRequired": "Wpisz swoje obecne hasło",
+    "newLabel": "Nowe hasło",
+    "newPlaceholder": "Co najmniej 8 znaków",
+    "notChanged": "Hasło nie zostało zmienione",
+    "changed": "Hasło zostało zmienione",
+    "otherDevicesSignedOut": "Pozostałe urządzenia zostały wylogowane.",
+    "submit": "Zmień hasło",
+    "submitting": "Zmienianie…"
+  },
+  "Dashboard": {
+    "title": "Rynki",
+    "pulseTitle": "Puls",
+    "pulseSubFinnhub": "Wspólne notowania z Finnhub",
+    "pulseSubYahoo": "Opóźnione notowania z serwisu Yahoo Finance",
+    "moversTitle": "Największe zmiany",
+    "moversSub": "Największe zmiany dzisiaj",
+    "leadersTitle": "Liderzy",
+    "leadersSub": "12-miesięczny trend według grup",
+    "stockHeatmapTitle": "Mapa cieplna indeksu S&P 500",
+    "cryptoHeatmapTitle": "Mapa cieplna kryptowalut",
+    "heatmapSub": "Wielkość według kapitalizacji, kolor według dzisiejszej zmiany",
+    "quotesTitle": "Notowania",
+    "quotesSub": "Liderzy według grup · {market}",
+    "storiesTitle": "Najważniejsze wiadomości",
+    "storiesSub": "Najnowsze na początku",
+    "sub": "{market} · {status, select, open {rynek otwarty} other {rynek zamknięty}} · {feed, select, live {dane na żywo} delayed {dane opóźnione} other {dane na koniec dnia}}",
+    "pulseSubTradingView": "{feed, select, live {Notowania na żywo z TradingView} delayed {Opóźnione notowania z TradingView} other {Notowania na koniec dnia z TradingView}}"
+  },
+  "MarketSwitcher": {
+    "label": "Rynki",
+    "openNow": "Teraz otwarty",
+    "closedNow": "Teraz zamknięty"
+  },
+  "PulseTile": {
+    "vsPrevClose": "{change} vs poprz. zamknięcie",
+    "unavailable": "Notowanie niedostępne"
+  },
+  "DataFreshness": {
+    "live": "Na żywo · 15 s",
+    "asOf": "Stan na {time} · odświeżane co godzinę",
+    "delayed": "Opóźnione · odświeżane co godzinę"
+  },
+  "YahooQuotes": {
+    "changePercent": "Zmiana %",
+    "unavailable": "Notowania są obecnie niedostępne.",
+    "source": "Ceny w {currency} z Yahoo Finance, opóźnione o około 15 minut.",
+    "sourceNoCurrency": "Ceny z Yahoo Finance, opóźnione o około 15 minut."
+  },
+  "TradingViewWidget": {
+    "fullScreen": "Pełny ekran",
+    "exitFullScreen": "Wyjdź z trybu pełnoekranowego",
+    "exitFullScreenHint": "Wyjdź z trybu pełnoekranowego (Esc)"
+  },
+  "Errors": {
+    "signUpFailed": "Rejestracja nie powiodła się",
+    "signInFailed": "Nie udało się zalogować",
+    "signOutFailed": "Nie udało się wylogować",
+    "tooManyAttempts": "Za dużo prób. Poczekaj kilka minut i spróbuj jeszcze raz.",
+    "socialSignInUnavailable": "Logowanie przez: {provider} jest teraz niedostępne.",
+    "resetEmailNotConfigured": "E-mail do resetowania hasła nie jest skonfigurowany.",
+    "resetBaseUrlMissing": "Aby można było wysyłać e-maile z linkiem do resetowania hasła, trzeba najpierw skonfigurować BETTER_AUTH_URL.",
+    "resetEmailFailed": "Nie udało się wysłać e-maila z linkiem do resetowania hasła.",
+    "resetLinkInvalid": "Link do resetowania jest nieprawidłowy lub wygasł.",
+    "nameLength": "Imię musi mieć od 2 do 80 znaków.",
+    "pickCountry": "Wybierz kraj.",
+    "pickEachOption": "Wybierz jedną opcję z każdej grupy.",
+    "profileSaveFailed": "Nie udało się zapisać twojego profilu.",
+    "passwordChangeFailed": "Obecne hasło jest nieprawidłowe albo nowe jest za krótkie.",
+    "watchlistFull": "Twoja lista obserwowanych jest pełna (limit: {max}). Usuń jedną pozycję, żeby dodać kolejną.",
+    "listNotFound": "Ta lista już nie istnieje.",
+    "listNameInvalid": "Nadaj liście nazwę (maksymalnie 60 znaków).",
+    "listLimit": "Możesz mieć maksymalnie {max} list. Usuń jedną, żeby zrobić miejsce.",
+    "listExists": "Masz już listę o nazwie „{name}”.",
+    "symbolInvalid": "Nie możemy wyszukać takiego symbolu.",
+    "listFull": "Lista może zawierać maksymalnie {max} symboli."
+  },
+  "NewsSources": {
+    "companyNews": "Aktualności firmy",
+    "marketNews": "Wiadomości rynkowe"
+  },
+  "Emails": {
+    "common": {
+      "logoAlt": "Logo OpenStock",
+      "unsubscribe": "Wypisz się",
+      "visitOpenstock": "Odwiedź OpenStock"
+    },
+    "welcome": {
+      "subject": "Witaj w OpenStock – twoim zestawie narzędzi open source do obsługi rynku akcji!",
+      "text": "Dzięki za dołączenie do OpenStock, inicjatywy stowarzyszenia Open Dev Society",
+      "title": "Witaj w OpenStock",
+      "dashboardAlt": "Podgląd pulpitu OpenStock",
+      "heading": "Witaj na pokładzie, {name}",
+      "fallbackIntro": "Dzięki za dołączenie do OpenStock. Masz teraz narzędzia do śledzenia rynków i podejmowania mądrzejszych decyzji.",
+      "featuresLabel": "Oto, co możesz zrobić już teraz:",
+      "featureWatchlist": "Skonfiguruj swoją listę obserwowanych, żeby śledzić ulubione akcje",
+      "featureSearch": "Wyszukaj dowolną akcję za pomocą ⌘K i otwórz ją w nowej karcie",
+      "featureDashboard": "Zajrzyj na pulpit, żeby zobaczyć trendy i najnowsze wiadomości z rynku",
+      "closing": "Będziemy informować cię o nowościach, spostrzeżeniach i alertach — a ty skup się na podejmowaniu dobrych decyzji.",
+      "cta": "Przejdź do pulpitu",
+      "initiative": "Inicjatywa Open Dev Society"
+    },
+    "resetPassword": {
+      "subject": "Zresetuj hasło do OpenStock",
+      "heading": "Zresetuj hasło",
+      "greeting": "Cześć, {name},",
+      "greetingNoName": "Cześć,",
+      "body": "Otrzymaliśmy prośbę o zresetowanie twojego hasła do OpenStock. Skorzystaj z przycisku poniżej, żeby wybrać nowe.",
+      "cta": "Zresetuj hasło",
+      "ignore": "Jeśli to nie ty prosisz o zmianę hasła, możesz zignorować tę wiadomość.",
+      "text": "Zresetuj hasło: {url}"
+    },
+    "stockAlert": {
+      "subjectAbove": "🔔 Alert cenowy: {symbol} powyżej {target}",
+      "subjectBelow": "🔔 Alert cenowy: {symbol} poniżej {target}",
+      "textAbove": "{symbol} kosztuje teraz {price}, powyżej twojego progu {target}.",
+      "textBelow": "{symbol} kosztuje teraz {price}, poniżej twojego progu {target}.",
+      "titleAbove": "Alert cenowy: {symbol} osiągnął górny próg",
+      "titleBelow": "Alert cenowy: {symbol} osiągnął dolny próg",
+      "headingAbove": "📈 Cena przekroczyła próg",
+      "headingBelow": "📉 Cena spadła poniżej progu",
+      "currentPrice": "Aktualna cena",
+      "details": "Szczegóły alertu",
+      "targetPriceLabel": "Cena docelowa:",
+      "triggerLabel": "Wyzwalacz:",
+      "triggerAbove": "Cena przekroczyła twój górny próg {target}",
+      "triggerBelow": "Cena spadła poniżej twojego dolnego progu {target}",
+      "calloutTitleAbove": "Okazja!",
+      "calloutBodyAbove": "{symbol} osiągnął twoją cenę docelową! To może być dobry moment, żeby przejrzeć swoją pozycję i rozważyć realizację zysków albo dostosowanie strategii.",
+      "calloutTitleBelow": "Cena spadła",
+      "calloutBodyBelow": "{symbol} spadł poniżej twojej ceny docelowej. To może być dobry moment na zakup.",
+      "cta": "Zobacz pulpit",
+      "footer": "Dostajesz tę wiadomość, bo masz włączone alerty w OpenStock."
+    }
+  },
+  "Sidebar": {
+    "homeAria": "OpenStock — strona główna",
+    "searchStocks": "Szukaj akcji",
+    "overview": "Przegląd",
+    "watchlist": "Lista obserwowanych",
+    "watching": "Obserwowane",
+    "watchingEmpty": "Oznacz akcję gwiazdką, żeby ją tu przypiąć.",
+    "resources": {
+      "help": "Pomoc",
+      "apiDocs": "Dokumentacja API",
+      "about": "O nas",
+      "terms": "Regulamin"
+    },
+    "support": "Wesprzyj OpenStock",
+    "sponsor": "Sponsor",
+    "sponsorSlotsOpen": "Otwarte są miejsca dla sponsorów",
+    "sponsorPitch": "Zaprezentuj swoją firmę każdemu użytkownikowi OpenStock.",
+    "signOut": "Wyloguj się",
+    "sponsorSlotsLeft": "{count, plural, one {Zostało # miejsce dla sponsora} few {Zostały # miejsca dla sponsorów} many {Zostało # miejsc dla sponsorów} other {Zostało # miejsca dla sponsorów}}"
+  },
+  "TabBar": {
+    "pages": {
+      "overview": "Przegląd",
+      "watchlist": "Obserwowane",
+      "profile": "Profil"
+    },
+    "openMenu": "Otwórz menu",
+    "closeTab": "Zamknij {label}",
+    "openStock": "Otwórz akcję",
+    "openStockHint": "Otwórz akcję (⌘K)"
+  },
+  "SearchCommand": {
+    "dialogTitle": "Szukaj akcji",
+    "dialogDescription": "Szukaj po nazwie firmy lub symbolu",
+    "placeholder": "Szukaj po nazwie firmy lub symbolu",
+    "searching": "Szukanie…",
+    "noMatch": "Brak wyników dla „{query}”",
+    "noStocks": "Brak dostępnych akcji",
+    "results": "Wyniki",
+    "popular": "Popularne",
+    "listPlaceholder": "Dodaj akcję do listy „{list}”",
+    "addingTo": "Dodawanie do listy <name>{list}</name>",
+    "addedToList": "Dodano {symbol} do listy „{list}”",
+    "addFailed": "Nie udało się dodać symbolu",
+    "addTitle": "Dodaj {symbol} do listy {list}",
+    "add": "Dodaj",
+    "adding": "Dodawanie"
+  },
+  "UpdateBanner": {
+    "new": "Nowość",
+    "seeWhatsNew": "Zobacz, co nowego",
+    "fullChangelog": "Przeczytaj pełny dziennik zmian"
+  },
+  "DonatePopup": {
+    "kicker": "Szukamy sponsorów",
+    "title": "Pomóż utrzymać OpenStock za darmo",
+    "description": "Twoje wsparcie dla OpenStock i Open Dev Society pomogło nam się rozwinąć, a teraz osiągamy limity darmowego planu Vercel. Zostań sponsorem już od 5 dolarów miesięcznie, przekaż jednorazową darowiznę albo porozmawiaj z nami o partnerstwie.",
+    "becomeSponsor": "Zostań sponsorem",
+    "maybeLater": "Może później"
+  },
+  "OpenDevSocietyBranding": {
+    "initiativeBy": "Inicjatywa"
+  },
+  "StockPage": {
+    "sentimentTitle": "Nastrój",
+    "sentimentSub": "Reddit, X.com, wiadomości i Polymarket",
+    "dividendYieldTitle": "Stopa dywidendy",
+    "chartTitle": "Wykres",
+    "chartUnavailableSub": "Dla tej giełdy tylko w TradingView",
+    "chartUnavailableTitle": "Wykres tu niedostępny",
+    "chartUnavailableBody": "TradingView nie udostępnia innym stronom wykresów z giełdy {exchange}. Dane finansowe, analiza techniczna i profil poniżej nadal działają.",
+    "openOnTradingView": "Otwórz wykres w TradingView",
+    "financialsTitle": "Finanse",
+    "financialsSub": "Rachunek zysków i strat, bilans oraz wskaźniki finansowe",
+    "technicalsTitle": "Analiza techniczna",
+    "technicalsSub": "Oscylatory i średnie kroczące, 1h",
+    "profileTitle": "Profil",
+    "profileSub": "Czym zajmuje się firma"
+  },
+  "StockHeader": {
+    "quoteViaYahoo": "opóźnione notowania z serwisu Yahoo Finance",
+    "quoteViaTradingView": "notowania z TradingView",
+    "alertsHint": "Alerty cenowe wymagają źródła notowań, które możemy sprawdzać co 5 minut",
+    "alertsScope": "Alerty: akcje z USA i kryptowaluty",
+    "setAlert": "Ustaw alert",
+    "open": "Otwarcie",
+    "openHint": "Pierwsza transakcja w sesji",
+    "dayRange": "Zakres dnia",
+    "dayRangeHint": "Od minimum do maksimum",
+    "prevClose": "Poprz. zamknięcie",
+    "prevCloseHint": "Ostatnia sesja",
+    "marketCap": "Kapitalizacja rynkowa"
+  },
+  "StockChart": {
+    "title": "Wykres",
+    "sub": "Na żywo z TradingView · zmień przedział czasowy i styl wykresu",
+    "indicatorsButton": "Wskaźniki",
+    "keptNote": "Zapamiętane dla każdego wykresu w tej przeglądarce",
+    "indicators": {
+      "sma": "Średnia krocząca (SMA)",
+      "ema": "Średnia krocząca wykładnicza (EMA)",
+      "bollingerBands": "Wstęgi Bollingera",
+      "vwap": "VWAP",
+      "rsi": "RSI",
+      "macd": "MACD",
+      "stochastic": "Oscylator stochastyczny",
+      "atr": "ATR"
+    }
+  },
+  "StockSentiment": {
+    "avgBuzz": "Śr. szum",
+    "bullishAvg": "Śr. optymizm",
+    "coverage": "Pokrycie",
+    "coverageValue": "{count}/{total} źródeł",
+    "sourceAlignment": "Zgodność źródeł: <value>{alignment}</value>",
+    "alignment": {
+      "noSentimentMix": "Brak danych o nastrojach",
+      "singleSourceView": "Widok z jednego źródła",
+      "bullishAlignment": "Zgodnie optymistyczne",
+      "bearishAlignment": "Zgodnie pesymistyczne",
+      "tightAlignment": "Wysoka zgodność",
+      "wideDivergence": "Duża rozbieżność",
+      "mixed": "Mieszane"
+    },
+    "newsSource": "Wiadomości",
+    "buzz": "szum",
+    "bullPct": "{pct}% optymizmu",
+    "trend": {
+      "rising": "Wzrost",
+      "falling": "Spadek",
+      "stable": "Stabilny"
+    },
+    "noTrend": "Brak trendu",
+    "metric": {
+      "mentions": "{value} {count, plural, one {wzmianka} few {wzmianki} many {wzmianek} other {wzmianki}}",
+      "trades": "{value} {count, plural, one {transakcja} few {transakcje} many {transakcji} other {transakcji}}"
+    }
+  },
+  "WatchlistButton": {
+    "added": "Dodano {symbol} do listy obserwowanych",
+    "removed": "Usunięto {symbol} z listy obserwowanych",
+    "updateFailed": "Nie udało się zaktualizować twojej listy obserwowanych",
+    "addLabel": "Dodaj {symbol} do listy obserwowanych",
+    "removeLabel": "Usuń {symbol} z listy obserwowanych",
+    "watch": "Obserwuj",
+    "watching": "Obserwujesz"
+  },
+  "WatchlistPage": {
+    "title": "Lista obserwowanych",
+    "addSymbol": "Dodaj symbol",
+    "symbolsTitle": "Symbole",
+    "symbolsSub": "Kliknij wiersz, żeby zobaczyć wykresy, analizę techniczną i dane finansowe",
+    "newsTitle": "Aktualności",
+    "newsSubWatched": "Najnowsze wiadomości dotyczące symboli, które obserwujesz",
+    "newsSubGeneral": "Ogólne wiadomości rynkowe",
+    "alertsTitle": "Alerty",
+    "alertsSubActive": "Aktywne: {count} · sprawdzane co 5 minut",
+    "alertsSubCloud": "Funkcja OpenStock Cloud",
+    "symbolCount": "{count, plural, one {# symbol} few {# symbole} many {# symboli} other {# symbolu}}",
+    "listsTitle": "Moje listy",
+    "listsSub": "Pogrupuj obserwowane akcje w nazwane listy"
+  },
+  "WatchlistTableRow": {
+    "today": "Dzisiaj",
+    "emptyTitle": "Twoja lista obserwowanych jest pusta",
+    "emptyBody": "Wyszukaj firmę i oznacz ją gwiazdką, żeby śledzić jej kurs tutaj i ustawić alerty.",
+    "searchStocks": "Szukaj akcji",
+    "setAlertLabel": "Ustaw alert cenowy: {symbol}",
+    "alertsUnavailable": "Alerty są dostępne dla akcji z USA i kryptowalut"
+  },
+  "AlertsPanel": {
+    "status": {
+      "triggered": "Uruchomiony",
+      "paused": "Wstrzymany",
+      "expired": "Wygasł",
+      "watching": "Aktywny"
+    },
+    "removed": "Usunięto alert: {symbol}",
+    "removeFailed": "Nie udało się usunąć alertu",
+    "cloudTitle": "Alerty są w OpenStock Cloud",
+    "cloudBody": "E-mailowe alerty cenowe są częścią OpenStock Cloud — 5 $ miesięcznie, wkrótce dostępne.",
+    "seeCloud": "Zobacz OpenStock Cloud",
+    "emptyTitle": "Nie masz jeszcze alertów",
+    "emptyBody": "Kliknij dzwonek w dowolnym wierszu albo „Ustaw alert” na stronie akcji. Wyślemy ci e-mail, gdy alert się uruchomi.",
+    "movedNotice": "Alerty przeniosły się do <link>OpenStock Cloud</link>, więc te są wstrzymane.",
+    "above": "Powyżej {price}",
+    "below": "Poniżej {price}",
+    "until": "do {date}",
+    "removeTitle": "Usuń alert",
+    "removeLabel": "Usuń alert: {symbol}"
+  },
+  "CreateAlertModal": {
+    "risesAbove": "Wzrośnie powyżej",
+    "fallsBelow": "Spadnie poniżej",
+    "createFailed": "Nie udało się utworzyć alertu",
+    "kicker": "Alert cenowy",
+    "description": "Wyślemy ci e-mail, gdy cena osiągnie twój poziom docelowy. Sprawdzamy co 5 minut, a alert wygasa po 90 dniach.",
+    "conditionLabel": "Warunek",
+    "targetPrice": "Cena docelowa",
+    "priceUnavailable": "Aktualna cena niedostępna",
+    "now": "Teraz {price}",
+    "nowWithDistance": "Teraz {price} · {distance}% różnicy",
+    "setting": "Ustawianie alertu…",
+    "setAlert": "Ustaw alert",
+    "cloudTitle": "Alerty cenowe są w OpenStock Cloud",
+    "cloudBody": "Cloud daje e-mailowe alerty cenowe i notowania na żywo za 5 $ miesięcznie — już wkrótce. Wersja hostowana samodzielnie ma oba już teraz.",
+    "seeCloud": "Zobacz OpenStock Cloud",
+    "selfHost": "Hostuj samodzielnie",
+    "created": "Ustawiono alert: {symbol} {condition, select, ABOVE {powyżej} other {poniżej}} {price}",
+    "alreadyMet": "Cena jest już {condition, select, ABOVE {powyżej} other {poniżej}} tego poziomu — alert uruchomi się przy następnym sprawdzeniu"
+  },
+  "NewsList": {
+    "emptyTitle": "Brak najnowszych wiadomości",
+    "emptyBody": "W ostatnich dniach nie było wiadomości o tych symbolach."
+  },
+  "NamedLists": {
+    "starred": "Oznaczone gwiazdką",
+    "addStock": "Dodaj akcję",
+    "addStockTo": "Dodaj akcję do listy {list}",
+    "newListName": "Nazwa nowej listy",
+    "create": "Utwórz",
+    "createTitle": "Utwórz listę",
+    "createFailed": "Nie udało się utworzyć listy",
+    "delete": "Usuń",
+    "deleteTitle": "Usuń listę {list}",
+    "deleteConfirm": "Usunąć listę „{list}”? Akcje oznaczone gwiazdką pozostaną bez zmian.",
+    "deleteFailed": "Nie udało się usunąć listy",
+    "emptyTitle": "Lista „{list}” jest pusta",
+    "emptyBody": "Użyj przycisku „Dodaj akcję” powyżej albo przycisku listy w dowolnym wierszu listy obserwowanych.",
+    "removeFrom": "Usuń {symbol} z listy {list}",
+    "removedFrom": "Usunięto {symbol} z listy „{list}”",
+    "removeFailed": "Nie udało się usunąć symbolu",
+    "menuTitle": "Dodaj {symbol} do listy",
+    "menuLabel": "Dodaj {symbol} do nazwanej listy",
+    "menuHeading": "Dodaj do listy",
+    "menuEmpty": "Nie masz jeszcze list — utwórz pierwszą poniżej.",
+    "newListItem": "Nowa lista…",
+    "newListTitle": "Nowa lista",
+    "listName": "Nazwa listy",
+    "addedTo": "Dodano {symbol} do listy „{list}”",
+    "addFailed": "Nie udało się dodać symbolu",
+    "addToFailed": "Nie udało się dodać {symbol} do listy „{list}”",
+    "createdAndAdded": "Utworzono listę „{list}” i dodano {symbol}",
+    "retryHint": "Lista „{list}” została utworzona — kliknij przycisk jeszcze raz, żeby ponowić dodanie {symbol}.",
+    "retryAdd": "Ponów dodanie",
+    "createAndAdd": "Utwórz i dodaj"
+  }
+}

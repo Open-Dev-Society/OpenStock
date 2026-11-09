@@ -1,37 +1,45 @@
 import Link from 'next/link';
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { getTranslations } from 'next-intl/server';
+import type { Messages } from 'next-intl';
 import ChangePill from '@/components/ChangePill';
 import { getYahooDailyQuotes } from '@/lib/actions/yahoo.actions';
 import { yahooAppSymbol } from '@/lib/yahoo';
-import { saudiSymbolNameAr } from '@/lib/saudi-symbols';
-import { arDigits, sectorLabel, tx, type Lang } from '@/lib/i18n';
 import type { Market } from '@/lib/markets';
+import { toMessageKey } from '@/i18n/config';
 
 const fmt = (v: number) => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+type GroupKey = keyof Messages['Markets']['groups'];
 
 const symbolsOf = (market: Market) => [...new Set(market.groups.flatMap((g) => g.symbols.map(([s]) => s)))];
 
 // Our own quotes table for Yahoo-priced markets: TradingView's market-quotes widget shows no TADAWUL values in free embeds,
 // and only end-of-day GPW values.
-export default async function YahooQuotesTable({ market, lang = 'en' }: { market: Market; lang?: Lang }) {
-    const quotes = await getYahooDailyQuotes(symbolsOf(market));
+export default async function YahooQuotesTable({ market }: { market: Market }) {
+    const [quotes, t, th, tm] = await Promise.all([
+        getYahooDailyQuotes(symbolsOf(market)),
+        getTranslations('YahooQuotes'),
+        getTranslations('WatchlistTable.headers'),
+        getTranslations('Markets'),
+    ]);
     const currency = Object.values(quotes)[0]?.currency;
 
     return (
         <div className="overflow-x-auto">
             <table className="w-full text-[13px]">
                 <thead>
-                    <tr className="text-start text-faint">
-                        <th className="px-3 py-2 font-medium">{tx(lang, 'wl.company')}</th>
-                        <th className="px-3 py-2 text-end font-medium">{tx(lang, 'wl.price')}</th>
-                        <th className="px-3 py-2 text-end font-medium">{tx(lang, 'wl.change')}</th>
-                        <th className="px-3 py-2 text-end font-medium">{tx(lang, 'wl.chgpct')}</th>
+                    <tr className="text-left text-faint">
+                        <th className="px-3 py-2 font-medium">{th('company')}</th>
+                        <th className="px-3 py-2 text-right font-medium">{th('price')}</th>
+                        <th className="px-3 py-2 text-right font-medium">{th('change')}</th>
+                        <th className="px-3 py-2 text-right font-medium">{t('changePercent')}</th>
                     </tr>
                 </thead>
                 {market.groups.map((group) => (
                     <tbody key={group.title}>
                         <tr>
-                            <td colSpan={4} className="kicker px-3 pt-3 pb-1">{sectorLabel(lang, group.title)}</td>
+                            <td colSpan={4} className="kicker px-3 pt-3 pb-1">{tm(`groups.${toMessageKey(group.title) as GroupKey}`)}</td>
                         </tr>
                         {group.symbols.map(([tvSymbol, name]) => {
                             const q = quotes[tvSymbol];
@@ -40,38 +48,37 @@ export default async function YahooQuotesTable({ market, lang = 'en' }: { market
                                 <tr key={tvSymbol} className="border-t border-line/60 transition-colors hover:bg-hover/40">
                                     <td className="px-3 py-2">
                                         <Link href={`/stocks/${appSymbol}`} className="font-semibold hover:text-brand-ink">
-                                            {(lang === 'ar' && appSymbol ? saudiSymbolNameAr(appSymbol) : null) ?? name}{' '}
-                                            <span dir="ltr" className="mono text-[11px] text-faint">{appSymbol}</span>
+                                            {name} <span className="mono text-[11px] text-faint">{appSymbol}</span>
                                         </Link>
                                     </td>
-                                    <td className="num px-3 py-2 text-end font-semibold">{q ? arDigits(fmt(q.price), lang) : '—'}</td>
-                                    <td className={`num px-3 py-2 text-end ${q && q.change < 0 ? 'text-down' : 'text-up'}`}>
-                                        {q ? <bdi>{`${q.change > 0 ? '+' : ''}${arDigits(fmt(q.change), lang)}`}</bdi> : '—'}
+                                    <td className="num px-3 py-2 text-right font-semibold">{q ? fmt(q.price) : '—'}</td>
+                                    <td className={`num px-3 py-2 text-right ${q && q.change < 0 ? 'text-down' : 'text-up'}`}>
+                                        {q ? `${q.change > 0 ? '+' : ''}${fmt(q.change)}` : '—'}
                                     </td>
-                                    <td className="px-3 py-2 text-end"><ChangePill value={q?.changePercent} lang={lang} /></td>
+                                    <td className="px-3 py-2 text-right"><ChangePill value={q?.changePercent} /></td>
                                 </tr>
                             );
                         })}
                     </tbody>
                 ))}
             </table>
-            <p className="px-3 py-2 text-[11.5px] text-faint">{currency ? tx(lang, 'quotes.footIn').replace('{c}', currency) : tx(lang, 'quotes.foot')}</p>
+            <p className="px-3 py-2 text-[11.5px] text-faint">{currency ? t('source', { currency }) : t('sourceNoCurrency')}</p>
         </div>
     );
 }
 
 // Today's biggest movers across the same groups, ranked by day change %
-export async function YahooMovers({ market, count = 8, lang = 'en' }: { market: Market; count?: number; lang?: Lang }) {
+export async function YahooMovers({ market, count = 8 }: { market: Market; count?: number }) {
     const symbols = symbolsOf(market);
     const nameOf = Object.fromEntries(market.groups.flatMap((g) => g.symbols));
-    const quotes = await getYahooDailyQuotes(symbols);
+    const [quotes, t] = await Promise.all([getYahooDailyQuotes(symbols), getTranslations('YahooQuotes')]);
     const ranked = symbols
         .flatMap((symbol) => (quotes[symbol] ? [{ symbol, name: nameOf[symbol], quote: quotes[symbol] }] : []))
         .sort((a, b) => Math.abs(b.quote.changePercent) - Math.abs(a.quote.changePercent))
         .slice(0, count);
     const max = Math.max(0.01, ...ranked.map((r) => Math.abs(r.quote.changePercent)));
 
-    if (ranked.length === 0) return <p className="search-list-indicator">{tx(lang, 'wl.noData')}</p>;
+    if (ranked.length === 0) return <p className="search-list-indicator">{t('unavailable')}</p>;
 
     return (
         <ul className="flex flex-col gap-1 p-1">
@@ -84,10 +91,8 @@ export async function YahooMovers({ market, count = 8, lang = 'en' }: { market: 
                                 {up ? <ArrowUpRight className="size-4" /> : <ArrowDownRight className="size-4" />}
                             </span>
                             <span className="min-w-0 flex-1">
-                                <span dir="auto" className="block truncate text-[13.5px] font-semibold">
-                                    {(lang === 'ar' ? saudiSymbolNameAr(yahooAppSymbol(symbol) ?? '') : null) ?? name}
-                                </span>
-                                <span dir="ltr" className="mono block text-[11.5px] text-faint">{symbol.split(':').pop()}</span>
+                                <span className="block truncate text-[13.5px] font-semibold">{name}</span>
+                                <span className="mono block text-[11.5px] text-faint">{symbol.split(':').pop()}</span>
                             </span>
                             <span className="relative h-1.5 w-20 overflow-hidden rounded-full bg-hover">
                                 <span
@@ -95,7 +100,7 @@ export async function YahooMovers({ market, count = 8, lang = 'en' }: { market: 
                                     style={{ width: `${(Math.abs(quote.changePercent) / max) * 100}%` }}
                                 />
                             </span>
-                            <ChangePill value={quote.changePercent} lang={lang} />
+                            <ChangePill value={quote.changePercent} />
                         </Link>
                     </li>
                 );

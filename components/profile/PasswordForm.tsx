@@ -2,15 +2,17 @@
 
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import InputField from "@/components/forms/InputField";
 import PasswordRequirements from "@/components/forms/PasswordRequirements";
-import { PASSWORD_VALIDATION } from "@/lib/constants";
+import { passwordValidation } from "@/lib/constants";
 import { changePassword } from "@/lib/actions/profile.actions";
-import { tx, type Lang } from "@/lib/i18n";
 
 type PasswordInput = { currentPassword: string; newPassword: string };
 
-export default function PasswordForm({ lang }: { lang: Lang }) {
+export default function PasswordForm() {
+    const t = useTranslations('PasswordForm');
+    const tPassword = useTranslations('Password');
     const { register, handleSubmit, watch, reset, formState: { errors, isSubmitting } } = useForm<PasswordInput>({
         defaultValues: { currentPassword: '', newPassword: '' },
         mode: 'onBlur',
@@ -19,10 +21,10 @@ export default function PasswordForm({ lang }: { lang: Lang }) {
     const onSubmit = async (values: PasswordInput) => {
         const result = await changePassword(values);
         if (!result.success) {
-            toast.error(tx(lang, 'pw.failed'), { description: tx(lang, result.code) });
+            toast.error(t('notChanged'), { description: result.error });
             return;
         }
-        toast.success(tx(lang, 'pw.changed'), { description: tx(lang, 'pw.changedSub') });
+        toast.success(t('changed'), { description: t('otherDevicesSignedOut') });
         reset();
     };
 
@@ -30,27 +32,27 @@ export default function PasswordForm({ lang }: { lang: Lang }) {
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 p-4">
             <InputField
                 name="currentPassword"
-                label={tx(lang, 'pw.current')}
-                placeholder={tx(lang, 'pw.currentPh')}
+                label={t('currentLabel')}
+                placeholder={t('currentPlaceholder')}
                 type="password"
                 register={register}
                 error={errors.currentPassword}
-                validation={{ required: 'Enter your current password' }}
+                validation={{ required: t('currentRequired') }}
             />
             <div className="flex flex-col gap-2">
                 <InputField
                     name="newPassword"
-                    label={tx(lang, 'pw.new')}
-                    placeholder={tx(lang, 'auth.passwordHint')}
+                    label={t('newLabel')}
+                    placeholder={t('newPlaceholder')}
                     type="password"
                     register={register}
                     error={errors.newPassword}
-                    validation={PASSWORD_VALIDATION}
+                    validation={passwordValidation({ required: tPassword('required'), minLength: tPassword('minLength'), pattern: tPassword('pattern') })}
                 />
-                <PasswordRequirements password={watch('newPassword') ?? ''} lang={lang} />
+                <PasswordRequirements password={watch('newPassword') ?? ''} />
             </div>
             <button type="submit" disabled={isSubmitting} className="btn btn-ghost self-start">
-                {isSubmitting ? tx(lang, 'pw.changing') : tx(lang, 'pw.change')}
+                {isSubmitting ? t('submitting') : t('submit')}
             </button>
         </form>
     );

@@ -1,4 +1,5 @@
 import { Bell, CalendarClock, Gauge, Landmark, MoveVertical } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
 import WatchlistButton from "@/components/WatchlistButton";
 import CreateAlertModal from "@/components/watchlist/CreateAlertModal";
 import StockLivePrice from "@/components/stocks/StockLivePrice";
@@ -7,23 +8,22 @@ import { getCompanyProfile, getLiveQuotes } from "@/lib/actions/finnhub.actions"
 import { formatNumber, formatPrice, formatSymbolForTradingView, isChartEmbeddable } from "@/lib/utils";
 import { hasFinnhubQuotes } from "@/lib/markets";
 import { symbolInfoConfig } from "@/lib/constants";
-import { tvLocale, tx, type Lang } from "@/lib/i18n";
 import TradingViewWidget from "@/components/TradingViewWidget";
 import ChangePill from "@/components/ChangePill";
 import { getYahooDailyQuotes } from "@/lib/actions/yahoo.actions";
 import { isYahooSymbol } from "@/lib/yahoo";
-import { saudiSymbolNameAr } from "@/lib/saudi-symbols";
-import Price from "@/components/Price";
 
 // Symbols Finnhub's free plan can't price (most non-US listings) use TradingView's quote panel instead.
 // TradingView blocks Tadawul quotes in embeds and has Warsaw only end of day, so those show a delayed Yahoo price
 // and skip TradingView's panel, which would show a second, older price for Warsaw. If Yahoo has no quote,
 // Warsaw falls back to that panel; Tadawul's is blocked either way.
-async function TradingViewHeader({ symbol, lang }: { symbol: string; lang: Lang }) {
+async function TradingViewHeader({ symbol }: { symbol: string }) {
     const yahooPriced = isYahooSymbol(symbol);
-    const [isInWatchlist, yahoo] = await Promise.all([
+    const [isInWatchlist, yahoo, t, locale] = await Promise.all([
         isStockInWatchlist(symbol),
         yahooPriced ? getYahooDailyQuotes([symbol]) : null,
+        getTranslations('StockHeader'),
+        getLocale(),
     ]);
     const quote = yahoo?.[symbol];
     const tvSymbol = formatSymbolForTradingView(symbol);
@@ -32,52 +32,53 @@ async function TradingViewHeader({ symbol, lang }: { symbol: string; lang: Lang 
         <section className="hatch">
             <div className="card flex flex-wrap items-center justify-between gap-4 p-4">
                 <div className="min-w-0">
-                    <h1 dir="ltr" className="mono truncate text-xl font-bold tracking-[-0.02em]">{symbol}</h1>
+                    <h1 className="mono truncate text-xl font-bold tracking-[-0.02em]">{symbol}</h1>
                     <p className="text-[12.5px] text-faint">
-                        {[tvSymbol.split(':')[0], (lang === 'ar' ? saudiSymbolNameAr(symbol) : null) ?? quote?.name, yahooPriced ? tx(lang, 'stock.yahooQuote') : tx(lang, 'stock.tvQuote')].filter(Boolean).join(' · ')}
+                        {[tvSymbol.split(':')[0], quote?.name, yahooPriced ? t('quoteViaYahoo') : t('quoteViaTradingView')].filter(Boolean).join(' · ')}
                     </p>
                 </div>
                 {quote && (
                     <div className="flex items-center gap-3">
-                        <p className="num text-2xl font-bold tracking-[-0.03em]"><Price value={quote.price} currency={quote.currency} lang={lang} /></p>
-                        <ChangePill value={quote.changePercent} lang={lang} />
+                        <p className="num text-2xl font-bold tracking-[-0.03em]">{formatPrice(quote.price, quote.currency)}</p>
+                        <ChangePill value={quote.changePercent} />
                     </div>
                 )}
                 <div className="flex items-center gap-2">
-                    <WatchlistButton symbol={symbol} company={symbol} isInWatchlist={isInWatchlist} lang={lang} />
-                    <span className="pill h-9 px-3" title={tx(lang, 'alert.tooltipQuote')}>
-                        <Bell /> {tx(lang, 'stock.alertsTV')}
+                    <WatchlistButton symbol={symbol} company={symbol} isInWatchlist={isInWatchlist} />
+                    <span className="pill h-9 px-3" title={t('alertsHint')}>
+                        <Bell /> {t('alertsScope')}
                     </span>
                 </div>
             </div>
             {!hidePanel && (
                 <div className="card mt-[3px] p-1">
-                    <TradingViewWidget scriptUrl="https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js" config={symbolInfoConfig(tvSymbol, tvLocale(lang))} height={180} />
+                    <TradingViewWidget scriptUrl="https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js" config={symbolInfoConfig(tvSymbol, locale)} height={180} />
                 </div>
             )}
         </section>
     );
 }
 
-export default async function StockHeader({ symbol, lang }: { symbol: string; lang: Lang }) {
-    if (!hasFinnhubQuotes(symbol)) return <TradingViewHeader symbol={symbol} lang={lang} />;
+export default async function StockHeader({ symbol }: { symbol: string }) {
+    if (!hasFinnhubQuotes(symbol)) return <TradingViewHeader symbol={symbol} />;
 
-    const [isInWatchlist, quotes, profile] = await Promise.all([
+    const [isInWatchlist, quotes, profile, t] = await Promise.all([
         isStockInWatchlist(symbol),
         getLiveQuotes([symbol]),
         getCompanyProfile(symbol),
+        getTranslations('StockHeader'),
     ]);
     const quote = quotes[symbol];
 
     const currency = profile?.currency || 'USD';
     const company = profile?.name || symbol;
-    const money = (value?: number) => (value ? formatPrice(value, currency, lang) : '—');
+    const money = (value?: number) => (value ? formatPrice(value, currency) : '—');
 
     const stats = [
-        { label: tx(lang, 'stock.open'), icon: CalendarClock, value: money(quote?.o), hint: tx(lang, 'stock.hintOpen') },
-        { label: tx(lang, 'stock.range'), icon: MoveVertical, value: quote?.l && quote?.h ? `${money(quote.l)} – ${money(quote.h)}` : '—', hint: tx(lang, 'stock.hintRange') },
-        { label: tx(lang, 'stock.prevClose'), icon: Gauge, value: money(quote?.pc), hint: tx(lang, 'stock.hintPrevClose') },
-        { label: tx(lang, 'stock.mcap'), icon: Landmark, value: profile?.marketCapitalization ? formatNumber(profile.marketCapitalization, lang) : '—', hint: currency },
+        { label: t('open'), icon: CalendarClock, value: money(quote?.o), hint: t('openHint') },
+        { label: t('dayRange'), icon: MoveVertical, value: quote?.l && quote?.h ? `${money(quote.l)} – ${money(quote.h)}` : '—', hint: t('dayRangeHint') },
+        { label: t('prevClose'), icon: Gauge, value: money(quote?.pc), hint: t('prevCloseHint') },
+        { label: t('marketCap'), icon: Landmark, value: profile?.marketCapitalization ? formatNumber(profile.marketCapitalization) : '—', hint: currency },
     ];
 
     return (
@@ -97,12 +98,12 @@ export default async function StockHeader({ symbol, lang }: { symbol: string; la
                     </div>
                 </div>
 
-                <StockLivePrice symbol={symbol} initial={quote} currency={currency} lang={lang} />
+                <StockLivePrice symbol={symbol} initial={quote} currency={currency} />
 
                 <div className="flex items-center gap-2">
-                    <WatchlistButton symbol={symbol} company={company} isInWatchlist={isInWatchlist} lang={lang} />
-                    <CreateAlertModal symbol={symbol} currentPrice={quote?.c} currency={currency} lang={lang}>
-                        <button type="button" className="btn btn-primary"><Bell /> {tx(lang, 'stock.setAlert')}</button>
+                    <WatchlistButton symbol={symbol} company={company} isInWatchlist={isInWatchlist} />
+                    <CreateAlertModal symbol={symbol} currentPrice={quote?.c} currency={currency}>
+                        <button type="button" className="btn btn-primary"><Bell /> {t('setAlert')}</button>
                     </CreateAlertModal>
                 </div>
             </div>
@@ -129,7 +130,7 @@ export function StockHeaderSkeleton() {
                     <span className="h-5 w-48 animate-pulse rounded-md bg-hover" />
                     <span className="h-3 w-32 animate-pulse rounded-md bg-hover" />
                 </span>
-                <span className="ms-auto h-8 w-36 animate-pulse rounded-md bg-hover" />
+                <span className="ml-auto h-8 w-36 animate-pulse rounded-md bg-hover" />
             </div>
             <div className="bento mt-[3px]">
                 {[0, 1, 2, 3].map((i) => (

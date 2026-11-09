@@ -9,11 +9,6 @@ export type Release = {
     date: string;
     title: string;
     summary: string;
-    // The in-app banner is the only place release notes reach a reader; the /changelog page and the
-    // marketing pages stay English. Arabic copy is optional and falls back to the English line.
-    titleAr?: string;
-    summaryAr?: string;
-    highlightsAr?: string[];
     highlights?: string[]; // the short list in the banner's modal (latest release only)
     sections: { title: string; items: string[] }[];
     credits: Credit[];
@@ -27,15 +22,6 @@ export const RELEASES: Release[] = [
         date: '9 Nov 2026',
         title: 'November update',
         summary: 'Saudi Arabia and Poland on the dashboard, dividend yield, and public stock pages',
-        titleAr: 'تحديث نوفمبر',
-        summaryAr: 'السعودية وبولندا في لوحة الأسواق، وعائد التوزيعات، وصفحات أسهم عامة',
-        highlightsAr: [
-            'سوقان جديدتان: السعودية (تداول) وبولندا (وارسو)، بأسعار متأخرة.',
-            'صفحات الأسهم تعرض عائد التوزيعات.',
-            'صفحات شركات ومقارنات يفتحها أي أحد، مسجّلًا أو لا.',
-            'من يستضيف OpenStock عبر Docker يستطيع تشغيل الوضع اللحظي من جديد.',
-            'واجهة عربية كاملة من اليمين إلى اليسار.',
-        ],
         highlights: [
             'Two new markets: Saudi Arabia (Tadawul) and Poland (Warsaw), with delayed prices.',
             'Stock pages show the dividend yield.',
@@ -66,7 +52,7 @@ export const RELEASES: Release[] = [
             {
                 title: 'Languages',
                 items: [
-                    'An Arabic interface with a full right-to-left layout: a language toggle in the sidebar and on the sign-in pages, and the dashboard, stock pages, watchlist, profile and sign-in screens in Arabic, with Arabic digits and the IBM Plex Sans Arabic face. #146',
+                    'OpenStock in Polish: the app, sign-in pages, error messages and the welcome and password reset emails, in your browser’s language or the one you pick from the new Language menu in the sidebar. #157',
                 ],
             },
             {
@@ -90,9 +76,9 @@ export const RELEASES: Release[] = [
         ],
         credits: [
             { login: 'ravixalgorithm', prs: [131, 132, 133, 134, 135, 136, 138, 139, 141, 145, 150] },
-            { login: 'ahmaddirar-ios', prs: [142, 146, 148] },
+            { login: 'ahmaddirar-ios', prs: [142, 148] },
             { login: 'octo-patch', prs: [140] },
-            { login: 'pawisoon', prs: [147] },
+            { login: 'pawisoon', prs: [147, 157] },
             { login: 'samki6576', prs: [137] },
             { login: 'dajiaohuang', prs: [151] },
             { login: 'soarkit', issues: [149] },
@@ -103,15 +89,6 @@ export const RELEASES: Release[] = [
         date: '18 Oct 2026',
         title: 'October update',
         summary: 'Draw on charts, keep your indicators, and safer sign-in',
-        titleAr: 'تحديث أكتوبر',
-        summaryAr: 'ارسم على الشارت، احتفظ بمؤشراتك، ودخول أكثر أماناً',
-        highlightsAr: [
-            'ارسم خطوط الاتجاه وفيبوناتشي والنصوص على أي شارت سهم.',
-            'المؤشرات التي تختارها تبقى محفوظة على كل شارت.',
-            'رموز مثل M&M وBajaj-Auto وEricsson B صارت تُرسم بشكل صحيح.',
-            'تسجيل الدخول وإعادة تعيين كلمة المرور محدودان بمعدل طلبات، وإعادة التعيين تُخرج أجهزتك الأخرى.',
-            'صورة Docker جاهزة للاستضافة الذاتية.',
-        ],
         highlights: [
             'Draw trend lines, Fibonacci and text on any stock chart.',
             'The indicators you pick stay on every chart.',

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ListPlus, Plus, Star } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -27,6 +28,8 @@ export default function AddToListMenu({
     lists: { id: string; name: string }[];
 }) {
     const router = useRouter();
+    const t = useTranslations('NamedLists');
+    const tc = useTranslations('Common');
     const [pending, setPending] = useState<string | null>(null);
     const [naming, setNaming] = useState(false);
     const [name, setName] = useState('');
@@ -44,10 +47,10 @@ export default function AddToListMenu({
                 toast.error(result.error);
                 return;
             }
-            toast.success(`${symbol} added to “${list.name}”`);
+            toast.success(t('addedTo', { symbol, list: list.name }));
             router.refresh();
         } catch {
-            toast.error('Couldn’t add the symbol');
+            toast.error(t('addFailed'));
         } finally {
             setPending(null);
         }
@@ -74,7 +77,7 @@ export default function AddToListMenu({
                     setCreatedId(created.id);
                     setCreatedName(created.name);
                 } catch {
-                    toast.error('Couldn’t create the list');
+                    toast.error(t('createFailed'));
                     return;
                 }
             }
@@ -85,10 +88,10 @@ export default function AddToListMenu({
                     return;
                 }
             } catch {
-                toast.error(`Couldn’t add ${symbol} to “${listName}”`);
+                toast.error(t('addToFailed', { symbol, list: listName }));
                 return;
             }
-            toast.success(`Created “${listName}” and added ${symbol}`);
+            toast.success(t('createdAndAdded', { symbol, list: listName }));
             setNaming(false);
             setName('');
             setCreatedId(null);
@@ -115,16 +118,16 @@ export default function AddToListMenu({
             <DropdownMenu>
                 <DropdownMenuTrigger
                     className="icon-btn"
-                    title={`Add ${symbol} to a list`}
-                    aria-label={`Add ${symbol} to a named list`}
+                    title={t('menuTitle', { symbol })}
+                    aria-label={t('menuLabel', { symbol })}
                 >
                     <ListPlus />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel className="text-[12px] font-normal text-faint">Add to a list</DropdownMenuLabel>
+                    <DropdownMenuLabel className="text-[12px] font-normal text-faint">{t('menuHeading')}</DropdownMenuLabel>
                     {lists.length === 0 ? (
                         <DropdownMenuLabel className="text-[12px] font-normal text-faint">
-                            No lists yet — start one below.
+                            {t('menuEmpty')}
                         </DropdownMenuLabel>
                     ) : (
                         lists.map((list) => (
@@ -137,7 +140,7 @@ export default function AddToListMenu({
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={() => setNaming(true)}>
                         <Plus className="size-3.5" />
-                        New list…
+                        {t('newListItem')}
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -145,33 +148,33 @@ export default function AddToListMenu({
             <Dialog open={naming} onOpenChange={closeDialog}>
                 <DialogContent className="sm:max-w-sm">
                     <DialogHeader>
-                        <DialogTitle>New list</DialogTitle>
+                        <DialogTitle>{t('newListTitle')}</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={createAndAdd} className="flex flex-col gap-3">
                         <input
                             value={createdId ? createdName : name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="List name"
-                            aria-label="List name"
+                            placeholder={t('listName')}
+                            aria-label={t('listName')}
                             autoFocus
                             disabled={!!createdId}
                             className="h-9 rounded-full bg-page px-3 text-[13px] shadow-[inset_0_0_0_1px_var(--line)] outline-none placeholder:text-faint focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
                         />
                         {createdId && (
                             <p className="text-[12px] text-muted-foreground">
-                                “{createdName}” was created — press the button again to retry adding {symbol}.
+                                {t('retryHint', { list: createdName, symbol })}
                             </p>
                         )}
                         <div className="flex justify-end gap-2">
                             <button type="button" onClick={() => closeDialog(false)} disabled={busy} className="pill h-8">
-                                Cancel
+                                {tc('cancel')}
                             </button>
                             <button
                                 type="submit"
                                 disabled={busy || (!createdId && !name.trim())}
                                 className="btn btn-primary"
                             >
-                                <Plus className="size-3.5" /> {createdId ? 'Retry add' : 'Create and add'}
+                                <Plus className="size-3.5" /> {createdId ? t('retryAdd') : t('createAndAdd')}
                             </button>
                         </div>
                     </form>

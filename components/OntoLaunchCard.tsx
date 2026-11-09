@@ -27,7 +27,7 @@ export default function OntoLaunchCard() {
                 type="button"
                 onClick={() => setClosed(true)}
                 aria-label="Close"
-                className="absolute end-2 top-2 grid h-7 w-7 place-items-center rounded-lg text-lg leading-none text-[var(--faint)] hover:bg-[var(--hover)] hover:text-[var(--text)]"
+                className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-lg text-lg leading-none text-[var(--faint)] hover:bg-[var(--hover)] hover:text-[var(--text)]"
             >
                 ×
             </button>

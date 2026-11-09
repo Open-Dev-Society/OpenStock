@@ -1,3 +1,5 @@
+import type { Locale } from '@/i18n/config';
+
 // Community links, used across the app, landing page and emails
 export const REPO_URL = 'https://github.com/Open-Dev-Society/OpenStock';
 // GitHub account that receives sponsorships. Switch to 'Open-Dev-Society' once the org's
@@ -42,11 +44,11 @@ export const CONDITION_OPTIONS = [
     { value: 'less', label: 'Less than (<)' },
 ];
 
-// TradingView widgets, built per market from lib/markets.ts groups
+// TradingView widgets, built per market from lib/markets.ts groups. `locale` is the widget UI language
+// (TradingView ships "pl"); callers outside the translated app keep the English default.
 type SymbolGroup = { title: string; symbols: [symbol: string, name: string][] };
 
-// `locale` is the page language, spelled the way TradingView spells it (see tvLocale in lib/i18n.ts)
-export const marketOverviewConfig = (groups: SymbolGroup[], locale = 'en') => ({
+export const marketOverviewConfig = (groups: SymbolGroup[], locale: Locale = 'en') => ({
     colorTheme: 'dark',
     dateRange: '12M',
     locale,
@@ -68,7 +70,7 @@ export const marketOverviewConfig = (groups: SymbolGroup[], locale = 'en') => ({
     showChart: true,
 });
 
-export const marketQuotesConfig = (groups: SymbolGroup[], locale = 'en') => ({
+export const marketQuotesConfig = (groups: SymbolGroup[], locale: Locale = 'en') => ({
     locale,
     showSymbolLogo: true,
     colorTheme: 'dark',
@@ -108,7 +110,7 @@ export const CRYPTO_HEATMAP_CONFIG = {
     isTransparent: true,
 };
 
-export const timelineConfig = (market: 'stock' | 'crypto' | 'forex', locale = 'en') => ({
+export const timelineConfig = (market: 'stock' | 'crypto' | 'forex', locale: Locale = 'en') => ({
     displayMode: 'regular',
     feedMode: 'market',
     colorTheme: 'dark',
@@ -117,7 +119,7 @@ export const timelineConfig = (market: 'stock' | 'crypto' | 'forex', locale = 'e
     market,
 });
 
-export const symbolInfoConfig = (symbol: string, locale = 'en') => ({
+export const symbolInfoConfig = (symbol: string, locale: Locale = 'en') => ({
     symbol,
     colorTheme: 'dark',
     isTransparent: true,
@@ -125,14 +127,14 @@ export const symbolInfoConfig = (symbol: string, locale = 'en') => ({
     width: '100%',
 });
 
-export const singleQuoteConfig = (symbol: string, locale = 'en') => ({
+export const singleQuoteConfig = (symbol: string, locale: Locale = 'en') => ({
     symbol,
     colorTheme: 'dark',
     isTransparent: true,
     locale,
 });
 
-export const CANDLE_CHART_WIDGET_CONFIG = (symbol: string, locale = 'en') => ({
+export const CANDLE_CHART_WIDGET_CONFIG = (symbol: string, locale: Locale = 'en') => ({
     allow_symbol_change: false,
     calendar: false,
     details: true,
@@ -146,8 +148,6 @@ export const CANDLE_CHART_WIDGET_CONFIG = (symbol: string, locale = 'en') => ({
     save_image: false,
     style: 1,
     symbol: symbol.toUpperCase(),
-    // Without this the embed asks the page's own origin for /support/... and logs a 403 on every load
-    support_host: 'https://www.tradingview.com',
     theme: 'dark',
     timezone: 'exchange',
     backgroundColor: '#1f1e1a', // --card
@@ -160,7 +160,7 @@ export const CANDLE_CHART_WIDGET_CONFIG = (symbol: string, locale = 'en') => ({
     height: 600,
 });
 
-export const TECHNICAL_ANALYSIS_WIDGET_CONFIG = (symbol: string, locale = 'en') => ({
+export const TECHNICAL_ANALYSIS_WIDGET_CONFIG = (symbol: string, locale: Locale = 'en') => ({
     symbol: symbol.toUpperCase(),
     colorTheme: 'dark',
     isTransparent: true,
@@ -172,7 +172,7 @@ export const TECHNICAL_ANALYSIS_WIDGET_CONFIG = (symbol: string, locale = 'en') 
 });
 
 // embed-widget-company-profile.js was retired by TradingView (403); symbol-profile.js takes the same config
-export const COMPANY_PROFILE_WIDGET_CONFIG = (symbol: string, locale = 'en') => ({
+export const COMPANY_PROFILE_WIDGET_CONFIG = (symbol: string, locale: Locale = 'en') => ({
     symbol: symbol.toUpperCase(),
     colorTheme: 'dark',
     isTransparent: true,
@@ -181,7 +181,7 @@ export const COMPANY_PROFILE_WIDGET_CONFIG = (symbol: string, locale = 'en') => 
     height: 440,
 });
 
-export const COMPANY_FINANCIALS_WIDGET_CONFIG = (symbol: string, locale = 'en') => ({
+export const COMPANY_FINANCIALS_WIDGET_CONFIG = (symbol: string, locale: Locale = 'en') => ({
     symbol: symbol.toUpperCase(),
     colorTheme: 'dark',
     isTransparent: true,
@@ -220,18 +220,28 @@ export const WATCHLIST_TABLE_HEADER = [
     'Action',
 ];
 
+// `key` is the message under Password.rules in messages/*.json
 export const PASSWORD_RULES = [
-    { label: 'At least 8 characters', test: (pw: string) => pw.length >= 8 },
-    { label: 'At least 1 uppercase letter', test: (pw: string) => /[A-Z]/.test(pw) },
-    { label: 'At least 1 lowercase letter', test: (pw: string) => /[a-z]/.test(pw) },
-    { label: 'At least 1 number', test: (pw: string) => /[0-9]/.test(pw) },
+    { key: 'min8', label: 'At least 8 characters', test: (pw: string) => pw.length >= 8 },
+    { key: 'upper', label: 'At least 1 uppercase letter', test: (pw: string) => /[A-Z]/.test(pw) },
+    { key: 'lower', label: 'At least 1 lowercase letter', test: (pw: string) => /[a-z]/.test(pw) },
+    { key: 'number', label: 'At least 1 number', test: (pw: string) => /[0-9]/.test(pw) },
 ] as const;
 
-export const PASSWORD_VALIDATION = {
+type PasswordMessages = { required: string; minLength: string; pattern: string };
+
+// Forms pass translated messages (Password namespace); the English defaults keep old callers working
+export const passwordValidation = (messages: PasswordMessages = {
     required: 'Password is required',
-    minLength: { value: 8, message: 'Password must be at least 8 characters' },
+    minLength: 'Password must be at least 8 characters',
+    pattern: 'Password must include uppercase, lowercase, and a number',
+}) => ({
+    required: messages.required,
+    minLength: { value: 8, message: messages.minLength },
     pattern: {
         value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/,
-        message: 'Password must include uppercase, lowercase, and a number',
+        message: messages.pattern,
     },
-};
+});
+
+export const PASSWORD_VALIDATION = passwordValidation();

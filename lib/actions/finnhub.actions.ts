@@ -8,7 +8,7 @@ import { hasFinnhubCompanyData, hasFinnhubQuotes } from '@/lib/markets';
 import { getYahooDailyQuotes } from '@/lib/actions/yahoo.actions';
 import { isYahooSymbol } from '@/lib/yahoo';
 import { getSession } from '@/lib/better-auth/auth';
-import { searchSaudiSymbols, saudiSecurityType } from '@/lib/saudi-symbols';
+import { getTranslations } from 'next-intl/server';
 
 const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
 // Key pool: each free key has its own 60 req/min, so N keys = N x the quota. Rotated per request.
@@ -268,6 +268,10 @@ export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> 
             .filter((s): s is string => Boolean(s) && hasFinnhubCompanyData(s));
 
         const maxArticles = 6;
+        // Labels for articles without a source; English if there is no locale to read (e.g. a background job)
+        const t = await getTranslations('NewsSources').catch(() => null);
+        const companySource = t?.('companyNews');
+        const marketSource = t?.('marketNews');
 
         // If we have symbols, try to fetch company news per symbol and round-robin select
         if (cleanSymbols.length > 0) {
@@ -295,7 +299,7 @@ export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> 
                     if (list.length === 0) continue;
                     const article = list.shift();
                     if (!article || !validateArticle(article)) continue;
-                    collected.push(formatArticle(article, true, sym, round));
+                    collected.push(formatArticle(article, true, sym, round, companySource));
                     if (collected.length >= maxArticles) break;
                 }
                 if (collected.length >= maxArticles) break;
@@ -324,7 +328,7 @@ export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> 
             if (unique.length >= 20) break; // cap early before final slicing
         }
 
-        const formatted = unique.slice(0, maxArticles).map((a, idx) => formatArticle(a, false, undefined, idx));
+        const formatted = unique.slice(0, maxArticles).map((a, idx) => formatArticle(a, false, undefined, idx, marketSource));
         return formatted;
     } catch (err) {
         console.error('getNews error:', err);
@@ -334,26 +338,13 @@ export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> 
 
 export const searchStocks = cache(async (query?: string): Promise<StockWithWatchlistStatus[]> => {
     try {
-        const trimmed = typeof query === 'string' ? query.trim() : '';
-
-        // Arabic names never reach Finnhub: its index is Latin-only. The local table answers them
-        // first, so a reader who types "أرامكو" does not have to know the ticker.
-        const local: SearchStockCandidate[] = searchSaudiSymbols(trimmed).map((entry) => ({
-            symbol: entry.symbol,
-            description: entry.name,
-            displaySymbol: entry.symbol,
-            type: saudiSecurityType(entry),
-            __exchange: 'SR',
-        }));
-
         if (FINNHUB_KEYS.length === 0) {
-            if (local.length === 0) {
-                // If no token, log and return empty to avoid throwing per requirements
-                console.error('Error in stock search:', new Error('FINNHUB API key is not configured'));
-                return [];
-            }
-            // The Arabic table needs no key, so it still answers when the feed is not configured.
+            // If no token, log and return empty to avoid throwing per requirements
+            console.error('Error in stock search:', new Error('FINNHUB API key is not configured'));
+            return [];
         }
+
+        const trimmed = typeof query === 'string' ? query.trim() : '';
 
         let results: SearchStockCandidate[] = [];
 
@@ -369,14 +360,9 @@ export const searchStocks = cache(async (query?: string): Promise<StockWithWatch
         } else {
             // A public server action: only signed-in users may spend Finnhub quota on searches
             if (!(await getSession())?.user) return [];
-            if (/[\u0600-\u06FF]/.test(trimmed)) {
-                // Finnhub cannot match Arabic, so asking it would only spend a call on an empty answer.
-                results = local;
-            } else {
-                const url = `${FINNHUB_BASE_URL}/search?q=${encodeURIComponent(trimmed)}`;
-                const data = await fetchJSON<FinnhubSearchResponse>(url, 1800);
-                results = Array.isArray(data?.result) ? data.result : [];
-            }
+            const url = `${FINNHUB_BASE_URL}/search?q=${encodeURIComponent(trimmed)}`;
+            const data = await fetchJSON<FinnhubSearchResponse>(url, 1800);
+            results = Array.isArray(data?.result) ? data.result : [];
         }
 
         const mapped: StockWithWatchlistStatus[] = results

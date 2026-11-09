@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Control, Controller, FieldError } from 'react-hook-form';
 import {
     Popover,
@@ -21,7 +22,6 @@ import { Label } from '@/components/ui/label';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import countryList from 'react-select-country-list';
-import { tx, type Lang } from '@/lib/i18n';
 
 const COUNTRY_LABEL_OVERRIDES: Record<string, string> = {
     TW: 'Taiwan',
@@ -32,23 +32,7 @@ const COUNTRY_OPTIONS = countryList().getData().map((country) => ({
     label: COUNTRY_LABEL_OVERRIDES[country.value] ?? country.label,
 }));
 
-// Names of ~250 countries are a closed set the platform already knows, so the Arabic picker asks
-// Intl for them instead of carrying a translation table that would drift.
-let arabicRegions: Intl.DisplayNames | null | undefined;
-const countryLabel = (lang: Lang, country: { value: string; label: string }): string => {
-    if (lang !== 'ar') return country.label;
-    if (arabicRegions === undefined) {
-        try {
-            arabicRegions = new Intl.DisplayNames(['ar'], { type: 'region' });
-        } catch {
-            arabicRegions = null;
-        }
-    }
-    return arabicRegions?.of(country.value) ?? country.label;
-};
-
 type CountrySelectProps = {
-    lang?: Lang;
     name: string;
     label: string;
     control: Control<any>;
@@ -59,13 +43,22 @@ type CountrySelectProps = {
 const CountrySelect = ({
                            value,
                            onChange,
-                           lang = 'en',
                        }: {
     value: string;
     onChange: (value: string) => void;
-    lang?: Lang;
 }) => {
+    const t = useTranslations('CountrySelect');
+    const locale = useLocale();
     const [open, setOpen] = useState(false);
+
+    // English keeps the library's names; other locales get the browser's localized region names
+    const countryOptions = useMemo(() => {
+        if (locale === 'en') return COUNTRY_OPTIONS;
+        const names = new Intl.DisplayNames([locale], { type: 'region', fallback: 'none' });
+        return COUNTRY_OPTIONS
+            .map((country) => ({ ...country, label: names.of(country.value) ?? country.label }))
+            .sort((a, b) => a.label.localeCompare(b.label, locale));
+    }, [locale]);
 
     // Helper function to get flag emoji
     const getFlagEmoji = (countryCode: string) => {
@@ -88,12 +81,12 @@ const CountrySelect = ({
                     {value ? (
                         <span className='flex items-center gap-2'>
               <span>{getFlagEmoji(value)}</span>
-              <span>{countryLabel(lang, COUNTRY_OPTIONS.find((c) => c.value === value) ?? { value, label: value })}</span>
+              <span>{countryOptions.find((c) => c.value === value)?.label}</span>
             </span>
                     ) : (
-                        tx(lang, 'country.select')
+                        t('placeholder')
                     )}
-                    <ChevronsUpDown className='ms-2 h-4 w-4 shrink-0 opacity-50' />
+                    <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
                 </Button>
             </PopoverTrigger>
             <PopoverContent
@@ -102,19 +95,18 @@ const CountrySelect = ({
             >
                 <Command className='bg-gray-800 border-gray-600'>
                     <CommandInput
-                        placeholder={tx(lang, 'country.search')}
+                        placeholder={t('searchPlaceholder')}
                         className='country-select-input'
                     />
                     <CommandEmpty className='country-select-empty'>
-                        {tx(lang, 'country.empty')}
+                        {t('empty')}
                     </CommandEmpty>
                     <CommandList className='max-h-60 bg-gray-800 scrollbar-hide-default'>
                         <CommandGroup className='bg-gray-800'>
-                            {COUNTRY_OPTIONS.map((country) => (
+                            {countryOptions.map((country) => (
                                 <CommandItem
                                     key={country.value}
-                                    value={`${countryLabel(lang, country)} ${country.value}`}
-                                    keywords={[country.label]}
+                                    value={`${country.label} ${country.value}`}
                                     onSelect={() => {
                                         onChange(country.value);
                                         setOpen(false);
@@ -123,13 +115,13 @@ const CountrySelect = ({
                                 >
                                     <Check
                                         className={cn(
-                                            'me-2 h-4 w-4 text-teal-500',
+                                            'mr-2 h-4 w-4 text-teal-500',
                                             value === country.value ? 'opacity-100' : 'opacity-0'
                                         )}
                                     />
                                     <span className='flex items-center gap-2'>
                     <span>{getFlagEmoji(country.value)}</span>
-                    <span>{countryLabel(lang, country)}</span>
+                    <span>{country.label}</span>
                   </span>
                                 </CommandItem>
                             ))}
@@ -147,8 +139,8 @@ export const CountrySelectField = ({
                                        control,
                                        error,
                                        required = false,
-                                       lang = 'en',
                                    }: CountrySelectProps) => {
+    const t = useTranslations('CountrySelect');
     return (
         <div className='space-y-2'>
             <Label htmlFor={name} className='form-label'>
@@ -158,15 +150,15 @@ export const CountrySelectField = ({
                 name={name}
                 control={control}
                 rules={{
-                    required: required ? `Please select ${label.toLowerCase()}` : false,
+                    required: required ? t('required', { field: label.toLowerCase() }) : false,
                 }}
                 render={({ field }) => (
-                    <CountrySelect value={field.value} onChange={field.onChange} lang={lang} />
+                    <CountrySelect value={field.value} onChange={field.onChange} />
                 )}
             />
             {error && <p className='text-[13px] text-down'>{error.message}</p>}
             <p className='text-[12.5px] text-faint'>
-                {tx(lang, 'country.help')}
+                {t('hint')}
             </p>
         </div>
     );

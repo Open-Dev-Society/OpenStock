@@ -4,12 +4,11 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BellRing, Trash2 } from "lucide-react";
+import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { deleteAlert } from "@/lib/actions/alert.actions";
 import { alertsEnabled } from "@/lib/market-data";
 import { formatPrice } from "@/lib/utils";
-import { tx, type Lang } from "@/lib/i18n";
-import { arNumberDigits } from '@/lib/i18n';
 
 type AlertRow = {
     _id: string;
@@ -21,15 +20,17 @@ type AlertRow = {
     expiresAt?: string;
 };
 
-const statusOf = (alert: AlertRow, lang: Lang) => {
-    if (alert.triggered) return { label: tx(lang, 'alert.triggered'), className: 'pill is-brand' };
-    if (!alertsEnabled) return { label: tx(lang, 'alert.paused'), className: 'pill' };
-    if (alert.expiresAt && new Date(alert.expiresAt) < new Date()) return { label: tx(lang, 'alert.expired'), className: 'pill' };
-    if (alert.active === false) return { label: tx(lang, 'alert.paused'), className: 'pill' };
-    return { label: tx(lang, 'alert.watching'), className: 'pill is-up' };
+const statusOf = (alert: AlertRow) => {
+    if (alert.triggered) return { labelKey: 'triggered', className: 'pill is-brand' } as const;
+    if (!alertsEnabled) return { labelKey: 'paused', className: 'pill' } as const;
+    if (alert.expiresAt && new Date(alert.expiresAt) < new Date()) return { labelKey: 'expired', className: 'pill' } as const;
+    if (alert.active === false) return { labelKey: 'paused', className: 'pill' } as const;
+    return { labelKey: 'watching', className: 'pill is-up' } as const;
 };
 
-export default function AlertsPanel({ alerts, lang }: { alerts: AlertRow[]; lang: Lang }) {
+export default function AlertsPanel({ alerts }: { alerts: AlertRow[] }) {
+    const t = useTranslations('AlertsPanel');
+    const format = useFormatter();
     const router = useRouter();
     const [pendingId, setPendingId] = useState<string | null>(null);
 
@@ -37,10 +38,10 @@ export default function AlertsPanel({ alerts, lang }: { alerts: AlertRow[]; lang
         setPendingId(alert._id);
         try {
             await deleteAlert(alert._id);
-            toast.success(tx(lang, 'alert.removedMsg').replace('{s}', alert.symbol));
+            toast.success(t('removed', { symbol: alert.symbol }));
             router.refresh();
         } catch {
-            toast.error(tx(lang, 'alert.removeFail'));
+            toast.error(t('removeFailed'));
         } finally {
             setPendingId(null);
         }
@@ -50,9 +51,9 @@ export default function AlertsPanel({ alerts, lang }: { alerts: AlertRow[]; lang
         return (
             <div className="empty-state py-10">
                 <span className="empty-icon"><BellRing className="size-5" /></span>
-                <h3>{tx(lang, 'alert.cloud')}</h3>
-                <p className="max-w-64 text-[13px]">{tx(lang, 'alert.cloudSub')}</p>
-                <Link href="/#data" className="btn btn-ghost mt-2">{tx(lang, 'alert.cloudBtn')}</Link>
+                <h3>{t('cloudTitle')}</h3>
+                <p className="max-w-64 text-[13px]">{t('cloudBody')}</p>
+                <Link href="/#data" className="btn btn-ghost mt-2">{t('seeCloud')}</Link>
             </div>
         );
     }
@@ -61,8 +62,8 @@ export default function AlertsPanel({ alerts, lang }: { alerts: AlertRow[]; lang
         return (
             <div className="empty-state py-10">
                 <span className="empty-icon"><BellRing className="size-5" /></span>
-                <h3>{tx(lang, 'alert.none')}</h3>
-                <p className="max-w-60 text-[13px]">{tx(lang, 'alert.noneSub')}</p>
+                <h3>{t('emptyTitle')}</h3>
+                <p className="max-w-60 text-[13px]">{t('emptyBody')}</p>
             </div>
         );
     }
@@ -71,29 +72,31 @@ export default function AlertsPanel({ alerts, lang }: { alerts: AlertRow[]; lang
         <>
             {!alertsEnabled && (
                 <p className="px-3 pt-3 pb-1 text-[12.5px] text-faint">
-                    {tx(lang, 'alert.pausedBefore')} <Link href="/#data" className="text-brand-ink hover:underline">OpenStock Cloud</Link>{tx(lang, 'alert.pausedAfter')}
+                    {t.rich('movedNotice', {
+                        link: (chunks) => <Link href="/#data" className="text-brand-ink hover:underline">{chunks}</Link>,
+                    })}
                 </p>
             )}
             <ul className="row-list">
                 {alerts.map((alert) => {
-                    const status = statusOf(alert, lang);
+                    const status = statusOf(alert);
                     return (
                         <li key={alert._id} className="flex items-center gap-3 px-3 py-2.5">
                             <div className="min-w-0 flex-1">
                                 <p className="mono font-semibold text-foreground">{alert.symbol}</p>
                                 <p className="num truncate text-[12.5px] text-faint">
-                                    {alert.condition === 'ABOVE' ? tx(lang, 'alert.above') : tx(lang, 'alert.below')} {formatPrice(alert.targetPrice)}
-                                    {alert.expiresAt && !alert.triggered && ` · ${tx(lang, 'alert.until').replace('{d}', arNumberDigits(new Date(alert.expiresAt).toLocaleDateString(lang === 'ar' ? 'ar-SA-u-nu-latn' : 'en-US', { month: 'short', day: 'numeric' }), lang))}`}
+                                    {t(alert.condition === 'ABOVE' ? 'above' : 'below', { price: formatPrice(alert.targetPrice) })}
+                                    {alert.expiresAt && !alert.triggered && ` · ${t('until', { date: format.dateTime(new Date(alert.expiresAt), { month: 'short', day: 'numeric' }) })}`}
                                 </p>
                             </div>
-                            <span className={status.className}>{status.label}</span>
+                            <span className={status.className}>{t(`status.${status.labelKey}`)}</span>
                             <button
                                 type="button"
                                 onClick={() => handleDelete(alert)}
                                 disabled={pendingId === alert._id}
                                 className="icon-btn is-danger"
-                                title={tx(lang, 'alert.remove')}
-                                aria-label={tx(lang, 'alert.removeFor').replace('{s}', alert.symbol)}
+                                title={t('removeTitle')}
+                                aria-label={t('removeLabel', { symbol: alert.symbol })}
                             >
                                 <Trash2 />
                             </button>

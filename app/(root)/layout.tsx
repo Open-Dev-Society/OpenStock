@@ -1,11 +1,12 @@
 import { getSession } from "@/lib/better-auth/auth";
 import { redirect } from "next/navigation";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale } from "next-intl/server";
+import HtmlLang from "@/components/HtmlLang";
 import AppShell from "@/components/shell/AppShell";
 import DonatePopup from "@/components/DonatePopup";
 import { searchStocks } from "@/lib/actions/finnhub.actions";
 import { getUserWatchlist } from "@/lib/actions/watchlist.actions";
-import { getLang } from "@/lib/i18n-server";
-import { HtmlLang, LangProvider } from "@/components/shell/LangProvider";
 
 const Layout = async ({ children }: { children: React.ReactNode }) => {
     const session = await getSession();
@@ -18,25 +19,24 @@ const Layout = async ({ children }: { children: React.ReactNode }) => {
         email: session.user.email,
     }
 
-    const [initialStocks, watchlist] = await Promise.all([
+    const [initialStocks, watchlist, locale] = await Promise.all([
         searchStocks(),
         getUserWatchlist(),
+        getLocale(),
     ]);
-    const lang = await getLang();
 
     return (
-        <LangProvider lang={lang}>
-            <HtmlLang lang={lang} />
+        <NextIntlClientProvider>
+            <HtmlLang locale={locale} />
             <AppShell
                 user={user}
                 watchlist={watchlist.map(({ symbol, company }: { symbol: string; company: string }) => ({ symbol, company }))}
                 initialStocks={initialStocks}
-                lang={lang}
             >
                 {children}
             </AppShell>
-            <DonatePopup lang={lang} />
-        </LangProvider>
+            <DonatePopup />
+        </NextIntlClientProvider>
     )
 }
 export default Layout

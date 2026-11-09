@@ -1,17 +1,25 @@
 'use client';
 
 import { Controller, type Control, type FieldValues, type Path } from "react-hook-form";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import { toMessageKey } from "@/i18n/config";
 
 type ChoiceChipsProps<T extends FieldValues> = {
     name: Path<T>;
     label: string;
     options: readonly { value: string; label: string }[];
     control: Control<T>;
+    // Shows each option's label from Options.<group> (keyed by its value) instead of option.label
+    optionGroup?: 'investmentGoals' | 'riskTolerance' | 'industries';
 };
 
 // Single-choice pills for short option lists: every choice is visible and one tap away.
-export default function ChoiceChips<T extends FieldValues>({ name, label, options, control }: ChoiceChipsProps<T>) {
+export default function ChoiceChips<T extends FieldValues>({ name, label, options, control, optionGroup }: ChoiceChipsProps<T>) {
+    const t = useTranslations('Options');
+    const optionLabel = (option: { value: string; label: string }) =>
+        optionGroup ? t(`${optionGroup}.${toMessageKey(option.value)}` as Parameters<typeof t>[0]) : option.label;
+
     return (
         <Controller
             name={name}
@@ -36,7 +44,7 @@ export default function ChoiceChips<T extends FieldValues>({ name, label, option
                                             : 'text-muted-foreground shadow-[inset_0_0_0_1px_var(--line)] hover:bg-hover hover:text-foreground',
                                     )}
                                 >
-                                    {option.label}
+                                    {optionLabel(option)}
                                 </button>
                             );
                         })}

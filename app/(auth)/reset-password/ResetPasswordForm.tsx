@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 import FooterLink from '@/components/forms/FooterLink';
 import InputField from '@/components/forms/InputField';
@@ -11,9 +12,7 @@ import PasswordRequirements from '@/components/forms/PasswordRequirements';
 import OpenDevSocietyBranding from '@/components/OpenDevSocietyBranding';
 import { Button } from '@/components/ui/button';
 import { resetPasswordWithToken } from '@/lib/actions/auth.actions';
-import { PASSWORD_VALIDATION } from '@/lib/constants';
-import LangToggle, { useLang } from '@/components/LangToggle';
-import { tx } from '@/lib/i18n';
+import { passwordValidation } from '@/lib/constants';
 
 type ResetPasswordFormData = {
     newPassword: string;
@@ -21,8 +20,10 @@ type ResetPasswordFormData = {
 };
 
 const ResetPasswordForm = () => {
+    const t = useTranslations('ResetPassword');
+    const tPassword = useTranslations('Password');
+    const tBrand = useTranslations('OpenDevSocietyBranding');
     const router = useRouter();
-    const lang = useLang();
     const searchParams = useSearchParams();
     const token = searchParams.get('token') ?? '';
     const error = searchParams.get('error');
@@ -44,13 +45,13 @@ const ResetPasswordForm = () => {
 
     useEffect(() => {
         if (error === 'INVALID_TOKEN') {
-            toast.error('Reset link is invalid or expired.');
+            toast.error(t('invalidLink'));
         }
-    }, [error]);
+    }, [error, t]);
 
     const onSubmit = async (data: ResetPasswordFormData) => {
         if (!token) {
-            toast.error('Reset link is invalid or expired.');
+            toast.error(t('invalidLink'));
             return;
         }
 
@@ -61,63 +62,60 @@ const ResetPasswordForm = () => {
             });
 
             if (result.success) {
-                toast.success('Password updated. You can sign in now.');
+                toast.success(t('updated'));
                 router.push('/sign-in');
                 return;
             }
 
-            toast.error('Password reset failed', {
-                description: result.error ?? 'Unable to reset your password.',
+            toast.error(t('failed'), {
+                description: result.error ?? t('unableToReset'),
             });
         } catch (error) {
-            toast.error('Password reset failed', {
-                description: error instanceof Error ? error.message : 'Unable to reset your password.',
+            toast.error(t('failed'), {
+                description: error instanceof Error ? error.message : t('unableToReset'),
             });
         }
     };
 
     return (
         <>
-            <div className="mb-2 flex items-center justify-between">
-                <h1 className="form-title">{tx(lang, 'auth.newTitle')}</h1>
-                <LangToggle initial={lang} />
-            </div>
+            <h1 className="form-title">{t('title')}</h1>
             <p className="text-sm text-gray-400 mb-6">
-                {tx(lang, 'auth.newSub')}
+                {t('subtitle')}
             </p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <InputField
                     name="newPassword"
-                    label={tx(lang, 'auth.newPassword')}
-                    placeholder={tx(lang, 'auth.newPasswordPh')}
+                    label={t('newPasswordLabel')}
+                    placeholder={t('newPasswordPlaceholder')}
                     type="password"
                     register={register}
                     error={errors.newPassword}
-                    validation={PASSWORD_VALIDATION}
+                    validation={passwordValidation({ required: tPassword('required'), minLength: tPassword('minLength'), pattern: tPassword('pattern') })}
                 />
-                <PasswordRequirements password={newPassword ?? ''} lang={lang} />
+                <PasswordRequirements password={newPassword ?? ''} />
 
                 <InputField
                     name="confirmPassword"
-                    label={tx(lang, 'auth.confirm')}
-                    placeholder={tx(lang, 'auth.confirmPh')}
+                    label={t('confirmPasswordLabel')}
+                    placeholder={t('confirmPasswordPlaceholder')}
                     type="password"
                     register={register}
                     error={errors.confirmPassword}
                     validation={{
-                        required: 'Please confirm your new password',
+                        required: t('confirmRequired'),
                         validate: (value: string) =>
-                            value === newPassword || 'Passwords do not match',
+                            value === newPassword || t('mismatch'),
                     }}
                 />
 
                 <Button type="submit" disabled={isSubmitting} className="yellow-btn w-full mt-5">
-                    {isSubmitting ? tx(lang, 'auth.resetting') : tx(lang, 'auth.reset')}
+                    {isSubmitting ? t('submitting') : t('submit')}
                 </Button>
 
-                <FooterLink text={tx(lang, 'auth.freshLink')} linkText={tx(lang, 'auth.requestAnother')} href="/forgot-password" />
-                <OpenDevSocietyBranding outerClassName="mt-10 flex justify-center"  text={tx(lang, 'auth.brandCredit')} />
+                <FooterLink text={t('needFreshLink')} linkText={t('requestAnother')} href="/forgot-password" />
+                <OpenDevSocietyBranding outerClassName="mt-10 flex justify-center" text={tBrand('initiativeBy')} />
             </form>
         </>
     );

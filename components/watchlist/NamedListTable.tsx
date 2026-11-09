@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Star } from 'lucide-react';
+import { getTranslations } from 'next-intl/server';
 import ChangePill from '@/components/ChangePill';
 import { getWatchlistData } from '@/lib/actions/finnhub.actions';
 import { formatNumber, formatPrice } from '@/lib/utils';
@@ -16,12 +17,17 @@ export default async function NamedListTable({
     listName: string;
     symbols: { symbol: string; company: string }[];
 }) {
+    const [t, th, tr] = await Promise.all([
+        getTranslations('NamedLists'),
+        getTranslations('WatchlistTable.headers'),
+        getTranslations('WatchlistTableRow'),
+    ]);
     if (symbols.length === 0) {
         return (
             <div className="empty-state py-12">
                 <span className="empty-icon"><Star className="size-5" /></span>
-                <h3>“{listName}” is empty</h3>
-                <p className="max-w-sm">Use “Add a stock” above, or the list button on any row of your watchlist.</p>
+                <h3>{t('emptyTitle', { list: listName })}</h3>
+                <p className="max-w-sm">{t('emptyBody')}</p>
             </div>
         );
     }
@@ -35,12 +41,12 @@ export default async function NamedListTable({
             <table className="data-table">
                 <thead>
                     <tr>
-                        <th>Company</th>
-                        <th className="is-num">Price</th>
-                        <th className="is-num">Today</th>
-                        <th className="is-num">Change</th>
-                        <th className="is-num">Market cap</th>
-                        <th className="w-[88px]"><span className="sr-only">Actions</span></th>
+                        <th>{th('company')}</th>
+                        <th className="is-num">{th('price')}</th>
+                        <th className="is-num">{tr('today')}</th>
+                        <th className="is-num">{th('change')}</th>
+                        <th className="is-num">{th('marketCap')}</th>
+                        <th className="w-[88px]"><span className="sr-only">{th('action')}</span></th>
                     </tr>
                 </thead>
                 <tbody>

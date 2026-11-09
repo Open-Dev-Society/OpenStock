@@ -3,43 +3,37 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { LayoutDashboard, Menu, Plus, Star, X } from "lucide-react";
 import { openSearch } from "@/components/SearchCommand";
 import { cn } from "@/lib/utils";
-import { tx, type Lang, type StringKey } from "@/lib/i18n";
 
 const PINNED = ['/dashboard', '/watchlist'];
 const STORAGE_KEY = 'openstock-tabs';
 const MAX_TABS = 12;
 
-const PAGE_LABELS: Record<string, StringKey> = {
-    '/dashboard': 'nav.overview',
-    '/watchlist': 'nav.watchlist',
-    '/profile': 'nav.profile',
+// Message keys under TabBar.pages
+const PAGE_LABELS: Record<string, 'overview' | 'watchlist' | 'profile'> = {
+    '/dashboard': 'overview',
+    '/watchlist': 'watchlist',
+    '/profile': 'profile',
 };
 
 // Pages become browser-style tabs; stock pages are labelled by their symbol.
-// Keys are resolved per language at render time, so switching language relabels open tabs.
-const tabKey = (path: string): StringKey | 'stock' | null => {
-    if (PAGE_LABELS[path]) return PAGE_LABELS[path];
-    if (/^\/stocks\/[^/]+$/.test(path)) return 'stock';
-    return null;
-};
-const tabLabel = (path: string, lang: Lang) => {
-    const key = tabKey(path);
-    if (!key) return null;
-    if (key === 'stock') return decodeURIComponent(path.split('/')[2]).toUpperCase();
-    return tx(lang, key);
+const stockSymbol = (path: string) => {
+    const stock = path.match(/^\/stocks\/([^/]+)$/);
+    return stock ? decodeURIComponent(stock[1]).toUpperCase() : null;
 };
 
 const withTab = (tabs: string[], path: string) => {
-    if (!tabKey(path) || tabs.includes(path)) return tabs;
+    if (!(stockSymbol(path) || PAGE_LABELS[path]) || tabs.includes(path)) return tabs;
     const next = [...tabs, path];
     const extra = next.length - MAX_TABS;
     return extra > 0 ? next.filter((t, i) => PINNED.includes(t) || i >= extra + PINNED.length) : next;
 };
 
-const TabBar = ({ onMenu, lang }: { onMenu: () => void; lang: Lang }) => {
+const TabBar = ({ onMenu }: { onMenu: () => void }) => {
+    const t = useTranslations('TabBar');
     const pathname = usePathname();
     const router = useRouter();
     const [tabs, setTabs] = useState(() => withTab(PINNED, pathname));
@@ -69,6 +63,8 @@ const TabBar = ({ onMenu, lang }: { onMenu: () => void; lang: Lang }) => {
         el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     }, [pathname, tabs]);
 
+    const tabLabel = (path: string) => stockSymbol(path) ?? (PAGE_LABELS[path] ? t(`pages.${PAGE_LABELS[path]}`) : null);
+
     const closeTab = (path: string) => {
         const index = tabs.indexOf(path);
         const next = tabs.filter((t) => t !== path);
@@ -78,11 +74,11 @@ const TabBar = ({ onMenu, lang }: { onMenu: () => void; lang: Lang }) => {
 
     return (
         <div className="tabbar">
-            <button type="button" onClick={onMenu} className="chrome-btn lg:hidden" aria-label={tx(lang, 'nav.menu')}>
+            <button type="button" onClick={onMenu} className="chrome-btn lg:hidden" aria-label={t('openMenu')}>
                 <Menu />
             </button>
 
-            <div className="tabs px-3">
+            <div className="tabs pl-3 pr-3">
                 <div
                     className={cn('tab-glider', glider && 'is-ready')}
                     style={glider ? { transform: `translateX(${glider.x}px)`, width: glider.w } : undefined}
@@ -101,18 +97,18 @@ const TabBar = ({ onMenu, lang }: { onMenu: () => void; lang: Lang }) => {
                         <div
                             key={path}
                             ref={(el) => { if (el) tabRefs.current.set(path, el); else tabRefs.current.delete(path); }}
-                            className={cn('tab', active && 'is-active', pinned && 'pe-4')}
+                            className={cn('tab', active && 'is-active', pinned && 'pr-4')}
                         >
                             {/* Stretched link: the whole tab navigates, while the close button stays a real, focusable button */}
                             <Link href={path} aria-current={active ? 'page' : undefined} className="flex min-w-0 flex-1 items-center gap-2 before:absolute before:inset-0 before:content-['']">
                                 {path === '/dashboard' && <LayoutDashboard />}
                                 {path === '/watchlist' && <Star />}
-                                <span dir={isStock ? 'ltr' : undefined} className={cn('tab-label', isStock && 'mono text-[13px]')}>{tabLabel(path, lang)}</span>
+                                <span className={cn('tab-label', isStock && 'mono text-[13px]')}>{tabLabel(path)}</span>
                             </Link>
                             {!pinned && (
                                 <button
                                     type="button"
-                                    aria-label={`${tx(lang, 'tab.close')} ${tabLabel(path, lang)}`}
+                                    aria-label={t('closeTab', { label: tabLabel(path) ?? path })}
                                     className="tab-close relative z-10"
                                     onClick={() => closeTab(path)}
                                 >
@@ -124,7 +120,7 @@ const TabBar = ({ onMenu, lang }: { onMenu: () => void; lang: Lang }) => {
                 })}
             </div>
 
-            <button type="button" onClick={openSearch} className="chrome-btn -ms-2" aria-label={tx(lang, 'tab.open')} title={`${tx(lang, 'tab.open')} (⌘K)`}>
+            <button type="button" onClick={openSearch} className="chrome-btn -ml-2" aria-label={t('openStock')} title={t('openStockHint')}>
                 <Plus />
             </button>
         </div>

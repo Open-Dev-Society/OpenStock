@@ -1,15 +1,14 @@
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
-import { arDigits, type Lang } from "@/lib/i18n";
 
 // Direction is carried by colour and arrow, so it never relies on colour alone.
-const ChangePill = ({ value, lang = 'en' }: { value?: number | null; lang?: Lang }) => {
+const ChangePill = ({ value }: { value?: number | null }) => {
     if (value == null || !Number.isFinite(value)) return <span className="pill">—</span>;
-    if (value === 0) return <span className="pill">{arDigits('0.00%', lang)}</span>;
+    if (value === 0) return <span className="pill">0.00%</span>;
     const up = value > 0;
     return (
         <span className={up ? 'pill is-up' : 'pill is-down'}>
             {up ? <ArrowUpRight /> : <ArrowDownRight />}
-            {arDigits(`${Math.abs(value).toFixed(2)}%`, lang)}
+            {Math.abs(value).toFixed(2)}%
         </span>
     );
 };

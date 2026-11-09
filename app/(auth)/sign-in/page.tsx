@@ -6,17 +6,19 @@ import InputField from '@/components/forms/InputField';
 import FooterLink from '@/components/forms/FooterLink';
 import { signInWithEmail } from "@/lib/actions/auth.actions";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import OpenDevSocietyBranding from "@/components/OpenDevSocietyBranding";
 import SocialAuthButtons from "@/components/forms/SocialAuthButtons";
-import LangToggle, { useLang } from "@/components/LangToggle";
-import { tx } from "@/lib/i18n";
 import React from "react";
 
 const SignIn = () => {
+    const t = useTranslations('SignIn');
+    const tFields = useTranslations('AuthFields');
+    const tPassword = useTranslations('Password');
+    const tBrand = useTranslations('OpenDevSocietyBranding');
     const router = useRouter()
-    const lang = useLang();
     const {
         register,
         handleSubmit,
@@ -36,65 +38,62 @@ const SignIn = () => {
                 router.push('/dashboard');
                 return;
             }
-            toast.error('Sign in failed', {
-                description: result.error ?? 'Invalid email or password.',
+            toast.error(t('failed'), {
+                description: result.error ?? t('invalidCredentials'),
             });
         } catch (e) {
             console.error(e);
-            toast.error('Sign in failed', {
-                description: e instanceof Error ? e.message : 'Failed to sign in.'
+            toast.error(t('failed'), {
+                description: e instanceof Error ? e.message : t('failedGeneric')
             })
         }
     }
 
     return (
         <>
-            <div className="mb-2 flex items-center justify-between">
-                <h1 className="form-title">{tx(lang, 'auth.welcome')}</h1>
-                <LangToggle initial={lang} />
-            </div>
-            <p className="mb-8 text-faint">{tx(lang, 'auth.welcomeSub')}</p>
+            <h1 className="form-title mb-2">{t('title')}</h1>
+            <p className="mb-8 text-faint">{t('subtitle')}</p>
 
-            <SocialAuthButtons lang={lang} />
+            <SocialAuthButtons />
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <InputField
                     name="email"
-                    label={tx(lang, 'auth.email')}
+                    label={tFields('email')}
                     placeholder="opendevsociety@cc.cc"
                     register={register}
                     error={errors.email}
                     validation={{
-                        required: 'Email is required',
+                        required: tFields('emailRequired'),
                         pattern: {
                             value: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
-                            message: 'Please enter a valid email address'
+                            message: tFields('emailInvalid')
                         }
                     }}
                 />
 
                 <InputField
                     name="password"
-                    label={tx(lang, 'auth.password')}
-                    placeholder={tx(lang, 'auth.passwordPh')}
+                    label={t('passwordLabel')}
+                    placeholder={t('passwordPlaceholder')}
                     type="password"
                     register={register}
                     error={errors.password}
-                    validation={{ required: 'Password is required', minLength: 8 }}
+                    validation={{ required: tPassword('required'), minLength: 8 }}
                 />
 
                 <div className="flex justify-end">
                     <Link href="/forgot-password" className="footer-link text-sm">
-                        {tx(lang, 'auth.forgot')}
+                        {t('forgotPassword')}
                     </Link>
                 </div>
 
                 <Button type="submit" disabled={isSubmitting} className="yellow-btn w-full mt-5">
-                    {isSubmitting ? tx(lang, 'auth.submittingIn') : tx(lang, 'auth.submitIn')}
+                    {isSubmitting ? t('submitting') : t('submit')}
                 </Button>
 
-                <FooterLink text={tx(lang, 'auth.noAccount')} linkText={tx(lang, 'auth.signUpLink')} href="/sign-up" />
-                <OpenDevSocietyBranding outerClassName="mt-10 flex justify-center"  text={tx(lang, 'auth.brandCredit')} />
+                <FooterLink text={t('noAccount')} linkText={t('createAccount')} href="/sign-up" />
+                <OpenDevSocietyBranding outerClassName="mt-10 flex justify-center" text={tBrand('initiativeBy')} />
             </form>
         </>
     );

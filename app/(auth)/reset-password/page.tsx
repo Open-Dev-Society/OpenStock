@@ -1,15 +1,12 @@
-'use client';
-
 import { Suspense } from 'react';
-import { useLang } from '@/components/LangToggle';
-import { tx } from '@/lib/i18n';
+import { getTranslations } from 'next-intl/server';
 
 import ResetPasswordForm from './ResetPasswordForm';
 
-const ResetPasswordPage = () => {
-    const lang = useLang();
+const ResetPasswordPage = async () => {
+    const t = await getTranslations('ResetPassword');
     return (
-        <Suspense fallback={<div className="text-sm text-gray-400">{tx(lang, 'auth.loadingReset')}</div>}>
+        <Suspense fallback={<div className="text-sm text-gray-400">{t('loading')}</div>}>
             <ResetPasswordForm />
         </Suspense>
     );

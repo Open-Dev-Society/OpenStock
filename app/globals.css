@@ -768,7 +768,7 @@
         @apply !bg-card border-b border-line relative;
     }
     .search-input {
-        @apply !bg-card border-0 text-foreground placeholder:text-faint focus:ring-0 text-base h-14 pe-10;
+        @apply !bg-card border-0 text-foreground placeholder:text-faint focus:ring-0 text-base h-14 pr-10;
     }
     .search-loader {
         @apply absolute right-12 top-1/2 -translate-y-1/2 h-4 w-4 text-faint animate-spin;
@@ -849,23 +849,4 @@
     --tweet-body-font-size: 15px;
     --tweet-body-line-height: 1.5;
     max-width: none;
-}
-
-/* ---------------------------------------------------------------------------
-   Arabic UI
-   The Latin display face has no Arabic glyphs, so Arabic switches to Plex Sans
-   Arabic. This sits outside every @layer on purpose: `body` carries Tailwind's
-   `font-sans` utility, and in Tailwind v4 the utilities layer beats @layer base,
-   so a rule inside the base layer would lose. Unlayered CSS always wins.
---------------------------------------------------------------------------- */
-html[lang="ar"] body {
-    font-family: var(--font-arabic), var(--font-jakarta), system-ui, sans-serif;
-    letter-spacing: 0;
-}
-
-/* A subtree that declares lang="en" (the English-only marketing pages) keeps the Latin face
-   even while the document is Arabic. */
-html[lang="ar"] [lang="en"] {
-    font-family: var(--font-jakarta), system-ui, sans-serif;
-    letter-spacing: normal;
 }

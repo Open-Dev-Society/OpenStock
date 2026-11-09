@@ -143,7 +143,7 @@ const ODSLogoSVG: React.FC<{ size?: number }> = ({ size = 26 }) => (
 );
 
 type OpenDevSocietyBrandingProps = {
-    text?: string; // e.g. "Designed by"
+    text?: string; // e.g. "Designed by". Stays English by default (also rendered on marketing pages, outside the intl provider); pages inside it pass OpenDevSocietyBranding.initiativeBy
     name?: string; // e.g. "Open Dev Society"
     style?: React.CSSProperties;
     className?: string;

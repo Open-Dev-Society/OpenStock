@@ -4,11 +4,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 import { removeSymbolFromList } from '@/lib/actions/watchlist-lists.actions';
 
 // Takes a symbol out of one named list. It never touches the starred watchlist.
 export default function RemoveFromListButton({ listId, listName, symbol }: { listId: string; listName: string; symbol: string }) {
     const router = useRouter();
+    const t = useTranslations('NamedLists');
     const [busy, setBusy] = useState(false);
 
     const onRemove = async () => {
@@ -20,10 +22,10 @@ export default function RemoveFromListButton({ listId, listName, symbol }: { lis
                 toast.error(result.error);
                 return;
             }
-            toast.success(`${symbol} removed from “${listName}”`);
+            toast.success(t('removedFrom', { symbol, list: listName }));
             router.refresh();
         } catch {
-            toast.error('Couldn’t remove the symbol');
+            toast.error(t('removeFailed'));
         } finally {
             setBusy(false);
         }
@@ -35,8 +37,8 @@ export default function RemoveFromListButton({ listId, listName, symbol }: { lis
             onClick={onRemove}
             disabled={busy}
             className="icon-btn is-danger"
-            title={`Remove ${symbol} from ${listName}`}
-            aria-label={`Remove ${symbol} from ${listName}`}
+            title={t('removeFrom', { symbol, list: listName })}
+            aria-label={t('removeFrom', { symbol, list: listName })}
         >
             <X />
         </button>

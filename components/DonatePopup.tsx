@@ -9,14 +9,15 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Heart } from 'lucide-react';
-import { tx, type Lang } from '@/lib/i18n';
 
 const DONATE_POPUP_KEY = 'opendevsociety-donate-popup-dismissed';
 const DONATE_POPUP_DELAY = 3000; // Show after 3 seconds
 const DONATE_POPUP_COOLDOWN = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
-export default function DonatePopup({ lang = 'en' }: { lang?: Lang }) {
+export default function DonatePopup() {
+    const t = useTranslations('DonatePopup');
     const [open, setOpen] = useState(false);
 
     useEffect(() => {
@@ -56,26 +57,26 @@ export default function DonatePopup({ lang = 'en' }: { lang?: Lang }) {
 
     return (
         <Dialog open={open} onOpenChange={(next) => (next ? setOpen(true) : handleDismiss())}>
-            <DialogContent className="gap-5 sm:max-w-[440px]" closeLabel={tx(lang, 'dialog.close')}>
-                <DialogHeader className="gap-3 text-start">
+            <DialogContent className="gap-5 sm:max-w-[440px]">
+                <DialogHeader className="gap-3 text-left">
                     <span className="bento-ico size-11 bg-brand-soft text-brand-ink">
                         <Heart className="size-5 fill-current" />
                     </span>
                     <div>
-                        <p className="kicker flex items-center gap-2 text-brand-ink"><span className="live-dot" /> {tx(lang, 'donate.kicker')}</p>
-                        <DialogTitle className="mt-1.5 text-2xl font-bold tracking-[-0.03em]">{tx(lang, 'donate.title')}</DialogTitle>
+                        <p className="kicker flex items-center gap-2 text-brand-ink"><span className="live-dot" /> {t('kicker')}</p>
+                        <DialogTitle className="mt-1.5 text-2xl font-bold tracking-[-0.03em]">{t('title')}</DialogTitle>
                     </div>
                     <DialogDescription className="text-[15px] leading-relaxed text-muted-foreground">
-                        {tx(lang, 'donate.body')}
+                        {t('description')}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="flex flex-col gap-2 sm:flex-row">
                     <Link href="/sponsor" onClick={handleDismiss} className="btn btn-primary h-11 flex-1">
-                        <Heart className="fill-current" /> {tx(lang, 'donate.cta')}
+                        <Heart className="fill-current" /> {t('becomeSponsor')}
                     </Link>
                     <button type="button" onClick={handleDismiss} className="btn btn-ghost h-11 flex-1">
-                        {tx(lang, 'donate.later')}
+                        {t('maybeLater')}
                     </button>
                 </div>
             </DialogContent>

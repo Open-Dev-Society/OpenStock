@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import { cookies } from "next/headers";
+import { getLocale, getTranslations } from "next-intl/server";
+import type { Messages } from "next-intl";
 import TradingViewWidget from "@/components/TradingViewWidget";
 import Panel from "@/components/Panel";
-import NewsList from "@/components/watchlist/NewsList";
-import { getSaudiMarketNews } from "@/lib/actions/news.actions";
 import IndexPulse, { PulseSkeleton } from "@/components/IndexPulse";
-import DataFreshness from "@/components/DataFreshness";
+import { LocalizedDataFreshness } from "@/components/DataFreshness";
 import MarketSwitcher from "@/components/MarketSwitcher";
 import YahooQuotesTable, { YahooMovers } from "@/components/YahooQuotes";
 import {
@@ -17,16 +17,12 @@ import {
 } from "@/lib/constants";
 import { MARKETS, MARKET_COOKIE, getMarket, isMarketOpen, marketForCountry } from "@/lib/markets";
 import { getSession } from "@/lib/better-auth/auth";
-import { getLang } from "@/lib/i18n-server";
-import { feedLabel, feedWord, marketName, tvLocale, tx, type Lang } from "@/lib/i18n";
-import NewsSkeleton from "@/components/watchlist/NewsSkeleton";
+import { toMessageKey } from "@/i18n/config";
 
 const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
 
-// The Arabic feed is a network call; the rest of the dashboard should not wait behind it.
-async function MarketNews({ lang }: { lang: Lang }) {
-    return <NewsList news={await getSaudiMarketNews(6, lang)} lang={lang} />;
-}
+type GroupKey = keyof Messages['Markets']['groups'];
+type FeedKey = keyof Messages['Markets']['feed'];
 
 // Widgets come from TradingView (live, no Finnhub quota) and render immediately; the tiles stream in.
 export default async function Dashboard({ searchParams }: { searchParams: Promise<{ market?: string }> }) {
@@ -34,89 +30,78 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     // Explicit choice, then the remembered one, then the market of the user's country
     const saved = (await cookies()).get(MARKET_COOKIE)?.value;
     const market = getMarket(requested ?? saved ?? marketForCountry((await getSession())?.user.country));
-    const lang = await getLang();
-    // The Arabic feed is only useful to a reader who reads Arabic; other languages keep TradingView.
-    const saudiNews = market.yahoo && lang === 'ar';
+    const [t, tm, tw, locale] = await Promise.all([getTranslations('Dashboard'), getTranslations('Markets'), getTranslations('TradingViewWidget'), getLocale()]);
+    const name = tm(`names.${market.id}`);
+    const feed = toMessageKey(market.feed) as FeedKey;
+    // Translated tab and group titles inside the TradingView widgets
+    const groups = market.groups.map((g) => ({ ...g, title: tm(`groups.${toMessageKey(g.title) as GroupKey}`) }));
+    const expandLabels = { fullScreen: tw('fullScreen'), exitFullScreen: tw('exitFullScreen'), exitFullScreenHint: tw('exitFullScreenHint') };
     const open = isMarketOpen(market);
     const native = market.pulse.some((p) => p.finnhub);
-    const pulseSub = native
-        ? tx(lang, 'dash.pulseFinnhub')
-        : market.yahoo
-            ? tx(lang, 'dash.pulseYahoo')
-            : tx(lang, 'dash.pulseTV').replace('{f}', feedWord(lang, market.feed));
+    const pulseSub = native ? t('pulseSubFinnhub') : market.yahoo ? t('pulseSubYahoo') : t('pulseSubTradingView', { feed });
     const heatmap = market.heatmap === 'stocks'
-        ? { script: 'stock-heatmap.js', config: { ...STOCK_HEATMAP_CONFIG, locale: tvLocale(lang) }, title: tx(lang, 'dash.heatmapStocks') }
+        ? { script: 'stock-heatmap.js', config: { ...STOCK_HEATMAP_CONFIG, locale }, title: t('stockHeatmapTitle') }
         : market.heatmap === 'crypto'
-            ? { script: 'crypto-coins-heatmap.js', config: { ...CRYPTO_HEATMAP_CONFIG, locale: tvLocale(lang) }, title: tx(lang, 'dash.heatmapCrypto') }
+            ? { script: 'crypto-coins-heatmap.js', config: { ...CRYPTO_HEATMAP_CONFIG, locale }, title: t('cryptoHeatmapTitle') }
             : null;
 
     return (
         <>
             <header className="page-head">
                 <div>
-                    <h1 className="page-title">{tx(lang, 'dash.title')}</h1>
-                    <p className="page-sub">{marketName(lang, market.id)} · {open ? tx(lang, 'dash.openNow') : tx(lang, 'dash.closedNow')} · {feedLabel(lang, market.feed)}</p>
+                    <h1 className="page-title">{t('title')}</h1>
+                    <p className="page-sub">{t('sub', { market: name, status: open ? 'open' : 'closed', feed })}</p>
                 </div>
             </header>
 
-            <MarketSwitcher lang={lang} active={market.id} openIds={MARKETS.filter((m) => isMarketOpen(m)).map((m) => m.id)} />
+            <MarketSwitcher active={market.id} openIds={MARKETS.filter((m) => isMarketOpen(m)).map((m) => m.id)} />
 
             <section className="hatch">
                 <div className="section-head">
                     <div>
-                        <h2 className="section-title">{tx(lang, 'dash.pulse')}</h2>
+                        <h2 className="section-title">{t('pulseTitle')}</h2>
                         <p className="section-sub">{pulseSub}</p>
                     </div>
-                    {native && <DataFreshness lang={lang} />}
+                    {native && <LocalizedDataFreshness />}
                 </div>
                 {/* Keyed so switching markets swaps the tiles instead of reusing old widgets */}
                 <Suspense key={market.id} fallback={<PulseSkeleton />}>
-                    <IndexPulse market={market} lang={lang} />
+                    <IndexPulse market={market} locale={locale} />
                 </Suspense>
             </section>
 
             <div key={market.id} className="flex flex-col gap-3">
                 <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
                     {market.yahoo ? (
-                        <Panel title={tx(lang, 'dash.movers')} sub={tx(lang, 'dash.moversSub')}>
-                            <YahooMovers market={market} lang={lang} />
+                        <Panel title={t('moversTitle')} sub={t('moversSub')}>
+                            <YahooMovers market={market} />
                         </Panel>
                     ) : (
-                        <Panel title={tx(lang, 'dash.leaders')} sub={tx(lang, 'dash.leadersSub')}>
-                            <TradingViewWidget scriptUrl={`${scriptUrl}market-overview.js`} config={marketOverviewConfig(market.groups, tvLocale(lang))} height={560} />
+                        <Panel title={t('leadersTitle')} sub={t('leadersSub')}>
+                            <TradingViewWidget scriptUrl={`${scriptUrl}market-overview.js`} config={marketOverviewConfig(groups, locale)} height={560} />
                         </Panel>
                     )}
                     {heatmap ? (
-                        <Panel title={heatmap.title} sub={tx(lang, 'dash.heatmapSub')}>
-                            <TradingViewWidget scriptUrl={`${scriptUrl}${heatmap.script}`} config={heatmap.config} height={560} allowExpand />
+                        <Panel title={heatmap.title} sub={t('heatmapSub')}>
+                            <TradingViewWidget scriptUrl={`${scriptUrl}${heatmap.script}`} config={heatmap.config} height={560} allowExpand labels={expandLabels} />
                         </Panel>
                     ) : (
-                        <Panel title={tx(lang, 'dash.quotes')} sub={tx(lang, 'dash.quotesSub').replace('{m}', marketName(lang, market.id))}>
+                        <Panel title={t('quotesTitle')} sub={t('quotesSub', { market: name })}>
                             {market.yahoo
-                                ? <YahooQuotesTable market={market} lang={lang} />
-                                : <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(market.groups, tvLocale(lang))} height={560} />}
+                                ? <YahooQuotesTable market={market} />
+                                : <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(groups, locale)} height={560} />}
                         </Panel>
                     )}
                 </div>
 
                 <div className="grid gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                     {heatmap && (
-                        <Panel title={tx(lang, 'dash.quotes')} sub={tx(lang, 'dash.quotesSub').replace('{m}', marketName(lang, market.id))}>
-                            <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(market.groups, tvLocale(lang))} height={560} />
+                        <Panel title={t('quotesTitle')} sub={t('quotesSub', { market: name })}>
+                            <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(groups, locale)} height={560} />
                         </Panel>
                     )}
-                    <Panel
-                        title={tx(lang, saudiNews ? 'dash.news' : 'dash.stories')}
-                        sub={tx(lang, saudiNews ? 'dash.newsSub' : 'dash.storiesSub')}
-                        className={heatmap ? '' : 'xl:col-span-2'}
-                    >
-                        {saudiNews
-                            ? (
-                                <Suspense fallback={<NewsSkeleton />}>
-                                    <MarketNews lang={lang} />
-                                </Suspense>
-                            )
-                            : <TradingViewWidget scriptUrl={`${scriptUrl}timeline.js`} config={timelineConfig(market.news, tvLocale(lang))} height={560} />}
+                    <Panel title={t('storiesTitle')} sub={t('storiesSub')} className={heatmap ? '' : 'xl:col-span-2'}>
+                        <TradingViewWidget scriptUrl={`${scriptUrl}timeline.js`} config={timelineConfig(market.news, locale)} height={560} />
                     </Panel>
                 </div>
             </div>

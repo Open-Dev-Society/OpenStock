@@ -5,21 +5,24 @@ import { Button } from "@/components/ui/button";
 import InputField from "@/components/forms/InputField";
 import ChoiceChips from "@/components/forms/ChoiceChips";
 import PasswordRequirements from "@/components/forms/PasswordRequirements";
-import { INVESTMENT_GOALS, PASSWORD_VALIDATION, PREFERRED_INDUSTRIES, RISK_TOLERANCE_OPTIONS } from "@/lib/constants";
+import { INVESTMENT_GOALS, passwordValidation, PREFERRED_INDUSTRIES, RISK_TOLERANCE_OPTIONS } from "@/lib/constants";
 import { CountrySelectField } from "@/components/forms/CountrySelectField";
 import FooterLink from "@/components/forms/FooterLink";
 import { signUpWithEmail } from "@/lib/actions/auth.actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import OpenDevSocietyBranding from "@/components/OpenDevSocietyBranding";
 import SocialAuthButtons from "@/components/forms/SocialAuthButtons";
-import LangToggle, { useLang } from "@/components/LangToggle";
-import { choiceLabel, tx } from "@/lib/i18n";
 import React from "react";
 
 const SignUp = () => {
+    const t = useTranslations('SignUp');
+    const tFields = useTranslations('AuthFields');
+    const tPrefs = useTranslations('PreferenceFields');
+    const tPassword = useTranslations('Password');
+    const tBrand = useTranslations('OpenDevSocietyBranding');
     const router = useRouter()
-    const lang = useLang();
     const {
         register,
         handleSubmit,
@@ -48,91 +51,87 @@ const SignUp = () => {
                 router.push('/dashboard');
                 return;
             }
-            toast.error('Sign up failed', {
-                description: result.error ?? 'We could not create your account.',
+            toast.error(t('failed'), {
+                description: result.error ?? t('couldNotCreate'),
             });
         } catch (e) {
             console.error(e);
-            toast.error('Sign up failed', {
-                description: e instanceof Error ? e.message : 'Failed to create an account.'
+            toast.error(t('failed'), {
+                description: e instanceof Error ? e.message : t('failedGeneric')
             })
         }
     }
 
     return (
         <>
-            <div className="mb-2 flex items-center justify-between">
-                <h1 className="form-title">{tx(lang, 'auth.create')}</h1>
-                <LangToggle initial={lang} />
-            </div>
-            <p className="mb-8 text-faint">{tx(lang, 'auth.createSub')}</p>
+            <h1 className="form-title mb-2">{t('title')}</h1>
+            <p className="mb-8 text-faint">{t('subtitle')}</p>
 
-            <SocialAuthButtons lang={lang} />
+            <SocialAuthButtons />
 
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-8">
-                <section className="flex flex-col gap-4" aria-label={tx(lang, 'signup.accountRegion')}>
+                <section className="flex flex-col gap-4" aria-label={t('accountSection')}>
                     <InputField
                         name="fullName"
-                        label={tx(lang, 'auth.fullName')}
-                        placeholder={tx(lang, 'auth.namePh')}
+                        label={t('fullNameLabel')}
+                        placeholder={t('fullNamePlaceholder')}
                         register={register}
                         error={errors.fullName}
-                        validation={{ required: 'Full name is required', minLength: 2 }}
+                        validation={{ required: t('fullNameRequired'), minLength: 2 }}
                     />
                     <InputField
                         name="email"
-                        label={tx(lang, 'auth.email')}
+                        label={tFields('email')}
                         placeholder="you@example.com"
                         register={register}
                         error={errors.email}
                         validation={{
-                            required: 'Email is required',
+                            required: tFields('emailRequired'),
                             pattern: {
                                 value: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
-                                message: 'Please enter a valid email address'
+                                message: tFields('emailInvalid')
                             }
                         }}
                     />
                     <div className="flex flex-col gap-2">
                         <InputField
                             name="password"
-                            label={tx(lang, 'auth.password')}
-                            placeholder={tx(lang, 'auth.passwordHint')}
+                            label={t('passwordLabel')}
+                            placeholder={t('passwordPlaceholder')}
                             type="password"
                             register={register}
                             error={errors.password}
-                            validation={PASSWORD_VALIDATION}
+                            validation={passwordValidation({ required: tPassword('required'), minLength: tPassword('minLength'), pattern: tPassword('pattern') })}
                         />
-                        <PasswordRequirements password={passwordValue ?? ''} lang={lang} />
+                        <PasswordRequirements password={passwordValue ?? ''} />
                     </div>
                 </section>
 
                 <section className="flex flex-col gap-5 border-t border-line pt-6" aria-labelledby="personalize">
                     <div>
-                        <p id="personalize" className="kicker text-brand-ink">{tx(lang, 'auth.personalize')}</p>
-                        <p className="mt-1 text-[13px] text-faint">{tx(lang, 'auth.personalizeSub')}</p>
+                        <p id="personalize" className="kicker text-brand-ink">{t('personalize')}</p>
+                        <p className="mt-1 text-[13px] text-faint">{t('personalizeHint')}</p>
                     </div>
                     <CountrySelectField
                         name="country"
-                        label={tx(lang, 'profile.country')}
+                        label={tPrefs('country')}
                         control={control}
                         error={errors.country}
-                        lang={lang}
                         required
                     />
-                    <ChoiceChips name="investmentGoals" label={tx(lang, 'profile.goal')} options={INVESTMENT_GOALS.map((o) => ({ ...o, label: choiceLabel(lang, o.value, o.label) }))} control={control} />
-                    <ChoiceChips name="riskTolerance" label={tx(lang, 'profile.risk')} options={RISK_TOLERANCE_OPTIONS.map((o) => ({ ...o, label: choiceLabel(lang, o.value, o.label) }))} control={control} />
-                    <ChoiceChips name="preferredIndustry" label={tx(lang, 'profile.industry')} options={PREFERRED_INDUSTRIES.map((o) => ({ ...o, label: choiceLabel(lang, o.value, o.label) }))} control={control} />
+                    <ChoiceChips name="investmentGoals" label={tPrefs('investmentGoal')} options={INVESTMENT_GOALS} optionGroup="investmentGoals" control={control} />
+                    <ChoiceChips name="riskTolerance" label={tPrefs('riskTolerance')} options={RISK_TOLERANCE_OPTIONS} optionGroup="riskTolerance" control={control} />
+                    <ChoiceChips name="preferredIndustry" label={tPrefs('preferredIndustry')} options={PREFERRED_INDUSTRIES} optionGroup="industries" control={control} />
                 </section>
 
                 <div className="flex flex-col gap-4">
                     <Button type="submit" disabled={isSubmitting} className="yellow-btn w-full">
-                        {isSubmitting ? tx(lang, 'auth.submitting') : tx(lang, 'auth.submit')}
+                        {isSubmitting ? t('submitting') : t('submit')}
                     </Button>
-                    <FooterLink text={tx(lang, 'auth.haveAccount')} linkText={tx(lang, 'auth.signInLink')} href="/sign-in" />
+                    <FooterLink text={t('haveAccount')} linkText={t('signIn')} href="/sign-in" />
                 </div>
 
-                <OpenDevSocietyBranding outerClassName="flex justify-center"  text={tx(lang, 'auth.brandCredit')} />
+                <OpenDevSocietyBranding outerClassName="flex justify-center" text={tBrand('initiativeBy')} />
             </form>
         </>
     )

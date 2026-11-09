@@ -1,13 +1,11 @@
 import { Suspense } from "react";
 import { CandlestickChart } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
 import TradingViewWidget from "@/components/TradingViewWidget";
 import StockHeader, { StockHeaderSkeleton } from "@/components/stocks/StockHeader";
 import StockSentimentCard from "@/components/stocks/StockSentimentCard";
 import StockChart from "@/components/stocks/StockChart";
 import Panel from "@/components/Panel";
-import NewsList from "@/components/watchlist/NewsList";
-import NewsSkeleton from "@/components/watchlist/NewsSkeleton";
-import { getCompanyNews } from "@/lib/actions/news.actions";
 import {
     TECHNICAL_ANALYSIS_WIDGET_CONFIG,
     COMPANY_PROFILE_WIDGET_CONFIG,
@@ -17,34 +15,27 @@ import { getStockSentimentInsights } from '@/lib/actions/adanos.actions';
 import { getStockMetrics } from '@/lib/actions/finnhub.actions';
 import { hasFinnhubCompanyData } from '@/lib/markets';
 import { formatSymbolForTradingView, isChartEmbeddable, tradingViewSymbolUrl } from '@/lib/utils';
-import { getLang } from '@/lib/i18n-server';
-import { tvLocale, tx, type Lang } from '@/lib/i18n';
-import { arDigits } from "@/lib/i18n";
 
 const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
 
-async function CompanyNews({ symbol, lang }: { symbol: string; lang: Lang }) {
-    return <NewsList news={await getCompanyNews(symbol, 6, lang)} lang={lang} />;
-}
-
-async function Sentiment({ symbol, lang }: { symbol: string; lang: Lang }) {
-    const insight = await getStockSentimentInsights(symbol);
+async function Sentiment({ symbol }: { symbol: string }) {
+    const [insight, t] = await Promise.all([getStockSentimentInsights(symbol), getTranslations('StockPage')]);
     if (!insight) return null;
     return (
-        <Panel title={tx(lang, 'stock.sentiment')} sub={tx(lang, 'stock.sentimentSub')}>
-            <StockSentimentCard insight={insight} lang={lang} />
+        <Panel title={t('sentimentTitle')} sub={t('sentimentSub')}>
+            <StockSentimentCard insight={insight} />
         </Panel>
     );
 }
 
-async function DividendYield({ symbol, lang }: { symbol: string; lang: Lang }) {
+async function DividendYield({ symbol }: { symbol: string }) {
     // Outside the US we can't tell "no dividend" from "no data", so show nothing rather than a misleading dash
     if (!hasFinnhubCompanyData(symbol)) return null;
-    const dividendYield = await getStockMetrics(symbol);
+    const [dividendYield, t] = await Promise.all([getStockMetrics(symbol), getTranslations('StockPage')]);
     return (
-        <Panel title={tx(lang, 'stock.dividend')}>
+        <Panel title={t('dividendYieldTitle')}>
             <p className="text-2xl font-semibold text-white">
-                {dividendYield !== null ? `${arDigits(dividendYield.toFixed(2), lang)}%` : "—"}
+                {dividendYield !== null ? `${dividendYield.toFixed(2)}%` : "—"}
             </p>
         </Panel>
     );
@@ -55,65 +46,60 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
     const { symbol: rawSymbol } = await params;
     const symbol = decodeURIComponent(rawSymbol).toUpperCase();
     const tvSymbol = formatSymbolForTradingView(symbol);
-    const lang = await getLang();
+    const [t, locale] = await Promise.all([getTranslations('StockPage'), getLocale()]);
 
     return (
         <>
             <Suspense fallback={<StockHeaderSkeleton />}>
-                <StockHeader symbol={symbol} lang={lang} />
+                <StockHeader symbol={symbol} />
             </Suspense>
 
             <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
                 <div className="flex min-w-0 flex-col gap-3">
                     {isChartEmbeddable(tvSymbol) ? (
-                        <StockChart tvSymbol={tvSymbol} scriptUrl={`${scriptUrl}advanced-chart.js`} lang={lang} />
+                        <StockChart tvSymbol={tvSymbol} scriptUrl={`${scriptUrl}advanced-chart.js`} />
                     ) : (
                         // TradingView refuses this exchange's chart in embeds; say so instead of showing its error
-                        <Panel title={tx(lang, 'stock.chart')} sub={tx(lang, 'stock.chartTVOnly')}>
+                        <Panel title={t('chartTitle')} sub={t('chartUnavailableSub')}>
                             <div className="empty-state py-14">
                                 <span className="empty-icon"><CandlestickChart className="size-5" /></span>
-                                <h3>{tx(lang, 'stock.chartUnavailable')}</h3>
+                                <h3>{t('chartUnavailableTitle')}</h3>
                                 <p className="max-w-80 text-[13px]">
-                                    {tx(lang, 'stock.chartBlocked').replace('{x}', tvSymbol.split(':')[0])}
+                                    {t('chartUnavailableBody', { exchange: tvSymbol.split(':')[0] })}
                                 </p>
                                 <a href={tradingViewSymbolUrl(tvSymbol)} target="_blank" rel="noopener noreferrer" className="btn btn-ghost mt-2">
-                                    {tx(lang, 'stock.openTV')}
+                                    {t('openOnTradingView')}
                                 </a>
                             </div>
                         </Panel>
                     )}
-                    <Panel title={tx(lang, 'stock.financials')} sub={tx(lang, 'stock.financialsSub')}>
+                    <Panel title={t('financialsTitle')} sub={t('financialsSub')}>
                         <TradingViewWidget
                             scriptUrl={`${scriptUrl}financials.js`}
-                            config={COMPANY_FINANCIALS_WIDGET_CONFIG(tvSymbol, tvLocale(lang))}
+                            config={COMPANY_FINANCIALS_WIDGET_CONFIG(tvSymbol, locale)}
                             height={500}
                         />
                     </Panel>
                 </div>
 
                 <div className="flex min-w-0 flex-col gap-3">
-                    <Panel title={tx(lang, 'stock.technicals')} sub={tx(lang, 'stock.technicalsSub')}>
+                    <Panel title={t('technicalsTitle')} sub={t('technicalsSub')}>
                         <TradingViewWidget
                             scriptUrl={`${scriptUrl}technical-analysis.js`}
-                            config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(tvSymbol, tvLocale(lang))}
+                            config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(tvSymbol, locale)}
                             height={400}
                         />
                     </Panel>
                     <Suspense fallback={null}>
-                        <DividendYield symbol={symbol} lang={lang} />
+                        <DividendYield symbol={symbol} />
                     </Suspense>
                     <Suspense fallback={null}>
-                        <Sentiment symbol={symbol} lang={lang} />
+                        <Sentiment symbol={symbol} />
                     </Suspense>
-                    <Panel title={tx(lang, 'stock.news')} sub={tx(lang, 'stock.newsSub')}>
-                        <Suspense fallback={<NewsSkeleton rows={3} />}>
-                            <CompanyNews symbol={symbol} lang={lang} />
-                        </Suspense>
-                    </Panel>
-                    <Panel title={tx(lang, 'stock.profile')} sub={tx(lang, 'stock.profileSub')}>
+                    <Panel title={t('profileTitle')} sub={t('profileSub')}>
                         <TradingViewWidget
                             scriptUrl={`${scriptUrl}symbol-profile.js`}
-                            config={COMPANY_PROFILE_WIDGET_CONFIG(tvSymbol, tvLocale(lang))}
+                            config={COMPANY_PROFILE_WIDGET_CONFIG(tvSymbol, locale)}
                             height={440}
                         />
                     </Panel>

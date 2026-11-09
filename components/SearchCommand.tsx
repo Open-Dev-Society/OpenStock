@@ -6,11 +6,10 @@ import { ArrowUpRight, Loader2, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { searchStocks } from "@/lib/actions/finnhub.actions";
 import { addSymbolToList } from "@/lib/actions/watchlist-lists.actions";
 import { useDebounce } from "@/hooks/useDebounce";
-import { tx, typeLabel, type Lang } from "@/lib/i18n";
-import { saudiSymbolNameAr } from "@/lib/saudi-symbols";
 import { cn } from "@/lib/utils";
 
 const OPEN_SEARCH_EVENT = 'open-search';
@@ -34,8 +33,9 @@ export const SearchButton = ({ children, className }: { children: React.ReactNod
     <button type="button" onClick={openSearch} className={className}>{children}</button>
 );
 
-export default function SearchCommand({ initialStocks, lang }: { initialStocks: StockWithWatchlistStatus[]; lang: Lang }) {
+export default function SearchCommand({ initialStocks }: { initialStocks: StockWithWatchlistStatus[] }) {
     const router = useRouter();
+    const t = useTranslations('SearchCommand');
     const [open, setOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
     const [loading, setLoading] = useState(false)
@@ -108,11 +108,11 @@ export default function SearchCommand({ initialStocks, lang }: { initialStocks: 
                 toast.error(result.error);
                 return;
             }
-            toast.success(`${stock.symbol} added to “${listTarget.name}”`);
+            toast.success(t('addedToList', { symbol: stock.symbol, list: listTarget.name }));
             // The palette stays open so several stocks can be filed in one go.
             router.refresh();
         } catch {
-            toast.error('Couldn’t add the symbol');
+            toast.error(t('addFailed'));
         } finally {
             setAdding(null);
         }
@@ -127,31 +127,32 @@ export default function SearchCommand({ initialStocks, lang }: { initialStocks: 
                 setOpen(next);
                 if (!next) setListTarget(null);
             }}
+            title={t('dialogTitle')}
+            description={t('dialogDescription')}
             className="search-dialog"
-            title={tx(lang, 'search.dialogTitle')}
-            description={tx(lang, 'search.dialogDesc')}
-            closeLabel={tx(lang, 'dialog.close')}
         >
             <div className="search-field">
                 <CommandInput
                     value={searchTerm}
                     onValueChange={setSearchTerm}
-                    placeholder={listTarget ? tx(lang, 'search.addToList').replace('{n}', listTarget.name) : tx(lang, 'search.placeholder')}
+                    placeholder={listTarget ? t('listPlaceholder', { list: listTarget.name }) : t('placeholder')}
                     className="search-input"
                 />
                 {loading && <Loader2 className="search-loader" />}
             </div>
             <CommandList className="search-list">
                 {loading ? (
-                    <CommandEmpty className="search-list-empty">{tx(lang, 'search.searching')}</CommandEmpty>
+                    <CommandEmpty className="search-list-empty">{t('searching')}</CommandEmpty>
                 ) : displayStocks?.length === 0 ? (
                     <div className="search-list-indicator">
-                        {isSearchMode ? `${tx(lang, 'search.noMatch')} “${searchTerm.trim()}”` : tx(lang, 'search.empty')}
+                        {isSearchMode ? t('noMatch', { query: searchTerm.trim() }) : t('noStocks')}
                     </div>
                 ) : (
                     <ul>
                         <li className="search-count">
-                            {listTarget ? <>{tx(lang, 'search.addingTo')} <span className="font-semibold">{listTarget.name}</span></> : isSearchMode ? tx(lang, 'search.results') : tx(lang, 'search.popular')}
+                            {listTarget
+                                ? t.rich('addingTo', { list: listTarget.name, name: (chunks) => <span className="font-semibold">{chunks}</span> })
+                                : isSearchMode ? t('results') : t('popular')}
                             <span className="num"> · {displayStocks?.length || 0}</span>
                         </li>
                         {displayStocks?.map((stock) => (
@@ -172,9 +173,9 @@ export default function SearchCommand({ initialStocks, lang }: { initialStocks: 
                                     }}
                                     className={cn('search-item-link group', listTarget && 'min-w-0 flex-1')}
                                 >
-                                    <span dir="ltr" className="mono w-20 shrink-0 text-[13px] font-semibold text-brand-ink truncate">{stock.symbol}</span>
-                                    <span dir="auto" className="search-item-name flex-1">{(lang === 'ar' ? saudiSymbolNameAr(stock.symbol) : null) ?? stock.name}</span>
-                                    <span className="hidden sm:block text-xs text-faint truncate max-w-40">{[stock.exchange, typeLabel(lang, stock.type)].filter(Boolean).join(' · ')}</span>
+                                    <span className="mono w-20 shrink-0 text-[13px] font-semibold text-brand-ink truncate">{stock.symbol}</span>
+                                    <span className="search-item-name flex-1">{stock.name}</span>
+                                    <span className="hidden sm:block text-xs text-faint truncate max-w-40">{[stock.exchange, stock.type].filter(Boolean).join(' · ')}</span>
                                     <ArrowUpRight className="size-4 text-faint opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </Link>
                                 {listTarget && (
@@ -183,9 +184,9 @@ export default function SearchCommand({ initialStocks, lang }: { initialStocks: 
                                         onClick={() => addToList(stock)}
                                         disabled={adding !== null}
                                         className="pill h-7 shrink-0"
-                                        title={`Add ${stock.symbol} to ${listTarget.name}`}
+                                        title={t('addTitle', { symbol: stock.symbol, list: listTarget.name })}
                                     >
-                                        <Plus className="size-3.5" /> {adding === stock.symbol ? 'Adding' : 'Add'}
+                                        <Plus className="size-3.5" /> {adding === stock.symbol ? t('adding') : t('add')}
                                     </button>
                                 )}
                             </li>

@@ -3,9 +3,9 @@
 import React, { createContext, useContext, useState } from "react";
 import { Github } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { signInWithSocial } from "@/lib/actions/auth.actions";
-import { tx, type Lang } from "@/lib/i18n";
 
 const GoogleIcon = () => (
     <svg viewBox="0 0 24 24" aria-hidden="true" className="size-5">
@@ -30,7 +30,8 @@ export const SocialProvidersProvider = ({ enabled, children }: { enabled: Provid
     <EnabledProviders.Provider value={enabled}>{children}</EnabledProviders.Provider>
 );
 
-const SocialAuthButtons = ({ lang = 'en' }: { lang?: Lang }) => {
+const SocialAuthButtons = () => {
+    const t = useTranslations('SocialAuth');
     const enabled = useContext(EnabledProviders);
     const [pending, setPending] = useState<string | null>(null);
     const providers = PROVIDERS.filter((p) => enabled.includes(p.id));
@@ -43,10 +44,10 @@ const SocialAuthButtons = ({ lang = 'en' }: { lang?: Lang }) => {
                 window.location.href = result.url;
                 return;
             }
-            toast.error(tx(lang, 'auth.signInFailed'), { description: result.error });
+            toast.error(t('signInFailed'), { description: result.error });
         } catch {
             // Network failure or a stale action after a deploy
-            toast.error(tx(lang, 'auth.signInFailed'), { description: tx(lang, 'auth.checkConnection') });
+            toast.error(t('signInFailed'), { description: t('connectionError') });
         }
         setPending(null);
     }
@@ -66,13 +67,13 @@ const SocialAuthButtons = ({ lang = 'en' }: { lang?: Lang }) => {
                         className="h-12 border-gray-600 text-gray-400 text-base rounded-lg cursor-pointer"
                     >
                         {icon}
-                        {pending === id ? tx(lang, 'auth.redirecting') : label}
+                        {pending === id ? t('redirecting') : label}
                     </Button>
                 ))}
             </div>
             <div className="flex items-center gap-3 text-sm text-gray-500">
                 <span className="h-px flex-1 bg-gray-600" />
-                {tx(lang, 'auth.or')}
+                {t('or')}
                 <span className="h-px flex-1 bg-gray-600" />
             </div>
         </div>

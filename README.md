@@ -314,32 +314,32 @@ OpenStock is built by everyone below: the people who wrote the code and the peop
   <tr>
     <td align="center" width="16%"><a href="https://github.com/ravixalgorithm"><img src="https://github.com/ravixalgorithm.png?size=96" width="56" height="56" alt="ravixalgorithm"/><br/><sub><b>ravixalgorithm</b></sub></a><br/><sub>Maintainer · 47 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/keshav-005"><img src="https://github.com/keshav-005.png?size=96" width="56" height="56" alt="keshav-005"/><br/><sub><b>keshav-005</b></sub></a><br/><sub>7 PRs</sub></td>
-    <td align="center" width="16%"><a href="https://github.com/ahmaddirar-ios"><img src="https://github.com/ahmaddirar-ios.png?size=96" width="56" height="56" alt="ahmaddirar-ios"/><br/><sub><b>ahmaddirar-ios</b></sub></a><br/><sub>3 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/octo-patch"><img src="https://github.com/octo-patch.png?size=96" width="56" height="56" alt="octo-patch"/><br/><sub><b>octo-patch</b></sub></a><br/><sub>3 PRs</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/ahmaddirar-ios"><img src="https://github.com/ahmaddirar-ios.png?size=96" width="56" height="56" alt="ahmaddirar-ios"/><br/><sub><b>ahmaddirar-ios</b></sub></a><br/><sub>2 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/akoweicollinxx"><img src="https://github.com/akoweicollinxx.png?size=96" width="56" height="56" alt="akoweicollinxx"/><br/><sub><b>akoweicollinxx</b></sub></a><br/><sub>2 PRs</sub></td>
-    <td align="center" width="16%"><a href="https://github.com/alexander-schneider"><img src="https://github.com/alexander-schneider.png?size=96" width="56" height="56" alt="alexander-schneider"/><br/><sub><b>alexander-schneider</b></sub></a><br/><sub>1 PR</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/pawisoon"><img src="https://github.com/pawisoon.png?size=96" width="56" height="56" alt="pawisoon"/><br/><sub><b>pawisoon</b></sub></a><br/><sub>2 PRs</sub></td>
   </tr>
   <tr>
+    <td align="center" width="16%"><a href="https://github.com/alexander-schneider"><img src="https://github.com/alexander-schneider.png?size=96" width="56" height="56" alt="alexander-schneider"/><br/><sub><b>alexander-schneider</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/BambaSatoru"><img src="https://github.com/BambaSatoru.png?size=96" width="56" height="56" alt="BambaSatoru"/><br/><sub><b>BambaSatoru</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/Bortlesboat"><img src="https://github.com/Bortlesboat.png?size=96" width="56" height="56" alt="Bortlesboat"/><br/><sub><b>Bortlesboat</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/chinnsenn"><img src="https://github.com/chinnsenn.png?size=96" width="56" height="56" alt="chinnsenn"/><br/><sub><b>chinnsenn</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/Chukwuebuka-2003"><img src="https://github.com/Chukwuebuka-2003.png?size=96" width="56" height="56" alt="Chukwuebuka-2003"/><br/><sub><b>Chukwuebuka-2003</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/cosark"><img src="https://github.com/cosark.png?size=96" width="56" height="56" alt="cosark"/><br/><sub><b>cosark</b></sub></a><br/><sub>1 PR</sub></td>
-    <td align="center" width="16%"><a href="https://github.com/cosmind-rusu"><img src="https://github.com/cosmind-rusu.png?size=96" width="56" height="56" alt="cosmind-rusu"/><br/><sub><b>cosmind-rusu</b></sub></a><br/><sub>1 PR</sub></td>
   </tr>
   <tr>
+    <td align="center" width="16%"><a href="https://github.com/cosmind-rusu"><img src="https://github.com/cosmind-rusu.png?size=96" width="56" height="56" alt="cosmind-rusu"/><br/><sub><b>cosmind-rusu</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/CrixusWen"><img src="https://github.com/CrixusWen.png?size=96" width="56" height="56" alt="CrixusWen"/><br/><sub><b>CrixusWen</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/dajiaohuang"><img src="https://github.com/dajiaohuang.png?size=96" width="56" height="56" alt="dajiaohuang"/><br/><sub><b>dajiaohuang</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/ettoreciolli"><img src="https://github.com/ettoreciolli.png?size=96" width="56" height="56" alt="ettoreciolli"/><br/><sub><b>ettoreciolli</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/fuxicodex"><img src="https://github.com/fuxicodex.png?size=96" width="56" height="56" alt="fuxicodex"/><br/><sub><b>fuxicodex</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/kuishou68"><img src="https://github.com/kuishou68.png?size=96" width="56" height="56" alt="kuishou68"/><br/><sub><b>kuishou68</b></sub></a><br/><sub>1 PR</sub></td>
-    <td align="center" width="16%"><a href="https://github.com/Mubashirrrr"><img src="https://github.com/Mubashirrrr.png?size=96" width="56" height="56" alt="Mubashirrrr"/><br/><sub><b>Mubashirrrr</b></sub></a><br/><sub>1 PR</sub></td>
   </tr>
   <tr>
+    <td align="center" width="16%"><a href="https://github.com/Mubashirrrr"><img src="https://github.com/Mubashirrrr.png?size=96" width="56" height="56" alt="Mubashirrrr"/><br/><sub><b>Mubashirrrr</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/muskanbandta23"><img src="https://github.com/muskanbandta23.png?size=96" width="56" height="56" alt="muskanbandta23"/><br/><sub><b>muskanbandta23</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/nb-src"><img src="https://github.com/nb-src.png?size=96" width="56" height="56" alt="nb-src"/><br/><sub><b>nb-src</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/NicolasBohn"><img src="https://github.com/NicolasBohn.png?size=96" width="56" height="56" alt="NicolasBohn"/><br/><sub><b>NicolasBohn</b></sub></a><br/><sub>1 PR</sub></td>
-    <td align="center" width="16%"><a href="https://github.com/pawisoon"><img src="https://github.com/pawisoon.png?size=96" width="56" height="56" alt="pawisoon"/><br/><sub><b>pawisoon</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/samki6576"><img src="https://github.com/samki6576.png?size=96" width="56" height="56" alt="samki6576"/><br/><sub><b>samki6576</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/TPTBusiness"><img src="https://github.com/TPTBusiness.png?size=96" width="56" height="56" alt="TPTBusiness"/><br/><sub><b>TPTBusiness</b></sub></a><br/><sub>1 PR</sub></td>
   </tr>

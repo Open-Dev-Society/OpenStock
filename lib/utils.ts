@@ -1,6 +1,5 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { arDigits, tx, type Lang, type StringKey } from '@/lib/i18n';
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -27,8 +26,9 @@ export function delay(ms: number) {
 }
 
 // Formatted string like "$3.10T", "$900.00B", "$25.00M" or "$999999.99"
-export function formatMarketCapValue(marketCapUsd: number): string {
-    if (!Number.isFinite(marketCapUsd) || marketCapUsd <= 0) return 'N/A';
+// notAvailable: pass the translated Common.notAvailable from a component
+export function formatMarketCapValue(marketCapUsd: number, notAvailable = 'N/A'): string {
+    if (!Number.isFinite(marketCapUsd) || marketCapUsd <= 0) return notAvailable;
 
     if (marketCapUsd >= 1e12) return `$${(marketCapUsd / 1e12).toFixed(2)}T`; // Trillions
     if (marketCapUsd >= 1e9) return `$${(marketCapUsd / 1e9).toFixed(2)}B`; // Billions
@@ -84,13 +84,15 @@ export const formatArticle = (
     article: RawNewsArticle,
     isCompanyNews: boolean,
     symbol?: string,
-    index: number = 0
+    index: number = 0,
+    // Shown when Finnhub omits the source; getNews passes the NewsSources messages
+    fallbackSource: string = isCompanyNews ? 'Company News' : 'Market News'
 ) => ({
     id: isCompanyNews ? Date.now() + Math.random() : article.id + index,
     headline: article.headline!.trim(),
     summary:
         article.summary!.trim().substring(0, isCompanyNews ? 200 : 150) + '...',
-    source: article.source || (isCompanyNews ? 'Company News' : 'Market News'),
+    source: article.source || fallbackSource,
     url: article.url!,
     datetime: article.datetime!,
     image: article.image || '',
@@ -109,41 +111,32 @@ export const getChangeColorClass = (changePercent?: number) => {
     return changePercent > 0 ? 'text-green-500' : 'text-red-500';
 };
 
-// Currencies whose Arabic short form matters in prose (alerts, toasts), where a drawn glyph
-// cannot go. Everything else keeps the formatter's own symbol.
-const CURRENCY_TEXT: Record<string, StringKey> = { SAR: 'currency.sarShort' };
-
-export const formatPrice = (price: number, currency = 'USD', lang: Lang = 'en') => {
-    const localized = lang === 'ar' ? CURRENCY_TEXT[currency] : undefined;
-    const formatted = localized
-        ? `${tx(lang, localized)} ${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-        : new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency,
-            minimumFractionDigits: 2,
-        }).format(price);
-    return arDigits(formatted, lang);
+export const formatPrice = (price: number, currency = 'USD') => {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency,
+        minimumFractionDigits: 2,
+    }).format(price);
 };
 
 // Alias for consistency
 export const formatCurrency = formatPrice;
 
-export function formatNumber(num?: number | null, lang: 'en' | 'ar' = 'en'): string {
+export function formatNumber(num?: number | null, notAvailable = 'N/A'): string {
     // Guard against missing/invalid market caps (Finnhub omits this field for many
     // symbols, e.g. ETFs). Without this, `num * 1e6` yields NaN and renders "NaN".
-    if (num === undefined || num === null || !Number.isFinite(num)) return 'N/A';
+    if (num === undefined || num === null || !Number.isFinite(num)) return notAvailable;
 
     // If number is small (likely already in millions from Finnhub), multiply by 1M to get actual value
     // Typical mega-cap is > 100B. 100B in millions is 100,000.
     // If we assume typical market cap input IS millions:
     const value = num * 1000000;
 
-    const withSuffix = (scaled: number, suffix: string) => arDigits(scaled.toFixed(2), lang) + suffix;
-    if (value >= 1e12) return withSuffix(value / 1e12, 'T');
-    if (value >= 1e9) return withSuffix(value / 1e9, 'B');
-    if (value >= 1e6) return withSuffix(value / 1e6, 'M');
-    if (value >= 1e3) return withSuffix(value / 1e3, 'K');
-    return arDigits(value.toString(), lang);
+    if (value >= 1e12) return (value / 1e12).toFixed(2) + 'T';
+    if (value >= 1e9) return (value / 1e9).toFixed(2) + 'B';
+    if (value >= 1e6) return (value / 1e6).toFixed(2) + 'M';
+    if (value >= 1e3) return (value / 1e3).toFixed(2) + 'K';
+    return value.toString();
 }
 
 export const formatDateToday = new Date().toLocaleDateString('en-US', {
@@ -155,9 +148,10 @@ export const formatDateToday = new Date().toLocaleDateString('en-US', {
 });
 
 
-export const getAlertText = (alert: Alert) => {
+// label: pass a translated "Price" from a component
+export const getAlertText = (alert: Alert, label = 'Price') => {
     const condition = alert.alertType === 'upper' ? '>' : '<';
-    return `Price ${condition} ${formatPrice(alert.threshold)}`;
+    return `${label} ${condition} ${formatPrice(alert.threshold)}`;
 };
 
 export const getFormattedTodayDate = () => new Date().toLocaleDateString('en-US', {

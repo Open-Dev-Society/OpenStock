@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, IBM_Plex_Mono, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Plus_Jakarta_Sans, IBM_Plex_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import {Toaster} from "@/components/ui/sonner";
 import OntoLaunchCard from "@/components/OntoLaunchCard";
@@ -8,14 +8,6 @@ import "./globals.css";
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
   subsets: ["latin"],
-});
-
-const arabic = IBM_Plex_Sans_Arabic({
-  variable: "--font-arabic",
-  subsets: ["arabic"],
-  weight: ["400", "500", "600", "700"],
-  // Only Arabic pages use it; English pages should not download it up front.
-  preload: false,
 });
 
 const plexMono = IBM_Plex_Mono({
@@ -34,12 +26,10 @@ export default function RootLayout({
                                    }: Readonly<{
     children: React.ReactNode;
 }>) {
-    // Static on purpose: (root) and (auth) set lang/dir for the reader (HtmlLang); a cookie read here
-    // would make every page dynamic, public ones included.
     return (
-        <html lang="en" className="dark" suppressHydrationWarning>
+        <html lang="en" className="dark">
             <body
-                className={`${jakarta.variable} ${arabic.variable} ${plexMono.variable} font-sans antialiased`}
+                className={`${jakarta.variable} ${plexMono.variable} font-sans antialiased`}
             >
                 {children}
                 <Toaster/>

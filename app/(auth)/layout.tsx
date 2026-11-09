@@ -2,12 +2,12 @@ import Link from "next/link";
 import React from "react";
 import Image from "next/image";
 import {redirect} from "next/navigation";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
+import HtmlLang from "@/components/HtmlLang";
 import {getSession} from "@/lib/better-auth/auth";
 import ProductPreview from "@/components/landing/ProductPreview";
 import { SocialProvidersProvider } from "@/components/forms/SocialAuthButtons";
-import { getLang } from "@/lib/i18n-server";
-import { HtmlLang, LangProvider } from "@/components/shell/LangProvider";
-import { tx } from "@/lib/i18n";
 
 const Layout = async ({ children }: { children : React.ReactNode }) => {
 
@@ -15,8 +15,8 @@ const Layout = async ({ children }: { children : React.ReactNode }) => {
 
     if (session?.user) redirect('/dashboard')
 
-    // Read on the server so the first paint of the sign-in/sign-up forms is already translated.
-    const lang = await getLang();
+    const locale = await getLocale();
+    const t = await getTranslations('AuthLayout');
 
     // Same condition that enables the providers in lib/better-auth/auth.ts
     const socialProviders = [
@@ -24,6 +24,8 @@ const Layout = async ({ children }: { children : React.ReactNode }) => {
         ...(process.env.GITHUB_CLIENT_ID ? ['github' as const] : []),
     ];
     return (
+        <NextIntlClientProvider>
+        <HtmlLang locale={locale} />
         <main className="auth-layout">
             <section className="auth-left-section scrollbar-hide-default">
                 <Link href="/" className="auth-logo flex items-center gap-2">
@@ -31,37 +33,35 @@ const Layout = async ({ children }: { children : React.ReactNode }) => {
                 </Link>
 
                 <div className="pb-6 lg:pb-8 flex-1">
-                    <LangProvider lang={lang}>
-                        <HtmlLang lang={lang} />
-                        <SocialProvidersProvider enabled={socialProviders}>{children}</SocialProvidersProvider>
-                    </LangProvider>
+                    <SocialProvidersProvider enabled={socialProviders}>{children}</SocialProvidersProvider>
                 </div>
             </section>
             <section className="auth-right-section">
                 <div className="z-10 relative lg:mt-4 lg:mb-16">
                     <blockquote className="auth-blockquote">
-                        {tx(lang, 'auth.quote')}
+                        {t('testimonialQuote')}
                     </blockquote>
                     <div className="flex items-center justify-between">
                         <div>
                             <cite className="auth-testimonial-author">- Ravi Pratap Singh (@ravixalgorithm)</cite>
-                            <p className="max-md:text-xs text-gray-500">{tx(lang, 'auth.founder')}</p>
+                            <p className="max-md:text-xs text-gray-500">{t('founderRole', { org: '@opendevsociety' })}</p>
                         </div>
                         <div className="flex items-center gap-0.5">
                             {[1,2,3,4,5].map((star) => (
-                                <Image src="/assets/icons/star.svg" alt="" aria-hidden key={star} width={20} height={20} className="w-4 h-4"/>
+                                <Image src="/assets/icons/star.svg" alt={t('starAlt')} key={star} width={20} height={20} className="w-4 h-4"/>
                             ))}
                         </div>
                     </div>
                 </div>
                 <div className="relative flex-1" aria-hidden>
                     <div className="auth-dashboard-preview absolute top-0">
-                        <ProductPreview lang={lang} />
+                        <ProductPreview />
                     </div>
                 </div>
             </section>
 
         </main>
+        </NextIntlClientProvider>
     )
 }
 export default Layout
