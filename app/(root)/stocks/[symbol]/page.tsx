@@ -12,6 +12,7 @@ import {
 } from "@/lib/constants";
 import { getStockSentimentInsights } from '@/lib/actions/adanos.actions';
 import { getStockMetrics } from '@/lib/actions/finnhub.actions';
+import { hasFinnhubCompanyData } from '@/lib/markets';
 import { formatSymbolForTradingView, isChartEmbeddable, tradingViewSymbolUrl } from '@/lib/utils';
 
 const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
@@ -27,6 +28,8 @@ async function Sentiment({ symbol }: { symbol: string }) {
 }
 
 async function DividendYield({ symbol }: { symbol: string }) {
+    // Outside the US we can't tell "no dividend" from "no data", so show nothing rather than a misleading dash
+    if (!hasFinnhubCompanyData(symbol)) return null;
     const dividendYield = await getStockMetrics(symbol);
     return (
         <Panel title="Dividend Yield">

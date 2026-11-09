@@ -27,7 +27,7 @@ describe('NYSE session', () => {
     });
 });
 
-import { getMarket, hasFinnhubQuotes, isMarketOpen } from '@/lib/markets';
+import { getMarket, hasFinnhubCompanyData, hasFinnhubQuotes, isMarketOpen } from '@/lib/markets';
 
 describe('markets', () => {
     it('knows which symbols Finnhub free can price', () => {
@@ -39,7 +39,13 @@ describe('markets', () => {
         expect(hasFinnhubQuotes('7203.T')).toBe(false);
         expect(hasFinnhubQuotes('2222.SR')).toBe(false);
         expect(hasFinnhubQuotes('PKN.WA')).toBe(false);
-        expect(hasFinnhubQuotes('FX:EURUSD')).toBe(false);
+        expect(hasFinnhubQuotes('FX:EURUSD')).toBe(false);    });
+
+    it('asks Finnhub for company data only where it has some', () => {
+        expect(hasFinnhubCompanyData('AAPL')).toBe(true);
+        expect(hasFinnhubCompanyData('BINANCE:BTCUSDT')).toBe(false);
+        expect(hasFinnhubCompanyData('2222.SR')).toBe(false);
+        expect(hasFinnhubCompanyData('PKN.WA')).toBe(false);
     });
 
     it('opens each market in its own time zone', () => {
