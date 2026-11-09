@@ -1,0 +1,601 @@
+{
+  "Common": {
+    "notAvailable": "غير متاح",
+    "close": "إغلاق",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "loading": "جارٍ التحميل"
+  },
+  "Language": {
+    "label": "اللغة"
+  },
+  "Options": {
+    "investmentGoals": {
+      "growth": "النمو",
+      "income": "دخل",
+      "balanced": "متوازن",
+      "conservative": "متحفّظ"
+    },
+    "riskTolerance": {
+      "low": "منخفض",
+      "medium": "متوسط",
+      "high": "مرتفع"
+    },
+    "industries": {
+      "technology": "التقنية",
+      "healthcare": "الرعاية الصحية",
+      "finance": "المالية",
+      "energy": "الطاقة",
+      "consumerGoods": "السلع الاستهلاكية"
+    },
+    "alertType": {
+      "upper": "الحد الأعلى",
+      "lower": "الحد الأدنى"
+    },
+    "condition": {
+      "greater": "أكبر من (>)",
+      "less": "أقل من (<)"
+    }
+  },
+  "Password": {
+    "rules": {
+      "min8": "٨ أحرف على الأقل",
+      "upper": "حرف كبير واحد على الأقل",
+      "lower": "حرف صغير واحد على الأقل",
+      "number": "رقم واحد على الأقل"
+    },
+    "required": "كلمة المرور مطلوبة",
+    "minLength": "يجب ألا تقل كلمة المرور عن ٨ أحرف",
+    "pattern": "يجب أن تحتوي كلمة المرور على حرف كبير وحرف صغير ورقم"
+  },
+  "Markets": {
+    "names": {
+      "us": "الولايات المتحدة",
+      "in": "الهند",
+      "de": "ألمانيا",
+      "ca": "كندا",
+      "au": "أستراليا",
+      "sa": "السعودية",
+      "crypto": "العملات الرقمية",
+      "fx": "الفوركس",
+      "pl": "بولندا"
+    },
+    "feed": {
+      "live": "مباشرة",
+      "delayed": "متأخر",
+      "endOfDay": "عند الإغلاق"
+    },
+    "groups": {
+      "financial": "الخدمات المالية",
+      "technology": "التقنية",
+      "consumer": "الاستهلاك",
+      "banks": "البنوك",
+      "industry": "الصناعة",
+      "finance": "المالية",
+      "energy": "الطاقة",
+      "growth": "النمو",
+      "resources": "الموارد",
+      "consumerHealth": "الاستهلاك والصحة",
+      "energyMaterials": "الطاقة والمواد",
+      "telecomConsumer": "الاتصالات والاستهلاك",
+      "majors": "العملات الرئيسية",
+      "more": "المزيد",
+      "commodityFX": "عملات السلع",
+      "banksInsurance": "البنوك والتأمين",
+      "energyIndustry": "الطاقة والصناعة",
+      "consumerTech": "الاستهلاك والتقنية"
+    }
+  },
+  "WatchlistTable": {
+    "headers": {
+      "company": "الشركة",
+      "price": "السعر",
+      "change": "التغير",
+      "marketCap": "القيمة السوقية",
+      "action": "إجراءات"
+    }
+  },
+  "AuthLayout": {
+    "testimonialQuote": "بالنسبة لي، OpenStock ليس مجرد تطبيق أسهم آخر؛ إنه منح الناس وضوحاً وتحكّماً في السوق، بلا حواجز ولا اشتراكات.",
+    "founderRole": "المؤسس {org}",
+    "starAlt": "نجمة"
+  },
+  "AuthFields": {
+    "email": "البريد",
+    "emailRequired": "البريد الإلكتروني مطلوب",
+    "emailInvalid": "أدخل بريدًا إلكترونيًا صحيحًا"
+  },
+  "PreferenceFields": {
+    "country": "الدولة",
+    "investmentGoal": "الهدف الاستثماري",
+    "riskTolerance": "تحمل المخاطر",
+    "preferredIndustry": "القطاع المفضل"
+  },
+  "SignIn": {
+    "title": "مرحباً بعودتك",
+    "subtitle": "سجّل الدخول لحسابك.",
+    "passwordLabel": "كلمة المرور",
+    "passwordPlaceholder": "أدخل كلمة المرور",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "submit": "سجّل الدخول",
+    "submitting": "جارٍ الدخول…",
+    "noAccount": "ما عندك حساب؟",
+    "createAccount": "أنشئ واحداً",
+    "failed": "تعذّر تسجيل الدخول",
+    "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+    "failedGeneric": "تعذّر تسجيل الدخول."
+  },
+  "SignUp": {
+    "title": "أنشئ حسابك",
+    "subtitle": "مجاني ومفتوح المصدر. بدون بطاقة.",
+    "accountSection": "الحساب",
+    "fullNameLabel": "الاسم الكامل",
+    "fullNamePlaceholder": "اسمك",
+    "fullNameRequired": "الاسم الكامل مطلوب",
+    "passwordLabel": "كلمة المرور",
+    "passwordPlaceholder": "٨ أحرف على الأقل",
+    "personalize": "تخصيص",
+    "personalizeHint": "تُستخدم لتخصيص رسالة الترحيب.",
+    "submit": "إنشاء الحساب",
+    "submitting": "جارٍ الإنشاء…",
+    "haveAccount": "عندك حساب؟",
+    "signIn": "سجّل الدخول",
+    "failed": "تعذّر إنشاء الحساب",
+    "couldNotCreate": "لم نتمكن من إنشاء حسابك.",
+    "failedGeneric": "تعذّر إنشاء حساب."
+  },
+  "ForgotPassword": {
+    "title": "نسيت كلمة المرور؟",
+    "subtitle": "أدخل بريدك وسنرسل لك رابط الاستعادة.",
+    "submit": "إرسال رابط الاستعادة",
+    "submitting": "جارٍ الإرسال…",
+    "remembered": "تذكرتها؟",
+    "signIn": "سجّل الدخول",
+    "sent": "اذا كان الحساب موجوداً، تم إرسال رابط الاستعادة.",
+    "unavailable": "إعادة تعيين كلمة المرور غير متاحة",
+    "unableToStart": "تعذّر بدء إعادة تعيين كلمة المرور."
+  },
+  "ResetPassword": {
+    "loading": "جارٍ تحميل الاستعادة…",
+    "title": "اختر كلمة مرور جديدة",
+    "subtitle": "أدخل كلمة مرور جديدة لحسابك.",
+    "newPasswordLabel": "كلمة المرور الجديدة",
+    "newPasswordPlaceholder": "أدخل كلمة مرور جديدة",
+    "confirmPasswordLabel": "تأكيد كلمة المرور",
+    "confirmPasswordPlaceholder": "أكّد كلمة المرور الجديدة",
+    "confirmRequired": "أكّد كلمة المرور الجديدة",
+    "mismatch": "كلمتا المرور غير متطابقتين",
+    "submit": "استعادة كلمة المرور",
+    "submitting": "جارٍ الاستعادة…",
+    "needFreshLink": "تحتاج رابطاً جديداً؟",
+    "requestAnother": "اطلب واحداً آخر",
+    "invalidLink": "رابط إعادة التعيين غير صالح أو منتهي الصلاحية.",
+    "updated": "تم تحديث كلمة المرور. يمكنك تسجيل الدخول الآن.",
+    "failed": "تعذّرت إعادة تعيين كلمة المرور",
+    "unableToReset": "تعذّرت إعادة تعيين كلمة المرور."
+  },
+  "SocialAuth": {
+    "signInFailed": "تعذّر تسجيل الدخول",
+    "connectionError": "تحقّق من اتصالك وحاول مرة أخرى.",
+    "redirecting": "جارٍ التحويل…",
+    "or": "أو"
+  },
+  "CountrySelect": {
+    "placeholder": "اختر بلدك…",
+    "searchPlaceholder": "ابحث عن بلد…",
+    "empty": "لا يوجد بلد مطابق.",
+    "required": "اختر {field}",
+    "hint": "يساعدنا في عرض بيانات وأخبار السوق المناسبة لك."
+  },
+  "ProfilePage": {
+    "metaTitle": "الملف الشخصي",
+    "memberSince": "عضو منذ {date}",
+    "statWatching": "المتابعة",
+    "statActiveAlerts": "تنبيهات نشطة",
+    "statPausedAlerts": "تنبيهات متوقفة",
+    "statSignInMethods": "طرق الدخول",
+    "detailsTitle": "البيانات",
+    "detailsSub": "اسمك وما تُصمم عليه رسالة الترحيب",
+    "signInMethodsTitle": "طرق الدخول",
+    "signInMethodsSub": "الطرق التي تدخل بها حسابك",
+    "methodCredential": "البريد وكلمة المرور",
+    "connected": "متصل",
+    "passwordTitle": "كلمة المرور",
+    "passwordSub": "تغييرها يخرج أجهزتك الأخرى"
+  },
+  "ProfileForm": {
+    "nameLabel": "الاسم",
+    "namePlaceholder": "اسمك",
+    "nameRequired": "الاسم مطلوب",
+    "nameMinLength": "حرفان على الأقل",
+    "saveFailed": "تعذر الحفظ",
+    "saved": "تم حفظ الملف",
+    "submit": "حفظ التغييرات",
+    "submitting": "يُحفظ…",
+    "upToDate": "محدّث"
+  },
+  "PasswordForm": {
+    "currentLabel": "كلمة المرور الحالية",
+    "currentPlaceholder": "كلمة المرور الحالية",
+    "currentRequired": "أدخل كلمة المرور الحالية",
+    "newLabel": "كلمة المرور الجديدة",
+    "newPlaceholder": "٨ أحرف على الأقل",
+    "notChanged": "لم تتغير كلمة المرور",
+    "changed": "تم تغيير كلمة المرور",
+    "otherDevicesSignedOut": "تم تسجيل خروج الأجهزة الأخرى.",
+    "submit": "تغيير كلمة المرور",
+    "submitting": "جارٍ التغيير…"
+  },
+  "Dashboard": {
+    "title": "السوق",
+    "sub": "{market} · {status, select, open {مفتوح الآن} other {مغلق الآن}} · {feed, select, live {بيانات مباشرة} delayed {بيانات متأخرة} other {بيانات إغلاق اليوم}}",
+    "pulseTitle": "النبض",
+    "pulseSubFinnhub": "أسعارنا المشتركة عبر Finnhub",
+    "pulseSubYahoo": "أسعار متأخرة عبر Yahoo Finance",
+    "pulseSubTradingView": "{feed, select, live {أسعار مباشرة عبر TradingView} delayed {أسعار متأخرة عبر TradingView} other {أسعار الإغلاق عبر TradingView}}",
+    "moversTitle": "الأكثر تحركاً",
+    "moversSub": "أكبر تحركات اليوم",
+    "leadersTitle": "القادة",
+    "leadersSub": "اتجاه ١٢ شهراً حسب المجموعة",
+    "stockHeatmapTitle": "خريطة مؤشر إس آند بي ٥٠٠",
+    "cryptoHeatmapTitle": "خريطة العملات الرقمية",
+    "heatmapSub": "بحجم القيمة السوقية، وبلون حركة اليوم",
+    "quotesTitle": "الأسعار",
+    "quotesSub": "{market} · القادة حسب المجموعة",
+    "storiesTitle": "أهم الأخبار",
+    "storiesSub": "الأحدث أولًا"
+  },
+  "MarketSwitcher": {
+    "label": "السوق",
+    "openNow": "مفتوح الآن",
+    "closedNow": "مغلق الآن"
+  },
+  "PulseTile": {
+    "vsPrevClose": "{change} عن الإغلاق السابق",
+    "unavailable": "لا سعر متاح"
+  },
+  "DataFreshness": {
+    "live": "مباشر · ١٥ ث",
+    "asOf": "حتى {time} · يُحدَّث كل ساعة",
+    "delayed": "متأخر · يُحدَّث كل ساعة"
+  },
+  "YahooQuotes": {
+    "changePercent": "٪ التغير",
+    "unavailable": "الأسعار غير متاحة الآن.",
+    "source": "الأسعار بعملة {currency} عبر Yahoo Finance، متأخرة نحو ١٥ دقيقة.",
+    "sourceNoCurrency": "الأسعار عبر Yahoo Finance، متأخرة نحو ١٥ دقيقة."
+  },
+  "TradingViewWidget": {
+    "fullScreen": "ملء الشاشة",
+    "exitFullScreen": "الخروج من ملء الشاشة",
+    "exitFullScreenHint": "الخروج من ملء الشاشة (Esc)"
+  },
+  "Errors": {
+    "signUpFailed": "تعذّر إنشاء الحساب",
+    "signInFailed": "تعذّر تسجيل الدخول",
+    "signOutFailed": "تعذّر تسجيل الخروج",
+    "tooManyAttempts": "محاولات كثيرة. انتظر بضع دقائق ثم حاول مرة أخرى.",
+    "socialSignInUnavailable": "تسجيل الدخول عبر {provider} غير متاح الآن.",
+    "resetEmailNotConfigured": "بريد إعادة تعيين كلمة المرور غير مُعدّ.",
+    "resetBaseUrlMissing": "يجب ضبط BETTER_AUTH_URL قبل إرسال رسائل إعادة تعيين كلمة المرور.",
+    "resetEmailFailed": "تعذّر إرسال بريد إعادة تعيين كلمة المرور.",
+    "resetLinkInvalid": "رابط إعادة التعيين غير صالح أو منتهي الصلاحية.",
+    "nameLength": "يجب أن يكون الاسم من ٢ إلى ٨٠ حرفًا.",
+    "pickCountry": "اختر دولة.",
+    "pickEachOption": "اختر خيارًا واحدًا من كل مجموعة.",
+    "profileSaveFailed": "تعذّر حفظ ملفك الشخصي.",
+    "passwordChangeFailed": "كلمة المرور الحالية غير صحيحة، أو الجديدة أقصر من المسموح.",
+    "watchlistFull": "قائمة المتابعة ممتلئة ({max} سهمًا). احذف سهمًا لإضافة آخر.",
+    "listNotFound": "هذه القائمة لم تعد موجودة.",
+    "listNameInvalid": "أعطِ القائمة اسمًا لا يتجاوز ٦٠ حرفًا.",
+    "listLimit": "يمكنك الاحتفاظ بـ {max} قوائم. احذف واحدة لتفسح المجال.",
+    "listExists": "لديك قائمة باسم «{name}» بالفعل.",
+    "symbolInvalid": "هذا ليس رمزًا يمكننا البحث عنه.",
+    "listFull": "تتسع القائمة لـ {max} رمزًا كحد أقصى."
+  },
+  "NewsSources": {
+    "companyNews": "أخبار الشركة",
+    "marketNews": "أخبار السوق"
+  },
+  "Emails": {
+    "common": {
+      "logoAlt": "شعار OpenStock",
+      "unsubscribe": "إلغاء الاشتراك",
+      "visitOpenstock": "زر OpenStock"
+    },
+    "welcome": {
+      "subject": "أهلًا بك في OpenStock، أدواتك مفتوحة المصدر لسوق الأسهم!",
+      "text": "شكرًا لانضمامك إلى OpenStock، مبادرة من Open Dev Society",
+      "title": "أهلًا بك في OpenStock",
+      "dashboardAlt": "معاينة لوحة OpenStock",
+      "heading": "أهلًا بك {name}",
+      "fallbackIntro": "شكرًا لانضمامك إلى OpenStock. أصبحت لديك الأدوات لمتابعة الأسواق واتخاذ قرارات أذكى.",
+      "featuresLabel": "إليك ما يمكنك فعله الآن:",
+      "featureWatchlist": "أنشئ قائمة متابعة لتتابع أسهمك المفضلة",
+      "featureSearch": "ابحث عن أي سهم بـ ⌘K وافتحه في تبويب",
+      "featureDashboard": "استكشف لوحة الأسواق لترى الاتجاهات وآخر أخبار السوق",
+      "closing": "سنبقيك على اطلاع بالتحديثات والرؤى والتنبيهات في وقتها، لتركّز على اتخاذ القرار الصحيح.",
+      "cta": "اذهب إلى لوحة الأسواق",
+      "initiative": "مبادرة من Open Dev Society"
+    },
+    "resetPassword": {
+      "subject": "أعد تعيين كلمة مرور OpenStock",
+      "heading": "أعد تعيين كلمة المرور",
+      "greeting": "مرحبًا {name}،",
+      "greetingNoName": "مرحبًا،",
+      "body": "وصلنا طلب لإعادة تعيين كلمة مرور OpenStock الخاصة بك. استخدم الزر أدناه لاختيار كلمة مرور جديدة.",
+      "cta": "استعادة كلمة المرور",
+      "ignore": "إن لم تطلب ذلك، يمكنك تجاهل هذه الرسالة بأمان.",
+      "text": "أعد تعيين كلمة المرور: {url}"
+    },
+    "stockAlert": {
+      "subjectAbove": "🔔 تنبيه سعر: {symbol} فوق {target}",
+      "subjectBelow": "🔔 تنبيه سعر: {symbol} تحت {target}",
+      "textAbove": "{symbol} الآن عند {price}، فوق هدفك {target}.",
+      "textBelow": "{symbol} الآن عند {price}، تحت هدفك {target}.",
+      "titleAbove": "تنبيه سعر: {symbol} بلغ الهدف الأعلى",
+      "titleBelow": "تنبيه سعر: {symbol} بلغ الهدف الأدنى",
+      "headingAbove": "📈 تجاوز السعر الهدف",
+      "headingBelow": "📉 نزل السعر تحت الهدف",
+      "currentPrice": "السعر الحالي",
+      "details": "تفاصيل التنبيه",
+      "targetPriceLabel": "السعر المستهدف:",
+      "triggerLabel": "سبب التنبيه:",
+      "triggerAbove": "تجاوز السعر حدك الأعلى {target}",
+      "triggerBelow": "نزل السعر تحت حدك الأدنى {target}",
+      "calloutTitleAbove": "فرصة!",
+      "calloutBodyAbove": "بلغ {symbol} سعرك المستهدف! قد يكون وقتًا مناسبًا لمراجعة مركزك والتفكير في جني الأرباح أو تعديل خطتك.",
+      "calloutTitleBelow": "انخفض السعر",
+      "calloutBodyBelow": "نزل {symbol} تحت سعرك المستهدف. قد يكون وقتًا مناسبًا للشراء.",
+      "cta": "افتح لوحة الأسواق",
+      "footer": "تصلك هذه الرسالة لأنك مشترك في تحديثات أخبار OpenStock."
+    }
+  },
+  "Sidebar": {
+    "homeAria": "لوحة OpenStock",
+    "searchStocks": "ابحث عن الأسهم",
+    "overview": "نظرة عامة",
+    "watchlist": "قائمة المتابعة",
+    "watching": "المتابعة",
+    "watchingEmpty": "ضع نجمة على سهم لتثبيته هنا.",
+    "resources": {
+      "help": "مساعدة",
+      "apiDocs": "توثيق API",
+      "about": "عن التطبيق",
+      "terms": "الشروط"
+    },
+    "support": "ادعم OpenStock",
+    "sponsor": "راعي",
+    "sponsorSlotsOpen": "أماكن الرعاة متاحة",
+    "sponsorSlotsLeft": "{count, plural, one {بقي مكان رعاية واحد} two {بقي مكانا رعاية} few {بقيت # أماكن رعاية} many {بقي # مكانًا للرعاية} other {بقي # مكان رعاية}}",
+    "sponsorPitch": "اجعل شركتك أمام كل مستخدمي OpenStock.",
+    "signOut": "تسجيل الخروج"
+  },
+  "TabBar": {
+    "pages": {
+      "overview": "نظرة عامة",
+      "watchlist": "قائمة المتابعة",
+      "profile": "الملف الشخصي"
+    },
+    "openMenu": "افتح القائمة",
+    "closeTab": "أغلق {label}",
+    "openStock": "افتح سهماً",
+    "openStockHint": "افتح سهمًا (⌘K)"
+  },
+  "SearchCommand": {
+    "dialogTitle": "لوحة الأوامر",
+    "dialogDescription": "ابحث عن أمر لتنفيذه...",
+    "placeholder": "ابحث بالشركة أو الرقم",
+    "searching": "يبحث…",
+    "noMatch": "لا نتائج لـ «{query}»",
+    "noStocks": "لا توجد أسهم متاحة",
+    "results": "النتائج",
+    "popular": "الأشهر",
+    "listPlaceholder": "أضف سهمًا إلى «{list}»",
+    "addingTo": "الإضافة إلى <name>{list}</name>",
+    "addedToList": "أُضيف {symbol} إلى «{list}»",
+    "addFailed": "تعذّرت إضافة الرمز",
+    "addTitle": "أضف {symbol} إلى {list}",
+    "add": "أضف",
+    "adding": "جارٍ الإضافة"
+  },
+  "UpdateBanner": {
+    "new": "جديد",
+    "seeWhatsNew": "شاهد الجديد",
+    "fullChangelog": "اقرأ سجل التغييرات كاملاً"
+  },
+  "DonatePopup": {
+    "kicker": "الباب مفتوح للرعاة",
+    "title": "خلّ OpenStock مجانياً",
+    "description": "دعمكم لـ OpenStock و‏Open Dev Society ساعدنا على النمو، ووصلنا الآن إلى حدود الطبقة المجانية في Vercel. ارعَنا من ٥ دولارات شهرياً، أو تبرّع مرة واحدة، أو تحدّث معنا عن شراكة.",
+    "becomeSponsor": "كن راعياً",
+    "maybeLater": "لاحقاً"
+  },
+  "OpenDevSocietyBranding": {
+    "initiativeBy": "مبادرة من"
+  },
+  "StockPage": {
+    "sentimentTitle": "المعنويات",
+    "sentimentSub": "ريديت و X والأخبار وبوليماركت",
+    "dividendYieldTitle": "عائد التوزيعات",
+    "chartTitle": "الشارت",
+    "chartUnavailableSub": "متاح على TradingView فقط لهذا السوق",
+    "chartUnavailableTitle": "الشارت غير متاح هنا",
+    "chartUnavailableBody": "TradingView لا ترخّص شارتات {exchange} لمواقع أخرى. القوائم المالية والمؤشرات الفنية وملف الشركة أدناه تعمل.",
+    "openOnTradingView": "افتح في TradingView",
+    "financialsTitle": "المالية",
+    "financialsSub": "الدخل والميزانية والنسب",
+    "technicalsTitle": "التحليل الفني",
+    "technicalsSub": "المذبذبات والمتوسطات، ساعة",
+    "profileTitle": "الملف الشخصي",
+    "profileSub": "ماذا تفعل الشركة"
+  },
+  "StockHeader": {
+    "quoteViaYahoo": "سعر متأخر عبر Yahoo Finance",
+    "quoteViaTradingView": "السعر عبر TradingView",
+    "alertsHint": "تنبيهات الأسعار تحتاج مصدر أسعار نتحقق منه كل ٥ دقائق",
+    "alertsScope": "التنبيهات: الأسهم الأمريكية والعملات الرقمية",
+    "setAlert": "فعّل تنبيه",
+    "open": "الافتتاح",
+    "openHint": "أول تداول في الجلسة",
+    "dayRange": "نطاق اليوم",
+    "dayRangeHint": "من الأدنى إلى الأعلى",
+    "prevClose": "الإغلاق السابق",
+    "prevCloseHint": "الجلسة السابقة",
+    "marketCap": "القيمة السوقية"
+  },
+  "StockChart": {
+    "title": "الشارت",
+    "sub": "مباشر من TradingView · غيّر الفترة والنمط من داخل الشارت",
+    "indicatorsButton": "المؤشرات",
+    "keptNote": "تُحفظ على كل شارت في هذا المتصفح",
+    "indicators": {
+      "sma": "المتوسط المتحرك (SMA)",
+      "ema": "المتوسط الأسّي (EMA)",
+      "bollingerBands": "نطاقات بولنجر",
+      "vwap": "VWAP",
+      "rsi": "RSI",
+      "macd": "MACD",
+      "stochastic": "ستوكاستيك",
+      "atr": "ATR"
+    }
+  },
+  "StockSentiment": {
+    "avgBuzz": "متوسط الضجيج",
+    "bullishAvg": "متوسط التفاؤل",
+    "coverage": "التغطية",
+    "coverageValue": "{count}/{total} مصادر",
+    "sourceAlignment": "توافق المصادر: <value>{alignment}</value>",
+    "alignment": {
+      "noSentimentMix": "لا مزيج للمشاعر",
+      "singleSourceView": "رأي مصدر واحد",
+      "bullishAlignment": "توافق صعودي",
+      "bearishAlignment": "توافق هبوطي",
+      "tightAlignment": "توافق وثيق",
+      "wideDivergence": "تباين واسع",
+      "mixed": "مختلط"
+    },
+    "metric": {
+      "mentions": "{value} {count, plural, one {إشارة} two {إشارتان} few {إشارات} many {إشارة} other {إشارة}}",
+      "trades": "{value} {count, plural, one {صفقة} two {صفقتان} few {صفقات} many {صفقة} other {صفقة}}"
+    },
+    "newsSource": "الأخبار",
+    "buzz": "ضجيج",
+    "bullPct": "{pct}% تفاؤل",
+    "trend": {
+      "rising": "صاعد",
+      "falling": "هابط",
+      "stable": "مستقر"
+    },
+    "noTrend": "لا اتجاه"
+  },
+  "WatchlistButton": {
+    "added": "أُضيف {symbol} إلى قائمة المتابعة",
+    "removed": "أُزيل {symbol} من قائمة المتابعة",
+    "updateFailed": "تعذر تحديث قائمتك",
+    "addLabel": "أضف {symbol} إلى قائمة المتابعة",
+    "removeLabel": "أزل {symbol} من قائمة المتابعة",
+    "watch": "تابع",
+    "watching": "المتابعة"
+  },
+  "WatchlistPage": {
+    "title": "قائمة المتابعة",
+    "symbolCount": "{count, plural, zero {لا رموز} one {رمز واحد} two {رمزان} few {# رموز} many {# رمزًا} other {# رمز}}",
+    "addSymbol": "أضف رمز",
+    "symbolsTitle": "رمز",
+    "symbolsSub": "اضغط الصف للشارت والتحليل والمالية",
+    "newsTitle": "الأخبار",
+    "newsSubWatched": "آخر أخبار رموزك",
+    "newsSubGeneral": "أخبار السوق العامة",
+    "alertsTitle": "التنبيهات",
+    "alertsSubActive": "{count} نشط · يُفحص كل ٥ دقائق",
+    "alertsSubCloud": "ميزة OpenStock Cloud",
+    "listsTitle": "قوائمي",
+    "listsSub": "رتّب الأسهم التي تتابعها في قوائم بأسماء"
+  },
+  "WatchlistTableRow": {
+    "today": "اليوم",
+    "emptyTitle": "قائمتك فارغة",
+    "emptyBody": "ابحث عن شركة ونجّمها لتتبع سعرها هنا.",
+    "searchStocks": "ابحث عن الأسهم",
+    "setAlertLabel": "اضبط تنبيه سعر لـ {symbol}",
+    "alertsUnavailable": "التنبيهات متاحة لأسهم الولايات المتحدة والعملات الرقمية"
+  },
+  "AlertsPanel": {
+    "status": {
+      "triggered": "تحقق",
+      "paused": "متوقف",
+      "expired": "منتهي",
+      "watching": "المتابعة"
+    },
+    "removed": "أُزيل تنبيه \"{symbol}\"",
+    "removeFailed": "تعذر حذف التنبيه",
+    "cloudTitle": "التنبيهات مع السحابة",
+    "cloudBody": "تنبيهات الأسعار بالبريد جزء من OpenStock Cloud، مقابل ٥ دولارات شهرياً وقريباً.",
+    "seeCloud": "شاهد OpenStock Cloud",
+    "emptyTitle": "لا تنبيهات بعد",
+    "emptyBody": "استخدم الجرس بأي صف، أو \"فعّل تنبيه\" بصفحة السهم. نراسلك عند تحققه.",
+    "movedNotice": "انتقلت التنبيهات إلى <link>OpenStock Cloud</link>، لذا أُوقفت مؤقتًا.",
+    "above": "فوق {price}",
+    "below": "تحت {price}",
+    "until": "حتى {date}",
+    "removeTitle": "حذف التنبيه",
+    "removeLabel": "احذف تنبيه {symbol}"
+  },
+  "CreateAlertModal": {
+    "risesAbove": "يصعد فوق",
+    "fallsBelow": "يهبط تحت",
+    "created": "ضُبط التنبيه: {symbol} {condition, select, ABOVE {فوق} other {تحت}} {price}",
+    "createFailed": "تعذّر إنشاء التنبيه",
+    "kicker": "تنبيه سعر",
+    "description": "نرسل لك بريداً عندما يتجاوز السعر هدفك. يُفحص كل ٥ دقائق، وينتهي بعد ٩٠ يوماً.",
+    "conditionLabel": "الشرط",
+    "targetPrice": "السعر المستهدف",
+    "priceUnavailable": "السعر الحالي غير متاح",
+    "alreadyMet": "السعر {condition, select, ABOVE {فوق} other {تحت}} هذا الحد بالفعل، وسيُطلق التنبيه في الفحص التالي",
+    "now": "الآن {price}",
+    "nowWithDistance": "الآن {price} · يبعد {distance}٪",
+    "setting": "جارٍ التعيين…",
+    "setAlert": "فعّل تنبيه",
+    "cloudTitle": "تنبيهات الأسعار تأتي مع Cloud",
+    "cloudBody": "يضيف Cloud تنبيهات الأسعار بالبريد والأسعار المباشرة مقابل ٥ دولارات شهرياً، وهو قادم قريباً. أما الاستضافة الذاتية فتتضمن الميزتين اليوم.",
+    "seeCloud": "شاهد OpenStock Cloud",
+    "selfHost": "استضف بنفسك"
+  },
+  "NewsList": {
+    "emptyTitle": "لا أخبار حديثة",
+    "emptyBody": "لا يوجد شيء منشور في الأيام الأخيرة لهذه الرموز."
+  },
+  "NamedLists": {
+    "starred": "المميّزة",
+    "addStock": "أضف سهمًا",
+    "addStockTo": "أضف سهمًا إلى {list}",
+    "newListName": "اسم القائمة الجديدة",
+    "create": "أنشئ",
+    "createTitle": "أنشئ القائمة",
+    "createFailed": "تعذّر إنشاء القائمة",
+    "delete": "احذف",
+    "deleteTitle": "احذف {list}",
+    "deleteConfirm": "أتحذف القائمة «{list}»؟ لن تتأثر الأسهم التي ميّزتها بنجمة.",
+    "deleteFailed": "تعذّر حذف القائمة",
+    "emptyTitle": "«{list}» فارغة",
+    "emptyBody": "استخدم «أضف سهمًا» في الأعلى، أو زر القوائم في أي صف من قائمة المتابعة.",
+    "removeFrom": "أزل {symbol} من {list}",
+    "removedFrom": "أُزيل {symbol} من «{list}»",
+    "removeFailed": "تعذّرت إزالة الرمز",
+    "menuTitle": "أضف {symbol} إلى قائمة",
+    "menuLabel": "أضف {symbol} إلى قائمة مسمّاة",
+    "menuHeading": "أضف إلى قائمة",
+    "menuEmpty": "لا قوائم بعد، ابدأ واحدة في الأسفل.",
+    "newListItem": "قائمة جديدة…",
+    "newListTitle": "قائمة جديدة",
+    "listName": "اسم القائمة",
+    "addedTo": "أُضيف {symbol} إلى «{list}»",
+    "addFailed": "تعذّرت إضافة الرمز",
+    "addToFailed": "تعذّرت إضافة {symbol} إلى «{list}»",
+    "createdAndAdded": "أُنشئت «{list}» وأُضيف إليها {symbol}",
+    "retryHint": "أُنشئت «{list}»، اضغط الزر مرة أخرى لإعادة محاولة إضافة {symbol}.",
+    "retryAdd": "أعد المحاولة",
+    "createAndAdd": "أنشئ وأضف"
+  }
+}
