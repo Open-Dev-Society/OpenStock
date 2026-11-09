@@ -1,7 +1,9 @@
 import type { MetadataRoute } from 'next';
 import { siteUrl } from '@/lib/seo/site';
 
-export const dynamic = 'force-dynamic';
+// Cached a day instead of rendered per hit. Regenerated at runtime, so a Docker build without
+// BETTER_AUTH_URL picks up the real origin within a day.
+export const revalidate = 86400;
 
 export default function robots(): MetadataRoute.Robots {
     const origin = siteUrl();

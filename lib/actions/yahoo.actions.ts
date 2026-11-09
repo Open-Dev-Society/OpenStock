@@ -1,10 +1,11 @@
 'use server';
 
+import { QUOTE_TTL_SECONDS } from '@/lib/market-data';
 import { dailyQuoteFromChart, normalizeYahooSymbol, yahooCurrency, type YahooDailyQuote } from '@/lib/yahoo';
 
 // Daily Tadawul and Warsaw quotes from Yahoo Finance (free, no key, covers .SR and .WA), keyed by the symbol passed in.
-// One chart call per symbol (no batch endpoint without login) behind a shared 5-minute cache,
-// so the Saudi or Polish dashboard costs ~17-19 requests every 5 minutes, not per user.
+// One chart call per symbol (no batch endpoint without login) behind the shared quote cache (hourly in cached
+// mode, 5 minutes in realtime), so the Saudi or Polish dashboard costs ~17-19 requests per refresh, not per user.
 export async function getYahooDailyQuotes(symbols: string[]): Promise<Record<string, YahooDailyQuote>> {
     const entries = await Promise.all(
         symbols.map(async (symbol) => {
@@ -13,7 +14,7 @@ export async function getYahooDailyQuotes(symbols: string[]): Promise<Record<str
             try {
                 const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?interval=1d&range=5d`, {
                     headers: { 'User-Agent': 'Mozilla/5.0' },
-                    next: { revalidate: 300 },
+                    next: { revalidate: Math.max(QUOTE_TTL_SECONDS, 300) },
                     // A stalled request would hold up the whole dashboard (movers and quotes aren't suspended)
                     signal: AbortSignal.timeout(5000),
                 });
