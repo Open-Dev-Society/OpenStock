@@ -123,8 +123,8 @@ export function parseSubmissions(cik: string, body: {
     };
 }
 
-// ponytail: one gap shared by this process. A second instance can double the rate; the Next
-// data cache (24h) is what keeps a crawl from asking EDGAR twice for the same company.
+// ponytail: one gap shared by this process. A second instance can double the rate; the page's ISR
+// (24h, app/(marketing)/s/[ticker]) is what keeps a crawl from asking EDGAR twice for the same company.
 const GAP_MS = 125;
 let nextSlot = 0;
 const memory = new Map<string, { expires: number; value: EdgarCompany | null }>();
@@ -158,8 +158,9 @@ async function loadEdgarCompany(cik: string): Promise<EdgarCompany | null> {
 
             await pace();
             const res = await fetch(`https://data.sec.gov/submissions/CIK${key}.json`, {
+                // Not in the Data Cache: the raw JSON is ~160 KB (20 ISR units per read and write) and the page ISR
+                // already keeps the parsed result.
                 headers: { 'User-Agent': SEC_USER_AGENT, Accept: 'application/json' },
-                next: { revalidate: 60 * 60 * 24 },
                 signal: AbortSignal.timeout(8000),
             });
             if (!res.ok) throw new Error(`SEC submissions ${res.status}`);

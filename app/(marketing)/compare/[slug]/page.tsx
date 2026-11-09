@@ -13,6 +13,11 @@ const EXAMPLES = ['AAPL', 'MSFT', 'NVDA', 'AMZN', 'JPM', 'XOM'];
 
 type Params = { slug: string };
 
+// A handful of guides: built ahead, so a visit or a prefetch is never a function call.
+export function generateStaticParams(): Params[] {
+    return GUIDES.map((guide) => ({ slug: guide.slug }));
+}
+
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
     const { slug } = await params;
     const guide = findGuide(slug);

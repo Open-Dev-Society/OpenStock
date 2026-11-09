@@ -49,7 +49,8 @@ export default function StockDirectoryPage() {
                         <ul className="mt-4 grid gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
                             {tickers.map((ticker) => (
                                 <li key={ticker.symbol}>
-                                    <Link href={tickerPath(ticker.symbol)} className="group flex items-baseline justify-between gap-3 rounded-lg px-2 py-1.5 hover:bg-hover/50">
+                                    {/* No prefetch: 518 links in view as you scroll would each fetch a page */}
+                                    <Link href={tickerPath(ticker.symbol)} prefetch={false} className="group flex items-baseline justify-between gap-3 rounded-lg px-2 py-1.5 hover:bg-hover/50">
                                         <span className="truncate text-[14px]">{ticker.name}</span>
                                         <span className="mono shrink-0 text-[12px] text-faint group-hover:text-foreground">{ticker.symbol}</span>
                                     </Link>
