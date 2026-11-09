@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Github } from "lucide-react";
-import { getSession } from "@/lib/better-auth/auth";
 import { formatCount, getRepoStats } from "@/lib/github";
 import OpenDevSocietyBranding from "@/components/OpenDevSocietyBranding";
 import SponsorsBand from "@/components/sponsors/SponsorsBand";
@@ -23,9 +22,10 @@ const FOOTER_LINKS = [
     { href: 'https://www.linkedin.com/company/opendevsociety-in/', label: 'LinkedIn' },
 ];
 
+// No session read here: it made every public page (and every <Link> prefetch of one) a function call.
+// The header always shows the signed-out buttons; /sign-in and /sign-up send a signed-in visitor to /dashboard.
 export default async function MarketingLayout({ children }: { children: React.ReactNode }) {
-    const [session, repo] = await Promise.all([getSession(), getRepoStats()]);
-    const signedIn = !!session?.user;
+    const repo = await getRepoStats();
 
     return (
         <div className="min-h-dvh bg-page">
@@ -48,14 +48,8 @@ export default async function MarketingLayout({ children }: { children: React.Re
                             <Github />
                             {repo && <span className="num">{formatCount(repo.stars)}</span>}
                         </a>
-                        {signedIn ? (
-                            <Link href="/dashboard" className="btn btn-primary h-9">Open dashboard</Link>
-                        ) : (
-                            <>
-                                <Link href="/sign-in" className="btn h-9 px-3 text-muted-foreground hover:text-foreground">Sign in</Link>
-                                <Link href="/sign-up" className="btn btn-primary h-9">Get started</Link>
-                            </>
-                        )}
+                        <Link href="/sign-in" className="btn h-9 px-3 text-muted-foreground hover:text-foreground">Sign in</Link>
+                        <Link href="/sign-up" className="btn btn-primary h-9">Get started</Link>
                     </div>
                 </div>
             </header>
