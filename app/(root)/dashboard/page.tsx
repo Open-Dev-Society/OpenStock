@@ -5,7 +5,7 @@ import Panel from "@/components/Panel";
 import IndexPulse, { PulseSkeleton } from "@/components/IndexPulse";
 import DataFreshness from "@/components/DataFreshness";
 import MarketSwitcher from "@/components/MarketSwitcher";
-import SaudiQuotesTable, { SaudiMovers } from "@/components/SaudiQuotes";
+import YahooQuotesTable, { YahooMovers } from "@/components/YahooQuotes";
 import {
     CRYPTO_HEATMAP_CONFIG,
     STOCK_HEATMAP_CONFIG,
@@ -62,7 +62,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                 <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
                     {market.yahoo ? (
                         <Panel title="Movers" sub="Biggest moves today">
-                            <SaudiMovers market={market} />
+                            <YahooMovers market={market} />
                         </Panel>
                     ) : (
                         <Panel title="Leaders" sub="12-month trend by group">
@@ -76,7 +76,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                     ) : (
                         <Panel title="Quotes" sub={`${market.name} leaders by group`}>
                             {market.yahoo
-                                ? <SaudiQuotesTable market={market} />
+                                ? <YahooQuotesTable market={market} />
                                 : <TradingViewWidget scriptUrl={`${scriptUrl}market-quotes.js`} config={marketQuotesConfig(market.groups)} height={560} />}
                         </Panel>
                     )}

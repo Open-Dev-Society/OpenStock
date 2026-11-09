@@ -38,6 +38,7 @@ describe('markets', () => {
         expect(hasFinnhubQuotes('BARC.L')).toBe(false);
         expect(hasFinnhubQuotes('7203.T')).toBe(false);
         expect(hasFinnhubQuotes('2222.SR')).toBe(false);
+        expect(hasFinnhubQuotes('PKN.WA')).toBe(false);
         expect(hasFinnhubQuotes('FX:EURUSD')).toBe(false);
     });
 
@@ -55,5 +56,9 @@ describe('markets', () => {
         expect(isMarketOpen(getMarket('sa'), new Date('2026-09-27T08:00:00Z'))).toBe(true);
         expect(isMarketOpen(getMarket('sa'), new Date('2026-09-25T08:00:00Z'))).toBe(false);
         expect(isMarketOpen(getMarket('sa'), new Date('2026-09-27T12:30:00Z'))).toBe(false);
+        // GPW trades Monday to Friday, 09:00-17:00 Warsaw (07:00-15:00 UTC in September)
+        expect(isMarketOpen(getMarket('pl'), new Date('2026-09-23T08:00:00Z'))).toBe(true);
+        expect(isMarketOpen(getMarket('pl'), new Date('2026-09-23T15:30:00Z'))).toBe(false);
+        expect(isMarketOpen(getMarket('pl'), new Date('2026-09-26T10:00:00Z'))).toBe(false);
     });
 });

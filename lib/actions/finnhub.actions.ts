@@ -6,7 +6,7 @@ import { cache } from 'react';
 import { QUOTE_TTL_SECONDS } from '@/lib/market-data';
 import { hasFinnhubQuotes } from '@/lib/markets';
 import { getYahooDailyQuotes } from '@/lib/actions/yahoo.actions';
-import { isTadawulSymbol } from '@/lib/yahoo';
+import { isYahooSymbol } from '@/lib/yahoo';
 import { getSession } from '@/lib/better-auth/auth';
 
 const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
@@ -226,12 +226,12 @@ export async function getStockMetrics(symbol: string): Promise<number | null> {
 export async function getWatchlistData(symbols: string[]) {
     if (!symbols || symbols.length === 0) return [];
 
-    // Finnhub free doesn't price Tadawul; Yahoo does (delayed)
-    const saudi = await getYahooDailyQuotes(symbols.filter(isTadawulSymbol));
+    // Finnhub free doesn't price Tadawul or Warsaw; Yahoo does (delayed)
+    const yahoo = await getYahooDailyQuotes(symbols.filter(isYahooSymbol));
 
     // Fetch quotes and profiles in parallel
     const promises = symbols.map(async (sym) => {
-        const y = saudi[sym];
+        const y = yahoo[sym];
         if (y) return { symbol: sym, price: y.price, change: y.change, changePercent: y.changePercent, currency: y.currency, name: y.name || sym, logo: undefined, marketCap: undefined, peRatio: 0 };
         const covered = hasFinnhubQuotes(sym);
         const [quote, profile] = covered
