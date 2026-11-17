@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/better-auth/auth";
 import { getLiveQuotes } from "@/lib/actions/finnhub.actions";
 import { isRateLimited } from "@/lib/rate-limit";
+import { MAX_QUOTE_SYMBOLS_PER_REQUEST } from "@/lib/market-data";
 
-const MAX_SYMBOLS = 25;
 const SYMBOL_PATTERN = /^[A-Z0-9.:\-]{1,20}$/;
 
 // Polled by on-screen prices. Signed-in only and capped, so nobody can burn the shared Finnhub quota.
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
             .split(",")
             .map((s) => s.trim().toUpperCase())
             .filter((s) => SYMBOL_PATTERN.test(s)),
-    )].slice(0, MAX_SYMBOLS);
+    )].slice(0, MAX_QUOTE_SYMBOLS_PER_REQUEST);
 
     // Counted per symbol: unseen tickers each cost a Finnhub call. A 25-symbol watchlist polled every 15 s uses
     // about 100 a minute; the cap stops one free account from draining the shared key pool.

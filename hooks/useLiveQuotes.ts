@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { isRealtime } from "@/lib/market-data";
+import { isRealtime, MAX_QUOTE_SYMBOLS_PER_REQUEST } from "@/lib/market-data";
 
 export type LiveQuote = { c?: number; d?: number; dp?: number; h?: number; l?: number; o?: number; pc?: number; t?: number };
 
@@ -14,17 +14,31 @@ export function useLiveQuotes(symbols: string[], intervalMs = 15_000) {
     useEffect(() => {
         if (!key || !isRealtime) return;
         let cancelled = false;
+        // The route caps each response at 25 symbols; send larger watchlists in batches.
+        const tickers = key.split(",");
+        const batches: string[][] = [];
+        for (let i = 0; i < tickers.length; i += MAX_QUOTE_SYMBOLS_PER_REQUEST) {
+            batches.push(tickers.slice(i, i + MAX_QUOTE_SYMBOLS_PER_REQUEST));
+        }
 
         const load = async () => {
             if (document.visibilityState !== "visible") return;
-            try {
-                const res = await fetch(`/api/quotes?symbols=${encodeURIComponent(key)}`);
-                if (res.ok && !cancelled) setQuotes(await res.json());
-            } catch { /* keep the last good prices */ }
+            const results = await Promise.all(batches.map(async (batch) => {
+                try {
+                    const res = await fetch(`/api/quotes?symbols=${encodeURIComponent(batch.join(","))}`);
+                    return res.ok ? (await res.json()) as Record<string, LiveQuote | null> : null;
+                } catch {
+                    return null; // Retain the last good quotes if this batch failed.
+                }
+            }));
+            if (cancelled) return;
+            const successful = results.filter((r): r is Record<string, LiveQuote | null> => r !== null);
+            if (successful.length) setQuotes((old) => ({ ...old, ...Object.assign({}, ...successful) }));
         };
-        const onVisibility = () => { if (document.visibilityState === "visible") load(); };
+        const onVisibility = () => { if (document.visibilityState === "visible") void load(); };
 
-        const interval = setInterval(load, intervalMs);
+        void load(); // Don't wait a full polling interval after opening the page.
+        const interval = setInterval(() => { void load(); }, intervalMs);
         document.addEventListener("visibilitychange", onVisibility);
         return () => {
             cancelled = true;
