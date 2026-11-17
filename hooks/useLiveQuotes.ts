@@ -21,24 +21,31 @@ export function useLiveQuotes(symbols: string[], intervalMs = 15_000) {
             batches.push(tickers.slice(i, i + MAX_QUOTE_SYMBOLS_PER_REQUEST));
         }
 
-        const load = async () => {
+        let pollGeneration = 0;
+        const lastAppliedGeneration = batches.map(() => 0);
+        const load = () => {
             if (document.visibilityState !== "visible") return;
-            const results = await Promise.all(batches.map(async (batch) => {
-                try {
-                    const res = await fetch(`/api/quotes?symbols=${encodeURIComponent(batch.join(","))}`);
-                    return res.ok ? (await res.json()) as Record<string, LiveQuote | null> : null;
-                } catch {
-                    return null; // Retain the last good quotes if this batch failed.
-                }
-            }));
-            if (cancelled) return;
-            const successful = results.filter((r): r is Record<string, LiveQuote | null> => r !== null);
-            if (successful.length) setQuotes((old) => ({ ...old, ...Object.assign({}, ...successful) }));
-        };
-        const onVisibility = () => { if (document.visibilityState === "visible") void load(); };
+            const generation = ++pollGeneration;
 
-        void load(); // Don't wait a full polling interval after opening the page.
-        const interval = setInterval(() => { void load(); }, intervalMs);
+            // Apply each batch independently: a slow request must not hold up other quotes.
+            batches.forEach((batch, index) => {
+                void (async () => {
+                    try {
+                        const res = await fetch(`/api/quotes?symbols=${encodeURIComponent(batch.join(","))}`);
+                        if (!res.ok) return;
+                        const fresh = await res.json() as Record<string, LiveQuote | null>;
+                        // Overlapping polls may finish out of order; never apply older data over newer data.
+                        if (cancelled || generation < lastAppliedGeneration[index]) return;
+                        lastAppliedGeneration[index] = generation;
+                        setQuotes((previous) => ({ ...previous, ...fresh }));
+                    } catch { /* Retain the last good quotes for this batch. */ }
+                })();
+            });
+        };
+        const onVisibility = () => { if (document.visibilityState === "visible") load(); };
+
+        load(); // Don't wait a full polling interval after opening the page.
+        const interval = setInterval(load, intervalMs);
         document.addEventListener("visibilitychange", onVisibility);
         return () => {
             cancelled = true;
