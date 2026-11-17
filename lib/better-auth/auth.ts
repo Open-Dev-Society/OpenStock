@@ -10,10 +10,12 @@ import { resolveLocale } from "@/i18n/locale";
 
 type MongoDb = Parameters<typeof mongodbAdapter>[0];
 
+const resolveAuthSecret = () => process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET;
+
 // Typed from the real config, so additional user fields (country, ...) show up in session types
-const createAuth = (database: MongoDb) => betterAuth({
+const createAuth = (database: MongoDb, secret: string | undefined = resolveAuthSecret()) => betterAuth({
         database: mongodbAdapter(database),
-       secret: process.env.BETTER_AUTH_SECRET,
+        secret,
         baseURL: process.env.BETTER_AUTH_URL,
         // Onboarding answers live on the user so the profile page can show and edit them
         user: {
@@ -88,9 +90,11 @@ export const getAuth = async () => {
     // createConnection; caching the instance would point a later request at dead sockets.
     if (!isWorkersRuntime() && authInstance) return authInstance;
 
+    const secret = resolveAuthSecret();
+
     // Without a secret better-auth falls back to a public default anyone could forge sessions with (1.7 refuses it in
     // production too); fail here first, before connecting. Checked on first use, not at import, so `next build` needs no secrets.
-    if (process.env.NODE_ENV === 'production' && !process.env.BETTER_AUTH_SECRET && !process.env.AUTH_SECRET) {
+    if (process.env.NODE_ENV === 'production' && !secret) {
         throw new Error('BETTER_AUTH_SECRET must be set in production');
     }
 
@@ -100,7 +104,7 @@ export const getAuth = async () => {
         throw new Error("MongoDB connection not found!");
     }
 
-    const instance = createAuth(database);
+    const instance = createAuth(database, secret);
     if (!isWorkersRuntime()) authInstance = instance;
     return instance;
 }
