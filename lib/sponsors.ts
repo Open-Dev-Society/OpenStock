@@ -64,6 +64,7 @@ export const SPONSOR_TIERS: {
 
 export const ACTIVE_SPONSORS: Sponsor[] = [
     { name: 'Orbit', url: 'https://github.com/diip3sh/orbit', logo: '/assets/icons/orbit.png', iconOnly: true, tier: 'partner', blurb: 'Free, open-source screen recorder and video editor for macOS.' },
+    { name: 'Swiftproxy', url: 'https://www.swiftproxy.net/?ref=OpenStock', logo: '/assets/images/swiftproxy-logo.png', tier: 'company', blurb: '90M+ residential IPs across 220+ locations, with free testing and 10% off using code PROXY90.' },
 ];
 
 export const PREVIOUS_SPONSORS: Sponsor[] = [
