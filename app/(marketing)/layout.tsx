@@ -2,25 +2,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { Github } from "lucide-react";
 import { formatCount, getRepoStats } from "@/lib/github";
-import OpenDevSocietyBranding from "@/components/OpenDevSocietyBranding";
-import SponsorsBand from "@/components/sponsors/SponsorsBand";
+import SiteFooter from "@/components/marketing/SiteFooter";
 import UpdateBanner from "@/components/UpdateBanner";
-import { DISCORD_URL, REPO_URL } from "@/lib/constants";
-
-const FOOTER_LINKS = [
-    { href: '/s', label: 'Stocks' },
-    { href: '/compare', label: 'Guides' },
-    { href: '/about', label: 'About' },
-    { href: '/help', label: 'Help' },
-    { href: '/api-docs', label: 'Architecture' },
-    { href: '/terms', label: 'Terms' },
-    { href: '/sponsor', label: 'Sponsor' },
-    { href: '/love', label: 'Wall of love' },
-    { href: '/changelog', label: 'Changelog' },
-    { href: REPO_URL, label: 'GitHub' },
-    { href: DISCORD_URL, label: 'Discord' },
-    { href: 'https://www.linkedin.com/company/opendevsociety-in/', label: 'LinkedIn' },
-];
+import { REPO_URL } from "@/lib/constants";
 
 // No session read here: it made every public page (and every <Link> prefetch of one) a function call.
 // The header always shows the signed-out buttons; /sign-in and /sign-up send a signed-in visitor to /dashboard.
@@ -56,22 +40,7 @@ export default async function MarketingLayout({ children }: { children: React.Re
 
             <main>{children}</main>
 
-            <SponsorsBand />
-
-            <footer className="mx-auto mt-24 flex max-w-[1200px] flex-col gap-6 px-5 pb-10 md:flex-row md:items-center md:justify-between">
-                <div className="flex flex-col gap-3">
-                    <Image src="/assets/images/logo.png" alt="OpenStock" width={120} height={30} />
-                    <p className="text-[13px] text-faint">© {new Date().getFullYear()} Open Dev Society · AGPL-3.0</p>
-                </div>
-                <nav className="flex flex-wrap gap-x-5 gap-y-2 text-[13px] font-semibold text-muted-foreground">
-                    {FOOTER_LINKS.map(({ href, label }) => (
-                        <Link key={label} href={href} className="transition-colors hover:text-foreground" {...(href.startsWith('http') ? { target: '_blank', rel: 'noreferrer' } : {})}>
-                            {label}
-                        </Link>
-                    ))}
-                </nav>
-                <OpenDevSocietyBranding />
-            </footer>
+            <SiteFooter />
         </div>
     );
 }
