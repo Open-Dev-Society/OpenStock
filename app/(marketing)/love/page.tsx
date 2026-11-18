@@ -4,7 +4,7 @@ import { Tweet } from "react-tweet";
 import PageHero from "@/components/marketing/PageHero";
 import SectionHead from "@/components/marketing/SectionHead";
 import { REPO_URL } from "@/lib/constants";
-import { ACTIVE_SPONSORS, PREVIOUS_SPONSORS, SPONSOR_TIERS, SUPPORTERS, type Sponsor } from "@/lib/sponsors";
+import { ACTIVE_SPONSORS, PREVIOUS_SPONSORS, PREVIOUS_SUPPORTERS, SPONSOR_TIERS, type Sponsor } from "@/lib/sponsors";
 import { cn } from "@/lib/utils";
 
 export const metadata = {
@@ -48,7 +48,7 @@ const WALL: WallItem[] = [
         const label = `Past ${tierLabel(s).toLowerCase()}`;
         return { name: s.name, url: s.url, logo: s.logo, iconOnly: s.iconOnly, label: s.period ? `${label} · ${s.period}` : label };
     }),
-    ...SUPPORTERS.map((s) => ({ name: s.name, url: `https://github.com/${s.login}`, avatar: `https://github.com/${s.login}.png?size=64`, label: 'Supporter' })),
+    ...PREVIOUS_SUPPORTERS.map((s) => ({ name: s.name, url: `https://github.com/${s.login}`, avatar: `https://github.com/${s.login}.png?size=64`, label: 'Past supporter' })),
 ];
 
 // Prefilled post for the share button. Keep it within X's 280 characters (the link counts as 23, an emoji as 2).
