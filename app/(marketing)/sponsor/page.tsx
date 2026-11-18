@@ -1,8 +1,8 @@
-import { Check, Cloud, HandCoins, MessageCircle, Minus, Users } from "lucide-react";
+import { ArrowUpRight, Check, Cloud, HandCoins, MessageCircle, Minus, Users } from "lucide-react";
 import IconCard from "@/components/marketing/IconCard";
 import { getRepoStats, formatCount } from "@/lib/github";
 import { DISCORD_URL, sponsorCheckoutUrl } from "@/lib/constants";
-import { ACTIVE_SPONSORS, FUNDING_USES, REGISTERED_USERS, SPONSOR_CONTACT_EMAIL, SPONSOR_GOAL, SPONSOR_RECIPIENT, SPONSOR_TIERS, tierBorder, type SponsorTierId } from "@/lib/sponsors";
+import { ACTIVE_SPONSORS, FUNDING_USES, PREVIOUS_SPONSORS, PREVIOUS_SUPPORTERS, REGISTERED_USERS, SPONSOR_CONTACT_EMAIL, SPONSOR_GOAL, SPONSOR_RECIPIENT, SPONSOR_TIERS, TIER_COLOR, tierBorder, type Sponsor, type SponsorTierId } from "@/lib/sponsors";
 import { cn } from "@/lib/utils";
 
 export const metadata = {
@@ -28,6 +28,74 @@ const FAQ = [
     ['Can I stop?', 'Yes, any time from your GitHub Sponsors settings.'],
     ['Can we sponsor as a company?', 'Yes. Sponsor from your organisation’s GitHub account, then send us your logo and link. For invoices or a custom deal, talk with us.'],
 ];
+
+const tierName = (id?: SponsorTierId) => SPONSOR_TIERS.find((t) => t.id === id)?.name ?? 'Sponsor';
+
+// Logo, or the name when the logo is a mark without it
+const SponsorLogo = ({ sponsor, className }: { sponsor: Sponsor; className?: string }) => (
+    <span className={cn('flex items-center gap-2', className)}>
+        {sponsor.logo && <img src={sponsor.logo} alt={sponsor.iconOnly ? '' : sponsor.name} className="h-7 w-auto" />}
+        {(!sponsor.logo || sponsor.iconOnly) && <span className="text-[17px] font-bold">{sponsor.name}</span>}
+    </span>
+);
+
+const pastTile = 'flex h-14 items-center justify-between gap-3 rounded-[12px] bg-page px-4 shadow-[inset_0_0_0_1px_var(--line)] transition-colors hover:bg-hover/60';
+
+// Current sponsors first and large, then everyone who used to back us, quieter
+const BackedBy = () => (
+    <section id="sponsors" className="mt-24 scroll-mt-24">
+        <p className="kicker text-brand-ink">Backed by</p>
+        <h2 className="mt-2 text-[28px] font-bold tracking-[-0.04em] md:text-[34px]">The people and companies keeping it free.</h2>
+
+        {ACTIVE_SPONSORS.length > 0 && (
+            <div className="mt-8 grid gap-3 md:grid-cols-2">
+                {ACTIVE_SPONSORS.map((sponsor) => (
+                    <a key={sponsor.name} href={sponsor.url} target="_blank" rel="noreferrer" className="hatch group" style={{ outline: `1px solid ${tierBorder(sponsor.tier ?? 'company')}` }}>
+                        <div className="card flex h-full flex-col gap-4 p-5">
+                            <div className="flex items-center justify-between gap-3">
+                                <SponsorLogo sponsor={sponsor} />
+                                <span className="kicker text-[10px]" style={{ color: TIER_COLOR[sponsor.tier ?? 'company'] }}>{tierName(sponsor.tier)}</span>
+                            </div>
+                            {sponsor.blurb && <p className="text-[14px] leading-relaxed text-muted-foreground">{sponsor.blurb}</p>}
+                            <span className="mt-auto flex items-center gap-1 text-[13px] font-semibold text-faint transition-colors group-hover:text-brand-ink">
+                                Visit {sponsor.name} <ArrowUpRight className="size-3.5" />
+                            </span>
+                        </div>
+                    </a>
+                ))}
+            </div>
+        )}
+
+        {(PREVIOUS_SPONSORS.length > 0 || PREVIOUS_SUPPORTERS.length > 0) && (
+            <div className="hatch mt-3">
+                <div className="card p-5">
+                    <p className="kicker">Previously backed by</p>
+                    <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {PREVIOUS_SPONSORS.map((sponsor) => (
+                            <li key={sponsor.name}>
+                                <a href={sponsor.url} target="_blank" rel="noreferrer" className={pastTile}>
+                                    <SponsorLogo sponsor={sponsor} className="opacity-60 grayscale" />
+                                    <span className="num shrink-0 text-[12px] text-faint">Past {tierName(sponsor.tier).toLowerCase()}{sponsor.period ? ` · ${sponsor.period}` : ''}</span>
+                                </a>
+                            </li>
+                        ))}
+                        {PREVIOUS_SUPPORTERS.map(({ name, login }) => (
+                            <li key={login}>
+                                <a href={`https://github.com/${login}`} target="_blank" rel="noreferrer" className={pastTile}>
+                                    <span className="flex min-w-0 items-center gap-2.5">
+                                        <img src={`https://github.com/${login}.png?size=64`} alt="" width={28} height={28} loading="lazy" className="size-7 rounded-full opacity-80 grayscale" />
+                                        <span className="truncate font-semibold text-muted-foreground">{name}</span>
+                                    </span>
+                                    <span className="shrink-0 text-[12px] text-faint">Past supporter</span>
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
+        )}
+    </section>
+);
 
 export default async function SponsorPage() {
     const repo = await getRepoStats();
@@ -73,6 +141,8 @@ export default async function SponsorPage() {
                     </div>
                 </div>
             </section>
+
+            <BackedBy />
 
             <section id="tiers" className="mt-24 scroll-mt-24">
                 <p className="kicker text-brand-ink">Monthly</p>

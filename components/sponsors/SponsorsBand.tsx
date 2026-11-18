@@ -1,29 +1,21 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ACTIVE_SPONSORS, PREVIOUS_SPONSORS, SPONSOR_CONTACT_EMAIL, SPONSOR_TIERS, SUPPORTERS, TIER_COLOR, tierBorder, type Sponsor, type SponsorTierId } from "@/lib/sponsors";
+import { ACTIVE_SPONSORS, SPONSOR_CONTACT_EMAIL, SPONSOR_TIERS, TIER_COLOR, tierBorder, type Sponsor, type SponsorTierId } from "@/lib/sponsors";
 import { cn } from "@/lib/utils";
 
 const tile = 'flex h-12 items-center rounded-[12px] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-side';
 // Outline, not an inset shadow, so the tier colour also draws over full-bleed banners
 const ring = (tier: SponsorTierId) => ({ outline: `1px solid ${tierBorder(tier)}`, outlineOffset: -1 });
 
-const SponsorMark = ({ sponsor, tier, muted }: { sponsor: Sponsor; tier: SponsorTierId; muted?: boolean }) => (
+const SponsorMark = ({ sponsor, tier }: { sponsor: Sponsor; tier: SponsorTierId }) => (
     <a href={sponsor.url} target="_blank" rel="noreferrer" title={sponsor.name} style={ring(tier)}
         className={cn(tile, sponsor.banner ? 'overflow-hidden' : 'min-w-[140px] justify-center gap-2 bg-page/60 px-4')}>
         {sponsor.banner ? <img src={sponsor.banner} alt={sponsor.name} className="h-full w-auto" /> : (
-            <span className={cn('flex items-center gap-2', muted && 'opacity-55 grayscale')}>
+            <span className="flex items-center gap-2">
                 {sponsor.logo && <img src={sponsor.logo} alt={sponsor.iconOnly ? '' : sponsor.name} className="h-6 w-auto" />}
                 {(!sponsor.logo || sponsor.iconOnly) && <span className="font-bold">{sponsor.name}</span>}
-                {muted && sponsor.period && <span className="num text-[11px] text-faint">{sponsor.period}</span>}
             </span>
         )}
-    </a>
-);
-
-const Person = ({ name, login }: { name: string; login: string }) => (
-    <a href={`https://github.com/${login}`} target="_blank" rel="noreferrer" style={ring('supporter')} className={cn(tile, 'gap-2.5 bg-page/60 px-3')}>
-        <img src={`https://github.com/${login}.png?size=64`} alt="" width={28} height={28} loading="lazy" className="size-7 rounded-full opacity-80 grayscale" />
-        <span className="text-[14px] font-semibold text-muted-foreground">{name}</span>
     </a>
 );
 
@@ -55,10 +47,6 @@ export default function SponsorsBand() {
         // A limited tier shows every free slot; an unlimited one shows a single invite
         return { id, sponsors, limited: !!tier.slots, open: tier.slots ? Math.max(0, tier.slots - sponsors.length) : 1, openLabel: tier.slots ? 'Slot open' : 'Add yours' };
     });
-    // Past sponsors without a recorded tier sit with the partners rather than disappearing
-    const previous = (['partner', 'company'] as const)
-        .map((id) => ({ id, sponsors: PREVIOUS_SPONSORS.filter((s) => !s.hideInFooter && (s.tier ?? 'partner') === id) }))
-        .filter((g) => g.sponsors.length > 0);
 
     return (
         <section aria-labelledby="footer-sponsors">
@@ -88,23 +76,6 @@ export default function SponsorsBand() {
                         </div>
                     </div>
 
-                    {(previous.length > 0 || SUPPORTERS.length > 0) && (
-                        <div className="flex flex-col gap-2.5">
-                            <p className="kicker">Previously backed by</p>
-                            <div className="flex flex-wrap gap-x-6 gap-y-4">
-                                {previous.map((g) => (
-                                    <Group key={g.id} tier={g.id}>
-                                        {g.sponsors.map((s) => <SponsorMark key={s.name} sponsor={s} tier={g.id} muted />)}
-                                    </Group>
-                                ))}
-                                {SUPPORTERS.length > 0 && (
-                                    <Group tier="supporter">
-                                        {SUPPORTERS.map((p) => <Person key={p.login} {...p} />)}
-                                    </Group>
-                                )}
-                            </div>
-                        </div>
-                    )}
                 </div>
 
             </div>
