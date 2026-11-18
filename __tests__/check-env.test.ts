@@ -14,6 +14,7 @@ const requiredEnvNames = [
     'FINNHUB_API_KEY',
     'NEXT_PUBLIC_FINNHUB_API_KEY',
 ];
+const requiredEnvNamesLowercase = new Set(requiredEnvNames.map((name) => name.toLowerCase()));
 const regularRequiredEnv = {
     MONGODB_URI: 'mongodb://example.test/openstock',
     BETTER_AUTH_SECRET: 'test-secret',
@@ -24,6 +25,12 @@ const finnhubKeyNames = [
     'FINNHUB_API_KEY',
     'NEXT_PUBLIC_FINNHUB_API_KEY',
 ] as const;
+
+function clearRequiredEnvVars(env: NodeJS.ProcessEnv) {
+    for (const name of Object.keys(env)) {
+        if (requiredEnvNamesLowercase.has(name.toLowerCase())) delete env[name];
+    }
+}
 
 describe('scripts/check-env.mjs', () => {
     let workingDirectory: string;
@@ -38,7 +45,7 @@ describe('scripts/check-env.mjs', () => {
 
     function runChecker(overrides: Record<string, string> = {}) {
         const env = { ...process.env };
-        for (const name of requiredEnvNames) delete env[name];
+        clearRequiredEnvVars(env);
         Object.assign(env, overrides);
         // Keep dotenv from reading a .env file from the repository or the caller's cwd.
         env.DOTENV_CONFIG_PATH = path.join(workingDirectory, 'no-project-env');
@@ -52,6 +59,22 @@ describe('scripts/check-env.mjs', () => {
         expect(result.error).toBeUndefined();
         return result;
     }
+
+    it('clears required environment variables regardless of case and keeps unrelated variables', () => {
+        const env: NodeJS.ProcessEnv = {
+            mOnGoDb_UrI: 'inherited-mongodb-uri',
+            better_auth_secret: 'inherited-auth-secret',
+            Better_Auth_Url: 'inherited-auth-url',
+            finnhub_api_keys: 'inherited-finnhub-keys',
+            Finnhub_Api_Key: 'inherited-finnhub-key',
+            next_public_finnhub_api_key: 'inherited-public-finnhub-key',
+            UNRELATED_SETTING: 'keep-me',
+        };
+
+        clearRequiredEnvVars(env);
+
+        expect(env).toEqual({ UNRELATED_SETTING: 'keep-me' });
+    });
 
     it.each(finnhubKeyNames)('reports 4/4 when %s is set', (finnhubKeyName) => {
         const result = runChecker({
