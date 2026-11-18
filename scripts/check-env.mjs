@@ -32,6 +32,16 @@ const requiredVars = {
 // The Finnhub key can be set under any of these names (checked separately below)
 const finnhubKeyNames = ['FINNHUB_API_KEYS', 'FINNHUB_API_KEY', 'NEXT_PUBLIC_FINNHUB_API_KEY'];
 
+// Grouped required checks where any candidate key satisfies one required check
+const requiredKeyGroups = [
+    {
+        names: finnhubKeyNames,
+        description: 'Finnhub API key',
+        missingDescription: 'Finnhub API key (free at finnhub.io)',
+        hint: 'Get a free key at finnhub.io → Dashboard → API, then set FINNHUB_API_KEY (or several, comma-separated, in FINNHUB_API_KEYS)',
+    },
+];
+
 /**
  * OPTIONAL: Can be set but not required for basic functionality.
  * These are checked and reported but won't cause failure.
@@ -152,12 +162,24 @@ for (const [key, description] of Object.entries(requiredVars)) {
     }
 }
 
-// 1b. A Finnhub key under any of its names
-const finnhubKey = finnhubKeyNames.find((key) => process.env[key]?.trim());
-if (finnhubKey) {
-    state.present.push({ key: finnhubKey, description: 'Finnhub API key', value: maskValue(process.env[finnhubKey].trim()), category: 'required' });
-} else {
-    state.missing.push({ key: finnhubKeyNames.join(' or '), description: 'Finnhub API key (free at finnhub.io)', severity: 'critical', hint: 'Get a free key at finnhub.io → Dashboard → API, then set FINNHUB_API_KEY (or several, comma-separated, in FINNHUB_API_KEYS)' });
+// 1b. Grouped required variables (e.g. Finnhub key under any accepted name)
+for (const group of requiredKeyGroups) {
+    const matchedKey = group.names.find((key) => process.env[key]?.trim());
+    if (matchedKey) {
+        state.present.push({
+            key: matchedKey,
+            description: group.description,
+            value: maskValue(process.env[matchedKey].trim()),
+            category: 'required',
+        });
+    } else {
+        state.missing.push({
+            key: group.names.join(' or '),
+            description: group.missingDescription,
+            severity: 'critical',
+            hint: group.hint,
+        });
+    }
 }
 
 // 2. Check deprecated variables
@@ -253,15 +275,19 @@ if (state.optionalPresent.length === 0) {
 // =============================================
 
 console.log('\n' + '='.repeat(70));
-const criticalMissing = state.missing.filter(m => m.severity === 'critical').length;
-const totalRequired = Object.keys(requiredVars).length;
-const presentRequired = state.present.length;
+const criticalMissing = state.missing.filter((m) => m.severity === 'critical').length;
+const totalRequired = Object.keys(requiredVars).length + requiredKeyGroups.length;
+const presentRequired = Math.min(
+    state.present.filter((item) => item.category === 'required').length,
+    totalRequired
+);
 
 console.log(`Summary: ${presentRequired}/${totalRequired} required variables present`);
 console.log(`Optional variables: ${state.optionalPresent.length}/${Object.keys(optionalVars).length} enabled`);
 
-if (criticalMissing > 0) {
-    console.log(`\n⚠️  ${criticalMissing} critical variable(s) are missing.`);
+if (criticalMissing > 0 || presentRequired < totalRequired) {
+    const missingCount = criticalMissing > 0 ? criticalMissing : (totalRequired - presentRequired);
+    console.log(`\n⚠️  ${missingCount} critical variable(s) are missing.`);
     console.log('\nTo fix:');
     console.log('1. Create a .env file in the project root (copy from .env.example)');
     console.log('2. Add the missing variables listed above');
