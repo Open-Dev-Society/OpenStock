@@ -8,9 +8,6 @@ export const DATA_MODE: DataMode = process.env.NEXT_PUBLIC_OPENSTOCK_DATA_MODE =
 
 export const QUOTE_TTL_SECONDS = DATA_MODE === 'realtime' ? 15 : 3600;
 
-// Keep client quote batching aligned with the server route's per-request cap.
-export const MAX_QUOTE_SYMBOLS_PER_REQUEST = 25;
-
 export const isRealtime = DATA_MODE === 'realtime';
 
 // Email price alerts are an OpenStock Cloud feature: on in realtime mode (Cloud or self-hosted), off on the free hourly site.
