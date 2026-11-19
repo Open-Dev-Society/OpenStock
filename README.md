@@ -161,7 +161,7 @@ Every variable is listed with comments in [`.env.example`](.env.example). The on
 | `NODEMAILER_EMAIL`, `NODEMAILER_PASSWORD` | No | Sending email through Gmail, with an app password. Without them, emails are skipped |
 | `GEMINI_API_KEY` (or MiniMax or Siray) | No | AI-written welcome emails and the news digest |
 | `ADANOS_API_KEY` | No | The sentiment card on stock pages |
-| `ALPHAI_API_KEY` | No | The scored news card on stock pages. A free key, no card needed, is at [alphai.io/developers](https://alphai.io/developers) |
+| `ALPHAI_API_KEY` | No | The scored news card on stock pages |
 | `KIT_API_KEY`, `KIT_API_SECRET`, `KIT_WELCOME_FORM_ID` | No | The weekly digest newsletter in Kit |
 | `GOOGLE_CLIENT_ID` / `_SECRET`, `GITHUB_CLIENT_ID` / `_SECRET` | No | Social sign-in. Callbacks: `<BETTER_AUTH_URL>/api/auth/callback/google` and `/github` |
 
@@ -264,7 +264,7 @@ __tests__/        Vitest tests
 - **Finnhub**: search, quotes, company profiles and news. Responses are cached and shared (for an hour, or 15 seconds in realtime mode), with timeouts and a key pool, so a slow upstream never hangs a page.
 - **TradingView**: the chart, heatmap, financials, technicals and profile widgets.
 - **Adanos** (optional): the sentiment card.
-- **AlphAI** (optional): the scored news card. One request per symbol, cached for an hour, so a free key covers a personal instance.
+- **AlphAI** (optional): the scored news card.
 - **Better Auth with MongoDB**: accounts and sessions. Pages and server actions check the session on the server; the middleware only redirects signed-out visitors.
 - **Inngest** runs the background jobs:
 
