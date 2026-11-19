@@ -7,6 +7,7 @@ import IconCard from "@/components/marketing/IconCard";
 import { formatCount, getRepoStats } from "@/lib/github";
 import { cn } from "@/lib/utils";
 import { sidebarSponsors } from "@/lib/sponsors";
+import SponsorLink from "@/components/sponsors/SponsorLink";
 import { DISCORD_URL, GOOD_FIRST_ISSUES_URL, REPO_URL } from "@/lib/constants";
 
 const FEATURES = [
@@ -74,7 +75,7 @@ const SponsorBanner = () => {
     return (
         <aside aria-label="Sponsors" className="fixed top-[130px] z-30 hidden w-[200px] right-[calc((100vw-1200px)/4-100px)] min-[1680px]:flex min-[1680px]:flex-col min-[1680px]:gap-3">
             {sponsors.map((sponsor) => (
-                <a key={sponsor.name} href={sponsor.url} target="_blank" rel="noreferrer" className="hatch group">
+                <SponsorLink key={sponsor.name} sponsor={sponsor} className="hatch group">
                     <div className="card flex flex-col gap-4 p-5">
                         <p className="kicker flex items-center gap-1.5 text-brand-ink"><span className="live-dot" /> Sponsor</p>
                         {sponsor.logo && <img src={sponsor.logo} alt={sponsor.iconOnly ? '' : sponsor.name} className="h-14 w-auto max-w-full self-start object-contain" />}
@@ -84,7 +85,7 @@ const SponsorBanner = () => {
                         </div>
                         <span className="btn btn-ghost h-9 text-[13px] group-hover:bg-[var(--hover)] group-hover:text-foreground">Visit {sponsor.name} <ArrowUpRight /></span>
                     </div>
-                </a>
+                </SponsorLink>
             ))}
         </aside>
     );

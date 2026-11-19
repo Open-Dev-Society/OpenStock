@@ -5,6 +5,7 @@ import PageHero from "@/components/marketing/PageHero";
 import SectionHead from "@/components/marketing/SectionHead";
 import { REPO_URL } from "@/lib/constants";
 import { ACTIVE_SPONSORS, PREVIOUS_SPONSORS, PREVIOUS_SUPPORTERS, SPONSOR_TIERS, type Sponsor } from "@/lib/sponsors";
+import SponsorLink from "@/components/sponsors/SponsorLink";
 import { cn } from "@/lib/utils";
 
 export const metadata = {
@@ -37,13 +38,13 @@ const PRAISE: Praise[] = [
     { kind: 'article', source: 'daily.dev', title: 'OpenStock is an open-source alternative to expensive market platforms', url: 'https://daily.dev/posts/openstock-is-an-open-source-alternative-to-expensive-market-platforms--0cijqlabk' },
 ];
 
-type WallItem = { name: string; url: string; label: string; logo?: string; iconOnly?: boolean; avatar?: string };
+type WallItem = { name: string; url: string; label: string; logo?: string; iconOnly?: boolean; avatar?: string; sponsor?: Sponsor };
 
 // "Partner", "Company", or "Sponsor" when no tier is recorded
 const tierLabel = (s: Sponsor) => SPONSOR_TIERS.find((t) => t.id === s.tier)?.name ?? 'Sponsor';
 
 const WALL: WallItem[] = [
-    ...ACTIVE_SPONSORS.map((s) => ({ name: s.name, url: s.url, logo: s.logo, iconOnly: s.iconOnly, label: tierLabel(s) })),
+    ...ACTIVE_SPONSORS.map((s) => ({ name: s.name, url: s.url, logo: s.logo, iconOnly: s.iconOnly, label: tierLabel(s), sponsor: s })),
     ...PREVIOUS_SPONSORS.map((s) => {
         const label = `Past ${tierLabel(s).toLowerCase()}`;
         return { name: s.name, url: s.url, logo: s.logo, iconOnly: s.iconOnly, label: s.period ? `${label} · ${s.period}` : label };
@@ -61,20 +62,32 @@ const SHARE_URL = `https://x.com/intent/post?text=${encodeURIComponent(SHARE_TEX
 const EDIT_URL = `${REPO_URL}/edit/main/app/%28marketing%29/love/page.tsx`;
 
 // Copies after the first are decoration for the loop: hidden from screen readers and skipped by Tab, still clickable.
-const Chip = ({ item, copy }: { item: WallItem; copy: boolean }) => (
-    <a
-        href={item.url}
-        target="_blank"
-        rel="noreferrer"
-        tabIndex={copy ? -1 : undefined}
-        className="mr-3 flex h-16 shrink-0 items-center gap-3 rounded-[14px] bg-card px-5 shadow-[inset_0_0_0_1px_var(--line)] transition-colors hover:bg-hover"
-    >
+const chipClass = "mr-3 flex h-16 shrink-0 items-center gap-3 rounded-[14px] bg-card px-5 shadow-[inset_0_0_0_1px_var(--line)] transition-colors hover:bg-hover";
+
+const ChipInner = ({ item }: { item: WallItem }) => (
+    <>
         {item.avatar && <img src={item.avatar} alt="" width={32} height={32} loading="lazy" className="size-8 rounded-full" />}
         {item.logo && <img src={item.logo} alt={item.iconOnly ? '' : item.name} className="h-6 w-auto" />}
         <span className="flex flex-col gap-0.5">
             {(!item.logo || item.iconOnly) && <span className="text-[14px] font-semibold leading-none">{item.name}</span>}
             <span className="kicker leading-none">{item.label}</span>
         </span>
+    </>
+);
+
+const Chip = ({ item, copy }: { item: WallItem; copy: boolean }) => item.sponsor ? (
+    <SponsorLink sponsor={item.sponsor} tabIndex={copy ? -1 : undefined} className={chipClass}>
+        <ChipInner item={item} />
+    </SponsorLink>
+) : (
+    <a
+        href={item.url}
+        target="_blank"
+        rel="noreferrer"
+        tabIndex={copy ? -1 : undefined}
+        className={chipClass}
+    >
+        <ChipInner item={item} />
     </a>
 );
 
