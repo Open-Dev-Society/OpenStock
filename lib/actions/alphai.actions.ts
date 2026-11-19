@@ -39,7 +39,9 @@ async function fetchTickerNews(symbol: string, apiKey: string): Promise<{ value:
                 Accept: 'application/json',
             },
             signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-            next: { revalidate: NEWS_TTL_SECONDS },
+            // The in-memory cache below owns both TTLs; the Next data cache would serve a stale or
+            // bad body past them, so it stays out.
+            cache: 'no-store',
         });
 
         if (!response.ok) {

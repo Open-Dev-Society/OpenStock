@@ -149,6 +149,7 @@ describe('getAlphaiTickerNews', () => {
         expect(url.origin + url.pathname).toBe('https://api.alphai.io/api/news/');
         expect(Object.fromEntries(url.searchParams)).toEqual({ symbol: 'NVDA', page_size: '5', min_relevance: '5', collapse: 'story' });
         expect((init?.headers as Record<string, string>).Authorization).toBe('Bearer test-key');
+        expect(init?.cache).toBe('no-store');
     });
 
     it('returns null when the key is rate limited', async () => {
