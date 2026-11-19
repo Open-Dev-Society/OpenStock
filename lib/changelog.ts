@@ -59,6 +59,12 @@ export const RELEASES: Release[] = [
                 ],
             },
             {
+                title: 'Phones and tablets',
+                items: [
+                    'No more pages wider than the screen: the update banner, header, tables, stat tiles and stock headers now fit from 320px phones to tablets, and English names stay readable on the Arabic layout. #175',
+                ],
+            },
+            {
                 title: 'Self-hosting',
                 items: [
                     'Docker and Railway self-hosters can switch on realtime mode again: the data mode is passed in at build time. #134',
@@ -81,7 +87,7 @@ export const RELEASES: Release[] = [
             },
         ],
         credits: [
-            { login: 'ravixalgorithm', prs: [131, 132, 133, 134, 135, 136, 138, 139, 141, 145, 150] },
+            { login: 'ravixalgorithm', prs: [131, 132, 133, 134, 135, 136, 138, 139, 141, 145, 150, 175] },
             { login: 'ahmaddirar-ios', prs: [142, 146, 148] },
             { login: 'octo-patch', prs: [140] },
             { login: 'pawisoon', prs: [147, 157, 158] },
