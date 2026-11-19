@@ -93,6 +93,7 @@
 - Pick indicators once (SMA, EMA, Bollinger Bands, VWAP, RSI, MACD, Stochastic, ATR) and they stay on every chart.
 - Financials, technicals and the company profile.
 - Sentiment from Reddit, X, news and Polymarket (with an Adanos key).
+- Recent news rated 1 to 10 for relevance, with what each story means for the stock (with an AlphAI key).
 
 **Watchlist and alerts**
 - A watchlist of up to 50 stocks, saved to your account.
@@ -122,7 +123,7 @@ Charts always stream live from TradingView. Quotes, watchlist prices and alerts 
 |---|---|
 | App | Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS v4, shadcn/ui and Radix |
 | Accounts and data | Better Auth, MongoDB with Mongoose |
-| Market data | Finnhub, TradingView widgets, Adanos (sentiment) |
+| Market data | Finnhub, TradingView widgets, Adanos (sentiment), AlphAI (scored news) |
 | Background jobs | Inngest |
 | Email | Nodemailer (Gmail), Kit for the newsletter |
 | AI | Gemini, MiniMax or Siray |
@@ -161,6 +162,7 @@ Every variable is listed with comments in [`.env.example`](.env.example). The on
 | `NODEMAILER_EMAIL`, `NODEMAILER_PASSWORD` | No | Sending email through Gmail, with an app password. Without them, emails are skipped |
 | `GEMINI_API_KEY` (or MiniMax or Siray) | No | AI-written welcome emails and the news digest |
 | `ADANOS_API_KEY` | No | The sentiment card on stock pages |
+| `ALPHAI_API_KEY` | No | The scored news card on stock pages. A free key, no card needed, is at [alphai.io/developers](https://alphai.io/developers) |
 | `KIT_API_KEY`, `KIT_API_SECRET`, `KIT_WELCOME_FORM_ID` | No | The weekly digest newsletter in Kit |
 | `GOOGLE_CLIENT_ID` / `_SECRET`, `GITHUB_CLIENT_ID` / `_SECRET` | No | Social sign-in. Callbacks: `<BETTER_AUTH_URL>/api/auth/callback/google` and `/github` |
 
@@ -263,6 +265,7 @@ __tests__/        Vitest tests
 - **Finnhub**: search, quotes, company profiles and news. Responses are cached and shared (for an hour, or 15 seconds in realtime mode), with timeouts and a key pool, so a slow upstream never hangs a page.
 - **TradingView**: the chart, heatmap, financials, technicals and profile widgets.
 - **Adanos** (optional): the sentiment card.
+- **AlphAI** (optional): the scored news card. One request per symbol, cached for an hour, so a free key covers a personal instance.
 - **Better Auth with MongoDB**: accounts and sessions. Pages and server actions check the session on the server; the middleware only redirects signed-out visitors.
 - **Inngest** runs the background jobs:
 
@@ -406,6 +409,7 @@ Because the future belongs to those who build it openly.
 
 - [Finnhub](https://finnhub.io) for accessible market data, and [TradingView](https://www.tradingview.com) for embeddable charts and widgets
 - [Adanos](https://adanos.org) for sentiment data
+- [AlphAI](https://alphai.io) for scored financial news
 - shadcn/ui, Radix UI, Tailwind CSS and the Next.js community
 - [Inngest](https://www.inngest.com) for dependable background jobs, and [Better Auth](https://www.better-auth.com) for simple, secure authentication
 - [Adrian Hajdin (JavaScript Mastery)](https://github.com/adrianhajdin), whose [Stock Market App tutorial](https://www.youtube.com/watch?v=gu4pafNCXng) was where OpenStock started

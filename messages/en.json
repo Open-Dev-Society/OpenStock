@@ -417,6 +417,8 @@
   "StockPage": {
     "sentimentTitle": "Sentiment",
     "sentimentSub": "Reddit, X.com, news and Polymarket",
+    "alphaiNewsTitle": "Scored news",
+    "alphaiNewsSub": "Recent stories rated 1 to 10 for relevance",
     "dividendYieldTitle": "Dividend Yield",
     "chartTitle": "Chart",
     "chartUnavailableSub": "Only on TradingView for this exchange",
@@ -488,6 +490,17 @@
       "stable": "Stable"
     },
     "noTrend": "No trend"
+  },
+  "AlphaiNews": {
+    "relevanceValue": "{score}/10",
+    "relevanceHint": "AlphAI relevance score: {score} out of 10",
+    "sentiment": {
+      "positive": "Positive",
+      "neutral": "Neutral",
+      "negative": "Negative"
+    },
+    "outlets": "{count, plural, one {# outlet} other {# outlets}}",
+    "scoredBy": "News scored by <link>AlphAI</link>"
   },
   "WatchlistButton": {
     "added": "{symbol} added to watchlist",

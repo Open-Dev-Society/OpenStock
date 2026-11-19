@@ -53,6 +53,9 @@ const optionalVars = {
     'ADANOS_API_KEY': 'Adanos API key for stock sentiment insights (Reddit, X.com, news, Polymarket)',
     'ADANOS_API_BASE_URL': 'Adanos API base URL override (default: https://api.adanos.org)',
 
+    // AlphAI scored news (optional)
+    'ALPHAI_API_KEY': 'AlphAI API key for the scored news card on stock pages (free key at https://alphai.io/developers)',
+
     // MiniMax (optional AI provider fallback)
     'MINIMAX_API_KEY': 'MiniMax API key (used when AI_PROVIDER=minimax or as fallback)',
     'MINIMAX_MODEL': 'MiniMax model override (default: MiniMax-M3.1-Flash; alternative: MiniMax-M3)',

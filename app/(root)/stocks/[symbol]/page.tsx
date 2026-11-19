@@ -4,6 +4,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import TradingViewWidget from "@/components/TradingViewWidget";
 import StockHeader, { StockHeaderSkeleton } from "@/components/stocks/StockHeader";
 import StockSentimentCard from "@/components/stocks/StockSentimentCard";
+import AlphaiNewsCard from "@/components/stocks/AlphaiNewsCard";
 import StockChart from "@/components/stocks/StockChart";
 import Panel from "@/components/Panel";
 import {
@@ -12,6 +13,7 @@ import {
     COMPANY_FINANCIALS_WIDGET_CONFIG,
 } from "@/lib/constants";
 import { getStockSentimentInsights } from '@/lib/actions/adanos.actions';
+import { getAlphaiTickerNews } from '@/lib/actions/alphai.actions';
 import { getStockMetrics } from '@/lib/actions/finnhub.actions';
 import { hasFinnhubCompanyData } from '@/lib/markets';
 import { formatSymbolForTradingView, isChartEmbeddable, tradingViewSymbolUrl } from '@/lib/utils';
@@ -24,6 +26,16 @@ async function Sentiment({ symbol }: { symbol: string }) {
     return (
         <Panel title={t('sentimentTitle')} sub={t('sentimentSub')}>
             <StockSentimentCard insight={insight} />
+        </Panel>
+    );
+}
+
+async function AlphaiNews({ symbol }: { symbol: string }) {
+    const [news, t] = await Promise.all([getAlphaiTickerNews(symbol), getTranslations('StockPage')]);
+    if (!news) return null;
+    return (
+        <Panel title={t('alphaiNewsTitle')} sub={t('alphaiNewsSub')}>
+            <AlphaiNewsCard news={news} />
         </Panel>
     );
 }
@@ -95,6 +107,9 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                     </Suspense>
                     <Suspense fallback={null}>
                         <Sentiment symbol={symbol} />
+                    </Suspense>
+                    <Suspense fallback={null}>
+                        <AlphaiNews symbol={symbol} />
                     </Suspense>
                     <Panel title={t('profileTitle')} sub={t('profileSub')}>
                         <TradingViewWidget

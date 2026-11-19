@@ -417,6 +417,8 @@
   "StockPage": {
     "sentimentTitle": "Nastrój",
     "sentimentSub": "Reddit, X.com, wiadomości i Polymarket",
+    "alphaiNewsTitle": "Ocenione wiadomości",
+    "alphaiNewsSub": "Najnowsze tematy z oceną istotności od 1 do 10",
     "dividendYieldTitle": "Stopa dywidendy",
     "chartTitle": "Wykres",
     "chartUnavailableSub": "Dla tej giełdy tylko w TradingView",
@@ -488,6 +490,17 @@
       "mentions": "{value} {count, plural, one {wzmianka} few {wzmianki} many {wzmianek} other {wzmianki}}",
       "trades": "{value} {count, plural, one {transakcja} few {transakcje} many {transakcji} other {transakcji}}"
     }
+  },
+  "AlphaiNews": {
+    "relevanceValue": "{score}/10",
+    "relevanceHint": "Ocena istotności AlphAI: {score} na 10",
+    "sentiment": {
+      "positive": "Pozytywnie",
+      "neutral": "Neutralnie",
+      "negative": "Negatywnie"
+    },
+    "outlets": "{count, plural, one {# serwis} few {# serwisy} many {# serwisów} other {# serwisu}}",
+    "scoredBy": "Wiadomości ocenia <link>AlphAI</link>"
   },
   "WatchlistButton": {
     "added": "Dodano {symbol} do listy obserwowanych",

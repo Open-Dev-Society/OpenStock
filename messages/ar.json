@@ -417,6 +417,8 @@
   "StockPage": {
     "sentimentTitle": "المعنويات",
     "sentimentSub": "ريديت و X والأخبار وبوليماركت",
+    "alphaiNewsTitle": "أخبار مقيّمة",
+    "alphaiNewsSub": "أحدث القصص مع تقييم للأهمية من 1 إلى 10",
     "dividendYieldTitle": "عائد التوزيعات",
     "chartTitle": "الشارت",
     "chartUnavailableSub": "متاح على TradingView فقط لهذا السوق",
@@ -488,6 +490,17 @@
       "stable": "مستقر"
     },
     "noTrend": "لا اتجاه"
+  },
+  "AlphaiNews": {
+    "relevanceValue": "{score}/10",
+    "relevanceHint": "تقييم الأهمية من AlphAI: {score} من 10",
+    "sentiment": {
+      "positive": "إيجابي",
+      "neutral": "محايد",
+      "negative": "سلبي"
+    },
+    "outlets": "{count, plural, two {مصدران} few {# مصادر} many {# مصدرًا} other {# مصدر}}",
+    "scoredBy": "تقييم الأخبار من <link>AlphAI</link>"
   },
   "WatchlistButton": {
     "added": "أُضيف {symbol} إلى قائمة المتابعة",
