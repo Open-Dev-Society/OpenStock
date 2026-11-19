@@ -20,7 +20,8 @@ export default function UpdateBanner({ className, labels = DEFAULT_LABELS }: { c
                 )}
             >
                 <span className="pill is-brand shrink-0">{labels.new}</span>
-                <span className="min-w-0 flex-1 truncate">
+                {/* The notes are English in every locale: dir=auto clips them at their own end on the Arabic page */}
+                <span dir="auto" className="min-w-0 flex-1 truncate rtl:text-right">
                     <span className="font-semibold text-foreground">{LATEST_RELEASE.title}:</span>{' '}
                     <span className="text-muted-foreground">{LATEST_RELEASE.summary}</span>
                 </span>
