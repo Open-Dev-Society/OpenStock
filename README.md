@@ -2,6 +2,11 @@
 
 <p align="center"><sub><a href="#sponsors">SPONSORED BY</a></sub></p>
 
+<!-- Link comes from PROXY_SELLER_URL in lib/sponsors.ts. Swap both when the tracking link arrives. -->
+<p align="center">
+  <a href="https://proxy-seller.com/"><img src="public/assets/images/proxy-seller-banner.png" alt="Proxy-Seller: 220+ GEOs, $0.70/GB, 15% off with promo code RAVI" width="420"></a>
+</p>
+
 <p align="center">
   <a href="https://www.swiftproxy.net/?ref=OpenStock"><picture><source media="(prefers-color-scheme: dark)" srcset="public/assets/images/swiftproxy-logo.png"><img src="public/assets/images/swiftproxy-banner.png" alt="Swiftproxy: 90M+ residential IPs across 220+ locations, 10% off with code PROXY90" width="300"></picture></a>
 </p>
@@ -431,5 +436,5 @@ Sponsorships are paid through GitHub Sponsors to [@ravixalgorithm](https://githu
 
 Can't sponsor right now? Pick a [good first issue](https://github.com/Open-Dev-Society/OpenStock/issues?q=is%3Aopen+label%3A%22good+first+issue%22), star the repo, or share OpenStock with someone who pays too much for a terminal.
 
-**Current sponsors** are shown at the [top of this README](#readme): [Swiftproxy](https://www.swiftproxy.net/?ref=OpenStock) · [Orbit](https://github.com/diip3sh/orbit)
+**Current sponsors** are shown at the [top of this README](#readme): [Proxy-Seller](https://proxy-seller.com/) · [Swiftproxy](https://www.swiftproxy.net/?ref=OpenStock) · [Orbit](https://github.com/diip3sh/orbit)
 **Previously backed by:** [Atlas Cloud](https://www.atlascloud.ai) · [Siray.ai](https://www.siray.ai/) (2026) · [RapidProxy](https://www.rapidproxy.io) (2026)

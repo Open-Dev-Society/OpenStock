@@ -61,8 +61,12 @@ export const SPONSOR_TIERS: {
     },
 ];
 
+// Placeholder until Proxy-Seller sends the custom tracking link. Swap this one line when it arrives.
+export const PROXY_SELLER_URL = 'https://proxy-seller.com/';
+
 export const ACTIVE_SPONSORS: Sponsor[] = [
     { name: 'Orbit', url: 'https://github.com/diip3sh/orbit', logo: '/assets/icons/orbit.png', iconOnly: true, tier: 'partner', blurb: 'Free, open-source screen recorder and video editor for macOS.' },
+    { name: 'Proxy-Seller', url: PROXY_SELLER_URL, logo: '/assets/images/proxy-seller-logo.png', tier: 'partner', blurb: '47M+ residential IPs across 220+ locations, with 99.7% uptime and 24/7 support. 15% off with promo code RAVI.' },
     { name: 'Swiftproxy', url: 'https://www.swiftproxy.net/?ref=OpenStock', logo: '/assets/images/swiftproxy-logo.png', tier: 'company', blurb: '90M+ residential IPs across 220+ locations, with free testing and 10% off using code PROXY90.' },
 ];
 

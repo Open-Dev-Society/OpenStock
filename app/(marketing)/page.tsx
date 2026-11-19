@@ -69,21 +69,23 @@ const CadenceRail = ({ perHour }: { perHour: number }) => (
 
 // Floats in the empty gutter beside the 1200px column, so it only shows on screens wide enough to have one.
 const SponsorBanner = () => {
-    const [sponsor] = sidebarSponsors();
-    if (!sponsor) return null;
+    const sponsors = sidebarSponsors();
+    if (sponsors.length === 0) return null;
     return (
-        <aside aria-label="Sponsor" className="fixed top-[130px] z-30 hidden w-[200px] right-[calc((100vw-1200px)/4-100px)] min-[1680px]:block">
-            <a href={sponsor.url} target="_blank" rel="noreferrer" className="hatch group">
-                <div className="card flex flex-col gap-4 p-5">
-                    <p className="kicker flex items-center gap-1.5 text-brand-ink"><span className="live-dot" /> Sponsor</p>
-                    {sponsor.logo && <img src={sponsor.logo} alt={sponsor.iconOnly ? '' : sponsor.name} className="h-14 w-auto self-start" />}
-                    <div>
-                        <p className="text-[17px] font-bold tracking-[-0.02em]">{sponsor.name}</p>
-                        {sponsor.blurb && <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{sponsor.blurb}</p>}
+        <aside aria-label="Sponsors" className="fixed top-[130px] z-30 hidden w-[200px] right-[calc((100vw-1200px)/4-100px)] min-[1680px]:flex min-[1680px]:flex-col min-[1680px]:gap-3">
+            {sponsors.map((sponsor) => (
+                <a key={sponsor.name} href={sponsor.url} target="_blank" rel="noreferrer" className="hatch group">
+                    <div className="card flex flex-col gap-4 p-5">
+                        <p className="kicker flex items-center gap-1.5 text-brand-ink"><span className="live-dot" /> Sponsor</p>
+                        {sponsor.logo && <img src={sponsor.logo} alt={sponsor.iconOnly ? '' : sponsor.name} className="h-14 w-auto max-w-full self-start object-contain" />}
+                        <div>
+                            <p className="text-[17px] font-bold tracking-[-0.02em]">{sponsor.name}</p>
+                            {sponsor.blurb && <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{sponsor.blurb}</p>}
+                        </div>
+                        <span className="btn btn-ghost h-9 text-[13px] group-hover:bg-[var(--hover)] group-hover:text-foreground">Visit {sponsor.name} <ArrowUpRight /></span>
                     </div>
-                    <span className="btn btn-ghost h-9 text-[13px] group-hover:bg-[var(--hover)] group-hover:text-foreground">Visit {sponsor.name} <ArrowUpRight /></span>
-                </div>
-            </a>
+                </a>
+            ))}
         </aside>
     );
 };
