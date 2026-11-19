@@ -61,7 +61,8 @@ describe('scripts/check-env.mjs', () => {
     }
 
     it('clears required environment variables regardless of case and keeps unrelated variables', () => {
-        const env: NodeJS.ProcessEnv = {
+        // A cast: ProcessEnv requires NODE_ENV, and this test checks the exact keys left over
+        const env = {
             mOnGoDb_UrI: 'inherited-mongodb-uri',
             better_auth_secret: 'inherited-auth-secret',
             Better_Auth_Url: 'inherited-auth-url',
@@ -69,7 +70,7 @@ describe('scripts/check-env.mjs', () => {
             Finnhub_Api_Key: 'inherited-finnhub-key',
             next_public_finnhub_api_key: 'inherited-public-finnhub-key',
             UNRELATED_SETTING: 'keep-me',
-        };
+        } as NodeJS.ProcessEnv;
 
         clearRequiredEnvVars(env);
 
