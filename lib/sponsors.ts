@@ -2,6 +2,12 @@
 // Perks only name placements the code actually renders (README, sponsor wall, site footer,
 // landing page, in-app sidebar), so the page never promises something the site doesn't do.
 
+export type SponsorPerk = {
+    code: string;
+    discount: string;
+    note?: string;
+};
+
 export type Sponsor = {
     name: string;
     url: string;
@@ -9,6 +15,7 @@ export type Sponsor = {
     iconOnly?: boolean;  // logo is a mark without the name, so the name is shown beside it
     banner?: string;     // sponsor-supplied banner, shown whole in the sponsor band instead of the logo
     blurb?: string;      // one line for the floating banner on the landing page
+    perk?: SponsorPerk;  // checkout code shown in a modal before leaving OpenStock
     tier?: SponsorTierId;
     period?: string;     // e.g. "2026"
 };
@@ -66,8 +73,8 @@ export const PROXY_SELLER_URL = 'https://proxy-seller.com/';
 
 export const ACTIVE_SPONSORS: Sponsor[] = [
     { name: 'Orbit', url: 'https://github.com/diip3sh/orbit', logo: '/assets/icons/orbit.png', iconOnly: true, tier: 'partner', blurb: 'Free, open-source screen recorder and video editor for macOS.' },
-    { name: 'Proxy-Seller', url: PROXY_SELLER_URL, logo: '/assets/images/proxy-seller-logo.png', tier: 'partner', blurb: '47M+ residential IPs across 220+ locations, with 99.7% uptime and 24/7 support. 15% off with promo code RAVI.' },
-    { name: 'Swiftproxy', url: 'https://www.swiftproxy.net/?ref=OpenStock', logo: '/assets/images/swiftproxy-logo.png', tier: 'company', blurb: '90M+ residential IPs across 220+ locations, with free testing and 10% off using code PROXY90.' },
+    { name: 'Proxy-Seller', url: PROXY_SELLER_URL, logo: '/assets/images/proxy-seller-logo.png', tier: 'partner', blurb: '47M+ residential IPs across 220+ locations, with 99.7% uptime and 24/7 support. 15% off with promo code RAVI.', perk: { code: 'RAVI', discount: '15% off' } },
+    { name: 'Swiftproxy', url: 'https://www.swiftproxy.net/?ref=OpenStock', logo: '/assets/images/swiftproxy-logo.png', tier: 'company', blurb: '90M+ residential IPs across 220+ locations, with free testing and 10% off using code PROXY90.', perk: { code: 'PROXY90', discount: '10% off', note: 'Free testing is also available.' } },
 ];
 
 export const PREVIOUS_SPONSORS: Sponsor[] = [

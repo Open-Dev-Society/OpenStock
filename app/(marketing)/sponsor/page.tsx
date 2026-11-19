@@ -3,6 +3,7 @@ import IconCard from "@/components/marketing/IconCard";
 import { getRepoStats, formatCount } from "@/lib/github";
 import { DISCORD_URL, sponsorCheckoutUrl } from "@/lib/constants";
 import { ACTIVE_SPONSORS, FUNDING_USES, PREVIOUS_SPONSORS, PREVIOUS_SUPPORTERS, REGISTERED_USERS, SPONSOR_CONTACT_EMAIL, SPONSOR_GOAL, SPONSOR_RECIPIENT, SPONSOR_TIERS, TIER_COLOR, tierBorder, type Sponsor, type SponsorTierId } from "@/lib/sponsors";
+import SponsorLink from "@/components/sponsors/SponsorLink";
 import { cn } from "@/lib/utils";
 
 export const metadata = {
@@ -50,7 +51,7 @@ const BackedBy = () => (
         {ACTIVE_SPONSORS.length > 0 && (
             <div className="mt-8 grid gap-3 md:grid-cols-2">
                 {ACTIVE_SPONSORS.map((sponsor) => (
-                    <a key={sponsor.name} href={sponsor.url} target="_blank" rel="noreferrer" className="hatch group" style={{ outline: `1px solid ${tierBorder(sponsor.tier ?? 'company')}` }}>
+                    <SponsorLink key={sponsor.name} sponsor={sponsor} className="hatch group" style={{ outline: `1px solid ${tierBorder(sponsor.tier ?? 'company')}` }}>
                         <div className="card flex h-full flex-col gap-4 p-5">
                             <div className="flex items-center justify-between gap-3">
                                 <SponsorLogo sponsor={sponsor} />
@@ -61,7 +62,7 @@ const BackedBy = () => (
                                 Visit {sponsor.name} <ArrowUpRight className="size-3.5" />
                             </span>
                         </div>
-                    </a>
+                    </SponsorLink>
                 ))}
             </div>
         )}

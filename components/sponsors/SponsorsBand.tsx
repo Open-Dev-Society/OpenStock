@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ACTIVE_SPONSORS, SPONSOR_CONTACT_EMAIL, SPONSOR_TIERS, TIER_COLOR, tierBorder, type Sponsor, type SponsorTierId } from "@/lib/sponsors";
+import SponsorLink from "@/components/sponsors/SponsorLink";
 import { cn } from "@/lib/utils";
 
 const tile = 'flex h-12 items-center rounded-[12px] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-side';
@@ -8,7 +9,7 @@ const tile = 'flex h-12 items-center rounded-[12px] transition-opacity hover:opa
 const ring = (tier: SponsorTierId) => ({ outline: `1px solid ${tierBorder(tier)}`, outlineOffset: -1 });
 
 const SponsorMark = ({ sponsor, tier }: { sponsor: Sponsor; tier: SponsorTierId }) => (
-    <a href={sponsor.url} target="_blank" rel="noreferrer" title={sponsor.name} style={ring(tier)}
+    <SponsorLink sponsor={sponsor} title={sponsor.name} style={ring(tier)}
         className={cn(tile, sponsor.banner ? 'overflow-hidden' : 'min-w-[140px] justify-center gap-2 bg-page/60 px-4')}>
         {sponsor.banner ? <img src={sponsor.banner} alt={sponsor.name} className="h-full w-auto" /> : (
             <span className="flex items-center gap-2">
@@ -16,7 +17,7 @@ const SponsorMark = ({ sponsor, tier }: { sponsor: Sponsor; tier: SponsorTierId 
                 {(!sponsor.logo || sponsor.iconOnly) && <span className="font-bold">{sponsor.name}</span>}
             </span>
         )}
-    </a>
+    </SponsorLink>
 );
 
 // Open slots are real: each one is a tier someone can take today.
