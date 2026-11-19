@@ -71,8 +71,8 @@ const Sidebar = ({ user, watchlist }: SidebarProps) => {
                                     title={company}
                                     className={cn('side-item h-8 font-medium', pathname === `/stocks/${symbol}` && 'is-active')}
                                 >
-                                    <span className="mono w-14 shrink-0 text-[12.5px] font-semibold text-foreground">{symbol}</span>
-                                    {company !== symbol && <span className="truncate text-[12.5px] text-faint">{company}</span>}
+                                    <span className="mono min-w-14 max-w-24 shrink-0 truncate text-[12.5px] font-semibold text-foreground">{symbol}</span>
+                                    {company !== symbol && <span dir="auto" className="truncate text-[12.5px] text-faint">{company}</span>}
                                 </Link>
                             </li>
                         ))}
@@ -120,8 +120,8 @@ const Sidebar = ({ user, watchlist }: SidebarProps) => {
                         {user.name?.[0]?.toUpperCase() ?? '?'}
                     </span>
                     <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[13px] font-semibold text-foreground">{user.name}</span>
-                        <span className="block truncate text-[12px] text-faint">{user.email}</span>
+                        <span dir="auto" className="block truncate text-[13px] font-semibold text-foreground rtl:text-right">{user.name}</span>
+                        <span dir="auto" className="block truncate text-[12px] text-faint rtl:text-right">{user.email}</span>
                     </span>
                 </Link>
                 <button type="button" onClick={handleSignOut} className="icon-btn" title={t('signOut')} aria-label={t('signOut')}>
