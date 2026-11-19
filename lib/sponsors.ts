@@ -68,8 +68,7 @@ export const SPONSOR_TIERS: {
     },
 ];
 
-// Placeholder until Proxy-Seller sends the custom tracking link. Swap this one line when it arrives.
-export const PROXY_SELLER_URL = 'https://proxy-seller.com/';
+export const PROXY_SELLER_URL = 'https://proxy-seller.com/?partner=0PC6QUN0HW8FI0';
 
 export const ACTIVE_SPONSORS: Sponsor[] = [
     { name: 'Orbit', url: 'https://github.com/diip3sh/orbit', logo: '/assets/icons/orbit.png', iconOnly: true, tier: 'partner', blurb: 'Free, open-source screen recorder and video editor for macOS.' },
