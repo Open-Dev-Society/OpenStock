@@ -93,6 +93,7 @@ describe('normalizeAlphaiNews', () => {
     it('drops rows without a usable title, link or score', () => {
         const news = normalizeAlphaiNews('AAPL', page(
             article('bad-score', { relevance: 11 }),
+            article('low-score', { relevance: 4 }),
             article('string-score', { relevance: '7' }),
             article('no-title', { title: '  ' }),
             article('script-link', { url: 'javascript:alert(1)' }),
@@ -131,17 +132,15 @@ describe('getAlphaiTickerNews', () => {
         expect(fetchSpy).not.toHaveBeenCalled();
     });
 
-    it('asks once per symbol, with the key in a header, and serves the next call from cache', async () => {
+    it('asks with the key in a header and caches the answer in the shared data cache for an hour', async () => {
         process.env.ALPHAI_API_KEY = 'test-key';
         const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(
             new Response(JSON.stringify(page(article('n1', { analyses: [{ ticker: 'NVDA', sentiment: 'positive', summary: 'Demand holds.' }] }))), { status: 200 }),
         );
 
-        const first = await getAlphaiTickerNews('nvda');
-        const second = await getAlphaiTickerNews('NVDA');
+        const news = await getAlphaiTickerNews('nvda');
 
-        expect(first?.items[0]).toMatchObject({ id: 'n1', sentiment: 'positive', impact: 'Demand holds.' });
-        expect(second).toEqual(first);
+        expect(news?.items[0]).toMatchObject({ id: 'n1', sentiment: 'positive', impact: 'Demand holds.' });
         expect(fetchSpy).toHaveBeenCalledTimes(1);
 
         const [input, init] = fetchSpy.mock.calls[0];
@@ -149,7 +148,24 @@ describe('getAlphaiTickerNews', () => {
         expect(url.origin + url.pathname).toBe('https://api.alphai.io/api/news/');
         expect(Object.fromEntries(url.searchParams)).toEqual({ symbol: 'NVDA', page_size: '5', min_relevance: '5', collapse: 'story' });
         expect((init?.headers as Record<string, string>).Authorization).toBe('Bearer test-key');
-        expect(init?.cache).toBe('no-store');
+        expect((init as RequestInit & { next?: { revalidate?: number } }).next).toEqual({ revalidate: 3600 });
+        expect(init?.signal).toBeInstanceOf(AbortSignal);
+    });
+
+    it('waits ten minutes after a failure before asking about that symbol again', async () => {
+        process.env.ALPHAI_API_KEY = 'test-key';
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(new Response('{}', { status: 503 }));
+        const now = Date.now();
+        const clock = vi.spyOn(Date, 'now').mockReturnValue(now);
+
+        await expect(getAlphaiTickerNews('META')).resolves.toBeNull();
+        await expect(getAlphaiTickerNews('META')).resolves.toBeNull();
+        expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+        clock.mockReturnValue(now + 10 * 60_000 + 1);
+        await getAlphaiTickerNews('META');
+        expect(fetchSpy).toHaveBeenCalledTimes(2);
     });
 
     it('returns null when the key is rate limited', async () => {

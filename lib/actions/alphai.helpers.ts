@@ -21,6 +21,9 @@ export interface AlphaiTickerNews {
 }
 
 export const ALPHAI_MAX_ITEMS = 5;
+// 5 and up: real company news and sector datapoints; recaps of already-known events stay out.
+// Sent to AlphAI as min_relevance and checked again here, so the card never depends on the server honouring it.
+export const ALPHAI_MIN_RELEVANCE = 5;
 
 const MAX_IMPACT_LENGTH = 240;
 
@@ -89,7 +92,7 @@ export function normalizeNewsItem(symbol: string, value: unknown): AlphaiNewsIte
     const title = asText(original.title);
     const url = safeHttpUrl(original.url);
     const relevance = enrichment.relevance_score;
-    if (!title || !url || typeof relevance !== 'number' || !Number.isInteger(relevance) || relevance < 1 || relevance > 10) {
+    if (!title || !url || typeof relevance !== 'number' || !Number.isInteger(relevance) || relevance < ALPHAI_MIN_RELEVANCE || relevance > 10) {
         return null;
     }
 
