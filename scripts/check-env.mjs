@@ -254,8 +254,8 @@ if (state.optionalPresent.length === 0) {
 
 console.log('\n' + '='.repeat(70));
 const criticalMissing = state.missing.filter(m => m.severity === 'critical').length;
-const totalRequired = Object.keys(requiredVars).length;
-const presentRequired = state.present.length;
+const totalRequired = Object.keys(requiredVars).length + 1;
+const presentRequired = totalRequired - criticalMissing;
 
 console.log(`Summary: ${presentRequired}/${totalRequired} required variables present`);
 console.log(`Optional variables: ${state.optionalPresent.length}/${Object.keys(optionalVars).length} enabled`);
