@@ -21,7 +21,7 @@ export default function YahooPulseTile({ tvSymbol, label, quote, labels = ENGLIS
                 <span className="truncate">{label}</span>
                 <span className="mono ms-auto text-xs text-faint">{tvSymbol.split(':').pop()}</span>
             </div>
-            <p className="bento-value self-start num">
+            <p className="bento-value self-start num text-[length:clamp(20px,15cqi,28px)]">
                 {/* Indices are in points, not a currency */}
                 {quote ? <>{appSymbol && <small>{quote.currency}&nbsp;</small>}{formatAmount(quote.price)}</> : '—'}
             </p>
@@ -38,6 +38,6 @@ export default function YahooPulseTile({ tvSymbol, label, quote, labels = ENGLIS
         </>
     );
     // Indices (TASI, WIG20, ...) have no stock page
-    if (!appSymbol) return <div className="bento-tile">{body}</div>;
-    return <Link href={`/stocks/${appSymbol}`} className="bento-tile transition-colors hover:bg-hover/60">{body}</Link>;
+    if (!appSymbol) return <div className="bento-tile @container">{body}</div>;
+    return <Link href={`/stocks/${appSymbol}`} className="bento-tile @container transition-colors hover:bg-hover/60">{body}</Link>;
 }

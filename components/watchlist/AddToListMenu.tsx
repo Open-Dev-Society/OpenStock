@@ -133,7 +133,7 @@ export default function AddToListMenu({
                         lists.map((list) => (
                             <DropdownMenuItem key={list.id} disabled={pending === list.id} onSelect={() => add(list)}>
                                 <Star className="size-3.5" />
-                                <span className="truncate">{list.name}</span>
+                                <span dir="auto" className="truncate">{list.name}</span>
                             </DropdownMenuItem>
                         ))
                     )}

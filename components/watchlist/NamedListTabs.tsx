@@ -72,8 +72,8 @@ export default function NamedListTabs({
             </Link>
 
             {lists.map((list) => (
-                <Link key={list.id} href={`/watchlist?list=${list.id}`} className={cn('pill h-8', activeId === list.id && 'is-up')}>
-                    {list.name} <span className="num">· {list.count}</span>
+                <Link key={list.id} href={`/watchlist?list=${list.id}`} className={cn('pill h-8 max-w-full', activeId === list.id && 'is-up')}>
+                    <span dir="auto" className="truncate">{list.name}</span> <span className="num">· {list.count}</span>
                 </Link>
             ))}
 

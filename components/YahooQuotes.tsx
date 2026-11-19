@@ -32,7 +32,7 @@ export default async function YahooQuotesTable({ market }: { market: Market }) {
                     <tr className="text-start text-faint">
                         <th className="px-3 py-2 font-medium">{th('company')}</th>
                         <th className="px-3 py-2 text-end font-medium">{th('price')}</th>
-                        <th className="px-3 py-2 text-end font-medium">{th('change')}</th>
+                        <th className="px-3 py-2 text-end font-medium max-sm:hidden">{th('change')}</th>
                         <th className="px-3 py-2 text-end font-medium">{t('changePercent')}</th>
                     </tr>
                 </thead>
@@ -52,7 +52,7 @@ export default async function YahooQuotesTable({ market }: { market: Market }) {
                                         </Link>
                                     </td>
                                     <td className="num px-3 py-2 text-end font-semibold">{q ? fmt(q.price) : '—'}</td>
-                                    <td className={`num px-3 py-2 text-end ${q && q.change < 0 ? 'text-down' : 'text-up'}`}>
+                                    <td className={`num px-3 py-2 text-end max-sm:hidden ${q && q.change < 0 ? 'text-down' : 'text-up'}`}>
                                         {q ? `${q.change > 0 ? '+' : ''}${fmt(q.change)}` : '—'}
                                     </td>
                                     <td className="px-3 py-2 text-end"><ChangePill value={q?.changePercent} /></td>
@@ -91,7 +91,7 @@ export async function YahooMovers({ market, count = 8 }: { market: Market; count
                                 {up ? <ArrowUpRight className="size-4" /> : <ArrowDownRight className="size-4" />}
                             </span>
                             <span className="min-w-0 flex-1">
-                                <span className="block truncate text-[13.5px] font-semibold">{name}</span>
+                                <span dir="auto" className="block truncate text-[13.5px] font-semibold rtl:text-right">{name}</span>
                                 <span className="mono block text-[11.5px] text-faint">{symbol.split(':').pop()}</span>
                             </span>
                             <span className="relative h-1.5 w-20 overflow-hidden rounded-full bg-hover">
