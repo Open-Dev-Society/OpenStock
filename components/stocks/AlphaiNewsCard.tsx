@@ -37,17 +37,18 @@ export default function AlphaiNewsCard({ news }: AlphaiNewsCardProps) {
                                 {t('relevanceValue', { score: item.relevance })}
                             </span>
                             <span className="min-w-0 flex-1">
-                                <span className="line-clamp-2 font-semibold text-foreground transition-colors group-hover:text-brand-ink">
+                                <span dir="auto" className="line-clamp-2 font-semibold text-foreground transition-colors group-hover:text-brand-ink">
                                     {item.title}
                                 </span>
                                 {item.impact && (
-                                    <span className="mt-1 line-clamp-2 block text-[12.5px] text-muted-foreground">
+                                    <span dir="auto" className="mt-1 line-clamp-2 block text-[12.5px] text-muted-foreground">
                                         {item.sentiment && (
                                             <span className={cn('font-semibold', SENTIMENT_CLASS[item.sentiment])}>
                                                 {t(`sentiment.${item.sentiment}`)}:{' '}
                                             </span>
                                         )}
-                                        {item.impact}
+                                        {/* AlphAI writes in English: isolate it so its punctuation stays put after an Arabic label */}
+                                        <bdi>{item.impact}</bdi>
                                     </span>
                                 )}
                                 <span className="mt-1 block truncate text-[12px] text-faint">
