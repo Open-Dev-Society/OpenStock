@@ -63,7 +63,8 @@ export default function ArchitecturePage() {
                                     <h3 className="text-[16px] font-bold">{name}</h3>
                                     <span className="pill is-brand">{cadence}</span>
                                 </div>
-                                <p className="text-[14px] leading-relaxed text-muted-foreground">{body}</p>
+                                {/* The env var name is one long word; let it break instead of widening the page on phones */}
+                                <p className="text-[14px] leading-relaxed text-muted-foreground [overflow-wrap:anywhere]">{body}</p>
                             </div>
                         </div>
                     ))}

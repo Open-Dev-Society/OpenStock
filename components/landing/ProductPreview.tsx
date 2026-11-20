@@ -20,7 +20,7 @@ export default function ProductPreview() {
                 {[['Overview', true], ['AAPL', false], ['NVDA', false]].map(([label, active]) => (
                     <span
                         key={label as string}
-                        className={cn('flex h-9 min-w-[104px] items-center rounded-t-xl px-4 font-semibold', active ? 'bg-canvas text-foreground' : 'text-faint', label !== 'Overview' && 'mono text-[13px]')}
+                        className={cn('flex h-9 items-center rounded-t-xl px-3 font-semibold sm:min-w-[104px] sm:px-4', active ? 'bg-canvas text-foreground' : 'text-faint', label !== 'Overview' && 'mono text-[13px]')}
                     >
                         {label}
                     </span>

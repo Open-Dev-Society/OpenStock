@@ -43,7 +43,7 @@ async function TradingViewHeader({ symbol }: { symbol: string }) {
                         <ChangePill value={quote.changePercent} />
                     </div>
                 )}
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <WatchlistButton symbol={symbol} company={symbol} isInWatchlist={isInWatchlist} />
                     <span className="pill h-9 px-3" title={t('alertsHint')}>
                         <Bell /> {t('alertsScope')}
@@ -91,7 +91,7 @@ export default async function StockHeader({ symbol }: { symbol: string }) {
                         <span className="logo-well is-empty size-11">{symbol[0]}</span>
                     )}
                     <div className="min-w-0">
-                        <h1 className="truncate text-xl font-bold tracking-[-0.03em]">{company}</h1>
+                        <h1 dir="auto" className="truncate text-xl font-bold tracking-[-0.03em] rtl:text-right">{company}</h1>
                         <p className="mono truncate text-[12.5px] text-faint">
                             {[symbol, profile?.exchange, profile?.finnhubIndustry].filter(Boolean).join(' · ')}
                         </p>
@@ -100,7 +100,7 @@ export default async function StockHeader({ symbol }: { symbol: string }) {
 
                 <StockLivePrice symbol={symbol} initial={quote} currency={currency} />
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <WatchlistButton symbol={symbol} company={company} isInWatchlist={isInWatchlist} />
                     <CreateAlertModal symbol={symbol} currentPrice={quote?.c} currency={currency}>
                         <button type="button" className="btn btn-primary"><Bell /> {t('setAlert')}</button>
@@ -112,7 +112,7 @@ export default async function StockHeader({ symbol }: { symbol: string }) {
                 {stats.map(({ label, icon: Icon, value, hint }) => (
                     <div key={label} className="bento-tile gap-2.5">
                         <div className="bento-head"><span className="bento-ico"><Icon /></span>{label}</div>
-                        <p className="num truncate text-[17px] font-bold tracking-[-0.02em]">{value}</p>
+                        <p className="num text-[17px] font-bold tracking-[-0.02em] [overflow-wrap:anywhere]">{value}</p>
                         <p className="text-[12px] text-faint">{hint}</p>
                     </div>
                 ))}

@@ -132,9 +132,9 @@ export default async function SponsorPage() {
                         {repo && (
                             <dl className="grid grid-cols-3 gap-2">
                                 {[['Users', REGISTERED_USERS.replace(',000', 'K')], ['Stars', formatCount(repo.stars)], ['Forks', formatCount(repo.forks)]].map(([label, value]) => (
-                                    <div key={label} className="rounded-[12px] bg-page px-3.5 py-3 shadow-[inset_0_0_0_1px_var(--line)]">
+                                    <div key={label} className="rounded-[12px] bg-page px-3 py-3 shadow-[inset_0_0_0_1px_var(--line)] sm:px-3.5">
                                         <dt className="kicker">{label}</dt>
-                                        <dd className="bento-value mt-1 text-[22px]">{value}</dd>
+                                        <dd className="bento-value mt-1 text-[18px] sm:text-[22px]">{value}</dd>
                                     </div>
                                 ))}
                             </dl>

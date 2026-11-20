@@ -217,7 +217,8 @@ export default async function LandingPage() {
 
             <section className="mx-auto mt-28 max-w-[1200px] px-5">
                 <div className="hatch">
-                    <div className="card grid gap-10 p-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:p-12">
+                    {/* Two columns only from lg: at md the stats column was too narrow for "TypeScript" */}
+                    <div className="card grid gap-10 p-5 sm:p-8 md:p-12 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
                         <div>
                             <p className="kicker text-brand-ink">Open Dev Society</p>
                             <blockquote className="mt-4 text-[26px] font-semibold leading-snug tracking-[-0.03em] md:text-[30px]">
@@ -229,7 +230,7 @@ export default async function LandingPage() {
                             </div>
                         </div>
                         {repo && (
-                            <dl className="grid grid-cols-2 content-end gap-3">
+                            <dl className="grid grid-cols-2 content-end gap-2 sm:gap-3">
                                 {[
                                     ['Stars', formatCount(repo.stars)],
                                     ['Forks', formatCount(repo.forks)],
@@ -238,7 +239,7 @@ export default async function LandingPage() {
                                 ].map(([label, value]) => (
                                     <div key={label} className="bento-tile col-span-1 bg-page">
                                         <dt className="kicker">{label}</dt>
-                                        <dd className="bento-value text-[26px]">{value}</dd>
+                                        <dd className="bento-value text-[18px] sm:text-[26px]">{value}</dd>
                                     </div>
                                 ))}
                             </dl>
