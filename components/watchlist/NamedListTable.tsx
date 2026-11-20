@@ -43,8 +43,8 @@ export default async function NamedListTable({
             <table className="data-table @max-[560px]:table-fixed @max-[560px]:[&_td]:px-2 @max-[560px]:[&_th]:px-2">
                 <thead>
                     <tr>
-                        <th>{th('company')}</th>
-                        <th className="is-num @max-[560px]:w-24">{th('price')}</th>
+                        <th className="@max-[560px]:truncate">{th('company')}</th>
+                        <th className="is-num @max-[560px]:w-[112px]">{th('price')}</th>
                         <th className="is-num @max-[560px]:hidden">{tr('today')}</th>
                         <th className="is-num @max-[740px]:hidden">{th('change')}</th>
                         <th className="is-num @max-[660px]:hidden">{th('marketCap')}</th>
