@@ -230,6 +230,26 @@ export const isChartEmbeddable = (tvSymbol: string) => !CHART_BLOCKED_EXCHANGES.
 
 export const tradingViewSymbolUrl = (tvSymbol: string) => `https://www.tradingview.com/symbols/${tvSymbol.replace(':', '-')}/`;
 
+// Finnhub's US symbol list tags each listing with its venue's MIC; TradingView names the same venues its own way.
+// NYSE Arca listings (SPY) live under AMEX on TradingView, Cboe BZX listings (ARKK) under CBOE.
+const US_MIC_TO_TRADINGVIEW_EXCHANGE: Record<string, string> = {
+    XNAS: 'NASDAQ',
+    XNYS: 'NYSE',
+    XASE: 'AMEX',
+    ARCX: 'AMEX',
+    BATS: 'CBOE',
+    OOTC: 'OTC',
+};
+
+export const tradingViewExchangeForMic = (mic?: string | null) => (mic && US_MIC_TO_TRADINGVIEW_EXCHANGE[mic.toUpperCase()]) || null;
+
+// Prefix a bare US ticker with its exchange (AAPL → NASDAQ:AAPL). The technical-analysis widget answers
+// "Permission denied" for bare US tickers and "Invalid symbol" for the wrong exchange, so an unknown one stays bare.
+export function qualifyTradingViewSymbol(tvSymbol: string, exchange: string | null): string {
+    if (!tvSymbol || !exchange || tvSymbol.includes(':')) return tvSymbol;
+    return `${exchange}:${tvSymbol}`;
+}
+
 // Finnhub writes share classes and symbols with - or &; on these exchanges TradingView only knows its own spelling
 // (the Finnhub one shows "This symbol doesn't exist"): BAJAJ-AUTO.NS → BSE:BAJAJ_AUTO, M&M.NS → BSE:M_M,
 // ERIC-B.ST → OMXSTO:ERIC_B, NOVO-B.CO → OMXCOP:NOVO_B, BT-A.L → LSE:BT.A. TSX accepts RCI-B as is.
