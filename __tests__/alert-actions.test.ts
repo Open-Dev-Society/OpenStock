@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // signed-in user, never to an id sent by the client. Adapted from #93.
 
 const requireUserId = vi.fn();
-vi.mock('@/lib/better-auth/auth', () => ({ requireUserId: () => requireUserId() }));
+vi.mock('@/lib/better-auth/auth', () => ({ requireUserId: () => requireUserId(), requireUserIdForRead: () => requireUserId() }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/database/mongoose', () => ({ connectToDatabase: vi.fn().mockResolvedValue({}) }));
 // Alerts are an OpenStock Cloud feature; most tests run with it on
