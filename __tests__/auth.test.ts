@@ -15,6 +15,11 @@ vi.mock('@/i18n/locale', () => ({
     resolveLocale: vi.fn().mockResolvedValue('en'),
 }));
 
+vi.mock('next/server', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('next/server')>()),
+    after: vi.fn(),
+}));
+
 describe('Better Auth secret resolution and production guard', () => {
     const originalEnv = { ...process.env };
     const setNodeEnv = (val: string) => {
@@ -136,5 +141,46 @@ describe('sendResetPassword callback', () => {
         send.mockRejectedValue(new Error('SMTP refused'));
 
         await expect(callback({ user, url, token: 'token-1' })).rejects.toThrow('SMTP refused');
+    });
+});
+
+describe('background tasks', () => {
+    beforeEach(() => {
+        vi.resetModules();
+    });
+
+    const loadHandler = async () => {
+        const { getAuth } = await import('@/lib/better-auth/auth');
+        const { after } = await import('next/server');
+        const auth = await getAuth();
+        const handler = auth.options.advanced?.backgroundTasks?.handler;
+        if (!handler) throw new Error('backgroundTasks.handler is not configured');
+        return { handler, after: vi.mocked(after) };
+    };
+
+    it('hands the reset email to after() instead of making the response wait for it', async () => {
+        const { handler, after } = await loadHandler();
+        const send = new Promise<void>(() => {});
+
+        handler(send);
+
+        expect(after).toHaveBeenCalledWith(send);
+    });
+
+    it('makes Better Auth return without waiting for a task that is still running', async () => {
+        const { getAuth } = await import('@/lib/better-auth/auth');
+        const context = await (await getAuth()).$context;
+        const neverSettles = new Promise<void>(() => {});
+
+        await expect(context.runInBackgroundOrAwait(neverSettles)).resolves.toBeUndefined();
+    });
+
+    it('lets the task run when there is no request to extend', async () => {
+        const { handler, after } = await loadHandler();
+        after.mockImplementation(() => {
+            throw new Error('`after` was called outside a request scope');
+        });
+
+        expect(() => handler(Promise.resolve())).not.toThrow();
     });
 });

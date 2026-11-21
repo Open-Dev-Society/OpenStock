@@ -3,6 +3,7 @@ import {mongodbAdapter} from "better-auth/adapters/mongodb";
 import {connectToDatabase, isWorkersRuntime} from "@/database/mongoose";
 import {nextCookies} from "better-auth/next-js";
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { cache } from "react";
 import { sendPasswordResetEmail } from "@/lib/nodemailer/reset-password";
 import { resolveLocale } from "@/i18n/locale";
@@ -11,6 +12,16 @@ import { resolveLocale } from "@/i18n/locale";
 type MongoDb = Parameters<typeof mongodbAdapter>[0];
 
 const resolveAuthSecret = () => process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET;
+
+// Next's after() keeps the task running once the response is sent (waitUntil on Vercel and Workers, the process on
+// Node). Outside a request (scripts, jobs) it throws; the task has already started and still runs, as before.
+const keepAfterResponse =(task: Promise<unknown>) => {
+    try {
+        after(task);
+    } catch {
+        // no request scope to extend
+    }
+};
 
 // Typed from the real config, so additional user fields (country, ...) show up in session types
 const createAuth = (database: MongoDb, secret: string | undefined = resolveAuthSecret()) => betterAuth({
@@ -38,8 +49,8 @@ const createAuth = (database: MongoDb, secret: string | undefined = resolveAuthS
             sendResetPassword: async ({ user, url }) => {
                 // Read the cookie now, while the user's request is still in scope
                 const locale = await resolveLocale().catch(() => undefined);
-                // Awaited, not detached: Better Auth awaits this callback, so the send finishes before the request
-                // ends and a failure reaches its "Failed to run background task" log. The response stays the same.
+                // Awaited, not detached, so this promise tracks the send: Better Auth hands it to backgroundTasks
+                // below, which keeps it alive past the response and logs a failure.
                 await sendPasswordResetEmail({
                     email: user.email,
                     name: user.name,
@@ -79,6 +90,9 @@ const createAuth = (database: MongoDb, secret: string | undefined = resolveAuthS
             ipAddress: {
                 ipAddressHeaders: isWorkersRuntime() ? ["cf-connecting-ip"] : ["x-forwarded-for"],
             },
+            // Without a handler Better Auth awaits the reset email, so a request for a known address would answer
+            // only after SMTP while an unknown one answers at once: the delay would tell who has an account.
+            backgroundTasks: { handler: keepAfterResponse },
         },
         plugins: [nextCookies()],
 });
