@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+    formatPrice,
     formatSymbolForTradingView,
     isChartEmbeddable,
     qualifyTradingViewSymbol,
@@ -164,6 +165,19 @@ describe('formatMarketCapValue', () => {
 
     it('formats sub-million values', () => {
         expect(formatMarketCapValue(999999.99)).toBe('$999999.99');
+    });
+});
+
+describe('formatPrice', () => {
+    it('keeps two decimals for normal prices', () => {
+        expect(formatPrice(1234.5)).toBe('$1,234.50');
+        expect(formatPrice(0.53)).toBe('$0.53');
+        expect(formatPrice(0)).toBe('$0.00');
+    });
+
+    it('keeps sub-cent prices visible', () => {
+        expect(formatPrice(0.000012345)).toBe('$0.00001235');
+        expect(formatPrice(0.0049)).toBe('$0.0049');
     });
 });
 
