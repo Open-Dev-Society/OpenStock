@@ -14,9 +14,10 @@ import {
 } from "@/lib/constants";
 import { getStockSentimentInsights } from '@/lib/actions/adanos.actions';
 import { getAlphaiTickerNews } from '@/lib/actions/alphai.actions';
-import { getStockMetrics } from '@/lib/actions/finnhub.actions';
+import { getStockMetrics, getTradingViewExchange } from '@/lib/actions/finnhub.actions';
 import { hasFinnhubCompanyData } from '@/lib/markets';
-import { formatSymbolForTradingView, isChartEmbeddable, tradingViewSymbolUrl } from '@/lib/utils';
+import { formatSymbolForTradingView, isChartEmbeddable, qualifyTradingViewSymbol, tradingViewSymbolUrl } from '@/lib/utils';
+import type { Locale } from '@/i18n/config';
 
 const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
 
@@ -49,6 +50,29 @@ async function DividendYield({ symbol }: { symbol: string }) {
             <p className="text-2xl font-semibold text-white">
                 {dividendYield !== null ? `${dividendYield.toFixed(2)}%` : "—"}
             </p>
+        </Panel>
+    );
+}
+
+// The technical-analysis widget refuses bare US tickers ("Permission denied"), so it gets NASDAQ:AAPL, AMEX:SPY, ...
+async function Technicals({ symbol, tvSymbol, locale }: { symbol: string; tvSymbol: string; locale: Locale }) {
+    const exchange = await getTradingViewExchange(symbol);
+    return <TechnicalsPanel tvSymbol={qualifyTradingViewSymbol(tvSymbol, exchange)} locale={locale} />;
+}
+
+async function TechnicalsPanel({ tvSymbol, locale, loading }: { tvSymbol: string; locale: Locale; loading?: boolean }) {
+    const t = await getTranslations('StockPage');
+    return (
+        <Panel title={t('technicalsTitle')} sub={t('technicalsSub')}>
+            {loading ? (
+                <div style={{ height: 400 }} />
+            ) : (
+                <TradingViewWidget
+                    scriptUrl={`${scriptUrl}technical-analysis.js`}
+                    config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(tvSymbol, locale)}
+                    height={400}
+                />
+            )}
         </Panel>
     );
 }
@@ -95,13 +119,9 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
                 </div>
 
                 <div className="flex min-w-0 flex-col gap-3">
-                    <Panel title={t('technicalsTitle')} sub={t('technicalsSub')}>
-                        <TradingViewWidget
-                            scriptUrl={`${scriptUrl}technical-analysis.js`}
-                            config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(tvSymbol, locale)}
-                            height={400}
-                        />
-                    </Panel>
+                    <Suspense fallback={<TechnicalsPanel tvSymbol={tvSymbol} locale={locale} loading />}>
+                        <Technicals symbol={symbol} tvSymbol={tvSymbol} locale={locale} />
+                    </Suspense>
                     <Suspense fallback={null}>
                         <DividendYield symbol={symbol} />
                     </Suspense>

@@ -1,6 +1,6 @@
 'use server';
 
-import { getDateRange, validateArticle, formatArticle } from '@/lib/utils';
+import { getDateRange, validateArticle, formatArticle, tradingViewExchangeForMic } from '@/lib/utils';
 import { POPULAR_STOCKS } from '@/lib/constants';
 import { cache } from 'react';
 import { QUOTE_TTL_SECONDS } from '@/lib/market-data';
@@ -57,6 +57,11 @@ type FinnhubCompanyProfile = {
     ticker?: string;
     finnhubIndustry?: string;
     weburl?: string;
+};
+
+type FinnhubSymbol = {
+    symbol?: string;
+    mic?: string; // listing venue: XNAS, XNYS, ARCX, ...
 };
 
 type SearchStockCandidate = FinnhubSearchResult & {
@@ -203,6 +208,44 @@ export async function getCompanyProfile(symbol: string) {
         logFailure('profile', symbol, e);
         return null;
     }
+}
+
+// symbol -> TradingView exchange for every US listing, from one daily download of Finnhub's US symbol list
+// (~31k listings, also covers ETFs, which have no profile). Finnhub serves it as a static file rebuilt daily with no
+// delta or ETag support: ~1.3 MB compressed, 7 MB of JSON. Kept as a compact map, not in responseCache.
+const US_LISTINGS_TTL_MS = 24 * 60 * 60 * 1000;
+let usListings: { exchanges: Map<string, string>; freshUntil: number } | null = null;
+let usListingsLoad: Promise<void> | null = null;
+
+function loadUsListings() {
+    usListingsLoad ??= request<FinnhubSymbol[]>(`${FINNHUB_BASE_URL}/stock/symbol?exchange=US`)
+        .then((list) => {
+            const exchanges = new Map<string, string>();
+            for (const { symbol, mic } of list ?? []) {
+                const exchange = tradingViewExchangeForMic(mic);
+                if (symbol && exchange) exchanges.set(symbol.toUpperCase(), exchange);
+            }
+            usListings = { exchanges, freshUntil: Date.now() + US_LISTINGS_TTL_MS };
+        })
+        .catch((e) => {
+            // Keep any previous map, and don't download 7 MB again on every page view while Finnhub is failing
+            usListings = { exchanges: usListings?.exchanges ?? new Map(), freshUntil: Date.now() + FAILURE_TTL_MS };
+            throw e;
+        })
+        .finally(() => { usListingsLoad = null; });
+    return usListingsLoad;
+}
+
+// TradingView exchange of a US listing (AAPL → NASDAQ, SPY → AMEX), or null when unknown or not a US listing
+export async function getTradingViewExchange(symbol: string): Promise<string | null> {
+    if (!hasFinnhubCompanyData(symbol) || FINNHUB_KEYS.length === 0) return null;
+    try {
+        if (!usListings) await loadUsListings();
+        else if (usListings.freshUntil < Date.now()) loadUsListings().catch(() => { /* keep serving the stale map */ });
+    } catch (e) {
+        logFailure('US symbol list', symbol, e);
+    }
+    return usListings?.exchanges.get(symbol.toUpperCase()) ?? null;
 }
 
 export async function getStockMetrics(symbol: string): Promise<number | null> {
