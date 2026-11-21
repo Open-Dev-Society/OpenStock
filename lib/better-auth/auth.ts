@@ -38,13 +38,13 @@ const createAuth = (database: MongoDb, secret: string | undefined = resolveAuthS
             sendResetPassword: async ({ user, url }) => {
                 // Read the cookie now, while the user's request is still in scope
                 const locale = await resolveLocale().catch(() => undefined);
-                void sendPasswordResetEmail({
+                // Awaited, not detached: Better Auth awaits this callback, so the send finishes before the request
+                // ends and a failure reaches its "Failed to run background task" log. The response stays the same.
+                await sendPasswordResetEmail({
                     email: user.email,
                     name: user.name,
                     resetUrl: url,
                     locale,
-                }).catch((error) => {
-                    console.error('Failed to queue password reset email:', error);
                 });
             },
         },
