@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { closesFromChart, hasCrossed, isSmaPeriod, sideOf, sma, yahooChartSymbol } from '@/lib/sma';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { closesFromChart, getDailyCloses, hasCrossed, isSmaPeriod, sideOf, sma, yahooChartSymbol } from '@/lib/sma';
 
 describe('sma', () => {
     it('averages the last N closes', () => {
@@ -71,5 +71,36 @@ describe('daily closes from Yahoo', () => {
         expect(closesFromChart({ chart: { result: [{ indicators: { quote: [{ close: [5, 6] }] } }] } })).toEqual({ closes: [5, 6], price: 6 });
         expect(closesFromChart({ chart: { result: [] } })).toBeNull();
         expect(closesFromChart(null)).toBeNull();
+    });
+});
+
+describe('getDailyCloses', () => {
+    afterEach(() => vi.restoreAllMocks());
+    const respond = (status: number, body: unknown = {}) => vi.spyOn(global, 'fetch').mockResolvedValue(new Response(JSON.stringify(body), { status }));
+
+    it('returns the closes from a good response', async () => {
+        respond(200, { chart: { result: [{ meta: { regularMarketPrice: 3 }, indicators: { quote: [{ close: [1, 2, 3] }] } }] } });
+        await expect(getDailyCloses('AAPL')).resolves.toEqual({ closes: [1, 2, 3], price: 3 });
+    });
+
+    it('answers "no history" when Yahoo has no such symbol or no bars', async () => {
+        respond(404);
+        await expect(getDailyCloses('ZZZZQ')).resolves.toEqual({ closes: [], price: null });
+        respond(200, { chart: { result: [] } });
+        await expect(getDailyCloses('ZZZZQ')).resolves.toEqual({ closes: [], price: null });
+    });
+
+    it('answers null (try again) when Yahoo is down or slow', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        respond(503);
+        await expect(getDailyCloses('AAPL')).resolves.toBeNull();
+        vi.spyOn(global, 'fetch').mockRejectedValue(new DOMException('timed out', 'TimeoutError'));
+        await expect(getDailyCloses('AAPL')).resolves.toBeNull();
+    });
+
+    it('never asks Yahoo about a symbol it has no series for', async () => {
+        const fetchSpy = vi.spyOn(global, 'fetch');
+        await expect(getDailyCloses('BINANCE:ETHBTC')).resolves.toEqual({ closes: [], price: null });
+        expect(fetchSpy).not.toHaveBeenCalled();
     });
 });

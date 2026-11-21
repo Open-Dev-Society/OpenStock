@@ -24,7 +24,8 @@ const CONDITIONS = [
     { value: 'BELOW', labelKey: 'fallsBelow', smaLabelKey: 'crossesBelow' },
 ] as const;
 
-// A row of mutually exclusive choices (condition, target, period)
+// A row of mutually exclusive choices (condition, target, period): toggle buttons, so Tab and Enter/Space work
+// as announced (a radiogroup would also promise arrow-key navigation)
 function Segmented<T extends string | number>({ label, value, options, onChange }: {
     label: string;
     value: T;
@@ -32,13 +33,12 @@ function Segmented<T extends string | number>({ label, value, options, onChange 
     onChange: (value: T) => void;
 }) {
     return (
-        <div className="grid gap-1 rounded-[12px] bg-page p-1" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }} role="radiogroup" aria-label={label}>
+        <div className="grid gap-1 rounded-[12px] bg-page p-1" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }} role="group" aria-label={label}>
             {options.map((option) => (
                 <button
                     key={option.value}
                     type="button"
-                    role="radio"
-                    aria-checked={value === option.value}
+                    aria-pressed={value === option.value}
                     onClick={() => onChange(option.value)}
                     // One line at any width: a phone (320px) gets a slightly smaller size instead of a wrap
                     className={cn(
@@ -81,7 +81,7 @@ export default function CreateAlertModal({ symbol, currentPrice, currency = 'USD
                 // The average comes back from the server: it is computed there from daily closes
                 const alert = await createAlert({ symbol, condition, target: 'SMA', smaPeriod });
                 if ('error' in alert) {
-                    toast.error(t('smaNoHistory', { period: smaPeriod }));
+                    toast.error(alert.error === 'notEnoughHistory' ? t('smaNoHistory', { period: smaPeriod }) : t('smaHistoryUnavailable'));
                     return;
                 }
                 toast.success(t('createdSma', { symbol, condition, period: smaPeriod, price: formatPrice(alert.targetPrice, currency) }));

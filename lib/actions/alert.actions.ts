@@ -7,6 +7,7 @@ import { requireUserId, requireUserIdForRead } from '@/lib/better-auth/auth';
 import { hasFinnhubQuotes } from '@/lib/markets';
 import { alertsEnabled } from '@/lib/market-data';
 import { getDailyCloses, isSmaPeriod, sideOf, sma } from '@/lib/sma';
+import { getQuote } from '@/lib/actions/finnhub.actions';
 
 // A ticker (AAPL, BRK.B) or a Binance pair. Anything else, including markup, is rejected:
 // the symbol ends up in alert emails.
@@ -45,14 +46,18 @@ export async function createAlert(params: {
     }
 
     // An SMA alert starts from the average and the side the price is on now, so it fires on the next cross
-    // rather than at once when the price is already past the line
+    // rather than at once when the price is already past the line. Codes, not thrown messages: production hides
+    // server-action errors, and the modal translates these.
     let smaFields = {};
     if (isSma) {
-        const daily = await getDailyCloses(symbol);
-        const average = daily ? sma(daily.closes, params.smaPeriod!) : null;
-        // A code, not a thrown message: production hides server-action errors, and the modal translates this one
-        if (!daily || average === null) return { error: 'notEnoughHistory' as const };
-        smaFields = { target: 'SMA', smaPeriod: params.smaPeriod, targetPrice: average, lastSide: daily.price ? sideOf(daily.price, average) ?? undefined : undefined };
+        const [daily, quote] = await Promise.all([getDailyCloses(symbol), getQuote(symbol)]);
+        if (!daily) return { error: 'historyUnavailable' as const };
+        const average = sma(daily.closes, params.smaPeriod!);
+        if (average === null) return { error: 'notEnoughHistory' as const };
+        // The side comes from the same Finnhub quote the checker compares, so the two can't disagree about which
+        // side the price starts on; Yahoo's price (up to an hour old) only when Finnhub has none
+        const price = quote?.c && quote.c > 0 ? quote.c : daily.price;
+        smaFields = { target: 'SMA', smaPeriod: params.smaPeriod, targetPrice: average, lastSide: price ? sideOf(price, average) ?? undefined : undefined };
     }
 
     try {

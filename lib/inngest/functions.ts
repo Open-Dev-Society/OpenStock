@@ -343,9 +343,10 @@ export const checkStockAlertsHandler = async ({ step }: { step: { run: <T>(id: s
             for (const { alert, currentPrice, average } of triggeredAlerts) {
                 // Claim the alert atomically before emailing. Inngest's concurrency limits steps, not
                 // whole runs, so two overlapping runs can hold the same alert; only one wins this update.
+                // An SMA alert also stores the average it crossed, so the alert matches its email
                 const claimed = await Alert.findOneAndUpdate(
                     { _id: alert._id, active: true, triggered: false },
-                    { $set: { triggered: true, active: false } },
+                    { $set: { triggered: true, active: false, ...(average !== undefined ? { targetPrice: average } : {}) } },
                 );
                 if (!claimed) continue;
                 const release = () => Alert.findByIdAndUpdate(alert._id, { triggered: false, active: true }).catch(() => {});

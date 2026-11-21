@@ -49,17 +49,21 @@ export function closesFromChart(json: unknown): { closes: number[]; price: numbe
 
 // A year of daily bars covers SMA 200 (about 250 trading days). The average moves once a day, so the response is
 // cached for an hour and shared: one request per symbol per hour, however many alerts or checks use it.
+// null means Yahoo couldn't be reached (timeout, 5xx), worth retrying; an empty history means it has none for
+// this symbol (404, an empty chart), which retrying won't change.
+const NO_HISTORY = { closes: [] as number[], price: null };
 export async function getDailyCloses(symbol: string): Promise<{ closes: number[]; price: number | null } | null> {
     const yahooSymbol = yahooChartSymbol(symbol);
-    if (!yahooSymbol) return null;
+    if (!yahooSymbol) return NO_HISTORY;
     try {
         const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?interval=1d&range=1y`, {
             headers: { 'User-Agent': 'Mozilla/5.0' },
             next: { revalidate: 3600 },
             signal: AbortSignal.timeout(5000),
         });
+        if (res.status === 404) return NO_HISTORY;
         if (!res.ok) return null;
-        return closesFromChart(await res.json());
+        return closesFromChart(await res.json()) ?? NO_HISTORY;
     } catch (e) {
         console.error('Daily closes error', symbol, e);
         return null;

@@ -594,7 +594,8 @@
     "crossesBelow": "Przebije w dół",
     "smaHint": "Prosta średnia krocząca z dziennych cen zamknięcia. Alert uruchamia się, gdy cena ją przetnie; sprawdzamy co 5 minut, wygasa po 90 dniach.",
     "createdSma": "Alert ustawiony: {symbol} przebije {condition, select, ABOVE {w górę} other {w dół}} SMA {period} ({price})",
-    "smaNoHistory": "Za mało historii cen dla SMA {period}"
+    "smaNoHistory": "Za mało historii cen dla SMA {period}",
+    "smaHistoryUnavailable": "Nie udało się pobrać historii cen. Spróbuj ponownie za chwilę."
   },
   "NewsList": {
     "emptyTitle": "Brak najnowszych wiadomości",

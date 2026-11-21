@@ -65,6 +65,11 @@ describe('alert checker', () => {
         expect(sendStockAlertEmail).toHaveBeenCalledWith(expect.objectContaining({
             symbol: 'AAPL', currentPrice: 103, targetPrice: 100, condition: 'ABOVE', smaPeriod: 20,
         }));
+        // The stored alert matches the email: the claim saves the average that was crossed
+        expect(findOneAndUpdate).toHaveBeenCalledWith(
+            { _id: 'a1', active: true, triggered: false },
+            { $set: { triggered: true, active: false, targetPrice: 100 } },
+        );
     });
 
     it('does not fire while the price stays on the same side, but saves the new average', async () => {
@@ -103,5 +108,6 @@ describe('alert checker', () => {
         await expect(checkStockAlertsHandler({ step })).resolves.toEqual({ processed: 1, triggered: 1 });
         expect(getDailyCloses).not.toHaveBeenCalled();
         expect(sendStockAlertEmail).toHaveBeenCalledWith(expect.not.objectContaining({ smaPeriod: expect.anything() }));
+        expect(findOneAndUpdate).toHaveBeenCalledWith(expect.anything(), { $set: { triggered: true, active: false } });
     });
 });
