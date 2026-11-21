@@ -141,7 +141,7 @@ export default async function LandingPage() {
                 <SectionHead
                     kicker="Data"
                     title="Pick how fresh your numbers are."
-                    sub="Charts always stream live from TradingView. Quotes, watchlists and alerts come from Finnhub (Saudi and Polish prices from Yahoo Finance, delayed), and this is how often they update."
+                    sub="Charts come from TradingView: live for most markets, end of day for some, and a link out where TradingView blocks the embed. Quotes, watchlists and alerts come from Finnhub (Saudi and Polish prices from Yahoo Finance, delayed), and this is how often they update."
                 />
                 <div className="grid gap-3 lg:grid-cols-3">
                     {TIERS.map((tier) => (

@@ -20,7 +20,7 @@ What OpenStock can show depends on free data sources: TradingView embeds and Fin
 ## What that means in the app
 
 - **Dashboard:** pick a market (US, India, Germany, Canada, Australia, Saudi Arabia, Poland, Crypto, Forex). US and crypto tiles use our own cached quotes; Saudi and Polish tiles, movers and quotes use delayed Yahoo Finance quotes, because TradingView blocks Tadawul in embeds and has Warsaw only end of day; the others use TradingView quote tiles.
-- **Stock pages:** symbols Finnhub can price get the full header (live price, day range, market cap). Saudi and Polish symbols get a delayed Yahoo Finance price. Others get TradingView's quote panel. US stocks go to TradingView's widgets with their real exchange (NASDAQ, NYSE, AMEX and so on), so the Technicals gauge shows a reading for them.
+- **Stock pages:** symbols Finnhub can price get the full header (price, day range, market cap), refreshed hourly on the community site and about every 15 seconds in realtime mode. Saudi and Polish symbols get a delayed Yahoo Finance price. Others get TradingView's quote panel. US stocks go to TradingView's widgets with their real exchange (NASDAQ, NYSE, AMEX and so on), so the Technicals gauge shows a reading for them.
 - **Alerts:** an OpenStock Cloud feature (or self-hosted in realtime mode). US stocks and crypto only, because the alert checker needs a quote source it can call every five minutes.
 - **Search:** Finnhub search returns listings worldwide. On exchanges whose chart is blocked, the stock page links to the chart on TradingView instead (the list is `CHART_BLOCKED_EXCHANGES` in `lib/utils.ts`, each confirmed with two tickers).
 
