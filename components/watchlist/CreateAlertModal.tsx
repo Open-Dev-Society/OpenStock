@@ -129,7 +129,7 @@ export default function CreateAlertModal({ symbol, currentPrice, currency = 'USD
                         <DialogDescription className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">
                             {t('cloudBody')}
                         </DialogDescription>
-                        <div className="mt-5 flex gap-2">
+                        <div className="mt-5 flex flex-wrap gap-2">
                             <Link href="/#data" className="btn btn-primary h-11 flex-1">{t('seeCloud')}</Link>
                             <Link href="/#self-host" className="btn btn-ghost h-11">{t('selfHost')}</Link>
                         </div>

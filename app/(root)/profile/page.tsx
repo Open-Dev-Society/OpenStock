@@ -51,7 +51,7 @@ export default async function ProfilePage() {
                         {user.name?.[0]?.toUpperCase() ?? '?'}
                     </span>
                     <div className="min-w-0 flex-1">
-                        <h1 className="truncate text-[22px] font-bold tracking-[-0.03em]">{user.name}</h1>
+                        <h1 dir="auto" className="truncate text-[22px] font-bold tracking-[-0.03em] rtl:text-right">{user.name}</h1>
                         <p className="truncate text-faint">{user.email} · {t('memberSince', { date: memberSince })}</p>
                     </div>
                 </div>

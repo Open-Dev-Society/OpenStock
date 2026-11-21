@@ -49,16 +49,18 @@ export default function WatchlistTable({ initialRows, lists = [] }: { initialRow
     }
 
     return (
-        <div className="overflow-x-auto rounded-[14px]">
-            <table className="data-table">
+        // Columns drop by the card's width, not the viewport's, so the table fits wherever it sits.
+        // In a phone-width card the layout is fixed: the name truncates and the % pill sits under the price.
+        <div className="@container overflow-x-auto rounded-[14px]">
+            <table className="data-table @max-[560px]:table-fixed @max-[560px]:[&_td]:px-2 @max-[560px]:[&_th]:px-2">
                 <thead>
                     <tr>
-                        <th>{th('company')}</th>
-                        <th className="is-num">{th('price')}</th>
-                        <th className="is-num">{t('today')}</th>
-                        <th className="is-num">{th('change')}</th>
-                        <th className="is-num">{th('marketCap')}</th>
-                        <th className="w-[88px]"><span className="sr-only">{th('action')}</span></th>
+                        <th className="@max-[560px]:truncate">{th('company')}</th>
+                        <th className="is-num @max-[560px]:w-[112px]">{th('price')}</th>
+                        <th className="is-num @max-[560px]:hidden">{t('today')}</th>
+                        <th className="is-num @max-[740px]:hidden">{th('change')}</th>
+                        <th className="is-num @max-[660px]:hidden">{th('marketCap')}</th>
+                        <th className="w-[88px] @max-[560px]:w-[120px]"><span className="sr-only">{th('action')}</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -67,22 +69,23 @@ export default function WatchlistTable({ initialRows, lists = [] }: { initialRow
                             <td className="max-w-[320px]">
                                 <Link href={`/stocks/${row.symbol}`} className="group flex items-center gap-3">
                                     {row.logo ? (
-                                        <span className="logo-well"><img src={row.logo} alt="" className="size-full object-contain p-1" /></span>
+                                        <span className="logo-well @max-[560px]:hidden"><img src={row.logo} alt="" className="size-full object-contain p-1" /></span>
                                     ) : (
-                                        <span className="logo-well is-empty">{row.symbol[0]}</span>
+                                        <span className="logo-well is-empty @max-[560px]:hidden">{row.symbol[0]}</span>
                                     )}
                                     <span className="min-w-0">
-                                        <span className="block truncate font-semibold text-foreground group-hover:text-brand-ink transition-colors" title={row.name}>{row.name}</span>
-                                        <span className="mono block text-[12px] text-faint">{row.symbol}</span>
+                                        <span dir="auto" className="block max-w-40 truncate font-semibold rtl:text-right @min-[900px]:max-w-56 text-foreground group-hover:text-brand-ink transition-colors" title={row.name}>{row.name}</span>
+                                        <span className="mono block truncate text-[12px] text-faint">{row.symbol}</span>
                                     </span>
                                 </Link>
                             </td>
                             <td className="is-num font-semibold text-foreground">
                                 <PriceFlash value={row.price} className="px-1">{row.price ? formatPrice(row.price, row.currency) : '—'}</PriceFlash>
+                                <div className="mt-1 @min-[560px]:hidden"><ChangePill value={row.price ? row.changePercent : null} /></div>
                             </td>
-                            <td className="is-num"><ChangePill value={row.price ? row.changePercent : null} /></td>
-                            <td className="is-num text-muted-foreground">{row.price ? `${row.change > 0 ? '+' : ''}${row.change.toFixed(2)}` : '—'}</td>
-                            <td className="is-num text-muted-foreground">{row.marketCap ? formatNumber(row.marketCap) : '—'}</td>
+                            <td className="is-num @max-[560px]:hidden"><ChangePill value={row.price ? row.changePercent : null} /></td>
+                            <td className="is-num text-muted-foreground @max-[740px]:hidden">{row.price ? `${row.change > 0 ? '+' : ''}${row.change.toFixed(2)}` : '—'}</td>
+                            <td className="is-num text-muted-foreground @max-[660px]:hidden">{row.marketCap ? formatNumber(row.marketCap) : '—'}</td>
                             <td>
                                 <div className="flex items-center justify-end gap-1">
                                     <AddToListMenu symbol={row.symbol} company={row.name} lists={lists} />

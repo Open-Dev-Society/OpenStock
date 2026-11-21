@@ -24,13 +24,13 @@ export default function PulseTile({ symbol, label, initial, labels = ENGLISH }: 
     const isCrypto = symbol.startsWith('BINANCE:');
 
     return (
-        <Link href={`/stocks/${encodeURIComponent(symbol)}`} className="bento-tile transition-colors hover:bg-hover/60">
+        <Link href={`/stocks/${encodeURIComponent(symbol)}`} className="bento-tile @container transition-colors hover:bg-hover/60">
             <div className="bento-head">
                 <span className="bento-ico"><LineChart /></span>
                 <span className="truncate">{label}</span>
                 <span className="mono ms-auto text-xs text-faint">{symbol.replace('BINANCE:', '')}</span>
             </div>
-            <PriceFlash value={quote?.c} className="bento-value self-start">
+            <PriceFlash value={quote?.c} className="bento-value self-start text-[length:clamp(20px,15cqi,28px)]">
                 {quote?.c ? (
                     isCrypto ? <>{formatAmount(quote.c)}<small> USDT</small></> : <><small>$</small>{formatAmount(quote.c)}</>
                 ) : '—'}

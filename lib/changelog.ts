@@ -41,12 +41,14 @@ export const RELEASES: Release[] = [
                 items: [
                     'A dividend yield card, from Finnhub’s real data, with a dash for stocks and crypto that don’t pay one. #137',
                     'Public company and comparison pages that work without signing in, and robots.txt and sitemap.xml that search engines can read. #136',
+                    'An optional scored news card: recent stories rated 1 to 10 for relevance, with what each means for the stock, when the server has an AlphAI key. #173',
                 ],
             },
             {
                 title: 'Watchlist',
                 items: [
                     'Named watchlists: group the stocks you watch into up to 10 lists of 50, and file a stock into one from any watchlist row or straight from search. #148',
+                    'Live prices reach every row of a full 50-stock watchlist, not just the first 25, on realtime deployments. #162',
                 ],
             },
             {
@@ -57,6 +59,12 @@ export const RELEASES: Release[] = [
                 ],
             },
             {
+                title: 'Phones and tablets',
+                items: [
+                    'No more pages wider than the screen: the update banner, header, tables, stat tiles and stock headers now fit from 320px phones to tablets, and English names stay readable on the Arabic layout. #175',
+                ],
+            },
+            {
                 title: 'Self-hosting',
                 items: [
                     'Docker and Railway self-hosters can switch on realtime mode again: the data mode is passed in at build time. #134',
@@ -64,6 +72,9 @@ export const RELEASES: Release[] = [
                     'better-auth 1.7.10 and nodemailer 10.1.2, with 81 fewer packages to install. #132 #133',
                     'The weekly news email no longer reports success when Kit only saved it as a draft, and doesn’t retry into more drafts. #151',
                     'OpenStock can also run on Cloudflare Workers (experimental), with a database connection per request and a rate limiter that only trusts Cloudflare’s client address there. The hosted site stays on Vercel. #150',
+                    'The Docker image builds again: the lockfile now installs with the npm 10 that ships in node:22-alpine. #158',
+                    'The environment check counts the Finnhub key as a required variable, so it no longer reports 4/3. #170',
+                    'Sign-in uses the same secret the production check looks for: BETTER_AUTH_SECRET, or AUTH_SECRET if that’s the one you set. #163',
                 ],
             },
             {
@@ -76,13 +87,17 @@ export const RELEASES: Release[] = [
             },
         ],
         credits: [
-            { login: 'ravixalgorithm', prs: [131, 132, 133, 134, 135, 136, 138, 139, 141, 145, 150] },
+            { login: 'ravixalgorithm', prs: [131, 132, 133, 134, 135, 136, 138, 139, 141, 145, 150, 175] },
             { login: 'ahmaddirar-ios', prs: [142, 146, 148] },
             { login: 'octo-patch', prs: [140] },
-            { login: 'pawisoon', prs: [147, 157] },
+            { login: 'pawisoon', prs: [147, 157, 158] },
             { login: 'samki6576', prs: [137] },
             { login: 'dajiaohuang', prs: [151] },
-            { login: 'soarkit', issues: [149] },
+            { login: 'mhatipog', prs: [162] },
+            { login: 'parmeetkxur', prs: [163] },
+            { login: 'inshu5757', prs: [170] },
+            { login: 'makeev', prs: [173] },
+            { login: 'soarkit', issues: [143, 149, 160] },
         ],
     },
     {
