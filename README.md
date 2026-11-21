@@ -25,6 +25,7 @@
   <a href="https://trendshift.io/repositories/15728?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-15728" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/15728/daily?language=TypeScript" alt="Open-Dev-Society%2FOpenStock | Trendshift" width="250" height="55"/></a>
   <a href="https://trendshift.io/repositories/15728?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-15728" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/15728/weekly?language=TypeScript" alt="Open-Dev-Society%2FOpenStock | Trendshift" width="250" height="55"/></a>
   <a href="https://trendshift.io/repositories/15728?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-15728" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/15728/monthly?language=TypeScript" alt="Open-Dev-Society%2FOpenStock | Trendshift" width="250" height="55"/></a>
+  <a href="https://idmo.app/p/openstock" target="_blank" rel="noopener noreferrer"><img src="https://idmo.app/badge/openstock" alt="I did my own Bloomberg Terminal" width="250" height="55"/></a>
 
 </p>
 <div align="center">
