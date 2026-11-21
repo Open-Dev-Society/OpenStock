@@ -68,7 +68,7 @@
 3. ⚙️ [Tech stack](#tech-stack)
 4. 🤸 [Quick start](#quick-start)
 5. 🔐 [Environment variables](#environment-variables)
-6. 🐳 [Self-hosting](#self-hosting): Docker, prebuilt image, one-click deploys, Vercel
+6. 🐳 [Self-hosting](#self-hosting): Docker, prebuilt image, one-click deploys, Railway, Cloudflare Workers (experimental), Vercel
 7. 🧱 [Project structure](#project-structure)
 8. 📡 [How it works](#data--integrations)
 9. 🌍 [Market support](#market-support)
@@ -84,24 +84,31 @@
 ## 🔋 Features <a name="features"></a>
 
 **Markets**
-- A dashboard for nine markets: US, India, Germany, Canada, Australia, Saudi Arabia, Poland, Crypto and Forex, with an index pulse, a sector heatmap, market leaders and top stories.
+- A dashboard for nine markets: US, India, Germany, Canada, Australia, Saudi Arabia, Poland, Crypto and Forex, with an index pulse and top stories, plus a heatmap and market leaders, or for Saudi Arabia and Poland today's movers and a quotes table priced from Yahoo Finance.
 - Search every exchange Finnhub covers with **⌘K**, and keep stocks open as browser-style tabs.
 
 **Stock pages**
 - TradingView candles with drawing tools (trend lines, Fibonacci, shapes, text) and fullscreen.
 - Pick indicators once (SMA, EMA, Bollinger Bands, VWAP, RSI, MACD, Stochastic, ATR) and they stay on every chart.
-- Financials, technicals and the company profile.
+- Financials, technicals, the company profile and the dividend yield.
 - Sentiment from Reddit, X, news and Polymarket (with an Adanos key).
 - Recent news rated 1 to 10 for relevance, with what each story means for the stock (with an AlphAI key).
 
 **Watchlist and alerts**
-- A watchlist of up to 50 stocks, saved to your account.
+- A starred watchlist of up to 50 stocks, plus up to 10 named lists of 50, saved to your account. File a stock into a list from any watchlist row or straight from search.
 - Price alerts above or below a target, checked every 5 minutes and emailed to you (in realtime mode).
 - A weekly, AI-written news digest by email every Monday.
 
 **Accounts**
 - Email and password, plus Google and GitHub sign-in when configured; password reset and a profile page.
 - Rate-limited sign-in, sign-up and password reset; resetting your password signs out your other devices.
+
+**Languages and devices**
+- The app, sign-in pages and emails in English, Polish and Arabic (laid out right to left), from your browser's language or the Language menu in the sidebar. The public site is in English.
+- Fits phones and tablets from 320px wide.
+
+**Public pages**
+- A TradingView chart and the latest SEC filings for every S&P 500 and Nasdaq-100 company at `/s/<ticker>`, and plain comparison guides at `/compare`, with no account needed.
 
 **Community**
 - A [changelog](https://openstock-ods.vercel.app/changelog) that credits everyone who contributed, a [Wall of love](https://openstock-ods.vercel.app/love), and an update banner in the app.
@@ -116,17 +123,19 @@ Charts always stream live from TradingView. Quotes, watchlist prices and alerts 
 | **OpenStock Cloud** (coming soon) | Every 15 seconds | By email | $5 a month |
 | **Self-hosted** | Every hour, or every 15 seconds with `NEXT_PUBLIC_OPENSTOCK_DATA_MODE=realtime` and your own Finnhub keys | By email, in realtime mode | Free |
 
+Saudi and Polish prices come from Yahoo Finance, delayed, on every deployment, because TradingView embeds block Tadawul and show Warsaw only end of day.
+
 ## ⚙️ Tech stack <a name="tech-stack"></a>
 
 | | |
 |---|---|
-| App | Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS v4, shadcn/ui and Radix |
+| App | Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS v4, shadcn/ui and Radix, next-intl (English, Polish, Arabic) |
 | Accounts and data | Better Auth, MongoDB with Mongoose |
-| Market data | Finnhub, TradingView widgets, Adanos (sentiment), AlphAI (scored news) |
+| Market data | Finnhub, TradingView widgets, Yahoo Finance (Saudi and Polish quotes), Adanos (sentiment), AlphAI (scored news) |
 | Background jobs | Inngest |
 | Email | Nodemailer (Gmail), Kit for the newsletter |
 | AI | Gemini, MiniMax or Siray |
-| Hosting | Vercel; a Docker image on GitHub Container Registry for self-hosting |
+| Hosting | Vercel; a Docker image on GitHub Container Registry for self-hosting; Cloudflare Workers through vinext (experimental) |
 
 ## 🤸 Quick start <a name="quick-start"></a>
 
@@ -245,15 +254,16 @@ app/
   (root)/         the signed-in app: dashboard, watchlist, stocks/[symbol], profile
   api/            auth/[...all] (Better Auth), inngest (background jobs), quotes (live prices)
 components/       shell/ (sidebar, tabs), stocks/, watchlist/, landing/, marketing/, sponsors/, forms/, ui/ (shadcn)
-database/         MongoDB connection and models (watchlist, alert)
+database/         MongoDB connection and models (watchlist, named lists, alert)
 lib/
-  actions/        server actions: auth, profile, watchlist, alerts, Finnhub, sentiment
+  actions/        server actions: auth, profile, watchlist, named lists, alerts, Finnhub, Yahoo, sentiment, scored news
   better-auth/    auth setup (connects to MongoDB on first use, so builds need no database)
   inngest/        background jobs and AI prompts
   nodemailer/     email sending and templates
   markets.ts      the dashboard's markets            market-data.ts   cached vs realtime
   changelog.ts    releases and contributor credits   sponsors.ts      sponsors and tiers
   rate-limit.ts   MongoDB-backed limits for auth and live quotes
+i18n/, messages/  next-intl setup and the English, Polish and Arabic strings
 middleware.ts     public marketing, /s and /compare pages; app pages redirect to sign-in
 scripts/          check-env.mjs, test-db.mjs, and one-off maintenance scripts
 __tests__/        Vitest tests
@@ -263,6 +273,7 @@ __tests__/        Vitest tests
 
 - **Finnhub**: search, quotes, company profiles and news. Responses are cached and shared (for an hour, or 15 seconds in realtime mode), with timeouts and a key pool, so a slow upstream never hangs a page.
 - **TradingView**: the chart, heatmap, financials, technicals and profile widgets.
+- **Yahoo Finance**: delayed quotes for Saudi Arabia and Poland on the dashboard, stock pages and watchlist.
 - **Adanos** (optional): the sentiment card.
 - **AlphAI** (optional): the scored news card.
 - **Better Auth with MongoDB**: accounts and sessions. Pages and server actions check the session on the server; the middleware only redirects signed-out visitors.
@@ -323,7 +334,7 @@ OpenStock is built by everyone below: the people who wrote the code and the peop
 <!-- Generated from the credits in lib/changelog.ts: update both together. -->
 <table>
   <tr>
-    <td align="center" width="16%"><a href="https://github.com/ravixalgorithm"><img src="https://github.com/ravixalgorithm.png?size=96" width="56" height="56" alt="ravixalgorithm"/><br/><sub><b>ravixalgorithm</b></sub></a><br/><sub>Maintainer · 50 PRs</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/ravixalgorithm"><img src="https://github.com/ravixalgorithm.png?size=96" width="56" height="56" alt="ravixalgorithm"/><br/><sub><b>ravixalgorithm</b></sub></a><br/><sub>Maintainer · 52 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/keshav-005"><img src="https://github.com/keshav-005.png?size=96" width="56" height="56" alt="keshav-005"/><br/><sub><b>keshav-005</b></sub></a><br/><sub>7 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/ahmaddirar-ios"><img src="https://github.com/ahmaddirar-ios.png?size=96" width="56" height="56" alt="ahmaddirar-ios"/><br/><sub><b>ahmaddirar-ios</b></sub></a><br/><sub>3 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/gugamorato-svg"><img src="https://github.com/gugamorato-svg.png?size=96" width="56" height="56" alt="gugamorato-svg"/><br/><sub><b>gugamorato-svg</b></sub></a><br/><sub>3 PRs</sub></td>

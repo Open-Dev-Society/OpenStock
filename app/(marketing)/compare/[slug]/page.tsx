@@ -87,7 +87,8 @@ export default async function GuidePage({ params }: { params: Promise<Params> })
                         <h2 className="text-[28px] font-bold tracking-[-0.04em]">{section.heading}</h2>
                         <div className="mt-3 flex flex-col gap-4">
                             {section.paragraphs.map((paragraph) => (
-                                <p key={paragraph} className="text-[16px] leading-relaxed text-muted-foreground">{paragraph}</p>
+                                // Env var names are one long word; let them break instead of widening the page on phones
+                                <p key={paragraph} className="text-[16px] leading-relaxed text-muted-foreground [overflow-wrap:anywhere]">{paragraph}</p>
                             ))}
                         </div>
                     </section>
