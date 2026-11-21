@@ -42,6 +42,7 @@ export const RELEASES: Release[] = [
                     'A dividend yield card, from Finnhub’s real data, with a dash for stocks and crypto that don’t pay one. #137',
                     'Public company and comparison pages that work without signing in, and robots.txt and sitemap.xml that search engines can read. #136',
                     'An optional scored news card: recent stories rated 1 to 10 for relevance, with what each means for the stock, when the server has an AlphAI key. #173',
+                    'The Technicals gauge on US stock pages shows a reading again instead of “Permission denied”: each ticker now goes to TradingView with its real exchange (NASDAQ, NYSE, AMEX and so on). #176',
                 ],
             },
             {
@@ -65,6 +66,14 @@ export const RELEASES: Release[] = [
                 ],
             },
             {
+                title: 'Accounts and security',
+                items: [
+                    'Password reset emails always go out: the send is no longer cut off when the server answers first. #177',
+                    'Signing out your other devices when you change your password stops them changing anything straight away. They can only view their own pages until the 5-minute session cache runs out. #181',
+                    'mongoose 8.24.10, which closes a critical advisory in how database query filters are cleaned. #179',
+                ],
+            },
+            {
                 title: 'Self-hosting',
                 items: [
                     'Docker and Railway self-hosters can switch on realtime mode again: the data mode is passed in at build time. #134',
@@ -75,6 +84,7 @@ export const RELEASES: Release[] = [
                     'The Docker image builds again: the lockfile now installs with the npm 10 that ships in node:22-alpine. #158',
                     'The environment check counts the Finnhub key as a required variable, so it no longer reports 4/3. #170',
                     'Sign-in uses the same secret the production check looks for: BETTER_AUTH_SECRET, or AUTH_SECRET if that’s the one you set. #163',
+                    'A team signing up from one shared address (one proxy, or Docker’s port forwarding) gets 30 sign-ups an hour instead of 5, with a per-email limit on top, and a forged client address no longer earns a fresh rate limit. Vercel keeps the strict limit. #178 #180',
                 ],
             },
             {
@@ -87,7 +97,7 @@ export const RELEASES: Release[] = [
             },
         ],
         credits: [
-            { login: 'ravixalgorithm', prs: [131, 132, 133, 134, 135, 136, 138, 139, 141, 145, 150, 175] },
+            { login: 'ravixalgorithm', prs: [131, 132, 133, 134, 135, 136, 138, 139, 141, 145, 150, 175, 180, 181] },
             { login: 'ahmaddirar-ios', prs: [142, 146, 148] },
             { login: 'octo-patch', prs: [140] },
             { login: 'pawisoon', prs: [147, 157, 158] },
@@ -97,7 +107,10 @@ export const RELEASES: Release[] = [
             { login: 'parmeetkxur', prs: [163] },
             { login: 'inshu5757', prs: [170] },
             { login: 'makeev', prs: [173] },
-            { login: 'soarkit', issues: [143, 149, 160] },
+            { login: 'gugamorato-svg', prs: [177, 178, 179] },
+            { login: 'mjmcg', prs: [176] },
+            { login: 'raclure', issues: [165] },
+            { login: 'soarkit', issues: [143, 144, 149, 159, 160, 161] },
         ],
     },
     {

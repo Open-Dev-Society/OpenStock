@@ -323,62 +323,65 @@ OpenStock is built by everyone below: the people who wrote the code and the peop
 <!-- Generated from the credits in lib/changelog.ts: update both together. -->
 <table>
   <tr>
-    <td align="center" width="16%"><a href="https://github.com/ravixalgorithm"><img src="https://github.com/ravixalgorithm.png?size=96" width="56" height="56" alt="ravixalgorithm"/><br/><sub><b>ravixalgorithm</b></sub></a><br/><sub>Maintainer · 48 PRs</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/ravixalgorithm"><img src="https://github.com/ravixalgorithm.png?size=96" width="56" height="56" alt="ravixalgorithm"/><br/><sub><b>ravixalgorithm</b></sub></a><br/><sub>Maintainer · 50 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/keshav-005"><img src="https://github.com/keshav-005.png?size=96" width="56" height="56" alt="keshav-005"/><br/><sub><b>keshav-005</b></sub></a><br/><sub>7 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/ahmaddirar-ios"><img src="https://github.com/ahmaddirar-ios.png?size=96" width="56" height="56" alt="ahmaddirar-ios"/><br/><sub><b>ahmaddirar-ios</b></sub></a><br/><sub>3 PRs</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/gugamorato-svg"><img src="https://github.com/gugamorato-svg.png?size=96" width="56" height="56" alt="gugamorato-svg"/><br/><sub><b>gugamorato-svg</b></sub></a><br/><sub>3 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/octo-patch"><img src="https://github.com/octo-patch.png?size=96" width="56" height="56" alt="octo-patch"/><br/><sub><b>octo-patch</b></sub></a><br/><sub>3 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/pawisoon"><img src="https://github.com/pawisoon.png?size=96" width="56" height="56" alt="pawisoon"/><br/><sub><b>pawisoon</b></sub></a><br/><sub>3 PRs</sub></td>
-    <td align="center" width="16%"><a href="https://github.com/akoweicollinxx"><img src="https://github.com/akoweicollinxx.png?size=96" width="56" height="56" alt="akoweicollinxx"/><br/><sub><b>akoweicollinxx</b></sub></a><br/><sub>2 PRs</sub></td>
   </tr>
   <tr>
+    <td align="center" width="16%"><a href="https://github.com/akoweicollinxx"><img src="https://github.com/akoweicollinxx.png?size=96" width="56" height="56" alt="akoweicollinxx"/><br/><sub><b>akoweicollinxx</b></sub></a><br/><sub>2 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/alexander-schneider"><img src="https://github.com/alexander-schneider.png?size=96" width="56" height="56" alt="alexander-schneider"/><br/><sub><b>alexander-schneider</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/BambaSatoru"><img src="https://github.com/BambaSatoru.png?size=96" width="56" height="56" alt="BambaSatoru"/><br/><sub><b>BambaSatoru</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/Bortlesboat"><img src="https://github.com/Bortlesboat.png?size=96" width="56" height="56" alt="Bortlesboat"/><br/><sub><b>Bortlesboat</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/chinnsenn"><img src="https://github.com/chinnsenn.png?size=96" width="56" height="56" alt="chinnsenn"/><br/><sub><b>chinnsenn</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/Chukwuebuka-2003"><img src="https://github.com/Chukwuebuka-2003.png?size=96" width="56" height="56" alt="Chukwuebuka-2003"/><br/><sub><b>Chukwuebuka-2003</b></sub></a><br/><sub>1 PR</sub></td>
-    <td align="center" width="16%"><a href="https://github.com/cosark"><img src="https://github.com/cosark.png?size=96" width="56" height="56" alt="cosark"/><br/><sub><b>cosark</b></sub></a><br/><sub>1 PR</sub></td>
   </tr>
   <tr>
+    <td align="center" width="16%"><a href="https://github.com/cosark"><img src="https://github.com/cosark.png?size=96" width="56" height="56" alt="cosark"/><br/><sub><b>cosark</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/cosmind-rusu"><img src="https://github.com/cosmind-rusu.png?size=96" width="56" height="56" alt="cosmind-rusu"/><br/><sub><b>cosmind-rusu</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/CrixusWen"><img src="https://github.com/CrixusWen.png?size=96" width="56" height="56" alt="CrixusWen"/><br/><sub><b>CrixusWen</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/dajiaohuang"><img src="https://github.com/dajiaohuang.png?size=96" width="56" height="56" alt="dajiaohuang"/><br/><sub><b>dajiaohuang</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/ettoreciolli"><img src="https://github.com/ettoreciolli.png?size=96" width="56" height="56" alt="ettoreciolli"/><br/><sub><b>ettoreciolli</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/fuxicodex"><img src="https://github.com/fuxicodex.png?size=96" width="56" height="56" alt="fuxicodex"/><br/><sub><b>fuxicodex</b></sub></a><br/><sub>1 PR</sub></td>
-    <td align="center" width="16%"><a href="https://github.com/inshu5757"><img src="https://github.com/inshu5757.png?size=96" width="56" height="56" alt="inshu5757"/><br/><sub><b>inshu5757</b></sub></a><br/><sub>1 PR</sub></td>
   </tr>
   <tr>
+    <td align="center" width="16%"><a href="https://github.com/inshu5757"><img src="https://github.com/inshu5757.png?size=96" width="56" height="56" alt="inshu5757"/><br/><sub><b>inshu5757</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/kuishou68"><img src="https://github.com/kuishou68.png?size=96" width="56" height="56" alt="kuishou68"/><br/><sub><b>kuishou68</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/makeev"><img src="https://github.com/makeev.png?size=96" width="56" height="56" alt="makeev"/><br/><sub><b>makeev</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/mhatipog"><img src="https://github.com/mhatipog.png?size=96" width="56" height="56" alt="mhatipog"/><br/><sub><b>mhatipog</b></sub></a><br/><sub>1 PR</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/mjmcg"><img src="https://github.com/mjmcg.png?size=96" width="56" height="56" alt="mjmcg"/><br/><sub><b>mjmcg</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/Mubashirrrr"><img src="https://github.com/Mubashirrrr.png?size=96" width="56" height="56" alt="Mubashirrrr"/><br/><sub><b>Mubashirrrr</b></sub></a><br/><sub>1 PR</sub></td>
-    <td align="center" width="16%"><a href="https://github.com/muskanbandta23"><img src="https://github.com/muskanbandta23.png?size=96" width="56" height="56" alt="muskanbandta23"/><br/><sub><b>muskanbandta23</b></sub></a><br/><sub>1 PR</sub></td>
-    <td align="center" width="16%"><a href="https://github.com/nb-src"><img src="https://github.com/nb-src.png?size=96" width="56" height="56" alt="nb-src"/><br/><sub><b>nb-src</b></sub></a><br/><sub>1 PR</sub></td>
   </tr>
   <tr>
+    <td align="center" width="16%"><a href="https://github.com/muskanbandta23"><img src="https://github.com/muskanbandta23.png?size=96" width="56" height="56" alt="muskanbandta23"/><br/><sub><b>muskanbandta23</b></sub></a><br/><sub>1 PR</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/nb-src"><img src="https://github.com/nb-src.png?size=96" width="56" height="56" alt="nb-src"/><br/><sub><b>nb-src</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/NicolasBohn"><img src="https://github.com/NicolasBohn.png?size=96" width="56" height="56" alt="NicolasBohn"/><br/><sub><b>NicolasBohn</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/parmeetkxur"><img src="https://github.com/parmeetkxur.png?size=96" width="56" height="56" alt="parmeetkxur"/><br/><sub><b>parmeetkxur</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/samki6576"><img src="https://github.com/samki6576.png?size=96" width="56" height="56" alt="samki6576"/><br/><sub><b>samki6576</b></sub></a><br/><sub>1 PR</sub></td>
     <td align="center" width="16%"><a href="https://github.com/TPTBusiness"><img src="https://github.com/TPTBusiness.png?size=96" width="56" height="56" alt="TPTBusiness"/><br/><sub><b>TPTBusiness</b></sub></a><br/><sub>1 PR</sub></td>
-    <td align="center" width="16%"><a href="https://github.com/Yi-111-a"><img src="https://github.com/Yi-111-a.png?size=96" width="56" height="56" alt="Yi-111-a"/><br/><sub><b>Yi-111-a</b></sub></a><br/><sub>1 PR</sub></td>
-    <td align="center" width="16%"><a href="https://github.com/nexitpl"><img src="https://github.com/nexitpl.png?size=96" width="56" height="56" alt="nexitpl"/><br/><sub><b>nexitpl</b></sub></a><br/><sub>6 issues</sub></td>
   </tr>
   <tr>
-    <td align="center" width="16%"><a href="https://github.com/soarkit"><img src="https://github.com/soarkit.png?size=96" width="56" height="56" alt="soarkit"/><br/><sub><b>soarkit</b></sub></a><br/><sub>3 issues</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/Yi-111-a"><img src="https://github.com/Yi-111-a.png?size=96" width="56" height="56" alt="Yi-111-a"/><br/><sub><b>Yi-111-a</b></sub></a><br/><sub>1 PR</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/nexitpl"><img src="https://github.com/nexitpl.png?size=96" width="56" height="56" alt="nexitpl"/><br/><sub><b>nexitpl</b></sub></a><br/><sub>6 issues</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/soarkit"><img src="https://github.com/soarkit.png?size=96" width="56" height="56" alt="soarkit"/><br/><sub><b>soarkit</b></sub></a><br/><sub>6 issues</sub></td>
     <td align="center" width="16%"><a href="https://github.com/a-lacruz"><img src="https://github.com/a-lacruz.png?size=96" width="56" height="56" alt="a-lacruz"/><br/><sub><b>a-lacruz</b></sub></a><br/><sub>1 issue</sub></td>
     <td align="center" width="16%"><a href="https://github.com/aaronwork1205"><img src="https://github.com/aaronwork1205.png?size=96" width="56" height="56" alt="aaronwork1205"/><br/><sub><b>aaronwork1205</b></sub></a><br/><sub>1 issue</sub></td>
     <td align="center" width="16%"><a href="https://github.com/brainistry10"><img src="https://github.com/brainistry10.png?size=96" width="56" height="56" alt="brainistry10"/><br/><sub><b>brainistry10</b></sub></a><br/><sub>1 issue</sub></td>
-    <td align="center" width="16%"><a href="https://github.com/cn-zeus-jp"><img src="https://github.com/cn-zeus-jp.png?size=96" width="56" height="56" alt="cn-zeus-jp"/><br/><sub><b>cn-zeus-jp</b></sub></a><br/><sub>1 issue</sub></td>
-    <td align="center" width="16%"><a href="https://github.com/danieldanielecki"><img src="https://github.com/danieldanielecki.png?size=96" width="56" height="56" alt="danieldanielecki"/><br/><sub><b>danieldanielecki</b></sub></a><br/><sub>1 issue</sub></td>
   </tr>
   <tr>
+    <td align="center" width="16%"><a href="https://github.com/cn-zeus-jp"><img src="https://github.com/cn-zeus-jp.png?size=96" width="56" height="56" alt="cn-zeus-jp"/><br/><sub><b>cn-zeus-jp</b></sub></a><br/><sub>1 issue</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/danieldanielecki"><img src="https://github.com/danieldanielecki.png?size=96" width="56" height="56" alt="danieldanielecki"/><br/><sub><b>danieldanielecki</b></sub></a><br/><sub>1 issue</sub></td>
     <td align="center" width="16%"><a href="https://github.com/Greatz08"><img src="https://github.com/Greatz08.png?size=96" width="56" height="56" alt="Greatz08"/><br/><sub><b>Greatz08</b></sub></a><br/><sub>1 issue</sub></td>
     <td align="center" width="16%"><a href="https://github.com/juipeter-pixel"><img src="https://github.com/juipeter-pixel.png?size=96" width="56" height="56" alt="juipeter-pixel"/><br/><sub><b>juipeter-pixel</b></sub></a><br/><sub>1 issue</sub></td>
     <td align="center" width="16%"><a href="https://github.com/k2alzhang"><img src="https://github.com/k2alzhang.png?size=96" width="56" height="56" alt="k2alzhang"/><br/><sub><b>k2alzhang</b></sub></a><br/><sub>1 issue</sub></td>
     <td align="center" width="16%"><a href="https://github.com/khajaG321"><img src="https://github.com/khajaG321.png?size=96" width="56" height="56" alt="khajaG321"/><br/><sub><b>khajaG321</b></sub></a><br/><sub>1 issue</sub></td>
-    <td align="center" width="16%"><a href="https://github.com/maplelaef0320"><img src="https://github.com/maplelaef0320.png?size=96" width="56" height="56" alt="maplelaef0320"/><br/><sub><b>maplelaef0320</b></sub></a><br/><sub>1 issue</sub></td>
-    <td align="center" width="16%"><a href="https://github.com/maxsyst"><img src="https://github.com/maxsyst.png?size=96" width="56" height="56" alt="maxsyst"/><br/><sub><b>maxsyst</b></sub></a><br/><sub>1 issue</sub></td>
   </tr>
   <tr>
+    <td align="center" width="16%"><a href="https://github.com/maplelaef0320"><img src="https://github.com/maplelaef0320.png?size=96" width="56" height="56" alt="maplelaef0320"/><br/><sub><b>maplelaef0320</b></sub></a><br/><sub>1 issue</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/maxsyst"><img src="https://github.com/maxsyst.png?size=96" width="56" height="56" alt="maxsyst"/><br/><sub><b>maxsyst</b></sub></a><br/><sub>1 issue</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/raclure"><img src="https://github.com/raclure.png?size=96" width="56" height="56" alt="raclure"/><br/><sub><b>raclure</b></sub></a><br/><sub>1 issue</sub></td>
     <td align="center" width="16%"><a href="https://github.com/saschabrockel"><img src="https://github.com/saschabrockel.png?size=96" width="56" height="56" alt="saschabrockel"/><br/><sub><b>saschabrockel</b></sub></a><br/><sub>1 issue</sub></td>
     <td align="center" width="16%"><a href="https://github.com/soonfatt"><img src="https://github.com/soonfatt.png?size=96" width="56" height="56" alt="soonfatt"/><br/><sub><b>soonfatt</b></sub></a><br/><sub>1 issue</sub></td>
     <td align="center" width="16%"><a href="https://github.com/Terry0930"><img src="https://github.com/Terry0930.png?size=96" width="56" height="56" alt="Terry0930"/><br/><sub><b>Terry0930</b></sub></a><br/><sub>1 issue</sub></td>
