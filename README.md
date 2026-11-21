@@ -97,7 +97,7 @@
 
 **Watchlist and alerts**
 - A starred watchlist of up to 50 stocks, plus up to 10 named lists of 50, saved to your account. File a stock into a list from any watchlist row or straight from search.
-- Price alerts above or below a target, checked every 5 minutes and emailed to you (in realtime mode).
+- Price alerts above or below a target, or when the price crosses its 20, 50, 100 or 200-day moving average, checked every 5 minutes and emailed to you (in realtime mode).
 - A weekly, AI-written news digest by email every Monday.
 
 **Accounts**
@@ -116,7 +116,7 @@
 
 ## ⏱️ How fresh is the data <a name="data-freshness"></a>
 
-Charts always stream live from TradingView. Quotes, watchlist prices and alerts come from Finnhub:
+Charts come from TradingView: live for most markets, end of day for some. Quotes, watchlist prices and alerts come from Finnhub:
 
 | | Quotes | Price alerts | Cost |
 |---|---|---|---|
@@ -335,7 +335,7 @@ OpenStock is built by everyone below: the people who wrote the code and the peop
 <!-- Generated from the credits in lib/changelog.ts: update both together. -->
 <table>
   <tr>
-    <td align="center" width="16%"><a href="https://github.com/ravixalgorithm"><img src="https://github.com/ravixalgorithm.png?size=96" width="56" height="56" alt="ravixalgorithm"/><br/><sub><b>ravixalgorithm</b></sub></a><br/><sub>Maintainer · 52 PRs</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/ravixalgorithm"><img src="https://github.com/ravixalgorithm.png?size=96" width="56" height="56" alt="ravixalgorithm"/><br/><sub><b>ravixalgorithm</b></sub></a><br/><sub>Maintainer · 54 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/keshav-005"><img src="https://github.com/keshav-005.png?size=96" width="56" height="56" alt="keshav-005"/><br/><sub><b>keshav-005</b></sub></a><br/><sub>7 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/ahmaddirar-ios"><img src="https://github.com/ahmaddirar-ios.png?size=96" width="56" height="56" alt="ahmaddirar-ios"/><br/><sub><b>ahmaddirar-ios</b></sub></a><br/><sub>3 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/gugamorato-svg"><img src="https://github.com/gugamorato-svg.png?size=96" width="56" height="56" alt="gugamorato-svg"/><br/><sub><b>gugamorato-svg</b></sub></a><br/><sub>3 PRs</sub></td>
@@ -391,11 +391,14 @@ OpenStock is built by everyone below: the people who wrote the code and the peop
     <td align="center" width="16%"><a href="https://github.com/khajaG321"><img src="https://github.com/khajaG321.png?size=96" width="56" height="56" alt="khajaG321"/><br/><sub><b>khajaG321</b></sub></a><br/><sub>1 issue</sub></td>
   </tr>
   <tr>
+    <td align="center" width="16%"><a href="https://github.com/kumetin"><img src="https://github.com/kumetin.png?size=96" width="56" height="56" alt="kumetin"/><br/><sub><b>kumetin</b></sub></a><br/><sub>1 issue</sub></td>
     <td align="center" width="16%"><a href="https://github.com/maplelaef0320"><img src="https://github.com/maplelaef0320.png?size=96" width="56" height="56" alt="maplelaef0320"/><br/><sub><b>maplelaef0320</b></sub></a><br/><sub>1 issue</sub></td>
     <td align="center" width="16%"><a href="https://github.com/maxsyst"><img src="https://github.com/maxsyst.png?size=96" width="56" height="56" alt="maxsyst"/><br/><sub><b>maxsyst</b></sub></a><br/><sub>1 issue</sub></td>
     <td align="center" width="16%"><a href="https://github.com/raclure"><img src="https://github.com/raclure.png?size=96" width="56" height="56" alt="raclure"/><br/><sub><b>raclure</b></sub></a><br/><sub>1 issue</sub></td>
     <td align="center" width="16%"><a href="https://github.com/saschabrockel"><img src="https://github.com/saschabrockel.png?size=96" width="56" height="56" alt="saschabrockel"/><br/><sub><b>saschabrockel</b></sub></a><br/><sub>1 issue</sub></td>
     <td align="center" width="16%"><a href="https://github.com/soonfatt"><img src="https://github.com/soonfatt.png?size=96" width="56" height="56" alt="soonfatt"/><br/><sub><b>soonfatt</b></sub></a><br/><sub>1 issue</sub></td>
+  </tr>
+  <tr>
     <td align="center" width="16%"><a href="https://github.com/Terry0930"><img src="https://github.com/Terry0930.png?size=96" width="56" height="56" alt="Terry0930"/><br/><sub><b>Terry0930</b></sub></a><br/><sub>1 issue</sub></td>
   </tr>
 </table>

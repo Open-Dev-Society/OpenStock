@@ -21,10 +21,11 @@ export const RELEASES: Release[] = [
         id: '2026-11-22',
         date: '22 Nov 2026',
         title: 'Late November update',
-        summary: 'OpenStock in Polish and Arabic, named watchlists, pages that fit your phone, and safer sign-in',
+        summary: 'OpenStock in Polish and Arabic, named watchlists, moving-average alerts, pages that fit your phone, and safer sign-in',
         highlights: [
             'The app in Polish and Arabic, laid out right to left in Arabic.',
             'Named watchlists: up to 10 lists of 50 stocks.',
+            'Alerts when a price crosses its 20 to 200-day moving average.',
             'The Technicals gauge works again for US stocks.',
             'Every page fits phones and tablets, from 320px up.',
             'Fixes to password reset, signed-out devices and sign-up limits.',
@@ -42,6 +43,12 @@ export const RELEASES: Release[] = [
                 items: [
                     'Named watchlists: group the stocks you watch into up to 10 lists of 50, and file a stock into one from any watchlist row or straight from search. #148',
                     'Live prices reach every row of a full 50-stock watchlist, not just the first 25, on realtime deployments. #162',
+                ],
+            },
+            {
+                title: 'Alerts',
+                items: [
+                    'Alerts can follow a moving average: get an email when a US stock or coin crosses above or below its 20, 50, 100 or 200-day simple moving average. It’s worked out from free daily closes, so no paid data plan is needed. OpenStock Cloud and self-hosted realtime mode. #183',
                 ],
             },
             {
@@ -81,11 +88,12 @@ export const RELEASES: Release[] = [
                 title: 'Community',
                 items: [
                     'The landing page, help, architecture page, guides and README describe OpenStock as it is today: nine markets, three languages, named lists and where each price comes from. #184',
+                    'The README shows the I Did My Own badge next to the Trendshift ones. #185',
                 ],
             },
         ],
         credits: [
-            { login: 'ravixalgorithm', prs: [150, 154, 175, 180, 181, 184] },
+            { login: 'ravixalgorithm', prs: [150, 154, 175, 180, 181, 183, 184, 185] },
             { login: 'ahmaddirar-ios', prs: [146, 148] },
             { login: 'pawisoon', prs: [157, 158] },
             { login: 'gugamorato-svg', prs: [177, 178, 179] },
@@ -96,6 +104,7 @@ export const RELEASES: Release[] = [
             { login: 'makeev', prs: [173] },
             { login: 'mjmcg', prs: [176] },
             { login: 'raclure', issues: [165] },
+            { login: 'kumetin', issues: [59] },
             { login: 'soarkit', issues: [144, 149, 159, 160, 161] },
         ],
     },
