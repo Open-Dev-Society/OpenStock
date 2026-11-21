@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { requireUserId, requireUserIdForRead } from '@/lib/better-auth/auth';
 import { hasFinnhubQuotes } from '@/lib/markets';
 import { alertsEnabled } from '@/lib/market-data';
+import { getDailyCloses, isSmaPeriod, sideOf, sma } from '@/lib/sma';
 
 // A ticker (AAPL, BRK.B) or a Binance pair. Anything else, including markup, is rejected:
 // the symbol ends up in alert emails.
@@ -17,8 +18,11 @@ const MAX_ACTIVE_ALERTS = 50;
 // Create a new alert. Server actions take untrusted input, so only validated fields are stored.
 export async function createAlert(params: {
     symbol: string;
-    targetPrice: number;
+    targetPrice?: number;
     condition: 'ABOVE' | 'BELOW';
+    // A fixed price (the default), or a cross of the simple moving average of the last smaPeriod daily closes
+    target?: 'PRICE' | 'SMA';
+    smaPeriod?: number;
 }) {
     const userId = await requireUserId();
     if (!alertsEnabled) throw new Error('Price alerts are part of OpenStock Cloud');
@@ -30,7 +34,9 @@ export async function createAlert(params: {
     if (!CONDITIONS.includes(condition)) throw new Error('Invalid condition');
     // The alert checker prices symbols through Finnhub, whose free plan covers US stocks and crypto
     if (!hasFinnhubQuotes(symbol)) throw new Error('Alerts are available for US stocks and crypto');
-    if (!Number.isFinite(targetPrice) || targetPrice <= 0) throw new Error('Target price must be a positive number');
+    const isSma = params.target === 'SMA';
+    if (!isSma && (!Number.isFinite(targetPrice) || targetPrice <= 0)) throw new Error('Target price must be a positive number');
+    if (isSma && !isSmaPeriod(params.smaPeriod)) throw new Error('Invalid moving average period');
 
     const db = await connectToDatabase();
     const Alert = alertModel(db);
@@ -38,9 +44,19 @@ export async function createAlert(params: {
         throw new Error(`You can have up to ${MAX_ACTIVE_ALERTS} active alerts`);
     }
 
+    // An SMA alert starts from the average and the side the price is on now, so it fires on the next cross
+    // rather than at once when the price is already past the line
+    let smaFields = {};
+    if (isSma) {
+        const daily = await getDailyCloses(symbol);
+        const average = daily ? sma(daily.closes, params.smaPeriod!) : null;
+        if (!daily || average === null) throw new Error('Not enough price history for this moving average');
+        smaFields = { target: 'SMA', smaPeriod: params.smaPeriod, targetPrice: average, lastSide: daily.price ? sideOf(daily.price, average) ?? undefined : undefined };
+    }
+
     try {
         // expiresAt and triggered come from the schema defaults, never from the caller
-        const newAlert = await Alert.create({ userId, symbol, targetPrice, condition, active: true });
+        const newAlert = await Alert.create({ userId, symbol, targetPrice, condition, active: true, ...smaFields });
         revalidatePath('/watchlist');
         return JSON.parse(JSON.stringify(newAlert));
     } catch (error) {

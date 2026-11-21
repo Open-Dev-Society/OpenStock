@@ -22,6 +22,13 @@ vi.mock('@/database/models/alert.model', () => ({
     }),
 }));
 
+// Real SMA math, canned daily closes
+const getDailyCloses = vi.fn();
+vi.mock('@/lib/sma', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@/lib/sma')>()),
+    getDailyCloses: (...args: unknown[]) => getDailyCloses(...args),
+}));
+
 import { createAlert, deleteAlert } from '@/lib/actions/alert.actions';
 
 describe('alert actions are scoped to the session user', () => {
@@ -96,5 +103,49 @@ describe('createAlert validates untrusted input', () => {
     it('stores only validated fields, so callers cannot pre-trigger or extend an alert', async () => {
         await createAlert({ symbol: ' brk.b ', targetPrice: 400, condition: 'BELOW', triggered: true, expiresAt: new Date(2100, 0) } as never);
         expect(create).toHaveBeenCalledWith({ userId: 'user-123', symbol: 'BRK.B', targetPrice: 400, condition: 'BELOW', active: true });
+    });
+});
+
+describe('createAlert for a moving average', () => {
+    // 60 closes: the last 50 average 105, and the price (110) sits above that
+    const closes = [...Array.from({ length: 10 }, () => 1), ...Array.from({ length: 50 }, (_, i) => 80.5 + i)];
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        requireUserId.mockResolvedValue('user-123');
+        create.mockImplementation(async (doc: unknown) => doc);
+        getDailyCloses.mockResolvedValue({ closes, price: 110 });
+    });
+
+    it('stores the period, the current average and the side the price is on now', async () => {
+        await createAlert({ symbol: 'AAPL', condition: 'BELOW', target: 'SMA', smaPeriod: 50 });
+        expect(getDailyCloses).toHaveBeenCalledWith('AAPL');
+        expect(create).toHaveBeenCalledWith({
+            userId: 'user-123', symbol: 'AAPL', condition: 'BELOW', active: true,
+            target: 'SMA', smaPeriod: 50, targetPrice: 105, lastSide: 'ABOVE',
+        });
+    });
+
+    it('ignores a target price sent with an SMA alert', async () => {
+        await createAlert({ symbol: 'AAPL', condition: 'ABOVE', target: 'SMA', smaPeriod: 50, targetPrice: 1 });
+        expect(create).toHaveBeenCalledWith(expect.objectContaining({ targetPrice: 105 }));
+    });
+
+    it('accepts only the listed periods', async () => {
+        await expect(createAlert({ symbol: 'AAPL', condition: 'ABOVE', target: 'SMA', smaPeriod: 7 })).rejects.toThrow('Invalid moving average period');
+        expect(getDailyCloses).not.toHaveBeenCalled();
+    });
+
+    it('refuses a period longer than the history it can get', async () => {
+        await expect(createAlert({ symbol: 'AAPL', condition: 'ABOVE', target: 'SMA', smaPeriod: 200 })).rejects.toThrow('Not enough price history');
+        getDailyCloses.mockResolvedValue(null);
+        await expect(createAlert({ symbol: 'AAPL', condition: 'ABOVE', target: 'SMA', smaPeriod: 20 })).rejects.toThrow('Not enough price history');
+        expect(create).not.toHaveBeenCalled();
+    });
+
+    it('checks the alert cap before fetching any history', async () => {
+        countDocuments.mockResolvedValueOnce(50);
+        await expect(createAlert({ symbol: 'AAPL', condition: 'ABOVE', target: 'SMA', smaPeriod: 50 })).rejects.toThrow('up to 50 active alerts');
+        expect(getDailyCloses).not.toHaveBeenCalled();
     });
 });

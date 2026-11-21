@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { createAlert } from "@/lib/actions/alert.actions";
+import { SMA_PERIODS, type SmaPeriod } from "@/lib/sma";
 import { alertsEnabled } from "@/lib/market-data";
 import { formatPrice } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -19,14 +20,45 @@ interface CreateAlertModalProps {
 }
 
 const CONDITIONS = [
-    { value: 'ABOVE', labelKey: 'risesAbove' },
-    { value: 'BELOW', labelKey: 'fallsBelow' },
+    { value: 'ABOVE', labelKey: 'risesAbove', smaLabelKey: 'crossesAbove' },
+    { value: 'BELOW', labelKey: 'fallsBelow', smaLabelKey: 'crossesBelow' },
 ] as const;
+
+// A row of mutually exclusive choices (condition, target, period)
+function Segmented<T extends string | number>({ label, value, options, onChange }: {
+    label: string;
+    value: T;
+    options: readonly { value: T; label: string }[];
+    onChange: (value: T) => void;
+}) {
+    return (
+        <div className="grid gap-1 rounded-[12px] bg-page p-1" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }} role="radiogroup" aria-label={label}>
+            {options.map((option) => (
+                <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={value === option.value}
+                    onClick={() => onChange(option.value)}
+                    className={cn(
+                        'h-9 rounded-[9px] font-semibold transition-colors',
+                        value === option.value ? 'bg-hover text-foreground shadow-[inset_0_1px_0_oklch(1_0_0/0.06)]' : 'text-faint hover:text-foreground',
+                    )}
+                >
+                    {option.label}
+                </button>
+            ))}
+        </div>
+    );
+}
 
 export default function CreateAlertModal({ symbol, currentPrice, currency = 'USD', children, onAlertCreated }: CreateAlertModalProps) {
     const t = useTranslations('CreateAlertModal');
     const [open, setOpen] = useState(false);
     const [condition, setCondition] = useState<'ABOVE' | 'BELOW'>('ABOVE');
+    const [targetType, setTargetType] = useState<'PRICE' | 'SMA'>('PRICE');
+    const [smaPeriod, setSmaPeriod] = useState<SmaPeriod>(50);
+    const isSma = targetType === 'SMA';
     const [targetPrice, setTargetPrice] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -44,8 +76,14 @@ export default function CreateAlertModal({ symbol, currentPrice, currency = 'USD
         e.preventDefault();
         setLoading(true);
         try {
-            await createAlert({ symbol, targetPrice: target, condition });
-            toast.success(t('created', { symbol, condition, price: formatPrice(target, currency) }));
+            if (isSma) {
+                // The average comes back from the server: it is computed there from daily closes
+                const alert = await createAlert({ symbol, condition, target: 'SMA', smaPeriod });
+                toast.success(t('createdSma', { symbol, condition, period: smaPeriod, price: formatPrice(alert.targetPrice, currency) }));
+            } else {
+                await createAlert({ symbol, targetPrice: target, condition });
+                toast.success(t('created', { symbol, condition, price: formatPrice(target, currency) }));
+            }
             setOpen(false);
             onAlertCreated?.();
         } catch (error) {
@@ -71,24 +109,31 @@ export default function CreateAlertModal({ symbol, currentPrice, currency = 'USD
                         </div>
 
                         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                            <div className="grid grid-cols-2 gap-1 rounded-[12px] bg-page p-1" role="radiogroup" aria-label={t('conditionLabel')}>
-                                {CONDITIONS.map(({ value, labelKey }) => (
-                                    <button
-                                        key={value}
-                                        type="button"
-                                        role="radio"
-                                        aria-checked={condition === value}
-                                        onClick={() => setCondition(value)}
-                                        className={cn(
-                                            'h-9 rounded-[9px] font-semibold transition-colors',
-                                            condition === value ? 'bg-hover text-foreground shadow-[inset_0_1px_0_oklch(1_0_0/0.06)]' : 'text-faint hover:text-foreground',
-                                        )}
-                                    >
-                                        {t(labelKey)}
-                                    </button>
-                                ))}
-                            </div>
+                            <Segmented
+                                label={t('alertOn')}
+                                value={targetType}
+                                options={[{ value: 'PRICE', label: t('typePrice') }, { value: 'SMA', label: t('typeSma') }]}
+                                onChange={setTargetType}
+                            />
+                            <Segmented
+                                label={t('conditionLabel')}
+                                value={condition}
+                                options={CONDITIONS.map(({ value, labelKey, smaLabelKey }) => ({ value, label: t(isSma ? smaLabelKey : labelKey) }))}
+                                onChange={setCondition}
+                            />
 
+                            {isSma ? (
+                                <div className="flex flex-col gap-2">
+                                    <span className="form-label">{t('smaPeriodLabel')}</span>
+                                    <Segmented
+                                        label={t('smaPeriodLabel')}
+                                        value={smaPeriod}
+                                        options={SMA_PERIODS.map((period) => ({ value: period, label: t('smaOption', { period }) }))}
+                                        onChange={setSmaPeriod}
+                                    />
+                                    <span className="text-[12.5px] text-faint">{t('smaHint')}</span>
+                                </div>
+                            ) : (
                             <label className="flex flex-col gap-2">
                                 <span className="form-label">{t('targetPrice')}</span>
                                 <span className="flex h-12 items-center gap-2 rounded-[11px] border border-line bg-page px-3 focus-within:border-brand">
@@ -115,8 +160,9 @@ export default function CreateAlertModal({ symbol, currentPrice, currency = 'USD
                                                 : t('nowWithDistance', { price: formatPrice(currentPrice!, currency), distance: `${distance > 0 ? '+' : ''}${distance.toFixed(2)}` })}
                                 </span>
                             </label>
+                            )}
 
-                            <button type="submit" disabled={loading || !(target > 0)} className="btn btn-primary h-11">
+                            <button type="submit" disabled={loading || (!isSma && !(target > 0))} className="btn btn-primary h-11">
                                 {loading ? t('setting') : t('setAlert')}
                             </button>
                         </form>
