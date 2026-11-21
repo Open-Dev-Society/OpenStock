@@ -3,7 +3,7 @@
 import { connectToDatabase } from '@/database/mongoose';
 import { watchlistListModel } from '@/database/models/watchlist-list.model';
 import { revalidatePath } from 'next/cache';
-import { requireUserId } from '@/lib/better-auth/auth';
+import { requireUserId, requireUserIdForRead } from '@/lib/better-auth/auth';
 import {
     MAX_LISTS,
     MAX_LIST_SYMBOLS,
@@ -45,7 +45,7 @@ const isDuplicateKey = (error: unknown): boolean => (error as { code?: number })
 const notFound = async () => ({ error: (await getErrorTranslator())('listNotFound') });
 
 export async function getWatchlistLists(): Promise<WatchlistListSummary[]> {
-    const userId = await requireUserId();
+    const userId = await requireUserIdForRead();
     try {
         const WatchlistList = watchlistListModel(await connectToDatabase());
         const lists = await WatchlistList.find({ userId }).sort({ createdAt: -1 });

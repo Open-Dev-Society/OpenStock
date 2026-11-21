@@ -3,7 +3,7 @@
 import { connectToDatabase } from '@/database/mongoose';
 import { watchlistModel } from '@/database/models/watchlist.model';
 import { revalidatePath } from 'next/cache';
-import { requireUserId } from '@/lib/better-auth/auth';
+import { requireUserId, requireUserIdForRead } from '@/lib/better-auth/auth';
 import { getTranslations } from 'next-intl/server';
 
 // Tickers as Finnhub writes them (AAPL, BRK.B, RELIANCE.NS, M&M.NS, 0700.HK, BINANCE:BTCUSDT). Server actions take
@@ -59,7 +59,7 @@ export async function removeFromWatchlist(symbol: string) {
 }
 
 export async function getUserWatchlist() {
-    const userId = await requireUserId();
+    const userId = await requireUserIdForRead();
     try {
         const watchlist = await watchlistModel(await connectToDatabase()).find({ userId }).sort({ addedAt: -1 });
         return JSON.parse(JSON.stringify(watchlist));
@@ -71,7 +71,7 @@ export async function getUserWatchlist() {
 
 // Check if a symbol is in the user's watchlist
 export async function isStockInWatchlist(symbol: string) {
-    const userId = await requireUserId();
+    const userId = await requireUserIdForRead();
     try {
         const item = await watchlistModel(await connectToDatabase()).findOne({ userId, symbol: symbol.toUpperCase() });
         return !!item;

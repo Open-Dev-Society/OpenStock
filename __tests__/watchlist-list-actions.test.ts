@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // update — never read-array, rewrite-array, which loses a concurrent add.
 
 const requireUserId = vi.fn();
-vi.mock('@/lib/better-auth/auth', () => ({ requireUserId: () => requireUserId() }));
+vi.mock('@/lib/better-auth/auth', () => ({ requireUserId: () => requireUserId(), requireUserIdForRead: () => requireUserId() }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/database/mongoose', () => ({ connectToDatabase: vi.fn().mockResolvedValue({}) }));
 

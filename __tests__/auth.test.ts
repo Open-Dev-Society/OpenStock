@@ -20,6 +20,10 @@ vi.mock('next/server', async (importOriginal) => ({
     after: vi.fn(),
 }));
 
+vi.mock('next/headers', () => ({
+    headers: vi.fn().mockResolvedValue(new Headers({ cookie: 'better-auth.session_token=t' })),
+}));
+
 describe('Better Auth secret resolution and production guard', () => {
     const originalEnv = { ...process.env };
     const setNodeEnv = (val: string) => {
@@ -182,5 +186,39 @@ describe('background tasks', () => {
         });
 
         expect(() => handler(Promise.resolve())).not.toThrow();
+    });
+});
+
+describe('session checks for reads and writes', () => {
+    beforeEach(() => {
+        vi.resetModules();
+    });
+
+    const load = async (session: unknown) => {
+        const authModule = await import('@/lib/better-auth/auth');
+        const instance = await authModule.getAuth();
+        const getSession = vi.spyOn(instance.api, 'getSession').mockResolvedValue(session as never);
+        return { ...authModule, getSession };
+    };
+    const signedIn = { user: { id: 'user-1' }, session: { id: 's1' } };
+
+    it('checks writes against the database, so a revoked session cannot write', async () => {
+        const { requireUserId, getSession } = await load(signedIn);
+
+        await expect(requireUserId()).resolves.toBe('user-1');
+        expect(getSession).toHaveBeenCalledWith(expect.objectContaining({ query: { disableCookieCache: true } }));
+    });
+
+    it('rejects a write once the session is gone from the database', async () => {
+        const { requireUserId } = await load(null);
+
+        await expect(requireUserId()).rejects.toThrow('Unauthorized');
+    });
+
+    it('serves reads from the cookie cache, without a database round trip', async () => {
+        const { requireUserIdForRead, getSession } = await load(signedIn);
+
+        await expect(requireUserIdForRead()).resolves.toBe('user-1');
+        expect(getSession.mock.calls[0][0]).not.toHaveProperty('query');
     });
 });

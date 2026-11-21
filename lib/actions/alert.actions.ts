@@ -3,7 +3,7 @@
 import { connectToDatabase } from '@/database/mongoose';
 import { alertModel } from '@/database/models/alert.model';
 import { revalidatePath } from 'next/cache';
-import { requireUserId } from '@/lib/better-auth/auth';
+import { requireUserId, requireUserIdForRead } from '@/lib/better-auth/auth';
 import { hasFinnhubQuotes } from '@/lib/markets';
 import { alertsEnabled } from '@/lib/market-data';
 
@@ -51,7 +51,7 @@ export async function createAlert(params: {
 
 // Get all alerts for a user
 export async function getUserAlerts() {
-    const userId = await requireUserId();
+    const userId = await requireUserIdForRead();
     try {
         const alerts = await alertModel(await connectToDatabase()).find({ userId }).sort({ createdAt: -1 });
         return JSON.parse(JSON.stringify(alerts));

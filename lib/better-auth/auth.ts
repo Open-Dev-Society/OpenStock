@@ -60,7 +60,8 @@ const createAuth = (database: MongoDb, secret: string | undefined = resolveAuthS
             },
         },
         // Signed session cookie for 5 min: pages stop paying a MongoDB round trip per request.
-        // Trade-off: a revoked session can stay valid for up to 5 minutes.
+        // Trade-off: a revoked session can still read pages for up to 5 minutes. Writes re-check the database
+        // (requireUserId below), and Better Auth's own sensitive endpoints (password, email, delete) always do.
         session: {
             cookieCache: { enabled: true, maxAge: 5 * 60 },
         },
@@ -137,11 +138,28 @@ export const auth = {
     handler: async (request: Request) => (await getAuth()).handler(request),
 };
 
-// One session lookup per request, shared by layouts, pages and actions
+// One session lookup per request, shared by layouts, pages and actions. Served from the 5-minute cookie cache,
+// so a session revoked elsewhere (a password change signs out every other device) can still read pages for up
+// to 5 minutes. Writes don't trust it: see requireUserId.
 export const getSession = cache(async () => auth.api.getSession({ headers: await headers() }));
 
+// Re-reads the session from MongoDB, skipping the cookie cache. A revoked session gets null here, and Better Auth
+// clears its cookies, so the device is signed out on its next write. Costs one session lookup per action.
+const getAuthoritativeSession = cache(async () =>
+    auth.api.getSession({ headers: await headers(), query: { disableCookieCache: true } })
+);
+
 // Server actions are public endpoints: never trust a userId sent from the client.
+// For anything that changes data. Checked against the database, so a revoked session can't write.
 export const requireUserId = async () => {
+    const session = await getAuthoritativeSession();
+    if (!session?.user) throw new Error("Unauthorized");
+    return session.user.id;
+}
+
+// For reads only (the layout reads the watchlist on every page): served from the cookie cache, no database
+// round trip. A revoked session can keep reading its own data until the cache expires (5 minutes at most).
+export const requireUserIdForRead = async () => {
     const session = await getSession();
     if (!session?.user) throw new Error("Unauthorized");
     return session.user.id;
