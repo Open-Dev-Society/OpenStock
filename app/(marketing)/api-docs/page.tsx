@@ -3,6 +3,7 @@ import PageHero from '@/components/marketing/PageHero';
 import SectionHead from '@/components/marketing/SectionHead';
 import IconCard from '@/components/marketing/IconCard';
 import { REPO_URL } from '@/lib/constants';
+import { LATEST_RELEASE } from '@/lib/changelog';
 
 export const metadata = {
     title: 'Architecture | OpenStock',
@@ -22,7 +23,7 @@ const COVERAGE = [
     ['India (BSE), Germany', 'End of day', 'No'],
 ];
 
-const FLOW = ['A user signs up, or a cron fires', 'Inngest runs the function', 'Gemini writes the text', 'MiniMax takes over if Gemini fails', 'The email goes out'];
+const FLOW = ['A user signs up, or a cron fires', 'Inngest runs the function', 'Gemini writes the text', 'MiniMax (or Siray) takes over if Gemini fails', 'The email goes out'];
 
 const JOBS = [
     { icon: Mail, title: 'Welcome email', trigger: 'On sign-up', body: 'An AI-written intro tailored to the country, goal, risk and industry picked at sign-up.' },
@@ -36,7 +37,10 @@ const STACK = [
     ['TradingView', 'Charts, heatmaps, technicals and market widgets, embedded live.', 'https://www.tradingview.com/widget/'],
     ['Inngest', 'Background jobs and schedules, with retries.', 'https://www.inngest.com'],
     ['Better Auth', 'Email, Google and GitHub sign-in with MongoDB sessions.', 'https://www.better-auth.com'],
-    ['MongoDB Atlas', 'Users, watchlists and alerts.', 'https://www.mongodb.com/atlas'],
+    ['Yahoo Finance', 'Delayed quotes for Saudi Arabia and Poland, which TradingView embeds block or show only end of day.', 'https://finance.yahoo.com'],
+    ['Adanos', 'Optional: the sentiment card, from Reddit, X, news and Polymarket.', 'https://adanos.org'],
+    ['AlphAI', 'Optional: the scored news card on stock pages.', 'https://alphai.io'],
+    ['MongoDB Atlas', 'Users, watchlists, named lists, alerts and rate limits.', 'https://www.mongodb.com/atlas'],
     ['Kit', 'Newsletter broadcasts for the weekly digest.', 'https://kit.com'],
 ];
 
@@ -48,7 +52,7 @@ export default function ArchitecturePage() {
                 title="How OpenStock works."
                 sub="A transparent look at the event-driven, multi-provider system behind your market data and emails."
             >
-                <span className="pill h-8 px-3">v1.0.0</span>
+                <span className="pill h-8 px-3">v{LATEST_RELEASE.id.replaceAll('-', '.')}</span>
                 <span className="pill h-8 px-3">Gemini with MiniMax fallback</span>
                 <span className="pill h-8 px-3">Open source · AGPL-3.0</span>
             </PageHero>
@@ -90,7 +94,7 @@ export default function ArchitecturePage() {
 
             <section className="mx-auto mt-24 grid max-w-[1200px] items-start gap-10 px-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                 <div>
-                    <SectionHead kicker="AI" title="Emails that don’t go down with a provider." sub="Welcome emails and news summaries are written by Gemini 2.5 Flash-Lite. If it fails, the request is retried on MiniMax-M3.1-Flash by default. Set MINIMAX_MODEL to MiniMax-M3 or keep your configured model override." />
+                    <SectionHead kicker="AI" title="Emails that don’t go down with a provider." sub="Welcome emails and news summaries are written by Gemini 2.5 Flash-Lite. If it fails, the request is retried on MiniMax (MiniMax-M3.1-Flash by default), or on Siray when that is the only fallback key set. Set MINIMAX_MODEL to MiniMax-M3 or keep your configured model override." />
                 </div>
                 <div className="hatch">
                     <ol className="card flex flex-col gap-1 p-4">

@@ -22,7 +22,7 @@ export const GUIDES: Guide[] = [
                 heading: 'What you actually get',
                 paragraphs: [
                     'OpenStock is an AGPL-3.0 web app. The hosted site is free: create an account, search a company, and open a chart. Candle charts, drawing tools, financials, technicals and the company profile come from TradingView’s embeddable widgets. Their logo and “by TradingView” link stay on the page.',
-                    'Around the chart, OpenStock adds an account, a watchlist of up to 50 symbols, browser-style tabs, and a dashboard for US, India, Germany, Canada, Australia, crypto and forex. A weekly email can summarise news for the symbols you watch when email and an AI provider are configured.',
+                    'Around the chart, OpenStock adds an account, a watchlist of up to 50 symbols with up to 10 named lists of 50, browser-style tabs, and a dashboard for US, India, Germany, Canada, Australia, Saudi Arabia, Poland, crypto and forex. A weekly email can summarise news for the symbols you watch when email and an AI provider are configured.',
                 ],
             },
             {
@@ -64,7 +64,7 @@ export const GUIDES: Guide[] = [
             {
                 heading: 'What you run',
                 paragraphs: [
-                    'Docker Compose starts the app and MongoDB together. MongoDB stays on the Docker network and is not published on the host. A prebuilt image is published to ghcr.io/open-dev-society/openstock for amd64 and arm64 on every push to main. Railway, Vercel and a couple of one-click hosts are documented in the README.',
+                    'Docker Compose starts the app and MongoDB together. MongoDB stays on the Docker network and is not published on the host. A prebuilt image is published to ghcr.io/open-dev-society/openstock for amd64 and arm64 on every push to main. Railway, Vercel, a couple of one-click hosts and, experimentally, Cloudflare Workers are documented in the README.',
                     'You need Node 22 if you build from source, a MongoDB database, and a Finnhub API key, the same one the README asks for. Charts still load from TradingView in the browser, so they stay live without that key. Quotes, search and email alerts use the key. Finnhub’s own terms are personal use; these public pages do not display those quotes.',
                 ],
             },
@@ -93,7 +93,7 @@ export const GUIDES: Guide[] = [
             },
             {
                 question: 'Where is the install guide?',
-                answer: 'The README section “Self-hosting” covers Docker Compose, the container image, Railway and Vercel, including the environment variables.',
+                answer: 'The README section “Self-hosting” covers Docker Compose, the container image, Railway, Vercel and Cloudflare Workers (experimental), including the environment variables.',
             },
         ],
     },
@@ -101,13 +101,13 @@ export const GUIDES: Guide[] = [
         slug: 'free-stock-watchlist',
         kicker: 'Watchlist',
         title: 'Free stock watchlist with email alerts',
-        description: 'A free watchlist for up to 50 symbols, saved to your OpenStock account. Email alerts currently need a self-hosted instance in realtime mode. They are off on the hosted site.',
+        description: 'A free watchlist for up to 50 symbols, plus up to 10 named lists, saved to your OpenStock account. Email alerts currently need a self-hosted instance in realtime mode. They are off on the hosted site.',
         lede: 'The watchlist is a list of companies you actually follow, not a feed. Add a symbol from search and keep the chart. Email alerts currently need a self-hosted instance; the hosted site does not send them, and OpenStock Cloud is not on sale.',
         sections: [
             {
                 heading: 'On the free hosted site',
                 paragraphs: [
-                    'Create an account and add up to 50 symbols. The watchlist is stored on your user, shown in the sidebar, and kept when you come back. Quotes on the community site refresh about once an hour. Email price alerts are not turned on there: the shared data plan is too coarse to check a target every few minutes.',
+                    'Create an account and add up to 50 symbols. The watchlist is stored on your user, shown in the sidebar, and kept when you come back. To group them, make up to 10 named lists of 50 symbols each, such as “Banks” or “EV”. Quotes on the community site refresh about once an hour. Email price alerts are not turned on there: the shared data plan is too coarse to check a target every few minutes.',
                     'You still get the chart, financials, technicals and the company profile for each symbol, plus a Monday digest when email is configured on that deployment.',
                 ],
             },
@@ -128,7 +128,7 @@ export const GUIDES: Guide[] = [
         faqs: [
             {
                 question: 'How many symbols can I watch?',
-                answer: '50 on an account. That cap is in the app today.',
+                answer: '50 on your starred watchlist, plus up to 10 named lists of 50 each. Those caps are in the app today.',
             },
             {
                 question: 'Why didn’t my alert email arrive?',
@@ -150,7 +150,7 @@ export const GUIDES: Guide[] = [
             {
                 heading: 'The slice OpenStock covers',
                 paragraphs: [
-                    'US, Indian, German, Canadian and Australian stock pages, plus crypto and forex. TradingView charts with drawing tools. A watchlist, email price alerts in realtime mode, and a short weekly news summary. For the S&P 500 and Nasdaq-100, public pages link the latest annual and quarterly reports on SEC EDGAR.',
+                    'US, Indian, German, Canadian, Australian, Saudi and Polish stock pages, plus crypto and forex. TradingView charts with drawing tools. A watchlist, email price alerts in realtime mode, and a short weekly news summary. For the S&P 500 and Nasdaq-100, public pages link the latest annual and quarterly reports on SEC EDGAR.',
                     'The source is public (AGPL-3.0), so a developer can see how a quote moves from the provider to the screen. That is the part a closed terminal will not show you.',
                 ],
             },
@@ -193,7 +193,7 @@ export const GUIDES: Guide[] = [
             {
                 heading: 'What a student can do on the site',
                 paragraphs: [
-                    'Open a large US company, read a TradingView chart, and follow the link to its latest 10-K or 10-Q on EDGAR. Save symbols to a watchlist. The dashboard covers more than the US: India, Germany, Canada, Australia, crypto and forex are in the signed-in app.',
+                    'Open a large US company, read a TradingView chart, and follow the link to its latest 10-K or 10-Q on EDGAR. Save symbols to a watchlist. The dashboard covers more than the US: India, Germany, Canada, Australia, Saudi Arabia, Poland, crypto and forex are in the signed-in app, which also comes in Polish and Arabic.',
                     'There is no credit card for the community site. Email price alerts are part of realtime mode (self-hosted) or the upcoming paid cloud plan, not the free hosted site. Hourly quotes are enough to learn the screen; they are not a trading signal.',
                 ],
             },

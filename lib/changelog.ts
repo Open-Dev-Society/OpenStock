@@ -21,12 +21,14 @@ export const RELEASES: Release[] = [
         id: '2026-11-09',
         date: '9 Nov 2026',
         title: 'November update',
-        summary: 'Saudi Arabia and Poland on the dashboard, dividend yield, and public stock pages',
+        summary: 'Saudi Arabia and Poland, OpenStock in Polish and Arabic, named watchlists and public stock pages',
         highlights: [
             'Two new markets: Saudi Arabia (Tadawul) and Poland (Warsaw), with delayed prices.',
-            'Stock pages show the dividend yield.',
+            'The app in Polish and Arabic, laid out right to left in Arabic.',
+            'Named watchlists: up to 10 lists of 50 stocks.',
+            'Stock pages show the dividend yield, and the Technicals gauge works again for US stocks.',
             'Company and comparison pages anyone can open, signed in or not.',
-            'Docker self-hosters can switch on realtime mode again.',
+            'Fits phones and tablets, with fixes to password reset, signed-out devices and sign-up limits.',
         ],
         sections: [
             {
