@@ -592,8 +592,9 @@
     "smaOption": "SMA {period}",
     "crossesAbove": "يقطع صعودًا",
     "crossesBelow": "يقطع هبوطًا",
-    "smaHint": "متوسط متحرك بسيط لأسعار الإغلاق اليومية. يُرسل التنبيه عندما يقطعه السعر؛ نتحقق كل 5 دقائق، وينتهي بعد 90 يومًا.",
-    "createdSma": "تم ضبط التنبيه: {symbol} يقطع SMA {period} {condition, select, ABOVE {صعودًا} other {هبوطًا}} (⁦{price}⁩)"
+    "smaHint": "متوسط متحرك بسيط لأسعار الإغلاق اليومية. يُرسل التنبيه عندما يقطعه السعر؛ نتحقق كل ٥ دقائق، وينتهي بعد ٩٠ يومًا.",
+    "createdSma": "تم ضبط التنبيه: {symbol} يقطع SMA {period} {condition, select, ABOVE {صعودًا} other {هبوطًا}} (⁦{price}⁩)",
+    "smaNoHistory": "لا يوجد سجل أسعار كافٍ لحساب SMA {period}"
   },
   "NewsList": {
     "emptyTitle": "لا أخبار حديثة",

@@ -50,7 +50,8 @@ export async function createAlert(params: {
     if (isSma) {
         const daily = await getDailyCloses(symbol);
         const average = daily ? sma(daily.closes, params.smaPeriod!) : null;
-        if (!daily || average === null) throw new Error('Not enough price history for this moving average');
+        // A code, not a thrown message: production hides server-action errors, and the modal translates this one
+        if (!daily || average === null) return { error: 'notEnoughHistory' as const };
         smaFields = { target: 'SMA', smaPeriod: params.smaPeriod, targetPrice: average, lastSide: daily.price ? sideOf(daily.price, average) ?? undefined : undefined };
     }
 

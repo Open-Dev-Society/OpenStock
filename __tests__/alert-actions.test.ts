@@ -136,10 +136,10 @@ describe('createAlert for a moving average', () => {
         expect(getDailyCloses).not.toHaveBeenCalled();
     });
 
-    it('refuses a period longer than the history it can get', async () => {
-        await expect(createAlert({ symbol: 'AAPL', condition: 'ABOVE', target: 'SMA', smaPeriod: 200 })).rejects.toThrow('Not enough price history');
+    it('answers with a code the modal can translate when the history is too short', async () => {
+        await expect(createAlert({ symbol: 'AAPL', condition: 'ABOVE', target: 'SMA', smaPeriod: 200 })).resolves.toEqual({ error: 'notEnoughHistory' });
         getDailyCloses.mockResolvedValue(null);
-        await expect(createAlert({ symbol: 'AAPL', condition: 'ABOVE', target: 'SMA', smaPeriod: 20 })).rejects.toThrow('Not enough price history');
+        await expect(createAlert({ symbol: 'AAPL', condition: 'ABOVE', target: 'SMA', smaPeriod: 20 })).resolves.toEqual({ error: 'notEnoughHistory' });
         expect(create).not.toHaveBeenCalled();
     });
 

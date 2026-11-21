@@ -593,7 +593,8 @@
     "crossesAbove": "Crosses above",
     "crossesBelow": "Crosses below",
     "smaHint": "Simple moving average of daily closes. Fires when the price crosses it; checked every 5 minutes, expires after 90 days.",
-    "createdSma": "Alert set: {symbol} crosses {condition, select, ABOVE {above} other {below}} SMA {period} ({price})"
+    "createdSma": "Alert set: {symbol} crosses {condition, select, ABOVE {above} other {below}} SMA {period} ({price})",
+    "smaNoHistory": "Not enough price history for SMA {period}"
   },
   "NewsList": {
     "emptyTitle": "No recent news",

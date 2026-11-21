@@ -40,8 +40,9 @@ function Segmented<T extends string | number>({ label, value, options, onChange 
                     role="radio"
                     aria-checked={value === option.value}
                     onClick={() => onChange(option.value)}
+                    // One line at any width: a phone (320px) gets a slightly smaller size instead of a wrap
                     className={cn(
-                        'h-9 rounded-[9px] font-semibold transition-colors',
+                        'min-h-9 whitespace-nowrap rounded-[9px] px-1 text-[12px] font-semibold transition-colors min-[400px]:text-[14px]',
                         value === option.value ? 'bg-hover text-foreground shadow-[inset_0_1px_0_oklch(1_0_0/0.06)]' : 'text-faint hover:text-foreground',
                     )}
                 >
@@ -79,6 +80,10 @@ export default function CreateAlertModal({ symbol, currentPrice, currency = 'USD
             if (isSma) {
                 // The average comes back from the server: it is computed there from daily closes
                 const alert = await createAlert({ symbol, condition, target: 'SMA', smaPeriod });
+                if ('error' in alert) {
+                    toast.error(t('smaNoHistory', { period: smaPeriod }));
+                    return;
+                }
                 toast.success(t('createdSma', { symbol, condition, period: smaPeriod, price: formatPrice(alert.targetPrice, currency) }));
             } else {
                 await createAlert({ symbol, targetPrice: target, condition });
