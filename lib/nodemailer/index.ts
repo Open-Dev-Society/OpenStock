@@ -144,8 +144,9 @@ export const sendNewsSummaryEmail = async (
 };
 
 export const sendStockAlertEmail = async (
-    { email, symbol, currentPrice, targetPrice, condition, locale }:
-    { email: string; symbol: string; currentPrice: number; targetPrice: number; condition: 'ABOVE' | 'BELOW'; locale?: string }
+    { email, symbol, currentPrice, targetPrice, condition, smaPeriod, locale }:
+    // smaPeriod: the alert was a cross of that moving average, and targetPrice is the average
+    { email: string; symbol: string; currentPrice: number; targetPrice: number; condition: 'ABOVE' | 'BELOW'; smaPeriod?: number; locale?: string }
 ) => {
     try {
         if (!transporter) {
@@ -160,21 +161,23 @@ export const sendStockAlertEmail = async (
             : formatPrice(value);
         const { lang, t } = await getEmailTranslator(locale);
         const dir = isUpper ? 'Above' : 'Below';
-        const values = { symbol, price: money(currentPrice), target: money(targetPrice) };
+        // An SMA alert names the average in the subject, title, text and trigger; heading and callout stay shared
+        const what = smaPeriod ? (isUpper ? 'SmaAbove' : 'SmaBelow') : dir;
+        const values = { symbol, price: money(currentPrice), target: money(targetPrice), period: smaPeriod ?? 0 };
         const htmlTemplate = fillTemplate(isUpper ? STOCK_ALERT_UPPER_EMAIL_TEMPLATE : STOCK_ALERT_LOWER_EMAIL_TEMPLATE, {
             ...escapeAll({
                 symbol,
                 currentPrice: values.price,
                 targetPrice: values.target,
                 timestamp: new Date().toLocaleString(lang, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'UTC', timeZoneName: 'short' }),
-                title: t(`stockAlert.title${dir}`, values),
+                title: t(`stockAlert.title${what}`, values),
                 logoAlt: t('common.logoAlt'),
                 heading: t(`stockAlert.heading${dir}`),
                 currentPriceLabel: t('stockAlert.currentPrice'),
                 details: t('stockAlert.details'),
-                targetPriceLabel: t('stockAlert.targetPriceLabel'),
+                targetPriceLabel: smaPeriod ? t('stockAlert.smaLabel', values) : t('stockAlert.targetPriceLabel'),
                 triggerLabel: t('stockAlert.triggerLabel'),
-                trigger: t(`stockAlert.trigger${dir}`, values),
+                trigger: t(`stockAlert.trigger${what}`, values),
                 calloutTitle: t(`stockAlert.calloutTitle${dir}`),
                 calloutBody: t(`stockAlert.calloutBody${dir}`, values),
                 cta: t('stockAlert.cta'),
@@ -189,8 +192,8 @@ export const sendStockAlertEmail = async (
         const mailOptions = {
             from: `"Openstock" <${process.env.NODEMAILER_EMAIL}>`,
             to: email,
-            subject: t(`stockAlert.subject${dir}`, values),
-            text: t(`stockAlert.text${dir}`, values),
+            subject: t(`stockAlert.subject${what}`, values),
+            text: t(`stockAlert.text${what}`, values),
             html: htmlTemplate,
         };
 

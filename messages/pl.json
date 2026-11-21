@@ -348,7 +348,16 @@
       "calloutTitleBelow": "Cena spadła",
       "calloutBodyBelow": "{symbol} spadł poniżej twojej ceny docelowej. To może być dobry moment na zakup.",
       "cta": "Zobacz pulpit",
-      "footer": "Dostajesz tę wiadomość, bo masz włączone alerty w OpenStock."
+      "footer": "Dostajesz tę wiadomość, bo masz włączone alerty w OpenStock.",
+      "subjectSmaAbove": "🔔 Alert cenowy: {symbol} przebił w górę średnią {period}-dniową",
+      "subjectSmaBelow": "🔔 Alert cenowy: {symbol} przebił w dół średnią {period}-dniową",
+      "textSmaAbove": "{symbol} kosztuje teraz {price}, powyżej {period}-dniowej prostej średniej kroczącej ({target}).",
+      "textSmaBelow": "{symbol} kosztuje teraz {price}, poniżej {period}-dniowej prostej średniej kroczącej ({target}).",
+      "titleSmaAbove": "Alert cenowy: {symbol} przebił w górę SMA {period}",
+      "titleSmaBelow": "Alert cenowy: {symbol} przebił w dół SMA {period}",
+      "triggerSmaAbove": "Cena przebiła w górę {period}-dniową prostą średnią kroczącą ({target})",
+      "triggerSmaBelow": "Cena przebiła w dół {period}-dniową prostą średnią kroczącą ({target})",
+      "smaLabel": "SMA {period}:"
     }
   },
   "Sidebar": {
@@ -553,7 +562,9 @@
     "below": "Poniżej {price}",
     "until": "do {date}",
     "removeTitle": "Usuń alert",
-    "removeLabel": "Usuń alert: {symbol}"
+    "removeLabel": "Usuń alert: {symbol}",
+    "aboveSma": "Powyżej SMA {period} ({price})",
+    "belowSma": "Poniżej SMA {period} ({price})"
   },
   "CreateAlertModal": {
     "risesAbove": "Wzrośnie powyżej",
@@ -573,7 +584,18 @@
     "seeCloud": "Zobacz OpenStock Cloud",
     "selfHost": "Hostuj samodzielnie",
     "created": "Ustawiono alert: {symbol} {condition, select, ABOVE {powyżej} other {poniżej}} {price}",
-    "alreadyMet": "Cena jest już {condition, select, ABOVE {powyżej} other {poniżej}} tego poziomu — alert uruchomi się przy następnym sprawdzeniu"
+    "alreadyMet": "Cena jest już {condition, select, ABOVE {powyżej} other {poniżej}} tego poziomu — alert uruchomi się przy następnym sprawdzeniu",
+    "alertOn": "Alert dla",
+    "typePrice": "Ceny",
+    "typeSma": "Średniej kroczącej",
+    "smaPeriodLabel": "Okres",
+    "smaOption": "SMA {period}",
+    "crossesAbove": "Przebije w górę",
+    "crossesBelow": "Przebije w dół",
+    "smaHint": "Prosta średnia krocząca z dziennych cen zamknięcia. Alert uruchamia się, gdy cena ją przetnie; sprawdzamy co 5 minut, wygasa po 90 dniach.",
+    "createdSma": "Alert ustawiony: {symbol} przebije {condition, select, ABOVE {w górę} other {w dół}} SMA {period} ({price})",
+    "smaNoHistory": "Za mało historii cen dla SMA {period}",
+    "smaHistoryUnavailable": "Nie udało się pobrać historii cen. Spróbuj ponownie za chwilę."
   },
   "NewsList": {
     "emptyTitle": "Brak najnowszych wiadomości",

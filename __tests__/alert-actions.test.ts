@@ -22,6 +22,17 @@ vi.mock('@/database/models/alert.model', () => ({
     }),
 }));
 
+// The Finnhub quote the checker compares against
+const getQuote = vi.fn();
+vi.mock('@/lib/actions/finnhub.actions', () => ({ getQuote: (...args: unknown[]) => getQuote(...args) }));
+
+// Real SMA math, canned daily closes
+const getDailyCloses = vi.fn();
+vi.mock('@/lib/sma', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@/lib/sma')>()),
+    getDailyCloses: (...args: unknown[]) => getDailyCloses(...args),
+}));
+
 import { createAlert, deleteAlert } from '@/lib/actions/alert.actions';
 
 describe('alert actions are scoped to the session user', () => {
@@ -96,5 +107,81 @@ describe('createAlert validates untrusted input', () => {
     it('stores only validated fields, so callers cannot pre-trigger or extend an alert', async () => {
         await createAlert({ symbol: ' brk.b ', targetPrice: 400, condition: 'BELOW', triggered: true, expiresAt: new Date(2100, 0) } as never);
         expect(create).toHaveBeenCalledWith({ userId: 'user-123', symbol: 'BRK.B', targetPrice: 400, condition: 'BELOW', active: true });
+    });
+});
+
+describe('createAlert for a moving average', () => {
+    // 60 closes: the last 50 average 105, and the price (110) sits above that
+    const closes = [...Array.from({ length: 10 }, () => 1), ...Array.from({ length: 50 }, (_, i) => 80.5 + i)];
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        requireUserId.mockResolvedValue('user-123');
+        create.mockImplementation(async (doc: unknown) => doc);
+        getDailyCloses.mockResolvedValue({ closes, price: 110 });
+        getQuote.mockResolvedValue({ c: 110 });
+    });
+
+    it('stores the period, the current average and the side the price is on now', async () => {
+        await createAlert({ symbol: 'AAPL', condition: 'BELOW', target: 'SMA', smaPeriod: 50 });
+        expect(getDailyCloses).toHaveBeenCalledWith('AAPL');
+        expect(create).toHaveBeenCalledWith({
+            userId: 'user-123', symbol: 'AAPL', condition: 'BELOW', active: true,
+            target: 'SMA', smaPeriod: 50, targetPrice: 105, lastSide: 'ABOVE',
+        });
+    });
+
+    it('ignores a target price sent with an SMA alert', async () => {
+        await createAlert({ symbol: 'AAPL', condition: 'ABOVE', target: 'SMA', smaPeriod: 50, targetPrice: 1 });
+        expect(create).toHaveBeenCalledWith(expect.objectContaining({ targetPrice: 105 }));
+    });
+
+    it('accepts only the listed periods', async () => {
+        await expect(createAlert({ symbol: 'AAPL', condition: 'ABOVE', target: 'SMA', smaPeriod: 7 })).rejects.toThrow('Invalid moving average period');
+        expect(getDailyCloses).not.toHaveBeenCalled();
+    });
+
+    it('answers with a code the modal can translate when the history is too short', async () => {
+        await expect(createAlert({ symbol: 'AAPL', condition: 'ABOVE', target: 'SMA', smaPeriod: 200 })).resolves.toEqual({ error: 'notEnoughHistory' });
+        getDailyCloses.mockResolvedValue({ closes: [], price: null }); // Yahoo has no data for the symbol
+        await expect(createAlert({ symbol: 'AAPL', condition: 'ABOVE', target: 'SMA', smaPeriod: 20 })).resolves.toEqual({ error: 'notEnoughHistory' });
+        expect(create).not.toHaveBeenCalled();
+    });
+
+    it('tells an unreachable history apart, so the modal can say to try again', async () => {
+        getDailyCloses.mockResolvedValue(null);
+        await expect(createAlert({ symbol: 'AAPL', condition: 'ABOVE', target: 'SMA', smaPeriod: 20 })).resolves.toEqual({ error: 'historyUnavailable' });
+        expect(create).not.toHaveBeenCalled();
+    });
+
+    it('checks the alert cap before fetching any history', async () => {
+        countDocuments.mockResolvedValueOnce(50);
+        await expect(createAlert({ symbol: 'AAPL', condition: 'ABOVE', target: 'SMA', smaPeriod: 50 })).rejects.toThrow('up to 50 active alerts');
+        expect(getDailyCloses).not.toHaveBeenCalled();
+    });
+});
+
+describe('createAlert starts an SMA alert from the checker’s price', () => {
+    // The last 50 closes average 105; Yahoo's cached price says 110 (above)
+    const closes = Array.from({ length: 50 }, (_, i) => 80.5 + i);
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        requireUserId.mockResolvedValue('user-123');
+        create.mockImplementation(async (doc: unknown) => doc);
+        getDailyCloses.mockResolvedValue({ closes, price: 110 });
+    });
+
+    it('takes the side from the Finnhub quote the checker uses, not Yahoo’s older price', async () => {
+        getQuote.mockResolvedValue({ c: 100 }); // below the average, while Yahoo still says above
+        await createAlert({ symbol: 'AAPL', condition: 'ABOVE', target: 'SMA', smaPeriod: 50 });
+        expect(getQuote).toHaveBeenCalledWith('AAPL');
+        expect(create).toHaveBeenCalledWith(expect.objectContaining({ lastSide: 'BELOW' }));
+    });
+
+    it('falls back to Yahoo’s price only when Finnhub has none', async () => {
+        getQuote.mockResolvedValue(null);
+        await createAlert({ symbol: 'AAPL', condition: 'ABOVE', target: 'SMA', smaPeriod: 50 });
+        expect(create).toHaveBeenCalledWith(expect.objectContaining({ lastSide: 'ABOVE' }));
     });
 });

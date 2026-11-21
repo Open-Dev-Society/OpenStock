@@ -348,7 +348,16 @@
       "calloutTitleBelow": "انخفض السعر",
       "calloutBodyBelow": "نزل {symbol} تحت سعرك المستهدف. قد يكون وقتًا مناسبًا للشراء.",
       "cta": "افتح لوحة الأسواق",
-      "footer": "تصلك هذه الرسالة لأنك مشترك في تحديثات أخبار OpenStock."
+      "footer": "تصلك هذه الرسالة لأنك مشترك في تحديثات أخبار OpenStock.",
+      "subjectSmaAbove": "🔔 تنبيه سعر: {symbol} قطع متوسطه المتحرك SMA {period} صعودًا",
+      "subjectSmaBelow": "🔔 تنبيه سعر: {symbol} قطع متوسطه المتحرك SMA {period} هبوطًا",
+      "textSmaAbove": "سعر {symbol} الآن ⁦{price}⁩، فوق متوسطه المتحرك البسيط SMA {period} البالغ ⁦{target}⁩.",
+      "textSmaBelow": "سعر {symbol} الآن ⁦{price}⁩، تحت متوسطه المتحرك البسيط SMA {period} البالغ ⁦{target}⁩.",
+      "titleSmaAbove": "تنبيه سعر: {symbol} قطع SMA {period} صعودًا",
+      "titleSmaBelow": "تنبيه سعر: {symbol} قطع SMA {period} هبوطًا",
+      "triggerSmaAbove": "قطع السعر المتوسط المتحرك البسيط SMA {period} صعودًا (⁦{target}⁩)",
+      "triggerSmaBelow": "قطع السعر المتوسط المتحرك البسيط SMA {period} هبوطًا (⁦{target}⁩)",
+      "smaLabel": "SMA {period}:"
     }
   },
   "Sidebar": {
@@ -553,7 +562,9 @@
     "below": "تحت ⁦{price}⁩",
     "until": "حتى {date}",
     "removeTitle": "حذف التنبيه",
-    "removeLabel": "احذف تنبيه {symbol}"
+    "removeLabel": "احذف تنبيه {symbol}",
+    "aboveSma": "فوق SMA {period} (⁦{price}⁩)",
+    "belowSma": "تحت SMA {period} (⁦{price}⁩)"
   },
   "CreateAlertModal": {
     "risesAbove": "يصعد فوق",
@@ -573,7 +584,18 @@
     "cloudTitle": "تنبيهات الأسعار تأتي مع Cloud",
     "cloudBody": "يضيف Cloud تنبيهات الأسعار بالبريد والأسعار المباشرة مقابل ٥ دولارات شهرياً، وهو قادم قريباً. أما الاستضافة الذاتية فتتضمن الميزتين اليوم.",
     "seeCloud": "شاهد OpenStock Cloud",
-    "selfHost": "استضف بنفسك"
+    "selfHost": "استضف بنفسك",
+    "alertOn": "التنبيه على",
+    "typePrice": "السعر",
+    "typeSma": "المتوسط المتحرك",
+    "smaPeriodLabel": "الفترة",
+    "smaOption": "SMA {period}",
+    "crossesAbove": "يقطع صعودًا",
+    "crossesBelow": "يقطع هبوطًا",
+    "smaHint": "متوسط متحرك بسيط لأسعار الإغلاق اليومية. يُرسل التنبيه عندما يقطعه السعر؛ نتحقق كل ٥ دقائق، وينتهي بعد ٩٠ يومًا.",
+    "createdSma": "تم ضبط التنبيه: {symbol} يقطع SMA {period} {condition, select, ABOVE {صعودًا} other {هبوطًا}} (⁦{price}⁩)",
+    "smaNoHistory": "لا يوجد سجل أسعار كافٍ لحساب SMA {period}",
+    "smaHistoryUnavailable": "تعذّر تحميل سجل الأسعار. حاول مرة أخرى بعد قليل."
   },
   "NewsList": {
     "emptyTitle": "لا أخبار حديثة",

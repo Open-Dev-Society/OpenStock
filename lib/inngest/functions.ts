@@ -100,7 +100,7 @@ export const sendWeeklyNewsSummary = inngest.createFunction(
             try {
                 const subData = await kit.listSubscribers();
                 const subscriberList = subData.subscribers || [];
-                const confirmedCount = subscriberList.filter((s: any) => s.state === 'active').length;
+                const confirmedCount = subscriberList.filter((s: { state?: string }) => s.state === 'active').length;
 
                 console.log(`📋 Target Audience: Found ${subData.total_subscribers} total subscribers in Kit.`);
                 console.log(`✅ Confirmed (Active) Subscribers receiving email: ${confirmedCount}`);
@@ -206,130 +206,194 @@ export const sendWeeklyNewsSummary = inngest.createFunction(
     }
 )
 
-export const checkStockAlerts = inngest.createFunction(
-    { id: 'check-stock-alerts', concurrency: 1, triggers: [{ cron: '*/5 * * * *' }] }, // Every 5 minutes; one run at a time so an alert is never emailed twice
-    async ({ step }) => {
-        // Step 1: Fetch active alerts
-        const activeAlerts = await step.run('fetch-active-alerts', async () => {
-            // Dynamic import to avoid circular dep issues if any, or just standard import
+// The fields the checker reads from an active alert (lean documents, JSON-serialised by step.run)
+type ActiveAlert = {
+    _id: string;
+    userId: string;
+    symbol: string;
+    targetPrice: number;
+    condition: 'ABOVE' | 'BELOW';
+    target?: 'PRICE' | 'SMA';
+    smaPeriod?: number;
+    lastSide?: 'ABOVE' | 'BELOW';
+};
+
+// Exported apart from the Inngest wrapper so it can be run directly (tests, a manual check) with a plain step runner
+export const checkStockAlertsHandler = async ({ step }: { step: { run: <T>(id: string, fn: () => Promise<T>) => Promise<T> } }) => {
+    // Step 1: Fetch active alerts
+    const activeAlerts = await step.run('fetch-active-alerts', async () => {
+        // Dynamic import to avoid circular dep issues if any, or just standard import
+        const { connectToDatabase } = await import("@/database/mongoose");
+        const { alertModel } = await import("@/database/models/alert.model");
+
+        const Alert = alertModel(await connectToDatabase());
+        const now = new Date();
+
+        return await Alert.find({
+            active: true,
+            triggered: false,
+            expiresAt: { $gt: now }
+        }).lean();
+    });
+
+    const alerts = activeAlerts as unknown as ActiveAlert[];
+    if (!alerts || alerts.length === 0) {
+        return { message: 'No active alerts to check.' };
+    }
+
+    // Step 2: Group by symbol
+    const symbols = [...new Set(alerts.map((a) => a.symbol))];
+
+    // Step 3: Fetch prices
+    const prices = await step.run('fetch-prices', async () => {
+        const { getQuote } = await import("@/lib/actions/finnhub.actions");
+        const priceMap: Record<string, number> = {};
+
+        // Process in chunks to be safe
+        for (const sym of symbols) {
+            try {
+                const quote = await getQuote(sym as string);
+                if (quote && quote.c) {
+                    priceMap[sym as string] = quote.c;
+                }
+            } catch (e) {
+                console.error(`Failed to fetch price for ${sym}`, e);
+            }
+        }
+        return priceMap;
+    });
+
+    // Step 3b: Daily closes for SMA alerts, one request per symbol per run (and cached for an hour)
+    const smaSymbols = [...new Set(alerts.filter((a) => a.target === 'SMA').map((a) => a.symbol))];
+    const closesBySymbol = smaSymbols.length === 0 ? {} : await step.run('fetch-daily-closes', async () => {
+        const { getDailyCloses, SMA_PERIODS } = await import("@/lib/sma");
+        const longest = Math.max(...SMA_PERIODS);
+        const map: Record<string, number[]> = {};
+        for (const sym of smaSymbols) {
+            const daily = await getDailyCloses(sym);
+            if (daily) map[sym] = daily.closes.slice(-longest);
+        }
+        return map;
+    });
+
+    // Step 4: Check conditions. Fixed-price alerts fire on the level; SMA alerts fire on a cross of the average.
+    const { sma, sideOf, hasCrossed } = await import("@/lib/sma");
+    type TriggeredAlert = { alert: ActiveAlert; currentPrice: number; average?: number };
+    const triggeredAlerts: TriggeredAlert[] = [];
+    // Where each SMA alert's price sits now, saved so the next run can tell a cross from a level
+    const smaUpdates: { id: string; lastSide?: 'ABOVE' | 'BELOW'; average: number }[] = [];
+
+    for (const alert of alerts) {
+        const currentPrice = prices[alert.symbol];
+        if (!currentPrice) continue;
+
+        if (alert.target === 'SMA') {
+            const closes = (closesBySymbol as Record<string, number[]>)[alert.symbol];
+            const average = closes && alert.smaPeriod ? sma(closes, alert.smaPeriod) : null;
+            if (average === null) continue;
+            if (hasCrossed(alert.condition, alert.lastSide, currentPrice, average)) {
+                triggeredAlerts.push({ alert, currentPrice, average });
+            } else {
+                const side = sideOf(currentPrice, average) ?? alert.lastSide;
+                if (side !== alert.lastSide || Math.abs(average - alert.targetPrice) > 1e-9) {
+                    smaUpdates.push({ id: String(alert._id), lastSide: side, average });
+                }
+            }
+            continue;
+        }
+
+        let isTriggered = false;
+        // Simple check
+        if (alert.condition === 'ABOVE' && currentPrice >= alert.targetPrice) {
+            isTriggered = true;
+        } else if (alert.condition === 'BELOW' && currentPrice <= alert.targetPrice) {
+            isTriggered = true;
+        }
+
+        if (isTriggered) {
+            triggeredAlerts.push({ alert, currentPrice });
+        }
+    }
+
+    // Only alerts whose side or average changed are written: the average moves once a day
+    if (smaUpdates.length > 0) {
+        await step.run('save-sma-state', async () => {
             const { connectToDatabase } = await import("@/database/mongoose");
             const { alertModel } = await import("@/database/models/alert.model");
-
             const Alert = alertModel(await connectToDatabase());
-            const now = new Date();
-
-            return await Alert.find({
-                active: true,
-                triggered: false,
-                expiresAt: { $gt: now }
-            }).lean();
+            await Alert.bulkWrite(smaUpdates.map(({ id, lastSide, average }) => ({
+                updateOne: {
+                    filter: { _id: id, active: true, triggered: false },
+                    update: { $set: { targetPrice: average, ...(lastSide ? { lastSide } : {}) } },
+                },
+            })));
         });
-
-        if (!activeAlerts || activeAlerts.length === 0) {
-            return { message: 'No active alerts to check.' };
-        }
-
-        // Step 2: Group by symbol
-        const symbols = [...new Set(activeAlerts.map((a: any) => a.symbol))];
-
-        // Step 3: Fetch prices
-        const prices = await step.run('fetch-prices', async () => {
-            const { getQuote } = await import("@/lib/actions/finnhub.actions");
-            const priceMap: Record<string, number> = {};
-
-            // Process in chunks to be safe
-            for (const sym of symbols) {
-                try {
-                    const quote = await getQuote(sym as string);
-                    if (quote && quote.c) {
-                        priceMap[sym as string] = quote.c;
-                    }
-                } catch (e) {
-                    console.error(`Failed to fetch price for ${sym}`, e);
-                }
-            }
-            return priceMap;
-        });
-
-        // Step 4: Check conditions
-        type TriggeredAlert = { alert: any; currentPrice: number };
-        const triggeredAlerts: TriggeredAlert[] = [];
-
-        for (const alert of activeAlerts as any[]) {
-            const currentPrice = prices[alert.symbol];
-            if (!currentPrice) continue;
-
-            let isTriggered = false;
-            // Simple check
-            if (alert.condition === 'ABOVE' && currentPrice >= alert.targetPrice) {
-                isTriggered = true;
-            } else if (alert.condition === 'BELOW' && currentPrice <= alert.targetPrice) {
-                isTriggered = true;
-            }
-
-            if (isTriggered) {
-                triggeredAlerts.push({ alert, currentPrice });
-            }
-        }
-
-        // Step 5: Email the alert owner, then mark triggered
-        if (triggeredAlerts.length > 0) {
-            await step.run('process-triggered-alerts', async () => {
-                const { connectToDatabase } = await import("@/database/mongoose");
-                const { alertModel } = await import("@/database/models/alert.model");
-                const handle = await connectToDatabase();
-                const db = handle.connection.db;
-                if (!db) throw new Error("No DB Connection");
-                const Alert = alertModel(handle);
-
-                for (const { alert, currentPrice } of triggeredAlerts) {
-                    // Claim the alert atomically before emailing. Inngest's concurrency limits steps, not
-                    // whole runs, so two overlapping runs can hold the same alert; only one wins this update.
-                    const claimed = await Alert.findOneAndUpdate(
-                        { _id: alert._id, active: true, triggered: false },
-                        { $set: { triggered: true, active: false } },
-                    );
-                    if (!claimed) continue;
-                    const release = () => Alert.findByIdAndUpdate(alert._id, { triggered: false, active: true }).catch(() => {});
-
-                    console.log(`🚀 ALERT FIRED: ${alert.symbol} is ${currentPrice} (${alert.condition} ${alert.targetPrice})`);
-
-                    // Per-alert try/catch: a failure releases the claim so the next 5-min run retries it,
-                    // and never throws the step (a step retry would re-email alerts already sent in this loop).
-                    try {
-                        // Better Auth users may be keyed by `id` or `_id` (see getWatchlistSymbolsByEmail)
-                        const user = await db.collection('user').findOne<{ email?: string }>(
-                            mongoose.isValidObjectId(alert.userId)
-                                ? { $or: [{ id: alert.userId }, { _id: new mongoose.Types.ObjectId(alert.userId) }] }
-                                : { id: alert.userId }
-                        );
-
-                        if (user?.email) {
-                            const result = await sendStockAlertEmail({
-                                email: user.email,
-                                symbol: alert.symbol,
-                                currentPrice,
-                                targetPrice: alert.targetPrice,
-                                condition: alert.condition,
-                            });
-                            // Email not configured: release so the alert fires once email works
-                            if (result.status === 'skipped') await release();
-                        } else {
-                            console.warn(`⚠️ No email for user ${alert.userId}; closing alert ${alert._id} without notifying`);
-                        }
-                    } catch (error) {
-                        await release();
-                        console.error(`❌ Failed to process alert ${alert._id} (${alert.symbol}); will retry next run`, error);
-                    }
-                }
-            });
-        }
-
-        return {
-            processed: activeAlerts.length,
-            triggered: triggeredAlerts.length
-        };
     }
+
+    // Step 5: Email the alert owner, then mark triggered
+    if (triggeredAlerts.length > 0) {
+        await step.run('process-triggered-alerts', async () => {
+            const { connectToDatabase } = await import("@/database/mongoose");
+            const { alertModel } = await import("@/database/models/alert.model");
+            const handle = await connectToDatabase();
+            const db = handle.connection.db;
+            if (!db) throw new Error("No DB Connection");
+            const Alert = alertModel(handle);
+
+            for (const { alert, currentPrice, average } of triggeredAlerts) {
+                // Claim the alert atomically before emailing. Inngest's concurrency limits steps, not
+                // whole runs, so two overlapping runs can hold the same alert; only one wins this update.
+                // An SMA alert also stores the average it crossed, so the alert matches its email
+                const claimed = await Alert.findOneAndUpdate(
+                    { _id: alert._id, active: true, triggered: false },
+                    { $set: { triggered: true, active: false, ...(average !== undefined ? { targetPrice: average } : {}) } },
+                );
+                if (!claimed) continue;
+                const release = () => Alert.findByIdAndUpdate(alert._id, { triggered: false, active: true }).catch(() => {});
+
+                console.log(`🚀 ALERT FIRED: ${alert.symbol} is ${currentPrice} (${alert.condition} ${average !== undefined ? `SMA ${alert.smaPeriod} ${average}` : alert.targetPrice})`);
+
+                // Per-alert try/catch: a failure releases the claim so the next 5-min run retries it,
+                // and never throws the step (a step retry would re-email alerts already sent in this loop).
+                try {
+                    // Better Auth users may be keyed by `id` or `_id` (see getWatchlistSymbolsByEmail)
+                    const user = await db.collection('user').findOne<{ email?: string }>(
+                        mongoose.isValidObjectId(alert.userId)
+                            ? { $or: [{ id: alert.userId }, { _id: new mongoose.Types.ObjectId(alert.userId) }] }
+                            : { id: alert.userId }
+                    );
+
+                    if (user?.email) {
+                        const result = await sendStockAlertEmail({
+                            email: user.email,
+                            symbol: alert.symbol,
+                            currentPrice,
+                            targetPrice: average ?? alert.targetPrice,
+                            condition: alert.condition,
+                            ...(average !== undefined ? { smaPeriod: alert.smaPeriod } : {}),
+                        });
+                        // Email not configured: release so the alert fires once email works
+                        if (result.status === 'skipped') await release();
+                    } else {
+                        console.warn(`⚠️ No email for user ${alert.userId}; closing alert ${alert._id} without notifying`);
+                    }
+                } catch (error) {
+                    await release();
+                    console.error(`❌ Failed to process alert ${alert._id} (${alert.symbol}); will retry next run`, error);
+                }
+            }
+        });
+    }
+
+    return {
+        processed: activeAlerts.length,
+        triggered: triggeredAlerts.length
+    };
+};
+
+export const checkStockAlerts = inngest.createFunction(
+    { id: 'check-stock-alerts', concurrency: 1, triggers: [{ cron: '*/5 * * * *' }] }, // Every 5 minutes; one run at a time so an alert is never emailed twice
+    checkStockAlertsHandler,
 );
 
 export const checkInactiveUsers = inngest.createFunction(

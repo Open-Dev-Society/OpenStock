@@ -15,6 +15,8 @@ type AlertRow = {
     symbol: string;
     targetPrice: number;
     condition: 'ABOVE' | 'BELOW';
+    target?: 'PRICE' | 'SMA';
+    smaPeriod?: number;
     triggered?: boolean;
     active?: boolean;
     expiresAt?: string;
@@ -85,7 +87,9 @@ export default function AlertsPanel({ alerts }: { alerts: AlertRow[] }) {
                             <div className="min-w-0 flex-1">
                                 <p className="mono font-semibold text-foreground">{alert.symbol}</p>
                                 <p className="num truncate text-[12.5px] text-faint">
-                                    {t(alert.condition === 'ABOVE' ? 'above' : 'below', { price: formatPrice(alert.targetPrice) })}
+                                    {alert.target === 'SMA'
+                                        ? t(alert.condition === 'ABOVE' ? 'aboveSma' : 'belowSma', { period: alert.smaPeriod ?? 0, price: formatPrice(alert.targetPrice) })
+                                        : t(alert.condition === 'ABOVE' ? 'above' : 'below', { price: formatPrice(alert.targetPrice) })}
                                     {alert.expiresAt && !alert.triggered && ` · ${t('until', { date: format.dateTime(new Date(alert.expiresAt), { month: 'short', day: 'numeric' }) })}`}
                                 </p>
                             </div>

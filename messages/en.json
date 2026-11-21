@@ -348,7 +348,16 @@
       "calloutTitleBelow": "Price Dropped",
       "calloutBodyBelow": "{symbol} dropped below your target price. This might be a good time to buy.",
       "cta": "View Dashboard",
-      "footer": "You're receiving this because you subscribed to Openstock news updates."
+      "footer": "You're receiving this because you subscribed to Openstock news updates.",
+      "subjectSmaAbove": "🔔 Price Alert: {symbol} crossed above its {period}-day average",
+      "subjectSmaBelow": "🔔 Price Alert: {symbol} crossed below its {period}-day average",
+      "textSmaAbove": "{symbol} is now {price}, above its {period}-day simple moving average of {target}.",
+      "textSmaBelow": "{symbol} is now {price}, below its {period}-day simple moving average of {target}.",
+      "titleSmaAbove": "Price Alert: {symbol} Crossed Above SMA {period}",
+      "titleSmaBelow": "Price Alert: {symbol} Crossed Below SMA {period}",
+      "triggerSmaAbove": "Price crossed above the {period}-day simple moving average ({target})",
+      "triggerSmaBelow": "Price crossed below the {period}-day simple moving average ({target})",
+      "smaLabel": "SMA {period}:"
     }
   },
   "Sidebar": {
@@ -553,7 +562,9 @@
     "below": "Below {price}",
     "until": "until {date}",
     "removeTitle": "Remove alert",
-    "removeLabel": "Remove alert for {symbol}"
+    "removeLabel": "Remove alert for {symbol}",
+    "aboveSma": "Above SMA {period} ({price})",
+    "belowSma": "Below SMA {period} ({price})"
   },
   "CreateAlertModal": {
     "risesAbove": "Rises above",
@@ -573,7 +584,18 @@
     "cloudTitle": "Price alerts come with Cloud",
     "cloudBody": "Cloud adds email price alerts and live quotes for $5 a month. It’s coming soon. Self-hosting includes both today.",
     "seeCloud": "See OpenStock Cloud",
-    "selfHost": "Self-host"
+    "selfHost": "Self-host",
+    "alertOn": "Alert on",
+    "typePrice": "Price",
+    "typeSma": "Moving average",
+    "smaPeriodLabel": "Period",
+    "smaOption": "SMA {period}",
+    "crossesAbove": "Crosses above",
+    "crossesBelow": "Crosses below",
+    "smaHint": "Simple moving average of daily closes. Fires when the price crosses it; checked every 5 minutes, expires after 90 days.",
+    "createdSma": "Alert set: {symbol} crosses {condition, select, ABOVE {above} other {below}} SMA {period} ({price})",
+    "smaNoHistory": "Not enough price history for SMA {period}",
+    "smaHistoryUnavailable": "Couldn’t load the price history. Try again in a moment."
   },
   "NewsList": {
     "emptyTitle": "No recent news",
