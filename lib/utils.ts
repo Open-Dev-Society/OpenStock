@@ -111,11 +111,12 @@ export const getChangeColorClass = (changePercent?: number) => {
     return changePercent > 0 ? 'text-green-500' : 'text-red-500';
 };
 
+// Under a cent (small coins, their moving averages), keep 4 significant digits: $0.00001234, not $0.00
 export const formatPrice = (price: number, currency = 'USD') => {
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency,
-        minimumFractionDigits: 2,
+        ...(price !== 0 && Math.abs(price) < 0.01 ? { maximumSignificantDigits: 4 } : { minimumFractionDigits: 2 }),
     }).format(price);
 };
 
