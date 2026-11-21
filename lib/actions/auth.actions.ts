@@ -5,7 +5,7 @@ import { inngest } from "@/lib/inngest/client";
 import { headers } from "next/headers";
 import { INVESTMENT_GOALS, PREFERRED_INDUSTRIES, RISK_TOLERANCE_OPTIONS } from "@/lib/constants";
 import countryList from "react-select-country-list";
-import { isClientRateLimited, isRateLimited } from "@/lib/rate-limit";
+import { isClientRateLimited, isRateLimited, signUpLimitPerIp } from "@/lib/rate-limit";
 import { getTranslations } from "next-intl/server";
 import { resolveLocale } from "@/i18n/locale";
 
@@ -23,7 +23,7 @@ export const signUpWithEmail = async ({ email, password, fullName, country, inve
         return { success: false, error: t('signUpFailed') };
     }
     // Each sign-up sends a welcome email from our Gmail and an AI call. Per client, and per address like sign-in
-    if (await isClientRateLimited('sign-up', 5, 60 * 60)
+    if (await isClientRateLimited('sign-up', signUpLimitPerIp(), 60 * 60)
         || await isRateLimited(`sign-up:email:${String(email).trim().toLowerCase()}`, 3, 60 * 60)) {
         return { success: false, error: t('tooManyAttempts') };
     }

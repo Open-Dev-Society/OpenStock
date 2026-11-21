@@ -30,7 +30,7 @@ vi.mock('next/headers', () => ({
     headers: async () => requestHeaders,
 }));
 
-import { NO_IP_BUDGET_FACTOR, clientIp, isClientRateLimited } from '@/lib/rate-limit';
+import { NO_IP_BUDGET_FACTOR, clientIp, isClientRateLimited, signUpLimitPerIp } from '@/lib/rate-limit';
 
 const attempts = async (n: number) => {
     const results: boolean[] = [];
@@ -51,6 +51,34 @@ describe('rate-limit', () => {
     it('takes the client from the first x-forwarded-for entry', async () => {
         requestHeaders = new Headers({ 'x-forwarded-for': '203.0.113.10, 10.0.0.1' });
         expect(await clientIp()).toBe('203.0.113.10');
+    });
+
+    it('accepts only an IP address as the client', async () => {
+        requestHeaders = new Headers({ 'x-forwarded-for': '::ffff:192.168.1.20' }); // what `next start` fills in
+        expect(await clientIp()).toBe('::ffff:192.168.1.20');
+        requestHeaders = new Headers({ 'x-forwarded-for': 'attacker-123, 10.0.0.1' });
+        expect(await clientIp()).toBeNull();
+        requestHeaders = new Headers({ 'x-forwarded-for': '203.0.113.10:51234' });
+        expect(await clientIp()).toBeNull();
+        requestHeaders = new Headers({ 'x-forwarded-for': 'junk', 'x-real-ip': '198.51.100.7' });
+        expect(await clientIp()).toBe('198.51.100.7');
+    });
+
+    it('does not give junk addresses a fresh budget each', async () => {
+        for (let i = 0; i < 5 * NO_IP_BUDGET_FACTOR; i++) {
+            requestHeaders = new Headers({ 'x-forwarded-for': `junk-${i}` });
+            await isClientRateLimited('sign-up', 5, 60 * 60);
+        }
+        requestHeaders = new Headers({ 'x-forwarded-for': 'junk-last' });
+        expect(await isClientRateLimited('sign-up', 5, 60 * 60)).toBe(true);
+    });
+
+    it('keeps the sign-up cap tight on Vercel and roomier where clients can share an address', () => {
+        vi.stubEnv('VERCEL', '1');
+        expect(signUpLimitPerIp()).toBe(5);
+        vi.stubEnv('VERCEL', '');
+        expect(signUpLimitPerIp()).toBe(30);
+        vi.unstubAllEnvs();
     });
 
     it('limits a known client after its own budget', async () => {
