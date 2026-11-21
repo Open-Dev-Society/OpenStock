@@ -334,7 +334,7 @@ OpenStock is built by everyone below: the people who wrote the code and the peop
 <!-- Generated from the credits in lib/changelog.ts: update both together. -->
 <table>
   <tr>
-    <td align="center" width="16%"><a href="https://github.com/ravixalgorithm"><img src="https://github.com/ravixalgorithm.png?size=96" width="56" height="56" alt="ravixalgorithm"/><br/><sub><b>ravixalgorithm</b></sub></a><br/><sub>Maintainer · 50 PRs</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/ravixalgorithm"><img src="https://github.com/ravixalgorithm.png?size=96" width="56" height="56" alt="ravixalgorithm"/><br/><sub><b>ravixalgorithm</b></sub></a><br/><sub>Maintainer · 52 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/keshav-005"><img src="https://github.com/keshav-005.png?size=96" width="56" height="56" alt="keshav-005"/><br/><sub><b>keshav-005</b></sub></a><br/><sub>7 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/ahmaddirar-ios"><img src="https://github.com/ahmaddirar-ios.png?size=96" width="56" height="56" alt="ahmaddirar-ios"/><br/><sub><b>ahmaddirar-ios</b></sub></a><br/><sub>3 PRs</sub></td>
     <td align="center" width="16%"><a href="https://github.com/gugamorato-svg"><img src="https://github.com/gugamorato-svg.png?size=96" width="56" height="56" alt="gugamorato-svg"/><br/><sub><b>gugamorato-svg</b></sub></a><br/><sub>3 PRs</sub></td>
