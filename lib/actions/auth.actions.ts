@@ -5,7 +5,7 @@ import { inngest } from "@/lib/inngest/client";
 import { headers } from "next/headers";
 import { INVESTMENT_GOALS, PREFERRED_INDUSTRIES, RISK_TOLERANCE_OPTIONS } from "@/lib/constants";
 import countryList from "react-select-country-list";
-import { clientIp, isRateLimited } from "@/lib/rate-limit";
+import { isClientRateLimited, isRateLimited } from "@/lib/rate-limit";
 import { getTranslations } from "next-intl/server";
 import { resolveLocale } from "@/i18n/locale";
 
@@ -22,8 +22,9 @@ export const signUpWithEmail = async ({ email, password, fullName, country, inve
         || !isOption(PREFERRED_INDUSTRIES, preferredIndustry)) {
         return { success: false, error: t('signUpFailed') };
     }
-    // Each sign-up sends a welcome email from our Gmail and an AI call
-    if (await isRateLimited(`sign-up:ip:${await clientIp()}`, 5, 60 * 60)) {
+    // Each sign-up sends a welcome email from our Gmail and an AI call. Per client, and per address like sign-in
+    if (await isClientRateLimited('sign-up', 5, 60 * 60)
+        || await isRateLimited(`sign-up:email:${String(email).trim().toLowerCase()}`, 3, 60 * 60)) {
         return { success: false, error: t('tooManyAttempts') };
     }
     try {
@@ -54,7 +55,7 @@ export const signUpWithEmail = async ({ email, password, fullName, country, inve
 export const signInWithEmail = async ({ email, password }: SignInFormData) => {
     const t = await getTranslations('Errors');
     // Per IP against credential stuffing, per account against guessing one password from many IPs
-    if (await isRateLimited(`sign-in:ip:${await clientIp()}`, 20, 10 * 60)
+    if (await isClientRateLimited('sign-in', 20, 10 * 60)
         || await isRateLimited(`sign-in:email:${String(email).trim().toLowerCase()}`, 10, 10 * 60)) {
         return { success: false, error: t('tooManyAttempts') };
     }
@@ -106,7 +107,7 @@ export const requestPasswordResetEmail =async ({ email }: { email: string }) => 
     }
     // Every request sends a real email from our Gmail; unlimited requests could exhaust its daily quota
     if (await isRateLimited(`reset:email:${String(email).trim().toLowerCase()}`, 3, 60 * 60)
-        || await isRateLimited(`reset:ip:${await clientIp()}`, 10, 60 * 60)) {
+        || await isClientRateLimited('reset', 10, 60 * 60)) {
         return { success: false, error: t('tooManyAttempts') };
     }
 
